@@ -1,0 +1,40 @@
+{
+  "name": "${localWorkspaceFolderBasename}",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-json",
+        "ms-vscode.vscode-typescript-next",
+        "oxc.oxc-vscode",
+        "vitest.explorer"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "oxc.oxc-vscode",
+        "[typescript]": {
+          "editor.defaultFormatter": "oxc.oxc-vscode"
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "oxc.oxc-vscode"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "oxc.oxc-vscode"
+        },
+        "[javascriptreact]": {
+          "editor.defaultFormatter": "oxc.oxc-vscode"
+        }
+      }
+    }
+  },
+  "containerEnv": {
+    "NPM_CONFIG_PREFIX": "/home/vscode/.npm-global"
+  },
+  "remoteUser": "vscode"
+}
