@@ -21,19 +21,19 @@ Parse YAML query files into Query AST and validate against the query DSL schema.
 
 ### Step 1: Define Query AST Types
 
-- [ ] Write test: `src/query/types.test.ts`
+- [x] Write test: `src/query/types.test.ts`
   - Test that types compile correctly with valid data
   - Test TypeScript type inference
-- [ ] Create types: `src/query/types.ts`
+- [x] Create types: `src/query/types.ts`
   - Define `FieldType` enum/union
   - Define `TermBlock` interface
   - Define `QueryBlock` interface
   - Define `Filters` interface
   - Define `OverrideBlock` interface
   - Define `QueryAST` interface
-- [ ] Verify types work with test data
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All types match spec/models/query-dsl.md
+- [x] Verify types work with test data
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All types match spec/models/query-dsl.md
 
 ### Step 2: Create Query Schema with Zod
 
