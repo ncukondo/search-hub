@@ -1,5 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { generateSessionId, sanitizeName } from './manager';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { mkdir, rm, readFile, access } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import {
+  generateSessionId,
+  sanitizeName,
+  createSession,
+  type CreateSessionOptions,
+} from './manager';
+import type { SessionFile, ProviderName } from './types';
 
 describe('Session Manager', () => {
   describe('sanitizeName', () => {
@@ -77,6 +86,124 @@ describe('Session Manager', () => {
       expect(parts[0]).toMatch(/^\d{8}$/);
       expect(parts[1]).toBe('diabetes-ai-scoping');
       expect(parts[2]).toBe('a3f2c1');
+    });
+  });
+
+  describe('createSession', () => {
+    let testDir: string;
+
+    beforeEach(async () => {
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    const createTestOptions = (
+      overrides: Partial<CreateSessionOptions> = {}
+    ): CreateSessionOptions => ({
+      name: 'Test Query',
+      queryFile: '/path/to/query.yaml',
+      queryContent: 'name: Test Query\nterms:\n  - test',
+      queryHash: 'abc123def456',
+      targets: ['pubmed', 'eric'] as ProviderName[],
+      sessionsDir: testDir,
+      ...overrides,
+    });
+
+    it('should create session directory', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      const sessionDir = join(testDir, session.id);
+      await expect(access(sessionDir)).resolves.toBeUndefined();
+    });
+
+    it('should create session.json with correct initial state', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      const sessionJsonPath = join(testDir, session.id, 'session.json');
+      const content = await readFile(sessionJsonPath, 'utf-8');
+      const sessionFile: SessionFile = JSON.parse(content);
+
+      expect(sessionFile.version).toBe(1);
+      expect(sessionFile.id).toBe(session.id);
+      expect(sessionFile.name).toBe('Test Query');
+      expect(sessionFile.query.file).toBe('/path/to/query.yaml');
+      expect(sessionFile.query.hash).toBe('abc123def456');
+      expect(sessionFile.query.targets).toEqual(['pubmed', 'eric']);
+      expect(sessionFile.summary.status).toBe('created');
+      expect(sessionFile.summary.totalHits).toBe(0);
+      expect(sessionFile.summary.totalRetrieved).toBe(0);
+    });
+
+    it('should copy query file to session directory', async () => {
+      const queryContent = 'name: Test Query\nterms:\n  - diabetes\n  - ai';
+      const options = createTestOptions({ queryContent });
+      const session = await createSession(options);
+
+      const queryPath = join(testDir, session.id, 'query_common.yaml');
+      const content = await readFile(queryPath, 'utf-8');
+      expect(content).toBe(queryContent);
+    });
+
+    it('should initialize database statuses as pending', async () => {
+      const options = createTestOptions({
+        targets: ['pubmed', 'eric', 'arxiv'] as ProviderName[],
+      });
+      const session = await createSession(options);
+
+      const sessionJsonPath = join(testDir, session.id, 'session.json');
+      const content = await readFile(sessionJsonPath, 'utf-8');
+      const sessionFile: SessionFile = JSON.parse(content);
+
+      expect(sessionFile.databases.pubmed?.status).toBe('pending');
+      expect(sessionFile.databases.eric?.status).toBe('pending');
+      expect(sessionFile.databases.arxiv?.status).toBe('pending');
+
+      expect(sessionFile.databases.pubmed?.files.query).toBe('query_pubmed.txt');
+      expect(sessionFile.databases.pubmed?.files.results).toBe(
+        'results_pubmed.jsonl'
+      );
+    });
+
+    it('should have valid ISO 8601 timestamps', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      const sessionJsonPath = join(testDir, session.id, 'session.json');
+      const content = await readFile(sessionJsonPath, 'utf-8');
+      const sessionFile: SessionFile = JSON.parse(content);
+
+      const isoPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
+      expect(sessionFile.createdAt).toMatch(isoPattern);
+      expect(sessionFile.updatedAt).toMatch(isoPattern);
+    });
+
+    it('should include description if provided', async () => {
+      const options = createTestOptions({
+        description: 'A test session for testing',
+      });
+      const session = await createSession(options);
+
+      const sessionJsonPath = join(testDir, session.id, 'session.json');
+      const content = await readFile(sessionJsonPath, 'utf-8');
+      const sessionFile: SessionFile = JSON.parse(content);
+
+      expect(sessionFile.description).toBe('A test session for testing');
+    });
+
+    it('should return session file structure', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      expect(session.version).toBe(1);
+      expect(session.id).toMatch(/^\d{8}_test-query_abc123$/);
+      expect(session.name).toBe('Test Query');
+      expect(session.summary.status).toBe('created');
     });
   });
 });
