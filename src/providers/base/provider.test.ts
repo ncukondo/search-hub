@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BaseProvider } from './provider';
+import { BaseProvider, serializeState, deserializeState } from './provider';
 import type { BaseProviderConfig } from './provider';
 import type {
   ProviderName,
@@ -8,12 +8,16 @@ import type {
   SearchOptions,
   QueryAstNode,
   ProviderError,
+  SearchState,
+  SearchResumeResult,
 } from './types';
 import { createProviderError } from './types';
 
 // Concrete implementation for testing
 class TestProvider extends BaseProvider {
   readonly name: ProviderName = 'pubmed';
+  private currentState: SearchState | null = null;
+  private stateValidationResult: SearchResumeResult = { valid: true };
 
   constructor(config: BaseProviderConfig = {}) {
     super(config);
@@ -45,6 +49,35 @@ class TestProvider extends BaseProvider {
     return true;
   }
 
+  getSearchState(): SearchState | null {
+    return this.currentState;
+  }
+
+  async *resumeSearch(state: SearchState): AsyncIterable<Article> {
+    this.currentState = state;
+    // Simulate resuming from saved state
+    yield {
+      doi: '10.1234/resumed',
+      title: 'Resumed Article',
+      authors: [{ family: 'Resume' }],
+      source: 'pubmed',
+      retrievedAt: new Date().toISOString(),
+    };
+  }
+
+  async validateState(_state: SearchState): Promise<SearchResumeResult> {
+    return this.stateValidationResult;
+  }
+
+  // Test helpers
+  setSearchState(state: SearchState | null): void {
+    this.currentState = state;
+  }
+
+  setStateValidation(result: SearchResumeResult): void {
+    this.stateValidationResult = result;
+  }
+
   // Expose protected members for testing
   getRateLimiter() {
     return this.rateLimiter;
@@ -57,6 +90,15 @@ class TestProvider extends BaseProvider {
   // Expose withRetry for testing
   async testWithRetry<T>(fn: () => Promise<T>): Promise<T> {
     return this.withRetry(fn);
+  }
+
+  // Expose createBaseState for testing
+  testCreateBaseState(
+    query: TranslatedQuery,
+    totalResults: number,
+    retrievedCount: number
+  ): SearchState {
+    return this.createBaseState(query, totalResults, retrievedCount);
   }
 }
 
@@ -326,6 +368,273 @@ describe('BaseProvider', () => {
       const result = await resultPromise;
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('session resume methods', () => {
+    it('getSearchState returns null when no search is active', () => {
+      const provider = new TestProvider();
+      expect(provider.getSearchState()).toBeNull();
+    });
+
+    it('getSearchState returns current state when set', () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'test query',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+      };
+
+      provider.setSearchState(state);
+      expect(provider.getSearchState()).toEqual(state);
+    });
+
+    it('resumeSearch yields articles from resumed state', async () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'test query',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+        providerState: { offset: 50 },
+      };
+
+      const articles: Article[] = [];
+      for await (const article of provider.resumeSearch(state)) {
+        articles.push(article);
+      }
+
+      expect(articles).toHaveLength(1);
+      expect(articles[0]?.title).toBe('Resumed Article');
+    });
+
+    it('validateState returns valid result by default', async () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'test query',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+      };
+
+      const result = await provider.validateState(state);
+      expect(result.valid).toBe(true);
+    });
+
+    it('validateState returns configured result', async () => {
+      const provider = new TestProvider();
+      provider.setStateValidation({
+        valid: false,
+        reason: 'State expired',
+      });
+
+      const query: TranslatedQuery = {
+        native: 'test query',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+      };
+
+      const result = await provider.validateState(state);
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe('State expired');
+    });
+  });
+
+  describe('createBaseState helper', () => {
+    it('creates SearchState with provided values', () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+
+      const state = provider.testCreateBaseState(query, 1000, 100);
+
+      expect(state.provider).toBe('pubmed');
+      expect(state.query).toEqual(query);
+      expect(state.totalResults).toBe(1000);
+      expect(state.retrievedCount).toBe(100);
+      expect(state.lastUpdated).toBeInstanceOf(Date);
+      expect(state.providerState).toBeUndefined();
+    });
+
+    it('sets lastUpdated to current time', () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'test',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+
+      const before = new Date();
+      const state = provider.testCreateBaseState(query, 100, 10);
+      const after = new Date();
+
+      expect(state.lastUpdated.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(state.lastUpdated.getTime()).toBeLessThanOrEqual(after.getTime());
+    });
+  });
+});
+
+describe('State serialization', () => {
+  describe('serializeState', () => {
+    it('serializes SearchState to JSON string', () => {
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 1000,
+        retrievedCount: 100,
+        lastUpdated: new Date('2025-01-15T12:00:00Z'),
+      };
+
+      const json = serializeState(state);
+      const parsed = JSON.parse(json);
+
+      expect(parsed.provider).toBe('pubmed');
+      expect(parsed.totalResults).toBe(1000);
+      expect(parsed.retrievedCount).toBe(100);
+      expect(parsed.lastUpdated).toBe('2025-01-15T12:00:00.000Z');
+    });
+
+    it('preserves providerState in serialization', () => {
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 1000,
+        retrievedCount: 100,
+        lastUpdated: new Date(),
+        providerState: {
+          webenv: 'NCID_123',
+          querykey: '1',
+          retstart: 100,
+        },
+      };
+
+      const json = serializeState(state);
+      const parsed = JSON.parse(json);
+
+      expect(parsed.providerState).toEqual({
+        webenv: 'NCID_123',
+        querykey: '1',
+        retstart: 100,
+      });
+    });
+  });
+
+  describe('deserializeState', () => {
+    it('deserializes JSON string to SearchState', () => {
+      const json = JSON.stringify({
+        provider: 'pubmed',
+        query: {
+          native: 'covid[Title]',
+          originalAst: { type: 'term' },
+          provider: 'pubmed',
+        },
+        totalResults: 1000,
+        retrievedCount: 100,
+        lastUpdated: '2025-01-15T12:00:00.000Z',
+      });
+
+      const state = deserializeState(json);
+
+      expect(state.provider).toBe('pubmed');
+      expect(state.totalResults).toBe(1000);
+      expect(state.lastUpdated).toBeInstanceOf(Date);
+      expect(state.lastUpdated.toISOString()).toBe('2025-01-15T12:00:00.000Z');
+    });
+
+    it('preserves providerState through deserialization', () => {
+      const json = JSON.stringify({
+        provider: 'pubmed',
+        query: {
+          native: 'covid[Title]',
+          originalAst: { type: 'term' },
+          provider: 'pubmed',
+        },
+        totalResults: 1000,
+        retrievedCount: 100,
+        lastUpdated: '2025-01-15T12:00:00.000Z',
+        providerState: {
+          webenv: 'NCID_123',
+          querykey: '1',
+          retstart: 100,
+        },
+      });
+
+      const state = deserializeState(json);
+
+      expect(state.providerState).toEqual({
+        webenv: 'NCID_123',
+        querykey: '1',
+        retstart: 100,
+      });
+    });
+
+    it('roundtrips correctly through serialize/deserialize', () => {
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term', value: 'covid' },
+        provider: 'pubmed',
+      };
+      const originalState: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 5000,
+        retrievedCount: 250,
+        lastUpdated: new Date('2025-01-15T12:00:00Z'),
+        providerState: {
+          webenv: 'NCID_456',
+          querykey: '2',
+          retstart: 250,
+        },
+      };
+
+      const json = serializeState(originalState);
+      const restoredState = deserializeState(json);
+
+      expect(restoredState.provider).toBe(originalState.provider);
+      expect(restoredState.query).toEqual(originalState.query);
+      expect(restoredState.totalResults).toBe(originalState.totalResults);
+      expect(restoredState.retrievedCount).toBe(originalState.retrievedCount);
+      expect(restoredState.lastUpdated.getTime()).toBe(originalState.lastUpdated.getTime());
+      expect(restoredState.providerState).toEqual(originalState.providerState);
     });
   });
 });

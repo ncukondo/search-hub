@@ -7,6 +7,8 @@ import {
   type TranslatedQuery,
   type SearchOptions,
   type ProviderError,
+  type SearchState,
+  type SearchResumeResult,
   // Type guards
   createProviderError,
   isProviderError,
@@ -20,6 +22,9 @@ import {
   // Registry helpers
   createProviderRegistry,
   globalRegistry,
+  // Serialization helpers
+  serializeState,
+  deserializeState,
 } from './index';
 
 describe('Module exports', () => {
@@ -67,6 +72,28 @@ describe('Module exports', () => {
         retryable: true,
       };
       expect(error.code).toBe('NETWORK_ERROR');
+    });
+
+    it('exports SearchState type', () => {
+      const state: SearchState = {
+        provider: 'pubmed',
+        query: {
+          native: 'test',
+          originalAst: { type: 'term' },
+          provider: 'pubmed',
+        },
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+      };
+      expect(state.provider).toBe('pubmed');
+    });
+
+    it('exports SearchResumeResult type', () => {
+      const result: SearchResumeResult = {
+        valid: true,
+      };
+      expect(result.valid).toBe(true);
     });
   });
 
@@ -119,6 +146,42 @@ describe('Module exports', () => {
 
     it('exports globalRegistry', () => {
       expect(globalRegistry).toBeInstanceOf(ProviderRegistry);
+    });
+  });
+
+  describe('serialization helpers', () => {
+    it('exports serializeState', () => {
+      const state: SearchState = {
+        provider: 'pubmed',
+        query: {
+          native: 'test',
+          originalAst: { type: 'term' },
+          provider: 'pubmed',
+        },
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date('2025-01-15T12:00:00Z'),
+      };
+      const json = serializeState(state);
+      expect(typeof json).toBe('string');
+      expect(JSON.parse(json).provider).toBe('pubmed');
+    });
+
+    it('exports deserializeState', () => {
+      const json = JSON.stringify({
+        provider: 'pubmed',
+        query: {
+          native: 'test',
+          originalAst: { type: 'term' },
+          provider: 'pubmed',
+        },
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: '2025-01-15T12:00:00.000Z',
+      });
+      const state = deserializeState(json);
+      expect(state.provider).toBe('pubmed');
+      expect(state.lastUpdated).toBeInstanceOf(Date);
     });
   });
 

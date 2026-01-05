@@ -11,6 +11,8 @@ import type {
   SearchOptions,
   QueryAstNode,
   ProviderError,
+  SearchState,
+  SearchResumeResult,
 } from './types';
 import { isProviderError, isRateLimitError } from './types';
 
@@ -90,6 +92,42 @@ export abstract class BaseProvider implements Provider {
   abstract testConnection(): Promise<boolean>;
 
   /**
+   * Get the current search state for session persistence.
+   * Returns null if no search is in progress.
+   */
+  abstract getSearchState(): SearchState | null;
+
+  /**
+   * Resume a search from a saved state.
+   * Continues yielding articles from where the previous search left off.
+   */
+  abstract resumeSearch(state: SearchState): AsyncIterable<Article>;
+
+  /**
+   * Validate if a saved state is still valid for resuming.
+   * Some providers (e.g., PubMed) have server-side state that can expire.
+   */
+  abstract validateState(state: SearchState): Promise<SearchResumeResult>;
+
+  /**
+   * Create a base SearchState with common fields.
+   * Subclasses can extend this with provider-specific state.
+   */
+  protected createBaseState(
+    query: TranslatedQuery,
+    totalResults: number,
+    retrievedCount: number
+  ): SearchState {
+    return {
+      provider: this.name,
+      query,
+      totalResults,
+      retrievedCount,
+      lastUpdated: new Date(),
+    };
+  }
+
+  /**
    * Execute a function with retry logic.
    *
    * Retries on network errors and server errors.
@@ -152,4 +190,52 @@ export abstract class BaseProvider implements Provider {
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
+}
+
+/**
+ * Serialized search state for JSON storage.
+ */
+interface SerializedSearchState {
+  provider: string;
+  query: {
+    native: string;
+    originalAst: Record<string, unknown>;
+    provider: string;
+  };
+  totalResults: number;
+  retrievedCount: number;
+  lastUpdated: string; // ISO 8601 string
+  providerState?: unknown;
+}
+
+/**
+ * Serialize a SearchState to a JSON string.
+ * Handles Date conversion to ISO 8601 string.
+ */
+export function serializeState(state: SearchState): string {
+  const serialized: SerializedSearchState = {
+    provider: state.provider,
+    query: state.query,
+    totalResults: state.totalResults,
+    retrievedCount: state.retrievedCount,
+    lastUpdated: state.lastUpdated.toISOString(),
+    providerState: state.providerState,
+  };
+  return JSON.stringify(serialized);
+}
+
+/**
+ * Deserialize a JSON string to a SearchState.
+ * Handles Date conversion from ISO 8601 string.
+ */
+export function deserializeState(json: string): SearchState {
+  const parsed = JSON.parse(json) as SerializedSearchState;
+  return {
+    provider: parsed.provider as SearchState['provider'],
+    query: parsed.query as SearchState['query'],
+    totalResults: parsed.totalResults,
+    retrievedCount: parsed.retrievedCount,
+    lastUpdated: new Date(parsed.lastUpdated),
+    providerState: parsed.providerState,
+  };
 }

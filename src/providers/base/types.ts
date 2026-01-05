@@ -211,3 +211,32 @@ export function isAuthError(error: unknown): error is AuthError {
     (error.code === 'API_KEY_MISSING' || error.code === 'API_KEY_INVALID')
   );
 }
+
+/**
+ * Represents the current state of a search for session persistence.
+ * Used to resume searches after interruption or application restart.
+ */
+export interface SearchState {
+  /** Provider that produced this state */
+  provider: ProviderName;
+  /** The query being executed */
+  query: TranslatedQuery;
+  /** Total number of results available */
+  totalResults: number;
+  /** Number of results retrieved so far */
+  retrievedCount: number;
+  /** When the state was last updated */
+  lastUpdated: Date;
+  /** Provider-specific state (e.g., PubMed webenv/querykey, or offset for other providers) */
+  providerState?: unknown;
+}
+
+/**
+ * Result of validating a search state for resume.
+ */
+export interface SearchResumeResult {
+  /** Whether the state is valid for resuming */
+  valid: boolean;
+  /** Reason if the state is invalid */
+  reason?: string;
+}

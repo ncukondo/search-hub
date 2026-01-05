@@ -17,6 +17,8 @@ export type {
   AuthError,
   QueryAstNode,
   ProviderErrorCode,
+  SearchState,
+  SearchResumeResult,
 } from './types';
 
 // Type guards and helpers
@@ -28,7 +30,7 @@ export {
 } from './types';
 
 // Base provider class
-export { BaseProvider } from './provider';
+export { BaseProvider, serializeState, deserializeState } from './provider';
 export type { BaseProviderConfig } from './provider';
 
 // Rate limiter
