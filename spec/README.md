@@ -34,6 +34,7 @@ spec/
 │   └── reference-manager.md
 │
 ├── tasks/                 # Implementation tasks
+│   ├── ROADMAP.md         # Progress tracking & task dependencies
 │   ├── _template.md       # Task file template
 │   ├── active/            # Current/pending tasks
 │   └── completed/         # Archived tasks
@@ -46,11 +47,11 @@ spec/
 
 ### For New Features/Tasks
 
-1. Read `overview.md` for project context
-2. Read `architecture.md` for system design
-3. Read relevant model/provider specs
-4. Check `tasks/active/` for current work
-5. Create new task file if needed
+1. Check `tasks/ROADMAP.md` for overall progress and next available task
+2. Read `overview.md` for project context (if unfamiliar)
+3. Read `architecture.md` for system design (if unfamiliar)
+4. Read relevant model/provider specs for the task
+5. Follow task file in `tasks/active/` or create one using `tasks/_template.md`
 
 ### Reading Order by Task Type
 
