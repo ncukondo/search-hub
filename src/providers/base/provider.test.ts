@@ -8,12 +8,16 @@ import type {
   SearchOptions,
   QueryAstNode,
   ProviderError,
+  SearchState,
+  SearchResumeResult,
 } from './types';
 import { createProviderError } from './types';
 
 // Concrete implementation for testing
 class TestProvider extends BaseProvider {
   readonly name: ProviderName = 'pubmed';
+  private currentState: SearchState | null = null;
+  private stateValidationResult: SearchResumeResult = { valid: true };
 
   constructor(config: BaseProviderConfig = {}) {
     super(config);
@@ -45,6 +49,35 @@ class TestProvider extends BaseProvider {
     return true;
   }
 
+  getSearchState(): SearchState | null {
+    return this.currentState;
+  }
+
+  async *resumeSearch(state: SearchState): AsyncIterable<Article> {
+    this.currentState = state;
+    // Simulate resuming from saved state
+    yield {
+      doi: '10.1234/resumed',
+      title: 'Resumed Article',
+      authors: [{ family: 'Resume' }],
+      source: 'pubmed',
+      retrievedAt: new Date().toISOString(),
+    };
+  }
+
+  async validateState(_state: SearchState): Promise<SearchResumeResult> {
+    return this.stateValidationResult;
+  }
+
+  // Test helpers
+  setSearchState(state: SearchState | null): void {
+    this.currentState = state;
+  }
+
+  setStateValidation(result: SearchResumeResult): void {
+    this.stateValidationResult = result;
+  }
+
   // Expose protected members for testing
   getRateLimiter() {
     return this.rateLimiter;
@@ -57,6 +90,15 @@ class TestProvider extends BaseProvider {
   // Expose withRetry for testing
   async testWithRetry<T>(fn: () => Promise<T>): Promise<T> {
     return this.withRetry(fn);
+  }
+
+  // Expose createBaseState for testing
+  testCreateBaseState(
+    query: TranslatedQuery,
+    totalResults: number,
+    retrievedCount: number
+  ): SearchState {
+    return this.createBaseState(query, totalResults, retrievedCount);
   }
 }
 
@@ -326,6 +368,137 @@ describe('BaseProvider', () => {
       const result = await resultPromise;
       expect(result).toBe('success');
       expect(fn).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('session resume methods', () => {
+    it('getSearchState returns null when no search is active', () => {
+      const provider = new TestProvider();
+      expect(provider.getSearchState()).toBeNull();
+    });
+
+    it('getSearchState returns current state when set', () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'test query',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+      };
+
+      provider.setSearchState(state);
+      expect(provider.getSearchState()).toEqual(state);
+    });
+
+    it('resumeSearch yields articles from resumed state', async () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'test query',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+        providerState: { offset: 50 },
+      };
+
+      const articles: Article[] = [];
+      for await (const article of provider.resumeSearch(state)) {
+        articles.push(article);
+      }
+
+      expect(articles).toHaveLength(1);
+      expect(articles[0]?.title).toBe('Resumed Article');
+    });
+
+    it('validateState returns valid result by default', async () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'test query',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+      };
+
+      const result = await provider.validateState(state);
+      expect(result.valid).toBe(true);
+    });
+
+    it('validateState returns configured result', async () => {
+      const provider = new TestProvider();
+      provider.setStateValidation({
+        valid: false,
+        reason: 'State expired',
+      });
+
+      const query: TranslatedQuery = {
+        native: 'test query',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+      };
+
+      const result = await provider.validateState(state);
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe('State expired');
+    });
+  });
+
+  describe('createBaseState helper', () => {
+    it('creates SearchState with provided values', () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+
+      const state = provider.testCreateBaseState(query, 1000, 100);
+
+      expect(state.provider).toBe('pubmed');
+      expect(state.query).toEqual(query);
+      expect(state.totalResults).toBe(1000);
+      expect(state.retrievedCount).toBe(100);
+      expect(state.lastUpdated).toBeInstanceOf(Date);
+      expect(state.providerState).toBeUndefined();
+    });
+
+    it('sets lastUpdated to current time', () => {
+      const provider = new TestProvider();
+      const query: TranslatedQuery = {
+        native: 'test',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+
+      const before = new Date();
+      const state = provider.testCreateBaseState(query, 100, 10);
+      const after = new Date();
+
+      expect(state.lastUpdated.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(state.lastUpdated.getTime()).toBeLessThanOrEqual(after.getTime());
     });
   });
 });

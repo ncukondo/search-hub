@@ -11,6 +11,8 @@ import type {
   SearchOptions,
   QueryAstNode,
   ProviderError,
+  SearchState,
+  SearchResumeResult,
 } from './types';
 import { isProviderError, isRateLimitError } from './types';
 
@@ -88,6 +90,42 @@ export abstract class BaseProvider implements Provider {
    * Returns false on failure (doesn't throw).
    */
   abstract testConnection(): Promise<boolean>;
+
+  /**
+   * Get the current search state for session persistence.
+   * Returns null if no search is in progress.
+   */
+  abstract getSearchState(): SearchState | null;
+
+  /**
+   * Resume a search from a saved state.
+   * Continues yielding articles from where the previous search left off.
+   */
+  abstract resumeSearch(state: SearchState): AsyncIterable<Article>;
+
+  /**
+   * Validate if a saved state is still valid for resuming.
+   * Some providers (e.g., PubMed) have server-side state that can expire.
+   */
+  abstract validateState(state: SearchState): Promise<SearchResumeResult>;
+
+  /**
+   * Create a base SearchState with common fields.
+   * Subclasses can extend this with provider-specific state.
+   */
+  protected createBaseState(
+    query: TranslatedQuery,
+    totalResults: number,
+    retrievedCount: number
+  ): SearchState {
+    return {
+      provider: this.name,
+      query,
+      totalResults,
+      retrievedCount,
+      lastUpdated: new Date(),
+    };
+  }
 
   /**
    * Execute a function with retry logic.

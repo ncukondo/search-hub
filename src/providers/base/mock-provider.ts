@@ -14,6 +14,8 @@ import type {
   SearchOptions,
   QueryAstNode,
   ProviderError,
+  SearchState,
+  SearchResumeResult,
 } from './types';
 
 /**
@@ -32,6 +34,8 @@ export interface MockProviderOptions extends BaseProviderConfig {
   searchDelay?: number;
   /** Error to throw on search */
   searchError?: ProviderError;
+  /** State validation result to return */
+  stateValidation?: SearchResumeResult;
 }
 
 /**
@@ -73,6 +77,9 @@ export class MockProvider extends BaseProvider {
   private connectionStatus: boolean;
   private searchDelay: number;
   private searchError: ProviderError | null;
+  private currentSearchState: SearchState | null = null;
+  private stateValidationResult: SearchResumeResult;
+  private currentRetrievedCount = 0;
 
   constructor(options: MockProviderOptions = {}) {
     super(options);
@@ -87,6 +94,7 @@ export class MockProvider extends BaseProvider {
     this.connectionStatus = options.connectionStatus ?? true;
     this.searchDelay = options.searchDelay ?? 0;
     this.searchError = options.searchError ?? null;
+    this.stateValidationResult = options.stateValidation ?? { valid: true };
 
     // Update articles source to match provider name
     this.mockArticles = this.mockArticles.map((article) => ({
@@ -161,6 +169,68 @@ export class MockProvider extends BaseProvider {
    */
   setConnectionStatus(status: boolean): void {
     this.connectionStatus = status;
+  }
+
+  /**
+   * Get current search state for session persistence.
+   */
+  getSearchState(): SearchState | null {
+    return this.currentSearchState;
+  }
+
+  /**
+   * Resume search from saved state.
+   */
+  async *resumeSearch(state: SearchState): AsyncIterable<Article> {
+    // Extract offset from provider state
+    const providerState = state.providerState as { offset?: number } | undefined;
+    const offset = providerState?.offset ?? state.retrievedCount;
+
+    // Throw configured error if set
+    if (this.searchError !== null) {
+      throw this.searchError;
+    }
+
+    // Simulate network delay
+    if (this.searchDelay > 0) {
+      await this.delay(this.searchDelay);
+    }
+
+    // Update current state
+    this.currentSearchState = {
+      ...state,
+      lastUpdated: new Date(),
+    };
+    this.currentRetrievedCount = offset;
+
+    // Yield remaining articles starting from offset
+    for (let i = offset; i < this.mockArticles.length; i++) {
+      const article = this.mockArticles[i];
+      if (article) {
+        this.currentRetrievedCount++;
+        this.currentSearchState = {
+          ...this.currentSearchState,
+          retrievedCount: this.currentRetrievedCount,
+          lastUpdated: new Date(),
+          providerState: { offset: this.currentRetrievedCount },
+        };
+        yield article;
+      }
+    }
+  }
+
+  /**
+   * Validate if state is still valid for resuming.
+   */
+  async validateState(_state: SearchState): Promise<SearchResumeResult> {
+    return this.stateValidationResult;
+  }
+
+  /**
+   * Set the state validation result.
+   */
+  setStateValidation(result: SearchResumeResult): void {
+    this.stateValidationResult = result;
   }
 
   private delay(ms: number): Promise<void> {

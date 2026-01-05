@@ -9,6 +9,8 @@ import type {
   TranslatedQuery,
   SearchOptions,
   QueryAstNode,
+  SearchState,
+  SearchResumeResult,
 } from './types';
 
 // Mock provider for testing
@@ -43,6 +45,18 @@ class MockProvider extends BaseProvider {
 
   async testConnection(): Promise<boolean> {
     return true;
+  }
+
+  getSearchState(): SearchState | null {
+    return null;
+  }
+
+  async *resumeSearch(_state: SearchState): AsyncIterable<Article> {
+    // Not implemented for this mock
+  }
+
+  async validateState(_state: SearchState): Promise<SearchResumeResult> {
+    return { valid: true };
   }
 }
 
