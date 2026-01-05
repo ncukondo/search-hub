@@ -191,3 +191,51 @@ export abstract class BaseProvider implements Provider {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
+
+/**
+ * Serialized search state for JSON storage.
+ */
+interface SerializedSearchState {
+  provider: string;
+  query: {
+    native: string;
+    originalAst: Record<string, unknown>;
+    provider: string;
+  };
+  totalResults: number;
+  retrievedCount: number;
+  lastUpdated: string; // ISO 8601 string
+  providerState?: unknown;
+}
+
+/**
+ * Serialize a SearchState to a JSON string.
+ * Handles Date conversion to ISO 8601 string.
+ */
+export function serializeState(state: SearchState): string {
+  const serialized: SerializedSearchState = {
+    provider: state.provider,
+    query: state.query,
+    totalResults: state.totalResults,
+    retrievedCount: state.retrievedCount,
+    lastUpdated: state.lastUpdated.toISOString(),
+    providerState: state.providerState,
+  };
+  return JSON.stringify(serialized);
+}
+
+/**
+ * Deserialize a JSON string to a SearchState.
+ * Handles Date conversion from ISO 8601 string.
+ */
+export function deserializeState(json: string): SearchState {
+  const parsed = JSON.parse(json) as SerializedSearchState;
+  return {
+    provider: parsed.provider as SearchState['provider'],
+    query: parsed.query as SearchState['query'],
+    totalResults: parsed.totalResults,
+    retrievedCount: parsed.retrievedCount,
+    lastUpdated: new Date(parsed.lastUpdated),
+    providerState: parsed.providerState,
+  };
+}

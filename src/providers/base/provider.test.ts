@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { BaseProvider } from './provider';
+import { BaseProvider, serializeState, deserializeState } from './provider';
 import type { BaseProviderConfig } from './provider';
 import type {
   ProviderName,
@@ -499,6 +499,142 @@ describe('BaseProvider', () => {
 
       expect(state.lastUpdated.getTime()).toBeGreaterThanOrEqual(before.getTime());
       expect(state.lastUpdated.getTime()).toBeLessThanOrEqual(after.getTime());
+    });
+  });
+});
+
+describe('State serialization', () => {
+  describe('serializeState', () => {
+    it('serializes SearchState to JSON string', () => {
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 1000,
+        retrievedCount: 100,
+        lastUpdated: new Date('2025-01-15T12:00:00Z'),
+      };
+
+      const json = serializeState(state);
+      const parsed = JSON.parse(json);
+
+      expect(parsed.provider).toBe('pubmed');
+      expect(parsed.totalResults).toBe(1000);
+      expect(parsed.retrievedCount).toBe(100);
+      expect(parsed.lastUpdated).toBe('2025-01-15T12:00:00.000Z');
+    });
+
+    it('preserves providerState in serialization', () => {
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 1000,
+        retrievedCount: 100,
+        lastUpdated: new Date(),
+        providerState: {
+          webenv: 'NCID_123',
+          querykey: '1',
+          retstart: 100,
+        },
+      };
+
+      const json = serializeState(state);
+      const parsed = JSON.parse(json);
+
+      expect(parsed.providerState).toEqual({
+        webenv: 'NCID_123',
+        querykey: '1',
+        retstart: 100,
+      });
+    });
+  });
+
+  describe('deserializeState', () => {
+    it('deserializes JSON string to SearchState', () => {
+      const json = JSON.stringify({
+        provider: 'pubmed',
+        query: {
+          native: 'covid[Title]',
+          originalAst: { type: 'term' },
+          provider: 'pubmed',
+        },
+        totalResults: 1000,
+        retrievedCount: 100,
+        lastUpdated: '2025-01-15T12:00:00.000Z',
+      });
+
+      const state = deserializeState(json);
+
+      expect(state.provider).toBe('pubmed');
+      expect(state.totalResults).toBe(1000);
+      expect(state.lastUpdated).toBeInstanceOf(Date);
+      expect(state.lastUpdated.toISOString()).toBe('2025-01-15T12:00:00.000Z');
+    });
+
+    it('preserves providerState through deserialization', () => {
+      const json = JSON.stringify({
+        provider: 'pubmed',
+        query: {
+          native: 'covid[Title]',
+          originalAst: { type: 'term' },
+          provider: 'pubmed',
+        },
+        totalResults: 1000,
+        retrievedCount: 100,
+        lastUpdated: '2025-01-15T12:00:00.000Z',
+        providerState: {
+          webenv: 'NCID_123',
+          querykey: '1',
+          retstart: 100,
+        },
+      });
+
+      const state = deserializeState(json);
+
+      expect(state.providerState).toEqual({
+        webenv: 'NCID_123',
+        querykey: '1',
+        retstart: 100,
+      });
+    });
+
+    it('roundtrips correctly through serialize/deserialize', () => {
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term', value: 'covid' },
+        provider: 'pubmed',
+      };
+      const originalState: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 5000,
+        retrievedCount: 250,
+        lastUpdated: new Date('2025-01-15T12:00:00Z'),
+        providerState: {
+          webenv: 'NCID_456',
+          querykey: '2',
+          retstart: 250,
+        },
+      };
+
+      const json = serializeState(originalState);
+      const restoredState = deserializeState(json);
+
+      expect(restoredState.provider).toBe(originalState.provider);
+      expect(restoredState.query).toEqual(originalState.query);
+      expect(restoredState.totalResults).toBe(originalState.totalResults);
+      expect(restoredState.retrievedCount).toBe(originalState.retrievedCount);
+      expect(restoredState.lastUpdated.getTime()).toBe(originalState.lastUpdated.getTime());
+      expect(restoredState.providerState).toEqual(originalState.providerState);
     });
   });
 });
