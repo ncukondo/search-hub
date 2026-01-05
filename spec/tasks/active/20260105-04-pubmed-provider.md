@@ -80,7 +80,7 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
 
 ### Step 4: Implement HTTP Client
 
-- [ ] Write test: `src/providers/pubmed/client.test.ts`
+- [x] Write test: `src/providers/pubmed/client.test.ts`
   - Test esearch API call construction
   - Test efetch API call construction
   - Test API key inclusion when configured
@@ -88,16 +88,16 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
   - Test pagination parameters (retstart, retmax)
   - Test usehistory parameter for large results
   - Mock HTTP calls for unit tests
-- [ ] Create stub: `src/providers/pubmed/client.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/pubmed/client.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `PubMedClient` class
   - `search(query: string, options): Promise<ESearchResult>`
   - `fetch(pmids: string[]): Promise<PubMedArticle[]>`
   - Rate limiter integration
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Client correctly calls E-utilities endpoints
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Client correctly calls E-utilities endpoints
 
 ### Step 5: Implement PubMed Provider
 
