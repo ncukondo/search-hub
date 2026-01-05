@@ -2,6 +2,8 @@
 
 Sessions track search progress, enable resume, and provide audit trails for PRISMA reporting.
 
+> **Implementation**: See `src/session/` for type definitions and implementation details.
+
 ## Session Directory Structure
 
 ```
@@ -32,63 +34,14 @@ Example: `20240115_diabetes-ai-scoping_a3f2c1`
 
 ## session.json Schema
 
-```typescript
-interface SessionFile {
-  version: 1;                     // Schema version
-  id: string;
-  name: string;                   // From query.name
-  description?: string;           // From query.description
-  createdAt: string;              // ISO 8601
-  updatedAt: string;              // ISO 8601
+The session file contains:
 
-  // Query info
-  query: {
-    file: string;                 // Original file path
-    hash: string;                 // SHA-256 of original
-    targets: ProviderName[];      // DBs to search
-  };
-
-  // Per-DB status
-  databases: Record<ProviderName, DatabaseStatus>;
-
-  // Summary
-  summary: {
-    totalHits: number;            // Sum of all DB hits
-    totalRetrieved: number;       // Sum of all retrieved
-    status: SessionStatus;
-  };
-}
-
-interface DatabaseStatus {
-  status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped';
-  startedAt?: string;
-  completedAt?: string;
-  totalHits?: number;
-  retrievedCount?: number;
-
-  // Pagination state (for resume)
-  pagination?: {
-    cursor: string | null;
-    pageNumber: number;
-    isComplete: boolean;
-  };
-
-  // Error info
-  error?: {
-    code: string;
-    message: string;
-    retryable: boolean;
-  };
-
-  // File paths (relative to session dir)
-  files: {
-    query: string;                // e.g., "query_pubmed.txt"
-    results: string;              // e.g., "results_pubmed.jsonl"
-  };
-}
-
-type SessionStatus = 'created' | 'running' | 'completed' | 'partial' | 'failed';
-```
+- **version**: Schema version (currently 1)
+- **id, name, description**: Session identification
+- **createdAt, updatedAt**: ISO 8601 timestamps
+- **query**: Original file path, hash, and target providers
+- **databases**: Per-provider status (only targeted providers are included)
+- **summary**: Aggregated totals and overall status
 
 ## Results File Format
 
@@ -107,15 +60,12 @@ Benefits:
 
 ## Log File Format
 
-Event log for debugging and audit:
+Event log for debugging and audit (JSON Lines):
 
 ```jsonl
 {"ts":"2024-01-15T10:00:00Z","event":"session_created","data":{...}}
 {"ts":"2024-01-15T10:00:01Z","event":"search_started","provider":"pubmed"}
 {"ts":"2024-01-15T10:00:02Z","event":"page_fetched","provider":"pubmed","page":1,"count":100}
-{"ts":"2024-01-15T10:00:05Z","event":"rate_limited","provider":"pubmed","waitMs":1000}
-{"ts":"2024-01-15T10:01:00Z","event":"search_completed","provider":"pubmed","total":500}
-{"ts":"2024-01-15T10:01:01Z","event":"search_started","provider":"eric"}
 ...
 ```
 
@@ -163,18 +113,9 @@ Event log for debugging and audit:
 
 ### Page-Level Resume
 
-```typescript
-// When resuming mid-pagination:
-const { cursor, pageNumber } = db.pagination;
-
-if (cursor) {
-  // API supports cursors (PubMed retstart, Scopus start)
-  continueFrom(cursor);
-} else {
-  // Fallback: re-fetch and skip already-saved IDs
-  refetchAndDedupe(pageNumber * pageSize);
-}
-```
+When resuming mid-pagination:
+- If cursor exists: continue from cursor position (API-specific)
+- Fallback: re-fetch and skip already-saved IDs using page number
 
 ## Session Commands
 
