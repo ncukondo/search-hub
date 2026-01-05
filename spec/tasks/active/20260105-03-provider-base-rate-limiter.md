@@ -41,22 +41,22 @@ Create the base provider infrastructure including the abstract provider class, c
 
 ### Step 2: Implement Token Bucket Rate Limiter
 
-- [ ] Write test: `src/providers/base/rate-limiter.test.ts`
+- [x] Write test: `src/providers/base/rate-limiter.test.ts`
   - Test allows requests within limit
   - Test blocks requests exceeding limit
   - Test tokens refill over time
   - Test multiple rate limiters are independent
   - Test configurable rate and burst
-- [ ] Create stub: `src/providers/base/rate-limiter.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/base/rate-limiter.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `RateLimiter` class with token bucket algorithm
   - `acquire(): Promise<void>` - waits if needed
   - `tryAcquire(): boolean` - returns false if would block
   - `getWaitTime(): number` - ms until next token
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Rate limiter correctly throttles requests
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Rate limiter correctly throttles requests
 
 ### Step 3: Implement Rate Limiter with Backoff
 
