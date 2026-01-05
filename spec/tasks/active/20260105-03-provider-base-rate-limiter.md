@@ -146,18 +146,18 @@ Create the base provider infrastructure including the abstract provider class, c
 
 ### Step 8: Create Module Index & Integration
 
-- [ ] Write test: `src/providers/base/index.test.ts`
+- [x] Write test: `src/providers/base/index.test.ts`
   - Test exports are correct
   - Test can create and use mock provider
-- [ ] Create `src/providers/base/index.ts`
+- [x] Create `src/providers/base/index.ts`
   - Export types
   - Export BaseProvider
   - Export RateLimiter
   - Export ProviderRegistry
   - Export MockProvider
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Module can be imported and used by provider implementations
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Module can be imported and used by provider implementations
 
 ## TDD Cycle Reference
 
