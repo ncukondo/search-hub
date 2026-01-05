@@ -111,21 +111,21 @@ Create the base provider infrastructure including the abstract provider class, c
 
 ### Step 6: Implement Provider Registry
 
-- [ ] Write test: `src/providers/base/registry.test.ts`
+- [x] Write test: `src/providers/base/registry.test.ts`
   - Test register provider factory
   - Test get provider by name
   - Test list available providers
   - Test throws on unknown provider
-- [ ] Create: `src/providers/base/registry.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create: `src/providers/base/registry.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `ProviderRegistry` singleton
   - `register(name: ProviderName, factory: ProviderFactory): void`
   - `get(name: ProviderName, config: ProviderConfig): Provider`
   - `list(): ProviderName[]`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Providers can register and be discovered
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Providers can register and be discovered
 
 ### Step 7: Create Mock Provider for Testing
 
