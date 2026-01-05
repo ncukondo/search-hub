@@ -133,16 +133,16 @@ Manage search sessions including creation, persistence, loading, and resume func
 
 ### Step 8: Create Module Index & Integration
 
-- [ ] Write test: `src/session/index.test.ts`
+- [x] Write test: `src/session/index.test.ts`
   - Test exports are correct
   - Test end-to-end: create -> update -> load
-- [ ] Create `src/session/index.ts`
+- [x] Create `src/session/index.ts`
   - Export types
   - Export SessionManager class/functions
   - Export SessionLogger
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Module can be imported and used from other modules
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Module can be imported and used from other modules
 
 ## TDD Cycle Reference
 
