@@ -45,13 +45,36 @@ spec/
 
 ## How to Use This Directory
 
-### For New Features/Tasks
+### Development Workflow
 
-1. Check `tasks/ROADMAP.md` for overall progress and next available task
-2. Read `overview.md` for project context (if unfamiliar)
-3. Read `architecture.md` for system design (if unfamiliar)
-4. Read relevant model/provider specs for the task
-5. Follow task file in `tasks/active/` or create one using `tasks/_template.md`
+1. **Requirements Definition** - Define what needs to be built
+   - Read `overview.md` for project context (if unfamiliar)
+   - Read `architecture.md` for system design (if unfamiliar)
+
+2. **Spec Update** - Update relevant spec files in this directory
+   - See "Reading Order by Task Type" below for which specs to update
+
+3. **Update ROADMAP** - Check `tasks/ROADMAP.md` and update if needed
+   - Add new tasks with dependencies
+   - Update status of existing tasks
+
+4. **Task Creation** - Create task files in `tasks/active/` using `tasks/_template.md`
+   - Order tasks by dependency (least dependent first)
+   - Include test cases for TDD
+
+5. **TDD Implementation** - Create a branch and work in git worktree
+   - `git worktree add /workspaces/search-hub--<branch> -b <branch>`
+   - Write tests first, then implement
+   - Follow TDD cycle: Red → Green → Refactor
+
+6. **Integration Testing** - Test end-to-end flows
+   - Verify all components work together
+   - Run full test suite
+
+7. **Cleanup** - Finalize the work
+   - Merge branch and remove worktree
+   - Archive completed task files to `tasks/completed/`
+   - Update `tasks/ROADMAP.md` status
 
 ### Reading Order by Task Type
 
