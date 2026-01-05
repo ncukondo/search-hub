@@ -96,11 +96,19 @@ function configToToml(config: Config): Record<string, unknown> {
         max_results: config.providers.scopus.max_results,
       },
       wos: {
-        enabled: false,
-        api_key: '',
+        enabled: config.providers.wos.enabled,
+        api_key: config.providers.wos.api_key ?? '',
+        rate_limit: config.providers.wos.rate_limit,
+        timeout: config.providers.wos.timeout,
+        retries: config.providers.wos.retries,
+        max_results: config.providers.wos.max_results,
       },
       embase: {
-        enabled: false,
+        enabled: config.providers.embase.enabled,
+        rate_limit: config.providers.embase.rate_limit,
+        timeout: config.providers.embase.timeout,
+        retries: config.providers.embase.retries,
+        max_results: config.providers.embase.max_results,
       },
     },
     integration: {

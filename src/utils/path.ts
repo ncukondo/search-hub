@@ -1,4 +1,5 @@
 import { homedir } from 'node:os';
+import { join } from 'node:path';
 
 /**
  * Expand ~ at the start of a path to the user's home directory.
@@ -13,7 +14,7 @@ export function expandPath(path: string): string {
   }
 
   if (path.startsWith('~/')) {
-    return homedir() + path.slice(1);
+    return join(homedir(), path.slice(2));
   }
 
   return path;
