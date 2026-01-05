@@ -76,21 +76,21 @@ Create the base provider infrastructure including the abstract provider class, c
 
 ### Step 4: Create Abstract Provider Base Class
 
-- [ ] Write test: `src/providers/base/provider.test.ts`
+- [x] Write test: `src/providers/base/provider.test.ts`
   - Test abstract class structure
   - Test constructor initializes rate limiter
   - Test name property
   - Test config merging (defaults + user config)
-- [ ] Create stub: `src/providers/base/provider.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/base/provider.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `abstract class BaseProvider implements Provider`
   - Constructor accepts config
   - Initialize rate limiter from config
   - Abstract methods: `search`, `translateQuery`, `testConnection`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Base class provides shared infrastructure
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Base class provides shared infrastructure
 
 ### Step 5: Implement Retry Logic
 
