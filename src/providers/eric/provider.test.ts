@@ -276,4 +276,107 @@ describe('ERIC Provider', () => {
       }).rejects.toThrow('API Error');
     });
   });
+
+  describe('Session Resume (Step 5a)', () => {
+    it('should return null when no search in progress', () => {
+      const state = provider.getSearchState();
+      expect(state).toBeNull();
+    });
+
+    it('should return offset-based state after search starts', async () => {
+      mockSearch.mockResolvedValueOnce({
+        totalResults: 100,
+        start: 0,
+        documents: Array(50)
+          .fill(null)
+          .map((_, i) => ({
+            ericId: `EJ${100000 + i}`,
+            title: `Article ${i}`,
+            authors: [],
+            source: 'eric',
+            retrievedAt: new Date().toISOString(),
+          })),
+      } as ERICSearchResult);
+
+      const query: TranslatedQuery = {
+        native: 'title:education',
+        originalAst: { type: 'query' },
+        provider: 'eric',
+      };
+
+      // Start search and consume some results
+      let count = 0;
+      for await (const _ of provider.search(query, { maxResults: 50 })) {
+        count++;
+      }
+      expect(count).toBe(50);
+
+      // Get search state
+      const state = provider.getSearchState();
+      expect(state).not.toBeNull();
+      expect(state!.provider).toBe('eric');
+      expect(state!.totalResults).toBe(100);
+      expect(state!.retrievedCount).toBe(50);
+      expect(state!.providerState).toEqual({
+        offset: 50,
+        pageSize: 100,
+      });
+    });
+
+    it('should validate state always returns true (offset-based)', async () => {
+      const state = {
+        provider: 'eric' as const,
+        query: {
+          native: 'title:test',
+          originalAst: { type: 'query' },
+          provider: 'eric' as const,
+        },
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+        providerState: { offset: 50, pageSize: 100 },
+      };
+
+      const result = await provider.validateState(state);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should resume search from saved offset', async () => {
+      // Set up mock for resumed search
+      mockSearch.mockResolvedValueOnce({
+        totalResults: 100,
+        start: 50,
+        documents: Array(50)
+          .fill(null)
+          .map((_, i) => ({
+            ericId: `EJ${100050 + i}`,
+            title: `Article ${50 + i}`,
+            authors: [],
+            source: 'eric',
+            retrievedAt: new Date().toISOString(),
+          })),
+      } as ERICSearchResult);
+
+      const state = {
+        provider: 'eric' as const,
+        query: {
+          native: 'title:education',
+          originalAst: { type: 'query' },
+          provider: 'eric' as const,
+        },
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+        providerState: { offset: 50, pageSize: 100 },
+      };
+
+      const articles: unknown[] = [];
+      for await (const article of provider.resumeSearch(state)) {
+        articles.push(article);
+      }
+
+      // Should get remaining 50 articles
+      expect(articles).toHaveLength(50);
+    });
+  });
 });
