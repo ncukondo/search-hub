@@ -152,7 +152,7 @@ export const queryFileSchema = z
  * Returns a validated QueryAST.
  */
 export function validateQueryFile(data: unknown): QueryAST {
-  return queryFileSchema.parse(data) as QueryAST;
+  return queryFileSchema.parse(data);
 }
 
 /**

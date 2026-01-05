@@ -35,9 +35,9 @@ export interface TermBlock {
   /** Free-text keywords (supported by all databases) */
   keywords: string[];
   /** MeSH terms (PubMed only) */
-  mesh?: string[];
+  mesh?: string[] | undefined;
   /** Emtree terms (Embase only) */
-  emtree?: string[];
+  emtree?: string[] | undefined;
 }
 
 /**
@@ -57,9 +57,9 @@ export interface QueryBlock {
  */
 export interface PublicationTypeFilter {
   /** Publication types to include */
-  include?: string[];
+  include?: string[] | undefined;
   /** Publication types to exclude */
-  exclude?: string[];
+  exclude?: string[] | undefined;
 }
 
 /**
@@ -67,13 +67,13 @@ export interface PublicationTypeFilter {
  */
 export interface Filters {
   /** Start year for date range filter */
-  yearFrom?: number;
+  yearFrom?: number | undefined;
   /** End year for date range filter */
-  yearTo?: number;
+  yearTo?: number | undefined;
   /** Language codes (e.g., 'en', 'ja') */
-  languages?: string[];
+  languages?: string[] | undefined;
   /** Publication type filters */
-  publicationTypes?: PublicationTypeFilter;
+  publicationTypes?: PublicationTypeFilter | undefined;
 }
 
 /**
@@ -82,11 +82,11 @@ export interface Filters {
  */
 export interface OverrideBlock {
   /** Override global filters for this provider */
-  filters?: Filters;
+  filters?: Filters | undefined;
   /** arXiv categories (arXiv only) */
-  categories?: string[];
+  categories?: string[] | undefined;
   /** Source types (Scopus only) */
-  sourceTypes?: string[];
+  sourceTypes?: string[] | undefined;
 }
 
 /**
@@ -97,11 +97,11 @@ export interface QueryAST {
   /** Query identifier */
   name: string;
   /** Human-readable description */
-  description?: string;
+  description?: string | undefined;
   /** List of query blocks (AND'd together) */
   blocks: QueryBlock[];
   /** Global filters */
   filters: Filters;
   /** Provider-specific overrides */
-  overrides: Partial<Record<ProviderName, OverrideBlock>>;
+  overrides: Partial<Record<ProviderName, OverrideBlock | undefined>>;
 }
