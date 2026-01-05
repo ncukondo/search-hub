@@ -37,25 +37,25 @@ Parse YAML query files into Query AST and validate against the query DSL schema.
 
 ### Step 2: Create Query Schema with Zod
 
-- [ ] Write test: `src/query/validator.test.ts`
+- [x] Write test: `src/query/validator.test.ts`
   - Test valid query passes validation
   - Test missing required fields fails
   - Test invalid field types fails
   - Test invalid operators fails
   - Test optional fields work correctly
-- [ ] Create stub: `src/query/validator.ts` (empty schema)
-- [ ] Verify tests fail (Red)
-- [ ] Implement Zod schemas:
+- [x] Create stub: `src/query/validator.ts` (empty schema)
+- [x] Verify tests fail (Red)
+- [x] Implement Zod schemas:
   - `fieldTypeSchema`
   - `termBlockSchema`
   - `queryBlockSchema`
   - `filtersSchema`
   - `overrideBlockSchema`
   - `queryFileSchema`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: Schema validates all examples from query-dsl.md
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: Schema validates all examples from query-dsl.md
 
 ### Step 3: Implement YAML Parser
 
