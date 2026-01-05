@@ -9,6 +9,8 @@ import type {
   ProviderError,
   RateLimitError,
   AuthError,
+  SearchState,
+  SearchResumeResult,
 } from './types';
 import {
   createProviderError,
@@ -290,6 +292,99 @@ describe('Provider Types', () => {
         );
         expect(isAuthError(error)).toBe(false);
       });
+    });
+  });
+
+  describe('SearchState', () => {
+    it('has correct structure with required fields', () => {
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+
+      const state: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 1000,
+        retrievedCount: 100,
+        lastUpdated: new Date(),
+      };
+
+      expect(state.provider).toBe('pubmed');
+      expect(state.query).toBe(query);
+      expect(state.totalResults).toBe(1000);
+      expect(state.retrievedCount).toBe(100);
+      expect(state.lastUpdated).toBeInstanceOf(Date);
+      expect(state.providerState).toBeUndefined();
+    });
+
+    it('accepts provider-specific state', () => {
+      const query: TranslatedQuery = {
+        native: 'covid[Title]',
+        originalAst: { type: 'term' },
+        provider: 'pubmed',
+      };
+
+      // PubMed-style state with webenv/querykey
+      const pubmedState: SearchState = {
+        provider: 'pubmed',
+        query,
+        totalResults: 5000,
+        retrievedCount: 200,
+        lastUpdated: new Date(),
+        providerState: {
+          webenv: 'NCID_1_12345678_130.14.22.215_9001_1234567890_0.0_1',
+          querykey: '1',
+          retstart: 200,
+        },
+      };
+
+      expect(pubmedState.providerState).toBeDefined();
+      expect((pubmedState.providerState as { webenv: string }).webenv).toContain('NCID');
+    });
+
+    it('accepts offset-based provider state', () => {
+      const query: TranslatedQuery = {
+        native: 'education policy',
+        originalAst: { type: 'term' },
+        provider: 'eric',
+      };
+
+      // ERIC/arXiv/Scopus style offset state
+      const offsetState: SearchState = {
+        provider: 'eric',
+        query,
+        totalResults: 300,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+        providerState: {
+          offset: 50,
+        },
+      };
+
+      expect((offsetState.providerState as { offset: number }).offset).toBe(50);
+    });
+  });
+
+  describe('SearchResumeResult', () => {
+    it('indicates valid state', () => {
+      const result: SearchResumeResult = {
+        valid: true,
+      };
+
+      expect(result.valid).toBe(true);
+      expect(result.reason).toBeUndefined();
+    });
+
+    it('indicates invalid state with reason', () => {
+      const result: SearchResumeResult = {
+        valid: false,
+        reason: 'Server-side history expired',
+      };
+
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe('Server-side history expired');
     });
   });
 });
