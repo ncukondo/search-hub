@@ -1,0 +1,340 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { writeFile, mkdir, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { parseQueryFile, parseQueryString } from './parser.js';
+
+describe('Query Parser', () => {
+  describe('parseQueryString', () => {
+    it('should parse simple query YAML', () => {
+      const yaml = `
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+    operator: OR
+`;
+      const result = parseQueryString(yaml);
+      expect(result.name).toBe('test_query');
+      expect(result.blocks).toHaveLength(1);
+      const block = result.blocks[0]!;
+      expect(block.field).toBe('title_abstract');
+      expect(block.terms.keywords).toEqual(['diabetes']);
+      expect(block.operator).toBe('OR');
+    });
+
+    it('should parse query with description', () => {
+      const yaml = `
+name: test_query
+description: A test query for diabetes research
+query:
+  - field: title
+    terms:
+      keywords:
+        - test
+    operator: AND
+`;
+      const result = parseQueryString(yaml);
+      expect(result.description).toBe('A test query for diabetes research');
+    });
+
+    it('should parse complex query with all fields', () => {
+      const yaml = `
+name: diabetes_ai_scoping
+description: AI applications in Type 2 Diabetes management
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+        - type 2 diabetes
+        - diabetes mellitus
+        - T2DM
+      mesh:
+        - Diabetes Mellitus, Type 2
+        - Diabetes Mellitus
+    operator: OR
+  - field: title_abstract
+    terms:
+      keywords:
+        - artificial intelligence
+        - machine learning
+        - deep learning
+        - neural network
+      mesh:
+        - Artificial Intelligence
+        - Machine Learning
+        - Deep Learning
+    operator: OR
+  - field: title_abstract
+    terms:
+      keywords:
+        - diagnosis
+        - prediction
+        - management
+        - treatment
+    operator: OR
+`;
+      const result = parseQueryString(yaml);
+      expect(result.name).toBe('diabetes_ai_scoping');
+      expect(result.blocks).toHaveLength(3);
+      expect(result.blocks[0]!.terms.mesh).toHaveLength(2);
+      expect(result.blocks[1]!.terms.keywords).toHaveLength(4);
+    });
+
+    it('should parse query with filters', () => {
+      const yaml = `
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - test
+    operator: OR
+filters:
+  year_from: 2020
+  year_to: 2024
+  language:
+    - en
+    - ja
+  publication_types:
+    include:
+      - Journal Article
+    exclude:
+      - Review
+      - Meta-Analysis
+`;
+      const result = parseQueryString(yaml);
+      expect(result.filters.yearFrom).toBe(2020);
+      expect(result.filters.yearTo).toBe(2024);
+      expect(result.filters.languages).toEqual(['en', 'ja']);
+      expect(result.filters.publicationTypes?.include).toEqual(['Journal Article']);
+      expect(result.filters.publicationTypes?.exclude).toEqual(['Review', 'Meta-Analysis']);
+    });
+
+    it('should parse query with overrides', () => {
+      const yaml = `
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - test
+    operator: OR
+overrides:
+  pubmed:
+    filters:
+      publication_types:
+        exclude:
+          - Comment
+          - Letter
+  arxiv:
+    categories:
+      - cs.AI
+      - cs.LG
+      - q-bio
+  scopus:
+    source_types:
+      - journal
+      - conference
+`;
+      const result = parseQueryString(yaml);
+      expect(result.overrides.pubmed?.filters?.publicationTypes?.exclude).toEqual([
+        'Comment',
+        'Letter',
+      ]);
+      expect(result.overrides.arxiv?.categories).toEqual(['cs.AI', 'cs.LG', 'q-bio']);
+      expect(result.overrides.scopus?.sourceTypes).toEqual(['journal', 'conference']);
+    });
+
+    it('should throw for invalid YAML syntax', () => {
+      const yaml = `
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - test
+    operator: OR
+  invalid yaml here
+    : missing key
+`;
+      expect(() => parseQueryString(yaml)).toThrow();
+    });
+
+    it('should throw for missing required fields', () => {
+      // Missing name
+      const yaml1 = `
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - test
+    operator: OR
+`;
+      expect(() => parseQueryString(yaml1)).toThrow();
+
+      // Missing query
+      const yaml2 = `
+name: test_query
+`;
+      expect(() => parseQueryString(yaml2)).toThrow();
+    });
+
+    it('should throw for empty query blocks', () => {
+      const yaml = `
+name: test_query
+query: []
+`;
+      expect(() => parseQueryString(yaml)).toThrow();
+    });
+
+    it('should throw for invalid field type', () => {
+      const yaml = `
+name: test_query
+query:
+  - field: invalid_field
+    terms:
+      keywords:
+        - test
+    operator: OR
+`;
+      expect(() => parseQueryString(yaml)).toThrow();
+    });
+
+    it('should throw for invalid operator', () => {
+      const yaml = `
+name: test_query
+query:
+  - field: title
+    terms:
+      keywords:
+        - test
+    operator: XOR
+`;
+      expect(() => parseQueryString(yaml)).toThrow();
+    });
+  });
+
+  describe('parseQueryFile', () => {
+    let testDir: string;
+
+    beforeAll(async () => {
+      testDir = join(tmpdir(), `query-parser-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+    });
+
+    afterAll(async () => {
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    it('should parse query from file', async () => {
+      const filePath = join(testDir, 'test-query.yaml');
+      await writeFile(
+        filePath,
+        `
+name: file_test_query
+query:
+  - field: title
+    terms:
+      keywords:
+        - test
+    operator: AND
+`
+      );
+
+      const result = await parseQueryFile(filePath);
+      expect(result.name).toBe('file_test_query');
+      expect(result.blocks).toHaveLength(1);
+    });
+
+    it('should throw for non-existent file', async () => {
+      const filePath = join(testDir, 'non-existent.yaml');
+      await expect(parseQueryFile(filePath)).rejects.toThrow();
+    });
+
+    it('should throw for invalid file content', async () => {
+      const filePath = join(testDir, 'invalid-query.yaml');
+      await writeFile(filePath, 'invalid: yaml: content: :::');
+
+      await expect(parseQueryFile(filePath)).rejects.toThrow();
+    });
+
+    it('should parse complete example from spec', async () => {
+      const filePath = join(testDir, 'complete-example.yaml');
+      await writeFile(
+        filePath,
+        `
+name: diabetes_ai_scoping
+description: AI applications in Type 2 Diabetes management
+
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+        - type 2 diabetes
+        - diabetes mellitus
+        - T2DM
+      mesh:
+        - Diabetes Mellitus, Type 2
+        - Diabetes Mellitus
+    operator: OR
+
+  - field: title_abstract
+    terms:
+      keywords:
+        - artificial intelligence
+        - machine learning
+        - deep learning
+        - neural network
+      mesh:
+        - Artificial Intelligence
+        - Machine Learning
+        - Deep Learning
+    operator: OR
+
+  - field: title_abstract
+    terms:
+      keywords:
+        - diagnosis
+        - prediction
+        - management
+        - treatment
+    operator: OR
+
+filters:
+  year_from: 2018
+  year_to: 2024
+  language:
+    - en
+
+overrides:
+  pubmed:
+    filters:
+      publication_types:
+        exclude:
+          - Review
+          - Systematic Review
+          - Meta-Analysis
+
+  arxiv:
+    categories:
+      - cs.AI
+      - cs.LG
+      - cs.CL
+      - q-bio.QM
+`
+      );
+
+      const result = await parseQueryFile(filePath);
+      expect(result.name).toBe('diabetes_ai_scoping');
+      expect(result.description).toBe('AI applications in Type 2 Diabetes management');
+      expect(result.blocks).toHaveLength(3);
+      expect(result.filters.yearFrom).toBe(2018);
+      expect(result.overrides.arxiv?.categories).toHaveLength(4);
+    });
+  });
+});
