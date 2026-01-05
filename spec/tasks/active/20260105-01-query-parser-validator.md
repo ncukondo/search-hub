@@ -59,24 +59,24 @@ Parse YAML query files into Query AST and validate against the query DSL schema.
 
 ### Step 3: Implement YAML Parser
 
-- [ ] Write test: `src/query/parser.test.ts`
+- [x] Write test: `src/query/parser.test.ts`
   - Test parsing simple query YAML
   - Test parsing complex query with all fields
   - Test parsing query with filters
   - Test parsing query with overrides
   - Test parse error handling (invalid YAML)
   - Test parse error handling (missing required fields)
-- [ ] Create stub: `src/query/parser.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement parser:
+- [x] Create stub: `src/query/parser.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement parser:
   - `parseQueryFile(filePath: string): Promise<QueryAST>`
   - `parseQueryString(yaml: string): QueryAST`
   - Use `yaml` package for YAML parsing
   - Validate parsed data against schema
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: Parser handles all examples from query-dsl.md
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: Parser handles all examples from query-dsl.md
 
 ### Step 4: Add Validation Error Messages
 
