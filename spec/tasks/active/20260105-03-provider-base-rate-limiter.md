@@ -22,11 +22,11 @@ Create the base provider infrastructure including the abstract provider class, c
 
 ### Step 1: Define Provider Types
 
-- [ ] Write test: `src/providers/base/types.test.ts`
+- [x] Write test: `src/providers/base/types.test.ts`
   - Test that types compile correctly with valid data
   - Test Article type fields
   - Test Provider interface methods
-- [ ] Create types: `src/providers/base/types.ts`
+- [x] Create types: `src/providers/base/types.ts`
   - Define `ProviderName` type
   - Define `Article` interface (from common-types.md)
   - Define `Author` interface
@@ -35,9 +35,9 @@ Create the base provider infrastructure including the abstract provider class, c
   - Define `Provider` interface
   - Define `ProviderConfig` interface
   - Define error types (`ProviderError`, `RateLimitError`, `AuthError`)
-- [ ] Verify types work with test data
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All types match spec/providers/_interface.md
+- [x] Verify types work with test data
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All types match spec/providers/_interface.md
 
 ### Step 2: Implement Token Bucket Rate Limiter
 
