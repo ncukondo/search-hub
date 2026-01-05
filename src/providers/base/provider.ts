@@ -1,0 +1,155 @@
+/**
+ * Abstract base class for database providers.
+ */
+
+import { RateLimiter } from './rate-limiter';
+import type {
+  Provider,
+  ProviderName,
+  Article,
+  TranslatedQuery,
+  SearchOptions,
+  QueryAstNode,
+  ProviderError,
+} from './types';
+import { isProviderError, isRateLimitError } from './types';
+
+/**
+ * Configuration options for BaseProvider.
+ */
+export interface BaseProviderConfig {
+  /** Requests per second rate limit */
+  rateLimit?: number;
+  /** Request timeout in milliseconds */
+  timeout?: number;
+  /** Number of retry attempts */
+  retries?: number;
+  /** Initial backoff time in ms for exponential backoff */
+  initialBackoff?: number;
+  /** Maximum backoff time in ms */
+  maxBackoff?: number;
+}
+
+const DEFAULT_CONFIG: Required<BaseProviderConfig> = {
+  rateLimit: 3,
+  timeout: 30000,
+  retries: 3,
+  initialBackoff: 1000,
+  maxBackoff: 60000,
+};
+
+/**
+ * Abstract base class for database providers.
+ *
+ * Provides common infrastructure:
+ * - Rate limiting
+ * - Configuration management
+ * - Retry logic (implemented in subclass)
+ */
+export abstract class BaseProvider implements Provider {
+  /** Provider name identifier */
+  abstract readonly name: ProviderName;
+
+  /** Rate limiter instance */
+  protected readonly rateLimiter: RateLimiter;
+
+  /** Merged configuration */
+  protected readonly config: Required<BaseProviderConfig>;
+
+  constructor(config: BaseProviderConfig = {}) {
+    this.config = {
+      ...DEFAULT_CONFIG,
+      ...config,
+    };
+
+    this.rateLimiter = new RateLimiter({
+      tokensPerSecond: this.config.rateLimit,
+      burstSize: this.config.rateLimit,
+      initialBackoff: this.config.initialBackoff,
+      maxBackoff: this.config.maxBackoff,
+    });
+  }
+
+  /**
+   * Execute search and return results as async iterable (streaming).
+   */
+  abstract search(
+    query: TranslatedQuery,
+    options?: SearchOptions
+  ): AsyncIterable<Article>;
+
+  /**
+   * Convert QueryAST to database-native syntax.
+   */
+  abstract translateQuery(ast: QueryAstNode): TranslatedQuery;
+
+  /**
+   * Verify API access and credentials.
+   * Returns false on failure (doesn't throw).
+   */
+  abstract testConnection(): Promise<boolean>;
+
+  /**
+   * Execute a function with retry logic.
+   *
+   * Retries on network errors and server errors.
+   * Does not retry on auth errors.
+   * Uses exponential backoff between retries.
+   * Respects rate limit error's retryAfter if provided.
+   */
+  protected async withRetry<T>(fn: () => Promise<T>): Promise<T> {
+    let lastError: ProviderError | Error | undefined;
+    let currentBackoff = this.config.initialBackoff;
+
+    for (let attempt = 0; attempt <= this.config.retries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error as ProviderError | Error;
+
+        // Check if we should retry
+        if (!this.shouldRetry(error)) {
+          throw error;
+        }
+
+        // If we've exhausted retries, throw
+        if (attempt >= this.config.retries) {
+          throw error;
+        }
+
+        // Calculate wait time
+        let waitTime: number;
+        if (isRateLimitError(error) && 'retryAfter' in error && typeof error.retryAfter === 'number') {
+          waitTime = error.retryAfter;
+        } else {
+          waitTime = currentBackoff;
+          currentBackoff = Math.min(currentBackoff * 2, this.config.maxBackoff);
+        }
+
+        await this.sleep(waitTime);
+      }
+    }
+
+    // This should never be reached, but TypeScript needs it
+    throw lastError;
+  }
+
+  /**
+   * Determine if an error should trigger a retry.
+   */
+  private shouldRetry(error: unknown): boolean {
+    if (isProviderError(error)) {
+      return error.retryable;
+    }
+
+    // Treat unknown errors as non-retryable
+    return false;
+  }
+
+  /**
+   * Sleep for specified milliseconds.
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+}
