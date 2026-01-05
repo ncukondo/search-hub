@@ -61,18 +61,18 @@ Implement the configuration system that loads, validates, and merges settings fr
   - [x] Refactor if needed, verify test still passes
   - [x] Acceptance: `deepMerge({a: {b: 1}}, {a: {c: 2}})` returns `{a: {b: 1, c: 2}}`
 
-- [ ] Step 4: Implement path expansion utility
-  - [ ] Write test: `src/utils/path.test.ts`
+- [x] Step 4: Implement path expansion utility
+  - [x] Write test: `src/utils/path.test.ts`
     - `~` expands to home directory
     - Absolute paths unchanged
     - Relative paths unchanged
-  - [ ] Create stub: `src/utils/path.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement `expandPath(path: string): string`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed, verify test still passes
-  - [ ] Acceptance: `expandPath('~/foo')` returns `/home/<user>/foo`
+  - [x] Create stub: `src/utils/path.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement `expandPath(path: string): string`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed, verify test still passes
+  - [x] Acceptance: `expandPath('~/foo')` returns `/home/<user>/foo`
 
 - [ ] Step 5: Implement TOML loader
   - [ ] Write test: `src/config/loader.test.ts`
