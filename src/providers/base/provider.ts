@@ -10,7 +10,9 @@ import type {
   TranslatedQuery,
   SearchOptions,
   QueryAstNode,
+  ProviderError,
 } from './types';
+import { isProviderError, isRateLimitError } from './types';
 
 /**
  * Configuration options for BaseProvider.
@@ -86,4 +88,68 @@ export abstract class BaseProvider implements Provider {
    * Returns false on failure (doesn't throw).
    */
   abstract testConnection(): Promise<boolean>;
+
+  /**
+   * Execute a function with retry logic.
+   *
+   * Retries on network errors and server errors.
+   * Does not retry on auth errors.
+   * Uses exponential backoff between retries.
+   * Respects rate limit error's retryAfter if provided.
+   */
+  protected async withRetry<T>(fn: () => Promise<T>): Promise<T> {
+    let lastError: ProviderError | Error | undefined;
+    let currentBackoff = this.config.initialBackoff;
+
+    for (let attempt = 0; attempt <= this.config.retries; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error as ProviderError | Error;
+
+        // Check if we should retry
+        if (!this.shouldRetry(error)) {
+          throw error;
+        }
+
+        // If we've exhausted retries, throw
+        if (attempt >= this.config.retries) {
+          throw error;
+        }
+
+        // Calculate wait time
+        let waitTime: number;
+        if (isRateLimitError(error) && 'retryAfter' in error && typeof error.retryAfter === 'number') {
+          waitTime = error.retryAfter;
+        } else {
+          waitTime = currentBackoff;
+          currentBackoff = Math.min(currentBackoff * 2, this.config.maxBackoff);
+        }
+
+        await this.sleep(waitTime);
+      }
+    }
+
+    // This should never be reached, but TypeScript needs it
+    throw lastError;
+  }
+
+  /**
+   * Determine if an error should trigger a retry.
+   */
+  private shouldRetry(error: unknown): boolean {
+    if (isProviderError(error)) {
+      return error.retryable;
+    }
+
+    // Treat unknown errors as non-retryable
+    return false;
+  }
+
+  /**
+   * Sleep for specified milliseconds.
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 }

@@ -94,20 +94,20 @@ Create the base provider infrastructure including the abstract provider class, c
 
 ### Step 5: Implement Retry Logic
 
-- [ ] Write test: `src/providers/base/provider.test.ts` (additional tests)
+- [x] Write test: `src/providers/base/provider.test.ts` (additional tests)
   - Test retries on network error
   - Test retries on 5xx server error
   - Test does not retry on 401/403
   - Test exponential backoff between retries
   - Test max retries limit
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `protected async withRetry<T>(fn: () => Promise<T>): Promise<T>`
   - Retry logic with configurable attempts
   - Handle different error types appropriately
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Retry logic handles all error scenarios from spec
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Retry logic handles all error scenarios from spec
 
 ### Step 6: Implement Provider Registry
 

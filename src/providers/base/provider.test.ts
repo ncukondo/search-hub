@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BaseProvider } from './provider';
 import type { BaseProviderConfig } from './provider';
 import type {
@@ -7,7 +7,9 @@ import type {
   TranslatedQuery,
   SearchOptions,
   QueryAstNode,
+  ProviderError,
 } from './types';
+import { createProviderError } from './types';
 
 // Concrete implementation for testing
 class TestProvider extends BaseProvider {
@@ -50,6 +52,11 @@ class TestProvider extends BaseProvider {
 
   getConfig() {
     return this.config;
+  }
+
+  // Expose withRetry for testing
+  async testWithRetry<T>(fn: () => Promise<T>): Promise<T> {
+    return this.withRetry(fn);
   }
 }
 
@@ -154,6 +161,171 @@ describe('BaseProvider', () => {
       const result = await provider.testConnection();
 
       expect(result).toBe(true);
+    });
+  });
+
+  describe('withRetry', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('returns result on success', async () => {
+      const provider = new TestProvider();
+      const fn = vi.fn().mockResolvedValue('success');
+
+      const result = await provider.testWithRetry(fn);
+
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries on network error', async () => {
+      const provider = new TestProvider({ retries: 3, initialBackoff: 100 });
+      const networkError = createProviderError(
+        'NETWORK_ERROR',
+        'Connection failed',
+        'pubmed',
+        { retryable: true }
+      );
+
+      const fn = vi
+        .fn()
+        .mockRejectedValueOnce(networkError)
+        .mockRejectedValueOnce(networkError)
+        .mockResolvedValue('success');
+
+      const resultPromise = provider.testWithRetry(fn);
+
+      // Wait for retries
+      await vi.advanceTimersByTimeAsync(100);
+      await vi.advanceTimersByTimeAsync(200);
+
+      const result = await resultPromise;
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(3);
+    });
+
+    it('retries on 5xx server error', async () => {
+      const provider = new TestProvider({ retries: 3, initialBackoff: 100 });
+      const serverError = createProviderError(
+        'SERVER_ERROR',
+        'Internal server error',
+        'pubmed',
+        { retryable: true }
+      );
+
+      const fn = vi
+        .fn()
+        .mockRejectedValueOnce(serverError)
+        .mockResolvedValue('success');
+
+      const resultPromise = provider.testWithRetry(fn);
+      await vi.advanceTimersByTimeAsync(100);
+
+      const result = await resultPromise;
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not retry on 401/403 auth error', async () => {
+      const provider = new TestProvider({ retries: 3 });
+      const authError = createProviderError(
+        'API_KEY_INVALID',
+        'Invalid API key',
+        'pubmed',
+        { retryable: false }
+      );
+
+      const fn = vi.fn().mockRejectedValue(authError);
+
+      await expect(provider.testWithRetry(fn)).rejects.toEqual(authError);
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('uses exponential backoff between retries', async () => {
+      const provider = new TestProvider({ retries: 3, initialBackoff: 100 });
+      const error = createProviderError(
+        'NETWORK_ERROR',
+        'Timeout',
+        'pubmed',
+        { retryable: true }
+      );
+
+      const fn = vi
+        .fn()
+        .mockRejectedValueOnce(error)
+        .mockRejectedValueOnce(error)
+        .mockResolvedValue('success');
+
+      const resultPromise = provider.testWithRetry(fn);
+
+      // First retry after 100ms
+      expect(fn).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(100);
+      expect(fn).toHaveBeenCalledTimes(2);
+
+      // Second retry after 200ms (exponential)
+      await vi.advanceTimersByTimeAsync(200);
+      expect(fn).toHaveBeenCalledTimes(3);
+
+      await resultPromise;
+    });
+
+    it('throws after max retries exceeded', async () => {
+      const provider = new TestProvider({ retries: 2, initialBackoff: 100 });
+      const error = createProviderError(
+        'NETWORK_ERROR',
+        'Timeout',
+        'pubmed',
+        { retryable: true }
+      );
+
+      const fn = vi.fn().mockRejectedValue(error);
+
+      // Catch the promise to prevent unhandled rejection
+      let caughtError: unknown;
+      const resultPromise = provider.testWithRetry(fn).catch((e) => {
+        caughtError = e;
+      });
+
+      // Advance through all retries
+      await vi.advanceTimersByTimeAsync(100); // First retry
+      await vi.advanceTimersByTimeAsync(200); // Second retry
+
+      await resultPromise;
+
+      expect(caughtError).toEqual(error);
+      // Initial call + 2 retries = 3 calls
+      expect(fn).toHaveBeenCalledTimes(3);
+    });
+
+    it('handles rate limit error with retryAfter', async () => {
+      const provider = new TestProvider({ retries: 3 });
+      const rateLimitError: ProviderError & { retryAfter: number } = {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many requests',
+        provider: 'pubmed',
+        retryable: true,
+        retryAfter: 5000,
+      };
+
+      const fn = vi
+        .fn()
+        .mockRejectedValueOnce(rateLimitError)
+        .mockResolvedValue('success');
+
+      const resultPromise = provider.testWithRetry(fn);
+
+      // Should wait for retryAfter time
+      await vi.advanceTimersByTimeAsync(5000);
+
+      const result = await resultPromise;
+      expect(result).toBe('success');
+      expect(fn).toHaveBeenCalledTimes(2);
     });
   });
 });
