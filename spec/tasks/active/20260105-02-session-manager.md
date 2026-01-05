@@ -52,20 +52,20 @@ Manage search sessions including creation, persistence, loading, and resume func
 
 ### Step 3: Implement Session Creation
 
-- [ ] Write test: `src/session/manager.test.ts` (additional tests)
+- [x] Write test: `src/session/manager.test.ts` (additional tests)
   - Test creates session directory
   - Test creates session.json with correct initial state
   - Test copies query file to session directory
   - Test initializes database statuses as 'pending'
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `createSession(options: CreateSessionOptions): Promise<Session>`
   - Create `~/.search-hub/sessions/{session-id}/` directory
   - Create `session.json` with initial state
   - Copy query file as `query_common.yaml`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: New session directory matches spec structure
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: New session directory matches spec structure
 
 ### Step 4: Implement Session Loading
 
