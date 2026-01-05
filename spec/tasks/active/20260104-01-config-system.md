@@ -74,18 +74,18 @@ Implement the configuration system that loads, validates, and merges settings fr
   - [x] Refactor if needed, verify test still passes
   - [x] Acceptance: `expandPath('~/foo')` returns `/home/<user>/foo`
 
-- [ ] Step 5: Implement TOML loader
-  - [ ] Write test: `src/config/loader.test.ts`
+- [x] Step 5: Implement TOML loader
+  - [x] Write test: `src/config/loader.test.ts`
     - Load valid TOML file
     - Missing file returns empty object
     - Invalid TOML throws with clear message
-  - [ ] Create stub: `src/config/loader.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement `loadTomlFile(path: string): Promise<Partial<RawConfig>>`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed, verify test still passes
-  - [ ] Acceptance: loads TOML and returns partial config object
+  - [x] Create stub: `src/config/loader.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement `loadTomlFile(path: string): Promise<Partial<RawConfig>>`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed, verify test still passes
+  - [x] Acceptance: loads TOML and returns partial config object
 
 - [ ] Step 6: Implement environment variable mapping
   - [ ] Write test: `src/config/env.test.ts`
