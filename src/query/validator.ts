@@ -154,3 +154,35 @@ export const queryFileSchema = z
 export function validateQueryFile(data: unknown): QueryAST {
   return queryFileSchema.parse(data) as QueryAST;
 }
+
+/**
+ * Validation error with path information.
+ */
+export class ValidationError extends Error {
+  constructor(
+    public readonly path: string,
+    message: string
+  ) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+/**
+ * Format Zod validation errors into an array of ValidationError objects.
+ *
+ * @param data - The data to validate
+ * @returns Array of ValidationError objects (empty if valid)
+ */
+export function formatValidationErrors(data: unknown): ValidationError[] {
+  const result = queryFileSchema.safeParse(data);
+
+  if (result.success) {
+    return [];
+  }
+
+  return result.error.issues.map((issue) => {
+    const path = issue.path.join('.');
+    return new ValidationError(path, issue.message);
+  });
+}

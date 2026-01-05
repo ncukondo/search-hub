@@ -7,6 +7,8 @@ import {
   overrideBlockSchema,
   queryFileSchema,
   validateQueryFile,
+  formatValidationErrors,
+  ValidationError,
 } from './validator.js';
 
 describe('Query Validator Schemas', () => {
@@ -360,6 +362,74 @@ describe('Query Validator Schemas', () => {
 
     it('should throw for invalid input', () => {
       expect(() => validateQueryFile({ invalid: 'data' })).toThrow();
+    });
+  });
+
+  describe('formatValidationErrors', () => {
+    it('should return descriptive error messages', () => {
+      const errors = formatValidationErrors({
+        name: '',
+        query: [],
+      });
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]!.message).toBeTruthy();
+    });
+
+    it('should include error paths', () => {
+      const errors = formatValidationErrors({
+        name: 'test',
+        query: [
+          {
+            field: 'invalid_field',
+            terms: { keywords: ['test'] },
+            operator: 'OR',
+          },
+        ],
+      });
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]!.path).toBeTruthy();
+      expect(errors[0]!.path).toContain('query');
+    });
+
+    it('should report multiple errors', () => {
+      const errors = formatValidationErrors({
+        query: [
+          {
+            field: 'invalid_field',
+            terms: { keywords: [] },
+            operator: 'INVALID',
+          },
+        ],
+      });
+      // Missing name, invalid field, empty keywords, invalid operator
+      expect(errors.length).toBeGreaterThan(1);
+    });
+
+    it('should return empty array for valid input', () => {
+      const errors = formatValidationErrors({
+        name: 'test_query',
+        query: [
+          {
+            field: 'title_abstract',
+            terms: { keywords: ['diabetes'] },
+            operator: 'OR',
+          },
+        ],
+      });
+      expect(errors).toEqual([]);
+    });
+  });
+
+  describe('ValidationError', () => {
+    it('should have path and message properties', () => {
+      const error = new ValidationError('query.0.field', 'Invalid field type');
+      expect(error.path).toBe('query.0.field');
+      expect(error.message).toBe('Invalid field type');
+    });
+
+    it('should extend Error', () => {
+      const error = new ValidationError('path', 'message');
+      expect(error).toBeInstanceOf(Error);
     });
   });
 });
