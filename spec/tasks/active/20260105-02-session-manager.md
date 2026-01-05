@@ -101,20 +101,20 @@ Manage search sessions including creation, persistence, loading, and resume func
 
 ### Step 6: Implement Event Logger
 
-- [ ] Write test: `src/session/logger.test.ts`
+- [x] Write test: `src/session/logger.test.ts`
   - Test logs events to log.jsonl
   - Test each event type logs correctly
   - Test timestamps are ISO 8601
   - Test appends to existing log
-- [ ] Create stub: `src/session/logger.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/session/logger.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `SessionLogger` class
   - `log(event: LogEvent): Promise<void>`
   - Support all event types from spec
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Log file matches format in session.md
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Log file matches format in session.md
 
 ### Step 7: Implement Resume Logic
 
