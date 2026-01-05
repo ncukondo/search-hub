@@ -3,6 +3,11 @@
  * These types define the common interface for all database providers.
  */
 
+import type { QueryAST } from '../../query/types.js';
+
+// Re-export QueryAST for convenience
+export type { QueryAST };
+
 /**
  * Supported provider names.
  */
@@ -57,22 +62,13 @@ export interface Article {
 }
 
 /**
- * Query AST node (simplified reference type).
- * Full implementation in query-parser module.
- */
-export interface QueryAstNode {
-  type: string;
-  [key: string]: unknown;
-}
-
-/**
  * Result of translating a query to database-native syntax.
  */
 export interface TranslatedQuery {
   /** Database-native query string */
   native: string;
   /** Reference to original AST */
-  originalAst: QueryAstNode;
+  originalAst: QueryAST;
   /** Provider that produced this translation */
   provider: ProviderName;
 }
@@ -112,7 +108,7 @@ export interface Provider {
   /**
    * Convert QueryAST to database-native syntax.
    */
-  translateQuery(ast: QueryAstNode): TranslatedQuery;
+  translateQuery(ast: QueryAST): TranslatedQuery;
 
   /**
    * Verify API access and credentials.

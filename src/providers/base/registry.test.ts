@@ -8,7 +8,7 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
-  QueryAstNode,
+  QueryAST,
   SearchState,
   SearchResumeResult,
 } from './types';
@@ -35,7 +35,7 @@ class MockProvider extends BaseProvider {
     };
   }
 
-  translateQuery(ast: QueryAstNode): TranslatedQuery {
+  translateQuery(ast: QueryAST): TranslatedQuery {
     return {
       native: 'mock query',
       originalAst: ast,
