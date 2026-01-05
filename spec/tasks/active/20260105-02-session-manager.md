@@ -36,19 +36,19 @@ Manage search sessions including creation, persistence, loading, and resume func
 
 ### Step 2: Implement Session ID Generation
 
-- [ ] Write test: `src/session/manager.test.ts`
+- [x] Write test: `src/session/manager.test.ts`
   - Test ID format: `{date}_{name}_{hash}`
   - Test name sanitization (lowercase, alphanumeric, dashes)
   - Test hash is 6 characters
   - Test unique IDs for different queries
-- [ ] Create stub: `src/session/manager.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/session/manager.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `generateSessionId(queryName: string, queryHash: string): string`
   - `sanitizeName(name: string): string`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: IDs match format like `20240115_diabetes-ai-scoping_a3f2c1`
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: IDs match format like `20240115_diabetes-ai-scoping_a3f2c1`
 
 ### Step 3: Implement Session Creation
 
