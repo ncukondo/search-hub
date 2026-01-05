@@ -61,22 +61,22 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
 
 ### Step 3: Implement XML Response Parser
 
-- [ ] Write test: `src/providers/pubmed/parser.test.ts`
+- [x] Write test: `src/providers/pubmed/parser.test.ts`
   - Test parsing esearch XML response (PMID list, count)
   - Test parsing efetch XML response (full articles)
   - Test extracting article fields (title, abstract, authors, DOI)
   - Test handling missing optional fields
   - Test handling multiple authors
   - Test date parsing from PubDate element
-- [ ] Create stub: `src/providers/pubmed/parser.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/pubmed/parser.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `parseESearchResponse(xml: string): ESearchResult`
   - `parseEFetchResponse(xml: string): PubMedArticle[]`
   - Use `fast-xml-parser` for XML parsing (see ADR-004)
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Parser correctly extracts all Article fields
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Parser correctly extracts all Article fields
 
 ### Step 4: Implement HTTP Client
 
