@@ -94,16 +94,16 @@ Parse YAML query files into Query AST and validate against the query DSL schema.
 
 ### Step 5: Create Module Index & Integration
 
-- [ ] Write test: `src/query/index.test.ts`
+- [x] Write test: `src/query/index.test.ts`
   - Test exports are correct
   - Test end-to-end: file path -> validated AST
-- [ ] Create `src/query/index.ts`
+- [x] Create `src/query/index.ts`
   - Export types
   - Export parser functions
   - Export validator functions
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Module can be imported and used from other modules
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Module can be imported and used from other modules
 
 ## TDD Cycle Reference
 
