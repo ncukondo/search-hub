@@ -120,20 +120,20 @@ Implement the configuration system that loads, validates, and merges settings fr
   - [x] Run `npm run lint && npm run typecheck`
   - [x] Acceptance: `import { loadConfig } from './config'` works
 
-- [ ] Step 9: Implement `init` command skeleton
-  - [ ] Write test: `src/cli/commands/init.test.ts`
+- [x] Step 9: Implement `init` command skeleton
+  - [x] Write test: `src/cli/commands/init.test.ts`
     - Creates `~/.search-hub/` directory
     - Creates `config.toml` with defaults
     - Creates `sessions/` directory
     - `--force` overwrites existing
     - Without `--force`, warns if exists
-  - [ ] Create stub: `src/cli/commands/init.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement init command
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed, verify test still passes
-  - [ ] Acceptance: `init` creates valid config file
+  - [x] Create stub: `src/cli/commands/init.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement init command
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed, verify test still passes
+  - [x] Acceptance: `init` creates valid config file
 
 ## Notes
 
