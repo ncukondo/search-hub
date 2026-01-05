@@ -80,17 +80,17 @@ Parse YAML query files into Query AST and validate against the query DSL schema.
 
 ### Step 4: Add Validation Error Messages
 
-- [ ] Write test: `src/query/validator.test.ts` (additional tests)
+- [x] Write test: `src/query/validator.test.ts` (additional tests)
   - Test error messages are descriptive
   - Test error paths are included
   - Test multiple errors are reported
-- [ ] Verify tests fail (Red)
-- [ ] Implement custom error formatting:
+- [x] Verify tests fail (Red)
+- [x] Implement custom error formatting:
   - `ValidationError` class with path and message
   - `formatValidationErrors(errors: z.ZodError): ValidationError[]`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Error messages help users fix their query files
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Error messages help users fix their query files
 
 ### Step 5: Create Module Index & Integration
 
