@@ -87,18 +87,18 @@ Implement the configuration system that loads, validates, and merges settings fr
   - [x] Refactor if needed, verify test still passes
   - [x] Acceptance: loads TOML and returns partial config object
 
-- [ ] Step 6: Implement environment variable mapping
-  - [ ] Write test: `src/config/env.test.ts`
+- [x] Step 6: Implement environment variable mapping
+  - [x] Write test: `src/config/env.test.ts`
     - `SEARCH_HUB_PUBMED_API_KEY` sets `providers.pubmed.api_key`
     - `SEARCH_HUB_LOG_LEVEL` sets `log.level`
     - Missing env vars don't affect config
-  - [ ] Create stub: `src/config/env.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement `ENV_VAR_MAP`, `applyEnvVars(config: Config): Config`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed, verify test still passes
-  - [ ] Acceptance: env vars override config values at correct paths
+  - [x] Create stub: `src/config/env.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement `ENV_VAR_MAP`, `applyEnvVars(config: Config): Config`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed, verify test still passes
+  - [x] Acceptance: env vars override config values at correct paths
 
 - [ ] Step 7: Implement full config loader
   - [ ] Write test: `src/config/loader.test.ts` (add to existing)
