@@ -7,7 +7,7 @@ This file tracks high-level progress. For implementation details, see individual
 | # | Task | Deps | Status | Task File |
 |---|------|------|--------|-----------|
 | 1 | Project Setup | - | ✅ Completed | - |
-| 2 | Config System | 1 | Pending | [20260104-01](active/20260104-01-config-system.md) |
+| 2 | Config System | 1 | ✅ Completed | [20260104-01](completed/20260104-01-config-system.md) |
 | 3 | Query Parser & Validator | 1 | Pending | - |
 | 4 | Session Manager | 2 | Pending | - |
 | 5 | Provider Base & Rate Limiter | 1 | Pending | - |
