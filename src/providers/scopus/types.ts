@@ -10,7 +10,7 @@ import type { BaseProviderConfig } from '../base/provider';
  */
 export interface ScopusAuthor extends Author {
   /** Scopus author ID */
-  authid?: string;
+  authid?: string | undefined;
 }
 
 /**
@@ -25,13 +25,13 @@ export interface ScopusDocument extends Article {
   scopusId: string;
 
   /** Citation count */
-  citedByCount?: number;
+  citedByCount?: number | undefined;
 
   /** Scopus EID (Electronic Identifier) */
-  eid?: string;
+  eid?: string | undefined;
 
   /** Source type (journal, conference, etc.) */
-  sourceType?: string;
+  sourceType?: string | undefined;
 }
 
 /**
