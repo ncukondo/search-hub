@@ -6,9 +6,12 @@ import {
   generateSessionId,
   sanitizeName,
   createSession,
+  loadSession,
+  listSessions,
+  sessionExists,
   type CreateSessionOptions,
 } from './manager';
-import type { SessionFile, ProviderName } from './types';
+import type { SessionFile, ProviderName, SessionSummary } from './types';
 
 describe('Session Manager', () => {
   describe('sanitizeName', () => {
@@ -204,6 +207,167 @@ describe('Session Manager', () => {
       expect(session.id).toMatch(/^\d{8}_test-query_abc123$/);
       expect(session.name).toBe('Test Query');
       expect(session.summary.status).toBe('created');
+    });
+  });
+
+  describe('loadSession', () => {
+    let testDir: string;
+
+    beforeEach(async () => {
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    const createTestOptions = (
+      overrides: Partial<CreateSessionOptions> = {}
+    ): CreateSessionOptions => ({
+      name: 'Test Query',
+      queryFile: '/path/to/query.yaml',
+      queryContent: 'name: Test Query\nterms:\n  - test',
+      queryHash: 'abc123def456',
+      targets: ['pubmed', 'eric'] as ProviderName[],
+      sessionsDir: testDir,
+      ...overrides,
+    });
+
+    it('should load existing session by ID', async () => {
+      const options = createTestOptions();
+      const created = await createSession(options);
+
+      const loaded = await loadSession(created.id, testDir);
+
+      expect(loaded.id).toBe(created.id);
+      expect(loaded.name).toBe(created.name);
+      expect(loaded.version).toBe(1);
+    });
+
+    it('should throw on non-existent session', async () => {
+      await expect(
+        loadSession('nonexistent-session-id', testDir)
+      ).rejects.toThrow('Session not found');
+    });
+
+    it('should load all session data correctly', async () => {
+      const options = createTestOptions({
+        description: 'Test description',
+        targets: ['pubmed', 'eric', 'arxiv'] as ProviderName[],
+      });
+      const created = await createSession(options);
+
+      const loaded = await loadSession(created.id, testDir);
+
+      expect(loaded.description).toBe('Test description');
+      expect(loaded.query.targets).toEqual(['pubmed', 'eric', 'arxiv']);
+      expect(loaded.databases.pubmed?.status).toBe('pending');
+      expect(loaded.databases.eric?.status).toBe('pending');
+      expect(loaded.databases.arxiv?.status).toBe('pending');
+    });
+  });
+
+  describe('sessionExists', () => {
+    let testDir: string;
+
+    beforeEach(async () => {
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    it('should return true for existing session', async () => {
+      const options: CreateSessionOptions = {
+        name: 'Test Query',
+        queryFile: '/path/to/query.yaml',
+        queryContent: 'name: Test\n',
+        queryHash: 'abc123',
+        targets: ['pubmed'] as ProviderName[],
+        sessionsDir: testDir,
+      };
+      const session = await createSession(options);
+
+      const exists = await sessionExists(session.id, testDir);
+      expect(exists).toBe(true);
+    });
+
+    it('should return false for non-existent session', async () => {
+      const exists = await sessionExists('nonexistent-id', testDir);
+      expect(exists).toBe(false);
+    });
+  });
+
+  describe('listSessions', () => {
+    let testDir: string;
+
+    beforeEach(async () => {
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    it('should return empty array when no sessions exist', async () => {
+      const sessions = await listSessions(testDir);
+      expect(sessions).toEqual([]);
+    });
+
+    it('should list all sessions', async () => {
+      // Create multiple sessions with different hashes to avoid ID collision
+      const options1: CreateSessionOptions = {
+        name: 'Query One',
+        queryFile: '/path/to/query1.yaml',
+        queryContent: 'name: Query One\n',
+        queryHash: 'hash1abc',
+        targets: ['pubmed'] as ProviderName[],
+        sessionsDir: testDir,
+      };
+      const options2: CreateSessionOptions = {
+        name: 'Query Two',
+        queryFile: '/path/to/query2.yaml',
+        queryContent: 'name: Query Two\n',
+        queryHash: 'hash2def',
+        targets: ['eric'] as ProviderName[],
+        sessionsDir: testDir,
+      };
+
+      await createSession(options1);
+      await createSession(options2);
+
+      const sessions = await listSessions(testDir);
+
+      expect(sessions).toHaveLength(2);
+      const names = sessions.map((s: SessionSummary) => s.name).sort();
+      expect(names).toEqual(['Query One', 'Query Two']);
+    });
+
+    it('should return session summaries with correct fields', async () => {
+      const options: CreateSessionOptions = {
+        name: 'Test Query',
+        queryFile: '/path/to/query.yaml',
+        queryContent: 'name: Test\n',
+        queryHash: 'abc123',
+        targets: ['pubmed'] as ProviderName[],
+        sessionsDir: testDir,
+      };
+      const created = await createSession(options);
+
+      const sessions = await listSessions(testDir);
+
+      expect(sessions).toHaveLength(1);
+      const summary = sessions[0]!;
+      expect(summary.id).toBe(created.id);
+      expect(summary.name).toBe('Test Query');
+      expect(summary.status).toBe('created');
+      expect(summary.totalHits).toBe(0);
+      expect(summary.totalRetrieved).toBe(0);
+      expect(summary.createdAt).toBeDefined();
     });
   });
 });

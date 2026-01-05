@@ -8,9 +8,9 @@
  * - Session updates and status management
  */
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, readdir, access } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { SessionFile, DatabaseStatus, ProviderName } from './types';
+import type { SessionFile, DatabaseStatus, ProviderName, SessionSummary } from './types';
 
 /**
  * Options for creating a new session.
@@ -121,4 +121,75 @@ export async function createSession(
   await writeFile(join(sessionDir, 'query_common.yaml'), queryContent, 'utf-8');
 
   return sessionFile;
+}
+
+/**
+ * Check if a session exists.
+ */
+export async function sessionExists(
+  sessionId: string,
+  sessionsDir: string
+): Promise<boolean> {
+  try {
+    await access(join(sessionsDir, sessionId, 'session.json'));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Load an existing session by ID.
+ */
+export async function loadSession(
+  sessionId: string,
+  sessionsDir: string
+): Promise<SessionFile> {
+  const sessionPath = join(sessionsDir, sessionId, 'session.json');
+
+  try {
+    const content = await readFile(sessionPath, 'utf-8');
+    return JSON.parse(content) as SessionFile;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      throw new Error(`Session not found: ${sessionId}`);
+    }
+    throw error;
+  }
+}
+
+/**
+ * List all sessions.
+ */
+export async function listSessions(sessionsDir: string): Promise<SessionSummary[]> {
+  let entries: string[];
+
+  try {
+    entries = await readdir(sessionsDir);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return [];
+    }
+    throw error;
+  }
+
+  const summaries: SessionSummary[] = [];
+
+  for (const entry of entries) {
+    try {
+      const session = await loadSession(entry, sessionsDir);
+      summaries.push({
+        id: session.id,
+        name: session.name,
+        status: session.summary.status,
+        createdAt: session.createdAt,
+        totalHits: session.summary.totalHits,
+        totalRetrieved: session.summary.totalRetrieved,
+      });
+    } catch {
+      // Skip directories that don't contain valid sessions
+    }
+  }
+
+  return summaries;
 }
