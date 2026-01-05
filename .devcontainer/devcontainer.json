@@ -36,5 +36,6 @@
   "containerEnv": {
     "NPM_CONFIG_PREFIX": "/home/vscode/.npm-global"
   },
+  "postCreateCommand": "sudo chown vscode:vscode /workspaces",
   "remoteUser": "vscode"
 }

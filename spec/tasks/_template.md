@@ -11,20 +11,51 @@ Why this task is needed and what problem it solves.
 
 ## Related Source Files
 
-- `src/xxx/handler.ts`
-- `src/xxx/schemas.ts`
+- `src/xxx/feature.ts`
+- `src/xxx/feature.test.ts` (co-located)
 
 ## Implementation Steps
 
-- [ ] Step 1: description (least dependent)
-  - [ ] Specific item 1
-  - [ ] Specific item 2
-  - [ ] Check Acceptance Criteria: (criteria 1, 2, ...)
-- [ ] Step 2: description
-  - [ ] Specific item 1
-  - [ ] Check Acceptance Criteria: (criteria 1, 2, ...)
-- [ ] Step 3: ...
+Each step follows the TDD cycle:
+
+1. **Red**: Write failing test
+2. **Green**: Write minimal implementation to pass
+3. **Refactor**: Clean up, pass lint/typecheck, verify tests still pass
+
+### Step Format
+
+- [ ] Step N: Description
+  - [ ] Write test: `src/xxx/feature.test.ts`
+  - [ ] Create stub: `src/xxx/feature.ts` (empty implementation)
+  - [ ] Verify test fails (Red)
+  - [ ] Implement feature
+  - [ ] Verify test passes (Green)
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Refactor if needed
+  - [ ] Verify test still passes
+  - [ ] Acceptance: (specific criteria)
+
+## TDD Cycle Reference
+
+```
+┌─────────────────────────────────────────────────────┐
+│  1. Write Test (Red)                                │
+│     - Write test that describes expected behavior   │
+│     - Run test → should FAIL                        │
+├─────────────────────────────────────────────────────┤
+│  2. Implement (Green)                               │
+│     - Write minimal code to pass test               │
+│     - Run test → should PASS                        │
+├─────────────────────────────────────────────────────┤
+│  3. Refactor                                        │
+│     - npm run lint                                  │
+│     - npm run typecheck                             │
+│     - Clean up code if needed                       │
+│     - Run test → should still PASS                  │
+└─────────────────────────────────────────────────────┘
+```
 
 ## Notes
 
-Any additional context or considerations.
+- Test files are co-located with source files (`*.test.ts` next to `*.ts`)
+- Any additional context or considerations
