@@ -27,16 +27,16 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
 
 ### Step 1: Define PubMed-specific Types
 
-- [ ] Write test: `src/providers/pubmed/types.test.ts`
+- [x] Write test: `src/providers/pubmed/types.test.ts`
   - Test type compatibility with base Article type
   - Test PubMed-specific fields (PMID, MeSH terms)
-- [ ] Create types: `src/providers/pubmed/types.ts`
+- [x] Create types: `src/providers/pubmed/types.ts`
   - `PubMedArticle` extending base `Article`
   - `ESearchResponse` for esearch API response
   - `EFetchResponse` for efetch API response
   - `PubMedConfig` for provider configuration
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Types match spec/providers/pubmed.md
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Types match spec/providers/pubmed.md
 
 ### Step 2: Implement Query Translator
 
