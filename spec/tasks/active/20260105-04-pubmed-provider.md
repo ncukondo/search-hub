@@ -140,7 +140,7 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
 
 ### Step 6: Implement E2E Tests
 
-- [ ] Update test: `src/providers/pubmed/pubmed.e2e.test.ts`
+- [x] Update test: `src/providers/pubmed/pubmed.e2e.test.ts`
   - Test searching PubMed with simple query
   - Test searching with field qualifiers
   - Test searching with date filters
@@ -150,8 +150,8 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
   - Test connection test works
   - Test session resume with usehistory (webenv/querykey)
   - Test state validation detects expired webenv
-- [ ] Verify tests pass with `npm run test:e2e`
-- [ ] Acceptance: E2E tests pass against live PubMed API
+- [x] Verify tests pass with `npm run test:e2e`
+- [x] Acceptance: E2E tests pass against live PubMed API
 
 ### Step 7: Provider Registration & Module Export
 
