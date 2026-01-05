@@ -40,7 +40,7 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
 
 ### Step 2: Implement Query Translator
 
-- [ ] Write test: `src/providers/pubmed/translator.test.ts`
+- [x] Write test: `src/providers/pubmed/translator.test.ts`
   - Test field mapping (title -> [ti], abstract -> [ab], etc.)
   - Test title_abstract -> [tiab] conversion
   - Test MeSH term handling with [mh] qualifier
@@ -49,15 +49,15 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
   - Test date filter translation (year_from, year_to -> [dp])
   - Test language filter translation
   - Test exclude filter translation (NOT review[pt])
-- [ ] Create stub: `src/providers/pubmed/translator.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/pubmed/translator.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `translateQuery(ast: QueryAST): TranslatedQuery`
   - Field qualifier mappings
   - Filter translations
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Translator produces valid PubMed queries per spec
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Translator produces valid PubMed queries per spec
 
 ### Step 3: Implement XML Response Parser
 
