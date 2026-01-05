@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { loadTomlFile } from './loader';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { loadTomlFile, loadConfig } from './loader';
 import { writeFile, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -78,5 +78,181 @@ this is not valid toml
     const result = await loadTomlFile(filePath);
 
     expect(result).toEqual({});
+  });
+});
+
+describe('loadConfig', () => {
+  let testDir: string;
+  let globalConfigDir: string;
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeEach(async () => {
+    testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+    globalConfigDir = join(testDir, 'global');
+    await mkdir(globalConfigDir, { recursive: true });
+    originalEnv = { ...process.env };
+  });
+
+  afterEach(async () => {
+    process.env = originalEnv;
+    await rm(testDir, { recursive: true, force: true });
+    vi.restoreAllMocks();
+  });
+
+  it('returns default config when no sources exist', async () => {
+    const config = await loadConfig({
+      globalConfigPath: join(testDir, 'nonexistent', 'config.toml'),
+      localConfigPath: join(testDir, 'nonexistent', 'local.toml'),
+    });
+
+    expect(config.log.level).toBe('info');
+    expect(config.session.directory).toBe('~/.search-hub/sessions');
+    expect(config.providers.pubmed.rate_limit).toBe(3);
+  });
+
+  it('applies global config over defaults', async () => {
+    const globalPath = join(globalConfigDir, 'config.toml');
+    await writeFile(
+      globalPath,
+      `
+[log]
+level = "debug"
+
+[providers.pubmed]
+rate_limit = 5
+`
+    );
+
+    const config = await loadConfig({
+      globalConfigPath: globalPath,
+      localConfigPath: join(testDir, 'nonexistent.toml'),
+    });
+
+    expect(config.log.level).toBe('debug');
+    expect(config.providers.pubmed.rate_limit).toBe(5);
+    // Defaults still apply for unset values
+    expect(config.output.color).toBe(true);
+  });
+
+  it('applies local config over global', async () => {
+    const globalPath = join(globalConfigDir, 'config.toml');
+    const localPath = join(testDir, 'local.toml');
+
+    await writeFile(
+      globalPath,
+      `
+[log]
+level = "debug"
+
+[providers.pubmed]
+rate_limit = 5
+`
+    );
+    await writeFile(
+      localPath,
+      `
+[log]
+level = "warn"
+`
+    );
+
+    const config = await loadConfig({
+      globalConfigPath: globalPath,
+      localConfigPath: localPath,
+    });
+
+    // Local overrides global
+    expect(config.log.level).toBe('warn');
+    // Global still applies for values not in local
+    expect(config.providers.pubmed.rate_limit).toBe(5);
+  });
+
+  it('applies env vars over local config', async () => {
+    const localPath = join(testDir, 'local.toml');
+    await writeFile(
+      localPath,
+      `
+[log]
+level = "warn"
+`
+    );
+
+    process.env['SEARCH_HUB_LOG_LEVEL'] = 'error';
+
+    const config = await loadConfig({
+      globalConfigPath: join(testDir, 'nonexistent.toml'),
+      localConfigPath: localPath,
+    });
+
+    expect(config.log.level).toBe('error');
+  });
+
+  it('applies CLI options over env vars', async () => {
+    process.env['SEARCH_HUB_LOG_LEVEL'] = 'error';
+
+    const config = await loadConfig({
+      globalConfigPath: join(testDir, 'nonexistent.toml'),
+      localConfigPath: join(testDir, 'nonexistent.toml'),
+      cliOptions: {
+        log: { level: 'debug' },
+      },
+    });
+
+    expect(config.log.level).toBe('debug');
+  });
+
+  it('deep merges across all sources', async () => {
+    const globalPath = join(globalConfigDir, 'config.toml');
+    const localPath = join(testDir, 'local.toml');
+
+    await writeFile(
+      globalPath,
+      `
+[providers.pubmed]
+api_key = "global-key"
+rate_limit = 5
+`
+    );
+    await writeFile(
+      localPath,
+      `
+[providers.pubmed]
+rate_limit = 8
+`
+    );
+
+    process.env['SEARCH_HUB_PUBMED_API_KEY'] = 'env-key';
+
+    const config = await loadConfig({
+      globalConfigPath: globalPath,
+      localConfigPath: localPath,
+      cliOptions: {
+        providers: {
+          pubmed: { timeout: 60000 },
+        },
+      },
+    });
+
+    // env overrides global api_key
+    expect(config.providers.pubmed.api_key).toBe('env-key');
+    // local overrides global rate_limit
+    expect(config.providers.pubmed.rate_limit).toBe(8);
+    // cli sets timeout
+    expect(config.providers.pubmed.timeout).toBe(60000);
+    // defaults still apply
+    expect(config.providers.pubmed.retries).toBe(3);
+  });
+
+  it('validates final config', async () => {
+    const config = await loadConfig({
+      globalConfigPath: join(testDir, 'nonexistent.toml'),
+      localConfigPath: join(testDir, 'nonexistent.toml'),
+    });
+
+    // Should have all required fields with proper types
+    expect(typeof config.log.level).toBe('string');
+    expect(typeof config.output.color).toBe('boolean');
+    expect(typeof config.providers.pubmed.rate_limit).toBe('number');
+    expect(typeof config.session.directory).toBe('string');
   });
 });
