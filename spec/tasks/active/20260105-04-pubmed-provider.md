@@ -155,16 +155,16 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
 
 ### Step 7: Provider Registration & Module Export
 
-- [ ] Write test: `src/providers/pubmed/index.test.ts`
+- [x] Write test: `src/providers/pubmed/index.test.ts`
   - Test exports are correct
   - Test provider can be created from registry
-- [ ] Create `src/providers/pubmed/index.ts`
+- [x] Create `src/providers/pubmed/index.ts`
   - Export PubMedProvider
   - Export types
   - Register provider in registry
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Provider is discoverable via registry
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Provider is discoverable via registry
 
 ## TDD Cycle Reference
 
