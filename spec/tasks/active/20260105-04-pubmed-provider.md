@@ -101,7 +101,7 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
 
 ### Step 5: Implement PubMed Provider
 
-- [ ] Write test: `src/providers/pubmed/provider.test.ts`
+- [x] Write test: `src/providers/pubmed/provider.test.ts`
   - Test implements Provider interface
   - Test search returns async iterable of articles
   - Test pagination handling (streams all results)
@@ -110,16 +110,16 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
   - Test error handling for various HTTP statuses
   - Test rate limiting integration
   - Test retry logic for 5xx errors
-- [ ] Create stub: `src/providers/pubmed/provider.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/pubmed/provider.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `class PubMedProvider extends BaseProvider`
   - `async *search(query, options): AsyncIterable<Article>`
   - `translateQuery(ast: QueryAST): TranslatedQuery`
   - `testConnection(): Promise<boolean>`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Provider fully implements interface contract
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Provider fully implements interface contract
 
 ### Step 5a: Implement Session Resume (PubMed-specific)
 
