@@ -22,44 +22,44 @@ Implement the configuration system that loads, validates, and merges settings fr
 
 ## Implementation Steps
 
-- [ ] Step 1: Define Zod schemas
-  - [ ] Write test: `src/config/schema.test.ts`
+- [x] Step 1: Define Zod schemas
+  - [x] Write test: `src/config/schema.test.ts`
     - Valid config parsing
     - Default values applied
     - Validation errors for invalid input
-  - [ ] Create stub: `src/config/schema.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement `ProviderConfigSchema`, `ConfigSchema`, export `Config` type
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed, verify test still passes
-  - [ ] Acceptance: `ConfigSchema.parse({})` returns full default config
+  - [x] Create stub: `src/config/schema.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement `ProviderConfigSchema`, `ConfigSchema`, export `Config` type
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed, verify test still passes
+  - [x] Acceptance: `ConfigSchema.parse({})` returns full default config
 
-- [ ] Step 2: Implement default config
-  - [ ] Write test: `src/config/defaults.test.ts`
+- [x] Step 2: Implement default config
+  - [x] Write test: `src/config/defaults.test.ts`
     - `getDefaultConfig()` returns valid Config
     - All required fields present
-  - [ ] Create stub: `src/config/defaults.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement `DEFAULT_CONFIG`, `getDefaultConfig()`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed, verify test still passes
-  - [ ] Acceptance: `getDefaultConfig()` passes `ConfigSchema.parse()`
+  - [x] Create stub: `src/config/defaults.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement `DEFAULT_CONFIG`, `getDefaultConfig()`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed, verify test still passes
+  - [x] Acceptance: `getDefaultConfig()` passes `ConfigSchema.parse()`
 
-- [ ] Step 3: Implement deep merge utility
-  - [ ] Write test: `src/utils/deep-merge.test.ts`
+- [x] Step 3: Implement deep merge utility
+  - [x] Write test: `src/utils/deep-merge.test.ts`
     - Shallow properties merge
     - Nested objects merge recursively
     - Arrays are replaced (not merged)
     - Undefined values don't override
-  - [ ] Create stub: `src/utils/deep-merge.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement `deepMerge<T>(base: T, override: Partial<T>): T`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed, verify test still passes
-  - [ ] Acceptance: `deepMerge({a: {b: 1}}, {a: {c: 2}})` returns `{a: {b: 1, c: 2}}`
+  - [x] Create stub: `src/utils/deep-merge.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement `deepMerge<T>(base: T, override: DeepPartial<T>): T`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed, verify test still passes
+  - [x] Acceptance: `deepMerge({a: {b: 1}}, {a: {c: 2}})` returns `{a: {b: 1, c: 2}}`
 
 - [ ] Step 4: Implement path expansion utility
   - [ ] Write test: `src/utils/path.test.ts`
