@@ -338,4 +338,194 @@ describe('PubMedProvider', () => {
       }).rejects.toMatchObject({ code: 'RATE_LIMIT_EXCEEDED' });
     });
   });
+
+  describe('session resume (Step 5a)', () => {
+    it('getSearchState returns null before any search', () => {
+      const provider = new PubMedProvider(baseConfig);
+      expect(provider.getSearchState()).toBeNull();
+    });
+
+    it('getSearchState returns state after search starts', async () => {
+      mockClientInstance.search.mockResolvedValueOnce({
+        count: 10,
+        retmax: 20,
+        retstart: 0,
+        idlist: ['12345678'],
+      });
+
+      mockClientInstance.fetch.mockResolvedValueOnce([createMockArticle('12345678')]);
+
+      const provider = new PubMedProvider(baseConfig);
+      const query: TranslatedQuery = {
+        native: 'test[tiab]',
+        originalAst: createMockQueryAST(),
+        provider: 'pubmed',
+      };
+
+      // Start the search and consume first article
+      const iterator = provider.search(query)[Symbol.asyncIterator]();
+      await iterator.next();
+
+      const state = provider.getSearchState();
+      expect(state).not.toBeNull();
+      expect(state!.provider).toBe('pubmed');
+      expect(state!.totalResults).toBe(10);
+      expect(state!.retrievedCount).toBe(1);
+    });
+
+    it('resumeSearch continues from offset without providerState', async () => {
+      // Setup mock for resume
+      mockClientInstance.search.mockResolvedValueOnce({
+        count: 100,
+        retmax: 20,
+        retstart: 50,
+        idlist: ['50', '51', '52'],
+      });
+
+      mockClientInstance.fetch.mockResolvedValueOnce([
+        createMockArticle('50'),
+        createMockArticle('51'),
+        createMockArticle('52'),
+      ]);
+
+      const provider = new PubMedProvider(baseConfig);
+      const savedState = {
+        provider: 'pubmed' as const,
+        query: {
+          native: 'test[tiab]',
+          originalAst: createMockQueryAST(),
+          provider: 'pubmed' as const,
+        },
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+        // No providerState - will use offset pagination
+      };
+
+      const articles: Article[] = [];
+      for await (const article of provider.resumeSearch(savedState)) {
+        articles.push(article);
+        if (articles.length >= 3) break; // Stop after first batch
+      }
+
+      expect(articles).toHaveLength(3);
+      expect(mockClientInstance.search).toHaveBeenCalledWith(
+        'test[tiab]',
+        expect.objectContaining({ retstart: 50 })
+      );
+    });
+
+    it('resumeSearch uses webenv/querykey from providerState', async () => {
+      mockClientInstance.fetchFromHistory.mockResolvedValueOnce([
+        createMockArticle('100'),
+        createMockArticle('101'),
+      ]);
+
+      const provider = new PubMedProvider(baseConfig);
+      const savedState = {
+        provider: 'pubmed' as const,
+        query: {
+          native: 'test[tiab]',
+          originalAst: createMockQueryAST(),
+          provider: 'pubmed' as const,
+        },
+        totalResults: 102,
+        retrievedCount: 100,
+        lastUpdated: new Date(),
+        providerState: {
+          webenv: 'MCID_test123',
+          querykey: '1',
+          retstart: 100,
+          useHistory: true,
+        },
+      };
+
+      const articles: Article[] = [];
+      for await (const article of provider.resumeSearch(savedState)) {
+        articles.push(article);
+      }
+
+      expect(articles).toHaveLength(2);
+      expect(mockClientInstance.fetchFromHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          webenv: 'MCID_test123',
+          querykey: '1',
+          retstart: 100,
+        })
+      );
+    });
+
+    it('validateState returns valid for state without providerState', async () => {
+      const provider = new PubMedProvider(baseConfig);
+      const state = {
+        provider: 'pubmed' as const,
+        query: {
+          native: 'test[tiab]',
+          originalAst: createMockQueryAST(),
+          provider: 'pubmed' as const,
+        },
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+      };
+
+      const result = await provider.validateState(state);
+      expect(result.valid).toBe(true);
+    });
+
+    it('validateState checks webenv validity', async () => {
+      mockClientInstance.fetchFromHistory.mockResolvedValueOnce([createMockArticle('1')]);
+
+      const provider = new PubMedProvider(baseConfig);
+      const state = {
+        provider: 'pubmed' as const,
+        query: {
+          native: 'test[tiab]',
+          originalAst: createMockQueryAST(),
+          provider: 'pubmed' as const,
+        },
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+        providerState: {
+          webenv: 'MCID_valid123',
+          querykey: '1',
+          retstart: 50,
+          useHistory: true,
+        },
+      };
+
+      const result = await provider.validateState(state);
+      expect(result.valid).toBe(true);
+    });
+
+    it('validateState returns invalid for expired webenv', async () => {
+      mockClientInstance.fetchFromHistory.mockRejectedValueOnce(
+        new Error('WebEnv expired')
+      );
+
+      const provider = new PubMedProvider(baseConfig);
+      const state = {
+        provider: 'pubmed' as const,
+        query: {
+          native: 'test[tiab]',
+          originalAst: createMockQueryAST(),
+          provider: 'pubmed' as const,
+        },
+        totalResults: 100,
+        retrievedCount: 50,
+        lastUpdated: new Date(),
+        providerState: {
+          webenv: 'MCID_expired456',
+          querykey: '1',
+          retstart: 50,
+          useHistory: true,
+        },
+      };
+
+      const result = await provider.validateState(state);
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe('Server-side history expired');
+    });
+  });
 });

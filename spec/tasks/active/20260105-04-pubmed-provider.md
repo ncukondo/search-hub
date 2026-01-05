@@ -123,20 +123,20 @@ Implement the PubMed provider to search NCBI's PubMed database using E-utilities
 
 ### Step 5a: Implement Session Resume (PubMed-specific)
 
-- [ ] Write test: `src/providers/pubmed/provider.test.ts` (additional tests)
+- [x] Write test: `src/providers/pubmed/provider.test.ts` (additional tests)
   - Test getSearchState returns PubMed-specific state (webenv, querykey)
   - Test resumeSearch uses saved webenv/querykey
   - Test validateState checks if webenv is still valid
   - Test handles expired webenv (server-side history expires)
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - Define `PubMedProviderState` with webenv, querykey, retstart
   - `getSearchState(): SearchState` - captures current pagination state
   - `resumeSearch(state): AsyncIterable<Article>` - resumes from saved state
   - `validateState(state): Promise<boolean>` - tests if webenv still works
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Can interrupt and resume PubMed searches
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Can interrupt and resume PubMed searches
 
 ### Step 6: Implement E2E Tests
 

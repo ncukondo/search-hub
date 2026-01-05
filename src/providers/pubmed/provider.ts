@@ -86,14 +86,15 @@ export class PubMedProvider extends BaseProvider {
       const articles = await this.client.fetch(pmidsToFetch);
 
       for (const article of articles) {
-        yield article;
         totalRetrieved++;
 
-        // Update state
+        // Update state before yield so it's visible when iterator returns
         if (this.currentState) {
           this.currentState.retrievedCount = totalRetrieved;
           this.currentState.lastUpdated = new Date();
         }
+
+        yield article;
 
         // Check maxResults
         if (maxResults !== undefined && totalRetrieved >= maxResults) {
