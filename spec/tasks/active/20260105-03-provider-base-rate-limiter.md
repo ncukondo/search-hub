@@ -60,19 +60,19 @@ Create the base provider infrastructure including the abstract provider class, c
 
 ### Step 3: Implement Rate Limiter with Backoff
 
-- [ ] Write test: `src/providers/base/rate-limiter.test.ts` (additional tests)
+- [x] Write test: `src/providers/base/rate-limiter.test.ts` (additional tests)
   - Test exponential backoff on 429 response
   - Test respects Retry-After header
   - Test backoff resets after success
   - Test max backoff cap
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `handleRateLimit(retryAfter?: number): Promise<void>`
   - Exponential backoff with jitter
   - Max backoff cap (configurable)
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Handles 429 responses gracefully
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Handles 429 responses gracefully
 
 ### Step 4: Create Abstract Provider Base Class
 

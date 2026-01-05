@@ -204,4 +204,105 @@ describe('RateLimiter', () => {
       expect(limiter.tryAcquire()).toBe(true);
     });
   });
+
+  describe('handleRateLimit', () => {
+    it('waits for specified retryAfter time', async () => {
+      const limiter = new RateLimiter();
+
+      const promise = limiter.handleRateLimit(2000);
+
+      // Should not resolve immediately
+      let resolved = false;
+      promise.then(() => {
+        resolved = true;
+      });
+      await Promise.resolve();
+      expect(resolved).toBe(false);
+
+      // Advance time by 2 seconds
+      vi.advanceTimersByTime(2000);
+      await promise;
+      expect(resolved).toBe(true);
+    });
+
+    it('uses exponential backoff when no retryAfter provided', async () => {
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 10000,
+      });
+
+      // First call should wait initialBackoff
+      const p1 = limiter.handleRateLimit();
+      vi.advanceTimersByTime(100);
+      await p1;
+
+      // Second call should wait 2x
+      const p2 = limiter.handleRateLimit();
+      vi.advanceTimersByTime(200);
+      await p2;
+
+      // Third call should wait 4x
+      const p3 = limiter.handleRateLimit();
+      vi.advanceTimersByTime(400);
+      await p3;
+    });
+
+    it('caps backoff at maxBackoff', async () => {
+      const limiter = new RateLimiter({
+        initialBackoff: 1000,
+        maxBackoff: 2000,
+      });
+
+      // First call
+      const p1 = limiter.handleRateLimit();
+      vi.advanceTimersByTime(1000);
+      await p1;
+
+      // Second call (would be 2000, equal to max)
+      const p2 = limiter.handleRateLimit();
+      vi.advanceTimersByTime(2000);
+      await p2;
+
+      // Third call (would be 4000, but capped at 2000)
+      const p3 = limiter.handleRateLimit();
+      vi.advanceTimersByTime(2000);
+      await p3;
+    });
+
+    it('resets backoff after resetBackoff is called', async () => {
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 10000,
+      });
+
+      // Build up backoff
+      const p1 = limiter.handleRateLimit();
+      vi.advanceTimersByTime(100);
+      await p1;
+
+      const p2 = limiter.handleRateLimit();
+      vi.advanceTimersByTime(200);
+      await p2;
+
+      // Reset
+      limiter.resetBackoff();
+
+      // Should be back to initial
+      const p3 = limiter.handleRateLimit();
+      vi.advanceTimersByTime(100);
+      await p3;
+    });
+
+    it('respects Retry-After even when backoff is higher', async () => {
+      const limiter = new RateLimiter({
+        initialBackoff: 5000,
+        maxBackoff: 10000,
+      });
+
+      // Retry-After of 1000ms should be used even though initialBackoff is 5000
+      const promise = limiter.handleRateLimit(1000);
+      vi.advanceTimersByTime(1000);
+      await promise;
+    });
+  });
 });

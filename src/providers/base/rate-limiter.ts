@@ -7,11 +7,17 @@ export interface RateLimiterOptions {
   tokensPerSecond?: number;
   /** Maximum tokens that can be stored (burst capacity) */
   burstSize?: number;
+  /** Initial backoff time in ms for exponential backoff */
+  initialBackoff?: number;
+  /** Maximum backoff time in ms */
+  maxBackoff?: number;
 }
 
 const DEFAULT_OPTIONS: Required<RateLimiterOptions> = {
   tokensPerSecond: 3,
   burstSize: 3,
+  initialBackoff: 1000,
+  maxBackoff: 60000,
 };
 
 /**
@@ -26,12 +32,18 @@ export class RateLimiter {
   private readonly tokensPerSecond: number;
   private readonly burstSize: number;
   private lastRefill: number;
+  private readonly initialBackoff: number;
+  private readonly maxBackoff: number;
+  private currentBackoff: number;
 
   constructor(options: RateLimiterOptions = {}) {
     this.tokensPerSecond = options.tokensPerSecond ?? DEFAULT_OPTIONS.tokensPerSecond;
     this.burstSize = options.burstSize ?? DEFAULT_OPTIONS.burstSize;
+    this.initialBackoff = options.initialBackoff ?? DEFAULT_OPTIONS.initialBackoff;
+    this.maxBackoff = options.maxBackoff ?? DEFAULT_OPTIONS.maxBackoff;
     this.tokens = this.burstSize;
     this.lastRefill = Date.now();
+    this.currentBackoff = this.initialBackoff;
   }
 
   /**
@@ -100,6 +112,33 @@ export class RateLimiter {
   reset(): void {
     this.tokens = this.burstSize;
     this.lastRefill = Date.now();
+  }
+
+  /**
+   * Handle a rate limit response (429) by waiting.
+   * If retryAfter is provided, waits that long.
+   * Otherwise, uses exponential backoff.
+   * @param retryAfter Optional time to wait in milliseconds (from Retry-After header)
+   */
+  async handleRateLimit(retryAfter?: number): Promise<void> {
+    if (retryAfter !== undefined) {
+      await this.sleep(retryAfter);
+      return;
+    }
+
+    // Use exponential backoff
+    await this.sleep(this.currentBackoff);
+
+    // Increase backoff for next time (exponential with cap)
+    this.currentBackoff = Math.min(this.currentBackoff * 2, this.maxBackoff);
+  }
+
+  /**
+   * Reset the exponential backoff to initial value.
+   * Call this after a successful request.
+   */
+  resetBackoff(): void {
+    this.currentBackoff = this.initialBackoff;
   }
 
   /**
