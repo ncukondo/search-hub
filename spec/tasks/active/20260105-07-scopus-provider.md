@@ -26,20 +26,20 @@ Implement the Scopus provider to search Elsevier's Scopus database. Scopus is on
 
 ### Step 1: Define Scopus-specific Types
 
-- [ ] Write test: `src/providers/scopus/types.test.ts`
+- [x] Write test: `src/providers/scopus/types.test.ts`
   - Test type compatibility with base Article type
   - Test Scopus-specific fields (Scopus ID, citation count)
-- [ ] Create types: `src/providers/scopus/types.ts`
+- [x] Create types: `src/providers/scopus/types.ts`
   - `ScopusDocument` extending base `Article`
   - `ScopusSearchResponse` for API response
   - `ScopusConfig` for provider configuration (including api_key)
   - `ScopusAuthor` for author details with authid
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Types match spec/providers/scopus.md
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Types match spec/providers/scopus.md
 
 ### Step 2: Implement Query Translator
 
-- [ ] Write test: `src/providers/scopus/translator.test.ts`
+- [x] Write test: `src/providers/scopus/translator.test.ts`
   - Test field mapping (title -> TITLE(), abstract -> ABS(), etc.)
   - Test title_abstract -> TITLE-ABS-KEY() conversion
   - Test author field mapping (AUTH())
@@ -50,20 +50,20 @@ Implement the Scopus provider to search Elsevier's Scopus database. Scopus is on
   - Test year filter translation (PUBYEAR > YYYY, PUBYEAR < YYYY)
   - Test language filter translation (LANGUAGE(english))
   - Test source type filter from overrides (SRCTYPE(j OR p))
-- [ ] Create stub: `src/providers/scopus/translator.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/scopus/translator.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `translateQuery(ast: QueryAST): TranslatedQuery`
   - Field function mappings
   - Filter translations
   - Override handling for source_types
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Translator produces valid Scopus queries per spec
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Translator produces valid Scopus queries per spec
 
 ### Step 3: Implement JSON Response Parser
 
-- [ ] Write test: `src/providers/scopus/parser.test.ts`
+- [x] Write test: `src/providers/scopus/parser.test.ts`
   - Test parsing search-results structure
   - Test extracting opensearch:totalResults
   - Test extracting entry array
@@ -72,19 +72,19 @@ Implement the Scopus provider to search Elsevier's Scopus database. Scopus is on
   - Test author array parsing (authname, authid)
   - Test date parsing from prism:coverDate
   - Test citation count extraction
-- [ ] Create stub: `src/providers/scopus/parser.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/scopus/parser.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `parseSearchResponse(json: unknown): ScopusSearchResult`
   - `parseDocument(entry: unknown): ScopusDocument`
   - Author parsing with IDs
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Parser correctly extracts all Article fields
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Parser correctly extracts all Article fields
 
 ### Step 4: Implement HTTP Client
 
-- [ ] Write test: `src/providers/scopus/client.test.ts`
+- [x] Write test: `src/providers/scopus/client.test.ts`
   - Test search API call construction
   - Test X-ELS-APIKey header inclusion
   - Test X-ELS-Insttoken header when configured
@@ -95,20 +95,20 @@ Implement the Scopus provider to search Elsevier's Scopus database. Scopus is on
   - Test fields parameter for response filtering
   - Test rate limit header parsing (X-RateLimit-*)
   - Mock HTTP calls for unit tests
-- [ ] Create stub: `src/providers/scopus/client.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/scopus/client.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `ScopusClient` class
   - `search(query: string, options): Promise<ScopusSearchResult>`
   - API key header handling
   - Rate limit header parsing
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Client correctly calls Scopus API with authentication
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Client correctly calls Scopus API with authentication
 
 ### Step 5: Implement Scopus Provider
 
-- [ ] Write test: `src/providers/scopus/provider.test.ts`
+- [x] Write test: `src/providers/scopus/provider.test.ts`
   - Test implements Provider interface
   - Test search returns async iterable of articles
   - Test pagination handling (streams all results, max 25 per page)
@@ -119,37 +119,37 @@ Implement the Scopus provider to search Elsevier's Scopus database. Scopus is on
   - Test error handling for 429 (rate limited)
   - Test retry logic for 5xx errors
   - Test rate limiting integration
-- [ ] Create stub: `src/providers/scopus/provider.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/providers/scopus/provider.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `class ScopusProvider extends BaseProvider`
   - `async *search(query, options): AsyncIterable<Article>`
   - `translateQuery(ast: QueryAST): TranslatedQuery`
   - `testConnection(): Promise<boolean>`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Provider fully implements interface contract
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Provider fully implements interface contract
 
 ### Step 5a: Implement Session Resume (Offset-based)
 
-- [ ] Write test: `src/providers/scopus/provider.test.ts` (additional tests)
+- [x] Write test: `src/providers/scopus/provider.test.ts` (additional tests)
   - Test getSearchState returns offset-based state
   - Test resumeSearch continues from saved offset
   - Test validateState checks API key is still valid
   - Test handles quota exhaustion on resume
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - Define `ScopusProviderState` with offset
   - `getSearchState(): SearchState` - captures current pagination offset
   - `resumeSearch(state): AsyncIterable<Article>` - resumes from saved offset
   - `validateState(state): Promise<boolean>` - validates API key still works
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Can interrupt and resume Scopus searches
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Can interrupt and resume Scopus searches
 
 ### Step 6: Implement E2E Tests
 
-- [ ] Update test: `src/providers/scopus/scopus.e2e.test.ts`
+- [x] Update test: `src/providers/scopus/scopus.e2e.test.ts`
   - Test searching Scopus with simple query
   - Test searching with field functions
   - Test searching with year filters
@@ -160,21 +160,21 @@ Implement the Scopus provider to search Elsevier's Scopus database. Scopus is on
   - Test authentication error handling (invalid key)
   - Test session resume from saved offset
   - Skip tests if SCOPUS_API_KEY not set
-- [ ] Verify tests pass with `npm run test:e2e`
-- [ ] Acceptance: E2E tests pass against live Scopus API (with valid API key)
+- [x] Verify tests pass with `npm run test:e2e`
+- [x] Acceptance: E2E tests pass against live Scopus API (with valid API key)
 
 ### Step 7: Provider Registration & Module Export
 
-- [ ] Write test: `src/providers/scopus/index.test.ts`
+- [x] Write test: `src/providers/scopus/index.test.ts`
   - Test exports are correct
   - Test provider can be created from registry
-- [ ] Create `src/providers/scopus/index.ts`
+- [x] Create `src/providers/scopus/index.ts`
   - Export ScopusProvider
   - Export types
   - Register provider in registry
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Provider is discoverable via registry
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Provider is discoverable via registry
 
 ## TDD Cycle Reference
 
