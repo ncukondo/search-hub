@@ -40,6 +40,12 @@ interface SearchState {
   providerState?: unknown;
 }
 
+// Validation result with optional reason
+interface SearchResumeResult {
+  valid: boolean;
+  reason?: string;  // Explains why state is invalid (e.g., "Server-side history expired")
+}
+
 // BaseProvider abstract methods
 abstract class BaseProvider {
   // Get current pagination state for session persistence
@@ -49,7 +55,7 @@ abstract class BaseProvider {
   abstract resumeSearch(state: SearchState): AsyncIterable<Article>;
 
   // Validate if state is still valid (e.g., PubMed webenv expires)
-  abstract validateState(state: SearchState): Promise<boolean>;
+  abstract validateState(state: SearchState): Promise<SearchResumeResult>;
 }
 ```
 
@@ -78,6 +84,7 @@ interface OffsetProviderState {
 - Session Manager doesn't need provider-specific knowledge
 - New providers follow established pattern
 - Graceful degradation: if provider state is invalid, can restart search
+- `SearchResumeResult` provides reason for invalid state, enabling better error messages
 
 ### Negative
 
