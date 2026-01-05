@@ -16,6 +16,8 @@ import type {
   ProviderName,
   SessionSummary,
   SessionStatus,
+  ResumableProvider,
+  ResumeStrategy,
 } from './types';
 
 /**
@@ -279,4 +281,66 @@ export async function updateSessionStatus(
   session.updatedAt = new Date().toISOString();
 
   await saveSession(session, sessionsDir);
+}
+
+/**
+ * Get providers that can be resumed based on the resume logic:
+ * - pending: start fresh
+ * - in_progress: continue from cursor
+ * - failed with retryable: retry from start
+ * - completed/skipped/failed without retryable: skip
+ */
+export function getResumableProviders(session: SessionFile): ResumableProvider[] {
+  const resumable: ResumableProvider[] = [];
+
+  for (const [providerName, dbStatus] of Object.entries(session.databases)) {
+    if (!dbStatus) continue;
+
+    const provider = providerName as ProviderName;
+    let strategy: ResumeStrategy | null = null;
+    let cursor: string | null | undefined;
+    let pageNumber: number | undefined;
+
+    switch (dbStatus.status) {
+      case 'pending':
+        strategy = 'fresh';
+        break;
+
+      case 'in_progress':
+        strategy = 'continue';
+        cursor = dbStatus.pagination?.cursor;
+        pageNumber = dbStatus.pagination?.pageNumber;
+        break;
+
+      case 'failed':
+        if (dbStatus.error?.retryable) {
+          strategy = 'retry';
+        }
+        break;
+
+      case 'completed':
+      case 'skipped':
+        // Skip these - nothing to resume
+        break;
+    }
+
+    if (strategy) {
+      const resumableProvider: ResumableProvider = {
+        provider,
+        strategy,
+      };
+
+      if (cursor !== undefined) {
+        resumableProvider.cursor = cursor;
+      }
+
+      if (pageNumber !== undefined) {
+        resumableProvider.pageNumber = pageNumber;
+      }
+
+      resumable.push(resumableProvider);
+    }
+  }
+
+  return resumable;
 }

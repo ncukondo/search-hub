@@ -12,6 +12,7 @@ import {
   updateDatabaseStatus,
   updateSessionStatus,
   saveSession,
+  getResumableProviders,
   type CreateSessionOptions,
 } from './manager';
 import type {
@@ -660,6 +661,194 @@ describe('Session Manager', () => {
       const pubmedUpdated = loaded.databases.pubmed?.status === 'in_progress';
       const ericUpdated = loaded.databases.eric?.status === 'in_progress';
       expect(pubmedUpdated || ericUpdated).toBe(true);
+    });
+  });
+
+  describe('getResumableProviders', () => {
+    let testDir: string;
+
+    beforeEach(async () => {
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    const createTestOptions = (): CreateSessionOptions => ({
+      name: 'Test Query',
+      queryFile: '/path/to/query.yaml',
+      queryContent: 'name: Test Query\nterms:\n  - test',
+      queryHash: 'abc123def456',
+      targets: ['pubmed', 'eric', 'arxiv'] as ProviderName[],
+      sessionsDir: testDir,
+    });
+
+    it('should find pending DBs needing resume with fresh strategy', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      const resumable = getResumableProviders(session);
+
+      expect(resumable).toHaveLength(3);
+      const pubmed = resumable.find((r) => r.provider === 'pubmed');
+      expect(pubmed).toBeDefined();
+      expect(pubmed?.strategy).toBe('fresh');
+    });
+
+    it('should identify retryable failed DBs with retry strategy', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // Set pubmed as failed with retryable error
+      await updateDatabaseStatus(
+        session.id,
+        'pubmed',
+        {
+          status: 'failed',
+          error: {
+            code: 'RATE_LIMIT',
+            message: 'Rate limit exceeded',
+            retryable: true,
+          },
+        },
+        testDir
+      );
+
+      const loaded = await loadSession(session.id, testDir);
+      const resumable = getResumableProviders(loaded);
+
+      const pubmed = resumable.find((r) => r.provider === 'pubmed');
+      expect(pubmed).toBeDefined();
+      expect(pubmed?.strategy).toBe('retry');
+    });
+
+    it('should skip non-retryable failed DBs', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // Set pubmed as failed with non-retryable error
+      await updateDatabaseStatus(
+        session.id,
+        'pubmed',
+        {
+          status: 'failed',
+          error: {
+            code: 'INVALID_API_KEY',
+            message: 'API key invalid',
+            retryable: false,
+          },
+        },
+        testDir
+      );
+
+      const loaded = await loadSession(session.id, testDir);
+      const resumable = getResumableProviders(loaded);
+
+      const pubmed = resumable.find((r) => r.provider === 'pubmed');
+      expect(pubmed).toBeUndefined();
+    });
+
+    it('should identify in-progress DBs with continue strategy and cursor', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // Set pubmed as in_progress with pagination state
+      await updateDatabaseStatus(
+        session.id,
+        'pubmed',
+        {
+          status: 'in_progress',
+          pagination: {
+            cursor: 'page-token-123',
+            pageNumber: 3,
+            isComplete: false,
+          },
+        },
+        testDir
+      );
+
+      const loaded = await loadSession(session.id, testDir);
+      const resumable = getResumableProviders(loaded);
+
+      const pubmed = resumable.find((r) => r.provider === 'pubmed');
+      expect(pubmed).toBeDefined();
+      expect(pubmed?.strategy).toBe('continue');
+      expect(pubmed?.cursor).toBe('page-token-123');
+      expect(pubmed?.pageNumber).toBe(3);
+    });
+
+    it('should skip completed DBs', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // Set pubmed as completed
+      await updateDatabaseStatus(
+        session.id,
+        'pubmed',
+        {
+          status: 'completed',
+          totalHits: 100,
+          retrievedCount: 100,
+          completedAt: new Date().toISOString(),
+        },
+        testDir
+      );
+
+      const loaded = await loadSession(session.id, testDir);
+      const resumable = getResumableProviders(loaded);
+
+      const pubmed = resumable.find((r) => r.provider === 'pubmed');
+      expect(pubmed).toBeUndefined();
+
+      // Other DBs should still be resumable
+      const eric = resumable.find((r) => r.provider === 'eric');
+      expect(eric).toBeDefined();
+    });
+
+    it('should skip skipped DBs', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // Set pubmed as skipped
+      await updateDatabaseStatus(
+        session.id,
+        'pubmed',
+        { status: 'skipped' },
+        testDir
+      );
+
+      const loaded = await loadSession(session.id, testDir);
+      const resumable = getResumableProviders(loaded);
+
+      const pubmed = resumable.find((r) => r.provider === 'pubmed');
+      expect(pubmed).toBeUndefined();
+    });
+
+    it('should return empty array when all DBs are completed', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // Set all as completed
+      for (const provider of ['pubmed', 'eric', 'arxiv'] as ProviderName[]) {
+        await updateDatabaseStatus(
+          session.id,
+          provider,
+          {
+            status: 'completed',
+            totalHits: 50,
+            retrievedCount: 50,
+            completedAt: new Date().toISOString(),
+          },
+          testDir
+        );
+      }
+
+      const loaded = await loadSession(session.id, testDir);
+      const resumable = getResumableProviders(loaded);
+
+      expect(resumable).toHaveLength(0);
     });
   });
 });

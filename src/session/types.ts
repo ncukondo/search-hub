@@ -224,3 +224,18 @@ export type LogEvent =
   | SearchFailedEvent
   | SessionCompletedEvent
   | SessionResumedEvent;
+
+/**
+ * Resume strategy for a provider.
+ */
+export type ResumeStrategy = 'fresh' | 'retry' | 'continue';
+
+/**
+ * Information about a provider that can be resumed.
+ */
+export interface ResumableProvider {
+  provider: ProviderName;
+  strategy: ResumeStrategy;
+  cursor?: string | null;
+  pageNumber?: number;
+}

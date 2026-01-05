@@ -118,18 +118,18 @@ Manage search sessions including creation, persistence, loading, and resume func
 
 ### Step 7: Implement Resume Logic
 
-- [ ] Write test: `src/session/manager.test.ts` (additional tests)
+- [x] Write test: `src/session/manager.test.ts` (additional tests)
   - Test finds DBs needing resume
   - Test identifies retryable failed DBs
   - Test identifies in-progress DBs with pagination state
   - Test skips completed DBs
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `getResumableProviders(session: Session): ResumableProvider[]`
   - Return provider name, resume strategy, and cursor if available
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Resume logic handles all states from lifecycle diagram
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Resume logic handles all states from lifecycle diagram
 
 ### Step 8: Create Module Index & Integration
 
