@@ -192,37 +192,13 @@ overrides:
 
 ## Query AST
 
-Internal representation after parsing:
+Internal representation after parsing.
 
-```typescript
-interface QueryAST {
-  name: string;
-  description?: string;
-  blocks: QueryBlock[];
-  filters: Filters;
-  overrides: Record<ProviderName, OverrideBlock>;
-}
-
-interface QueryBlock {
-  field: FieldType;
-  terms: {
-    keywords: string[];
-    mesh?: string[];
-    emtree?: string[];
-  };
-  operator: 'AND' | 'OR';
-}
-
-interface Filters {
-  yearFrom?: number;
-  yearTo?: number;
-  languages?: string[];
-  publicationTypes?: {
-    include?: string[];
-    exclude?: string[];
-  };
-}
-```
+See `src/query/types.ts` for the authoritative type definitions:
+- `QueryAST` - Complete parsed query structure
+- `QueryBlock` - Individual query block with field, terms, and operator
+- `Filters` - Global filter settings (year range, languages, publication types)
+- `OverrideBlock` - Provider-specific overrides
 
 ## Translation Rules
 

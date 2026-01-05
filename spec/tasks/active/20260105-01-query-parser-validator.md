@@ -21,89 +21,89 @@ Parse YAML query files into Query AST and validate against the query DSL schema.
 
 ### Step 1: Define Query AST Types
 
-- [ ] Write test: `src/query/types.test.ts`
+- [x] Write test: `src/query/types.test.ts`
   - Test that types compile correctly with valid data
   - Test TypeScript type inference
-- [ ] Create types: `src/query/types.ts`
+- [x] Create types: `src/query/types.ts`
   - Define `FieldType` enum/union
   - Define `TermBlock` interface
   - Define `QueryBlock` interface
   - Define `Filters` interface
   - Define `OverrideBlock` interface
   - Define `QueryAST` interface
-- [ ] Verify types work with test data
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All types match spec/models/query-dsl.md
+- [x] Verify types work with test data
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All types match spec/models/query-dsl.md
 
 ### Step 2: Create Query Schema with Zod
 
-- [ ] Write test: `src/query/validator.test.ts`
+- [x] Write test: `src/query/validator.test.ts`
   - Test valid query passes validation
   - Test missing required fields fails
   - Test invalid field types fails
   - Test invalid operators fails
   - Test optional fields work correctly
-- [ ] Create stub: `src/query/validator.ts` (empty schema)
-- [ ] Verify tests fail (Red)
-- [ ] Implement Zod schemas:
+- [x] Create stub: `src/query/validator.ts` (empty schema)
+- [x] Verify tests fail (Red)
+- [x] Implement Zod schemas:
   - `fieldTypeSchema`
   - `termBlockSchema`
   - `queryBlockSchema`
   - `filtersSchema`
   - `overrideBlockSchema`
   - `queryFileSchema`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: Schema validates all examples from query-dsl.md
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: Schema validates all examples from query-dsl.md
 
 ### Step 3: Implement YAML Parser
 
-- [ ] Write test: `src/query/parser.test.ts`
+- [x] Write test: `src/query/parser.test.ts`
   - Test parsing simple query YAML
   - Test parsing complex query with all fields
   - Test parsing query with filters
   - Test parsing query with overrides
   - Test parse error handling (invalid YAML)
   - Test parse error handling (missing required fields)
-- [ ] Create stub: `src/query/parser.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement parser:
+- [x] Create stub: `src/query/parser.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement parser:
   - `parseQueryFile(filePath: string): Promise<QueryAST>`
   - `parseQueryString(yaml: string): QueryAST`
   - Use `yaml` package for YAML parsing
   - Validate parsed data against schema
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: Parser handles all examples from query-dsl.md
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: Parser handles all examples from query-dsl.md
 
 ### Step 4: Add Validation Error Messages
 
-- [ ] Write test: `src/query/validator.test.ts` (additional tests)
+- [x] Write test: `src/query/validator.test.ts` (additional tests)
   - Test error messages are descriptive
   - Test error paths are included
   - Test multiple errors are reported
-- [ ] Verify tests fail (Red)
-- [ ] Implement custom error formatting:
+- [x] Verify tests fail (Red)
+- [x] Implement custom error formatting:
   - `ValidationError` class with path and message
   - `formatValidationErrors(errors: z.ZodError): ValidationError[]`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Error messages help users fix their query files
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Error messages help users fix their query files
 
 ### Step 5: Create Module Index & Integration
 
-- [ ] Write test: `src/query/index.test.ts`
+- [x] Write test: `src/query/index.test.ts`
   - Test exports are correct
   - Test end-to-end: file path -> validated AST
-- [ ] Create `src/query/index.ts`
+- [x] Create `src/query/index.ts`
   - Export types
   - Export parser functions
   - Export validator functions
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Module can be imported and used from other modules
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Module can be imported and used from other modules
 
 ## TDD Cycle Reference
 
