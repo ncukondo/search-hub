@@ -69,19 +69,19 @@ Manage search sessions including creation, persistence, loading, and resume func
 
 ### Step 4: Implement Session Loading
 
-- [ ] Write test: `src/session/manager.test.ts` (additional tests)
+- [x] Write test: `src/session/manager.test.ts` (additional tests)
   - Test loads existing session by ID
   - Test throws on non-existent session
   - Test validates session schema on load
   - Test lists all sessions
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `loadSession(sessionId: string): Promise<Session>`
   - `listSessions(): Promise<SessionSummary[]>`
   - `sessionExists(sessionId: string): Promise<boolean>`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Can load and list sessions correctly
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Can load and list sessions correctly
 
 ### Step 5: Implement Session Updates
 
