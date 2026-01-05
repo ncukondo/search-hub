@@ -8,13 +8,14 @@ This file tracks high-level progress. For implementation details, see individual
 |---|------|------|--------|-----------|
 | 1 | Project Setup | - | ✅ Completed | - |
 | 2 | Config System | 1 | ✅ Completed | [20260104-01](completed/20260104-01-config-system.md) |
-| 3 | Query Parser & Validator | 1 | Pending | [20260105-01](active/20260105-01-query-parser-validator.md) |
-| 4 | Session Manager | 2 | Pending | [20260105-02](active/20260105-02-session-manager.md) |
-| 5 | Provider Base & Rate Limiter | 1 | Pending | [20260105-03](active/20260105-03-provider-base-rate-limiter.md) |
-| 6 | PubMed Provider | 3, 5 | Pending | - |
-| 7 | ERIC Provider | 3, 5 | Pending | - |
-| 8 | arXiv Provider | 3, 5 | Pending | - |
-| 9 | Scopus Provider | 3, 5 | Pending | - |
+| 3 | Query Parser & Validator | 1 | ✅ Completed | [20260105-01](completed/20260105-01-query-parser-validator.md) |
+| 4 | Session Manager | 2 | ✅ Completed | [20260105-02](completed/20260105-02-session-manager.md) |
+| 5 | Provider Base & Rate Limiter | 1 | ✅ Completed | [20260105-03](completed/20260105-03-provider-base-rate-limiter.md) |
+| 5a | Provider Session Resume | 4, 5 | Pending | [20260105-08](active/20260105-08-provider-session-resume.md) |
+| 6 | PubMed Provider | 3, 5a | Pending | [20260105-04](active/20260105-04-pubmed-provider.md) |
+| 7 | ERIC Provider | 3, 5a | Pending | [20260105-05](active/20260105-05-eric-provider.md) |
+| 8 | arXiv Provider | 3, 5a | Pending | [20260105-06](active/20260105-06-arxiv-provider.md) |
+| 9 | Scopus Provider | 3, 5a | Pending | [20260105-07](active/20260105-07-scopus-provider.md) |
 | 10 | CLI Commands | 2-4, 6-9 | Pending | - |
 | 11 | Reference Manager Integration | 10 | Pending | - |
 | 12 | E2E Tests & Polish | All | Pending | - |
