@@ -100,25 +100,25 @@ Implement the configuration system that loads, validates, and merges settings fr
   - [x] Refactor if needed, verify test still passes
   - [x] Acceptance: env vars override config values at correct paths
 
-- [ ] Step 7: Implement full config loader
-  - [ ] Write test: `src/config/loader.test.ts` (add to existing)
+- [x] Step 7: Implement full config loader
+  - [x] Write test: `src/config/loader.test.ts` (add to existing)
     - Priority: global < local < env < cli
     - Deep merge works across sources
     - Final config passes validation
-  - [ ] Implement `loadConfig(cliOptions?): Promise<Config>` in `loader.ts`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed, verify test still passes
-  - [ ] Acceptance: CLI options override all other sources
+  - [x] Implement `loadConfig(cliOptions?): Promise<Config>` in `loader.ts`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed, verify test still passes
+  - [x] Acceptance: CLI options override all other sources
 
-- [ ] Step 8: Create public API
-  - [ ] Write test: `src/config/index.test.ts`
+- [x] Step 8: Create public API
+  - [x] Write test: `src/config/index.test.ts`
     - All exports accessible
-  - [ ] Create `src/config/index.ts`
-  - [ ] Export `loadConfig`, `Config`, `ConfigSchema`, `getDefaultConfig`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `import { loadConfig } from './config'` works
+  - [x] Create `src/config/index.ts`
+  - [x] Export `loadConfig`, `Config`, `ConfigSchema`, `getDefaultConfig`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `import { loadConfig } from './config'` works
 
 - [ ] Step 9: Implement `init` command skeleton
   - [ ] Write test: `src/cli/commands/init.test.ts`
