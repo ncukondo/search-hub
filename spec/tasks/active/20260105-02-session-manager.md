@@ -21,128 +21,128 @@ Manage search sessions including creation, persistence, loading, and resume func
 
 ### Step 1: Define Session Types
 
-- [ ] Write test: `src/session/types.test.ts`
+- [x] Write test: `src/session/types.test.ts`
   - Test that types compile correctly with valid data
   - Test TypeScript type inference
-- [ ] Create types: `src/session/types.ts`
+- [x] Create types: `src/session/types.ts`
   - Define `SessionStatus` type
   - Define `DatabaseStatus` interface
   - Define `SessionFile` interface
   - Define `LogEvent` types
   - Define `PaginationState` interface
-- [ ] Verify types work with test data
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All types match spec/models/session.md
+- [x] Verify types work with test data
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All types match spec/models/session.md
 
 ### Step 2: Implement Session ID Generation
 
-- [ ] Write test: `src/session/manager.test.ts`
+- [x] Write test: `src/session/manager.test.ts`
   - Test ID format: `{date}_{name}_{hash}`
   - Test name sanitization (lowercase, alphanumeric, dashes)
   - Test hash is 6 characters
   - Test unique IDs for different queries
-- [ ] Create stub: `src/session/manager.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/session/manager.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `generateSessionId(queryName: string, queryHash: string): string`
   - `sanitizeName(name: string): string`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: IDs match format like `20240115_diabetes-ai-scoping_a3f2c1`
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: IDs match format like `20240115_diabetes-ai-scoping_a3f2c1`
 
 ### Step 3: Implement Session Creation
 
-- [ ] Write test: `src/session/manager.test.ts` (additional tests)
+- [x] Write test: `src/session/manager.test.ts` (additional tests)
   - Test creates session directory
   - Test creates session.json with correct initial state
   - Test copies query file to session directory
   - Test initializes database statuses as 'pending'
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `createSession(options: CreateSessionOptions): Promise<Session>`
   - Create `~/.search-hub/sessions/{session-id}/` directory
   - Create `session.json` with initial state
   - Copy query file as `query_common.yaml`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: New session directory matches spec structure
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: New session directory matches spec structure
 
 ### Step 4: Implement Session Loading
 
-- [ ] Write test: `src/session/manager.test.ts` (additional tests)
+- [x] Write test: `src/session/manager.test.ts` (additional tests)
   - Test loads existing session by ID
   - Test throws on non-existent session
   - Test validates session schema on load
   - Test lists all sessions
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `loadSession(sessionId: string): Promise<Session>`
   - `listSessions(): Promise<SessionSummary[]>`
   - `sessionExists(sessionId: string): Promise<boolean>`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Can load and list sessions correctly
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Can load and list sessions correctly
 
 ### Step 5: Implement Session Updates
 
-- [ ] Write test: `src/session/manager.test.ts` (additional tests)
+- [x] Write test: `src/session/manager.test.ts` (additional tests)
   - Test updates database status
   - Test updates pagination state
   - Test updates summary totals
   - Test handles concurrent updates safely
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `updateDatabaseStatus(sessionId: string, provider: string, status: DatabaseStatus): Promise<void>`
   - `updateSessionStatus(sessionId: string, status: SessionStatus): Promise<void>`
   - `saveSession(session: Session): Promise<void>`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Session state persists correctly across updates
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Session state persists correctly across updates
 
 ### Step 6: Implement Event Logger
 
-- [ ] Write test: `src/session/logger.test.ts`
+- [x] Write test: `src/session/logger.test.ts`
   - Test logs events to log.jsonl
   - Test each event type logs correctly
   - Test timestamps are ISO 8601
   - Test appends to existing log
-- [ ] Create stub: `src/session/logger.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Create stub: `src/session/logger.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `SessionLogger` class
   - `log(event: LogEvent): Promise<void>`
   - Support all event types from spec
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Log file matches format in session.md
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Log file matches format in session.md
 
 ### Step 7: Implement Resume Logic
 
-- [ ] Write test: `src/session/manager.test.ts` (additional tests)
+- [x] Write test: `src/session/manager.test.ts` (additional tests)
   - Test finds DBs needing resume
   - Test identifies retryable failed DBs
   - Test identifies in-progress DBs with pagination state
   - Test skips completed DBs
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `getResumableProviders(session: Session): ResumableProvider[]`
   - Return provider name, resume strategy, and cursor if available
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Resume logic handles all states from lifecycle diagram
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Resume logic handles all states from lifecycle diagram
 
 ### Step 8: Create Module Index & Integration
 
-- [ ] Write test: `src/session/index.test.ts`
+- [x] Write test: `src/session/index.test.ts`
   - Test exports are correct
   - Test end-to-end: create -> update -> load
-- [ ] Create `src/session/index.ts`
+- [x] Create `src/session/index.ts`
   - Export types
   - Export SessionManager class/functions
   - Export SessionLogger
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Module can be imported and used from other modules
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Module can be imported and used from other modules
 
 ## TDD Cycle Reference
 
