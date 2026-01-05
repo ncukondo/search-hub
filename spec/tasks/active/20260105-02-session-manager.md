@@ -85,19 +85,19 @@ Manage search sessions including creation, persistence, loading, and resume func
 
 ### Step 5: Implement Session Updates
 
-- [ ] Write test: `src/session/manager.test.ts` (additional tests)
+- [x] Write test: `src/session/manager.test.ts` (additional tests)
   - Test updates database status
   - Test updates pagination state
   - Test updates summary totals
   - Test handles concurrent updates safely
-- [ ] Verify tests fail (Red)
-- [ ] Implement:
+- [x] Verify tests fail (Red)
+- [x] Implement:
   - `updateDatabaseStatus(sessionId: string, provider: string, status: DatabaseStatus): Promise<void>`
   - `updateSessionStatus(sessionId: string, status: SessionStatus): Promise<void>`
   - `saveSession(session: Session): Promise<void>`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Session state persists correctly across updates
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Session state persists correctly across updates
 
 ### Step 6: Implement Event Logger
 

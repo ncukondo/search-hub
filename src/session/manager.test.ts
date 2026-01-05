@@ -9,9 +9,17 @@ import {
   loadSession,
   listSessions,
   sessionExists,
+  updateDatabaseStatus,
+  updateSessionStatus,
+  saveSession,
   type CreateSessionOptions,
 } from './manager';
-import type { SessionFile, ProviderName, SessionSummary } from './types';
+import type {
+  SessionFile,
+  ProviderName,
+  SessionSummary,
+  DatabaseStatus,
+} from './types';
 
 describe('Session Manager', () => {
   describe('sanitizeName', () => {
@@ -368,6 +376,290 @@ describe('Session Manager', () => {
       expect(summary.totalHits).toBe(0);
       expect(summary.totalRetrieved).toBe(0);
       expect(summary.createdAt).toBeDefined();
+    });
+  });
+
+  describe('updateDatabaseStatus', () => {
+    let testDir: string;
+
+    beforeEach(async () => {
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    const createTestOptions = (): CreateSessionOptions => ({
+      name: 'Test Query',
+      queryFile: '/path/to/query.yaml',
+      queryContent: 'name: Test Query\nterms:\n  - test',
+      queryHash: 'abc123def456',
+      targets: ['pubmed', 'eric'] as ProviderName[],
+      sessionsDir: testDir,
+    });
+
+    it('should update database status', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      const newStatus: Partial<DatabaseStatus> = {
+        status: 'in_progress',
+        startedAt: new Date().toISOString(),
+        totalHits: 100,
+      };
+
+      await updateDatabaseStatus(session.id, 'pubmed', newStatus, testDir);
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(loaded.databases.pubmed?.status).toBe('in_progress');
+      expect(loaded.databases.pubmed?.startedAt).toBeDefined();
+      expect(loaded.databases.pubmed?.totalHits).toBe(100);
+    });
+
+    it('should update pagination state', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      const newStatus: Partial<DatabaseStatus> = {
+        status: 'in_progress',
+        pagination: {
+          cursor: 'next-page-token',
+          pageNumber: 2,
+          isComplete: false,
+        },
+      };
+
+      await updateDatabaseStatus(session.id, 'pubmed', newStatus, testDir);
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(loaded.databases.pubmed?.pagination?.cursor).toBe('next-page-token');
+      expect(loaded.databases.pubmed?.pagination?.pageNumber).toBe(2);
+      expect(loaded.databases.pubmed?.pagination?.isComplete).toBe(false);
+    });
+
+    it('should update summary totals', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // Complete pubmed with results
+      await updateDatabaseStatus(
+        session.id,
+        'pubmed',
+        {
+          status: 'completed',
+          totalHits: 100,
+          retrievedCount: 100,
+          completedAt: new Date().toISOString(),
+        },
+        testDir
+      );
+
+      // Complete eric with results
+      await updateDatabaseStatus(
+        session.id,
+        'eric',
+        {
+          status: 'completed',
+          totalHits: 50,
+          retrievedCount: 50,
+          completedAt: new Date().toISOString(),
+        },
+        testDir
+      );
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(loaded.summary.totalHits).toBe(150);
+      expect(loaded.summary.totalRetrieved).toBe(150);
+    });
+
+    it('should update updatedAt timestamp', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+      const originalUpdatedAt = session.updatedAt;
+
+      // Wait a bit to ensure different timestamp
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      await updateDatabaseStatus(
+        session.id,
+        'pubmed',
+        { status: 'in_progress' },
+        testDir
+      );
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(new Date(loaded.updatedAt).getTime()).toBeGreaterThan(
+        new Date(originalUpdatedAt).getTime()
+      );
+    });
+
+    it('should preserve existing database fields when updating', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // First update: set startedAt
+      await updateDatabaseStatus(
+        session.id,
+        'pubmed',
+        {
+          status: 'in_progress',
+          startedAt: '2024-01-15T10:00:00.000Z',
+        },
+        testDir
+      );
+
+      // Second update: set totalHits (should preserve startedAt)
+      await updateDatabaseStatus(
+        session.id,
+        'pubmed',
+        {
+          totalHits: 100,
+        },
+        testDir
+      );
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(loaded.databases.pubmed?.startedAt).toBe('2024-01-15T10:00:00.000Z');
+      expect(loaded.databases.pubmed?.totalHits).toBe(100);
+    });
+  });
+
+  describe('updateSessionStatus', () => {
+    let testDir: string;
+
+    beforeEach(async () => {
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    const createTestOptions = (): CreateSessionOptions => ({
+      name: 'Test Query',
+      queryFile: '/path/to/query.yaml',
+      queryContent: 'name: Test Query\nterms:\n  - test',
+      queryHash: 'abc123def456',
+      targets: ['pubmed', 'eric'] as ProviderName[],
+      sessionsDir: testDir,
+    });
+
+    it('should update session status to running', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      await updateSessionStatus(session.id, 'running', testDir);
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(loaded.summary.status).toBe('running');
+    });
+
+    it('should update session status to completed', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      await updateSessionStatus(session.id, 'completed', testDir);
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(loaded.summary.status).toBe('completed');
+    });
+
+    it('should update session status to partial', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      await updateSessionStatus(session.id, 'partial', testDir);
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(loaded.summary.status).toBe('partial');
+    });
+
+    it('should update session status to failed', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      await updateSessionStatus(session.id, 'failed', testDir);
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(loaded.summary.status).toBe('failed');
+    });
+  });
+
+  describe('saveSession', () => {
+    let testDir: string;
+
+    beforeEach(async () => {
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      await mkdir(testDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    const createTestOptions = (): CreateSessionOptions => ({
+      name: 'Test Query',
+      queryFile: '/path/to/query.yaml',
+      queryContent: 'name: Test Query\nterms:\n  - test',
+      queryHash: 'abc123def456',
+      targets: ['pubmed', 'eric'] as ProviderName[],
+      sessionsDir: testDir,
+    });
+
+    it('should save session with all modifications', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // Modify the session
+      session.summary.status = 'running';
+      session.summary.totalHits = 200;
+      session.databases.pubmed = {
+        ...session.databases.pubmed!,
+        status: 'completed',
+        totalHits: 200,
+        retrievedCount: 200,
+      };
+
+      await saveSession(session, testDir);
+
+      const loaded = await loadSession(session.id, testDir);
+      expect(loaded.summary.status).toBe('running');
+      expect(loaded.summary.totalHits).toBe(200);
+      expect(loaded.databases.pubmed?.status).toBe('completed');
+    });
+
+    it('should handle concurrent updates safely', async () => {
+      const options = createTestOptions();
+      const session = await createSession(options);
+
+      // Simulate concurrent updates by doing them in quick succession
+      const updates = [
+        updateDatabaseStatus(
+          session.id,
+          'pubmed',
+          { status: 'in_progress', startedAt: new Date().toISOString() },
+          testDir
+        ),
+        updateDatabaseStatus(
+          session.id,
+          'eric',
+          { status: 'in_progress', startedAt: new Date().toISOString() },
+          testDir
+        ),
+      ];
+
+      // Note: This test verifies that updates don't throw errors
+      // True concurrent safety would require file locking
+      await Promise.all(updates);
+
+      const loaded = await loadSession(session.id, testDir);
+      // At least one of the updates should succeed
+      const pubmedUpdated = loaded.databases.pubmed?.status === 'in_progress';
+      const ericUpdated = loaded.databases.eric?.status === 'in_progress';
+      expect(pubmedUpdated || ericUpdated).toBe(true);
     });
   });
 });

@@ -10,7 +10,13 @@
 
 import { mkdir, writeFile, readFile, readdir, access } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { SessionFile, DatabaseStatus, ProviderName, SessionSummary } from './types';
+import type {
+  SessionFile,
+  DatabaseStatus,
+  ProviderName,
+  SessionSummary,
+  SessionStatus,
+} from './types';
 
 /**
  * Options for creating a new session.
@@ -192,4 +198,85 @@ export async function listSessions(sessionsDir: string): Promise<SessionSummary[
   }
 
   return summaries;
+}
+
+/**
+ * Calculate summary totals from all database statuses.
+ */
+function calculateSummaryTotals(databases: Partial<Record<ProviderName, DatabaseStatus>>): {
+  totalHits: number;
+  totalRetrieved: number;
+} {
+  let totalHits = 0;
+  let totalRetrieved = 0;
+
+  for (const db of Object.values(databases)) {
+    if (db) {
+      totalHits += db.totalHits ?? 0;
+      totalRetrieved += db.retrievedCount ?? 0;
+    }
+  }
+
+  return { totalHits, totalRetrieved };
+}
+
+/**
+ * Save a session to disk.
+ */
+export async function saveSession(
+  session: SessionFile,
+  sessionsDir: string
+): Promise<void> {
+  const sessionPath = join(sessionsDir, session.id, 'session.json');
+  await writeFile(sessionPath, JSON.stringify(session, null, 2), 'utf-8');
+}
+
+/**
+ * Update the status of a specific database within a session.
+ * Also updates summary totals and updatedAt timestamp.
+ */
+export async function updateDatabaseStatus(
+  sessionId: string,
+  provider: ProviderName,
+  status: Partial<DatabaseStatus>,
+  sessionsDir: string
+): Promise<void> {
+  const session = await loadSession(sessionId, sessionsDir);
+
+  // Merge the new status with the existing status
+  const existingStatus = session.databases[provider];
+  if (!existingStatus) {
+    throw new Error(`Database ${provider} not found in session ${sessionId}`);
+  }
+
+  session.databases[provider] = {
+    ...existingStatus,
+    ...status,
+  };
+
+  // Recalculate summary totals
+  const { totalHits, totalRetrieved } = calculateSummaryTotals(session.databases);
+  session.summary.totalHits = totalHits;
+  session.summary.totalRetrieved = totalRetrieved;
+
+  // Update timestamp
+  session.updatedAt = new Date().toISOString();
+
+  await saveSession(session, sessionsDir);
+}
+
+/**
+ * Update the overall session status.
+ */
+export async function updateSessionStatus(
+  sessionId: string,
+  status: SessionStatus,
+  sessionsDir: string
+): Promise<void> {
+  const session = await loadSession(sessionId, sessionsDir);
+
+  session.summary.status = status;
+  session.updatedAt = new Date().toISOString();
+
+  await saveSession(session, sessionsDir);
 }
