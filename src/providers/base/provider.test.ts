@@ -6,12 +6,24 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
-  QueryAstNode,
+  QueryAST,
   ProviderError,
   SearchState,
   SearchResumeResult,
 } from './types';
 import { createProviderError } from './types';
+
+/**
+ * Helper to create a minimal QueryAST for testing.
+ */
+function createMockQueryAST(name = 'test-query'): QueryAST {
+  return {
+    name,
+    blocks: [],
+    filters: {},
+    overrides: {},
+  };
+}
 
 // Concrete implementation for testing
 class TestProvider extends BaseProvider {
@@ -37,7 +49,7 @@ class TestProvider extends BaseProvider {
     };
   }
 
-  translateQuery(ast: QueryAstNode): TranslatedQuery {
+  translateQuery(ast: QueryAST): TranslatedQuery {
     return {
       native: 'test query',
       originalAst: ast,
@@ -177,7 +189,7 @@ describe('BaseProvider', () => {
       const provider = new TestProvider();
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'pubmed',
       };
 
@@ -192,7 +204,7 @@ describe('BaseProvider', () => {
 
     it('translateQuery is implemented by subclass', () => {
       const provider = new TestProvider();
-      const result = provider.translateQuery({ type: 'term', value: 'test' });
+      const result = provider.translateQuery(createMockQueryAST());
 
       expect(result.native).toBe('test query');
       expect(result.provider).toBe('pubmed');
@@ -381,7 +393,7 @@ describe('BaseProvider', () => {
       const provider = new TestProvider();
       const query: TranslatedQuery = {
         native: 'test query',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'pubmed',
       };
       const state: SearchState = {
@@ -400,7 +412,7 @@ describe('BaseProvider', () => {
       const provider = new TestProvider();
       const query: TranslatedQuery = {
         native: 'test query',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'pubmed',
       };
       const state: SearchState = {
@@ -425,7 +437,7 @@ describe('BaseProvider', () => {
       const provider = new TestProvider();
       const query: TranslatedQuery = {
         native: 'test query',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'pubmed',
       };
       const state: SearchState = {
@@ -449,7 +461,7 @@ describe('BaseProvider', () => {
 
       const query: TranslatedQuery = {
         native: 'test query',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'pubmed',
       };
       const state: SearchState = {
@@ -471,7 +483,7 @@ describe('BaseProvider', () => {
       const provider = new TestProvider();
       const query: TranslatedQuery = {
         native: 'covid[Title]',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST('covid-query'),
         provider: 'pubmed',
       };
 
@@ -489,7 +501,7 @@ describe('BaseProvider', () => {
       const provider = new TestProvider();
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'pubmed',
       };
 
@@ -508,7 +520,7 @@ describe('State serialization', () => {
     it('serializes SearchState to JSON string', () => {
       const query: TranslatedQuery = {
         native: 'covid[Title]',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST('covid-query'),
         provider: 'pubmed',
       };
       const state: SearchState = {
@@ -531,7 +543,7 @@ describe('State serialization', () => {
     it('preserves providerState in serialization', () => {
       const query: TranslatedQuery = {
         native: 'covid[Title]',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST('covid-query'),
         provider: 'pubmed',
       };
       const state: SearchState = {
@@ -564,7 +576,7 @@ describe('State serialization', () => {
         provider: 'pubmed',
         query: {
           native: 'covid[Title]',
-          originalAst: { type: 'term' },
+          originalAst: { name: 'covid-query', blocks: [], filters: {}, overrides: {} },
           provider: 'pubmed',
         },
         totalResults: 1000,
@@ -585,7 +597,7 @@ describe('State serialization', () => {
         provider: 'pubmed',
         query: {
           native: 'covid[Title]',
-          originalAst: { type: 'term' },
+          originalAst: { name: 'covid-query', blocks: [], filters: {}, overrides: {} },
           provider: 'pubmed',
         },
         totalResults: 1000,
@@ -610,7 +622,7 @@ describe('State serialization', () => {
     it('roundtrips correctly through serialize/deserialize', () => {
       const query: TranslatedQuery = {
         native: 'covid[Title]',
-        originalAst: { type: 'term', value: 'covid' },
+        originalAst: createMockQueryAST('covid-query'),
         provider: 'pubmed',
       };
       const originalState: SearchState = {
