@@ -11,6 +11,7 @@ import type {
   AuthError,
   SearchState,
   SearchResumeResult,
+  QueryAST,
 } from './types';
 import {
   createProviderError,
@@ -18,6 +19,18 @@ import {
   isRateLimitError,
   isAuthError,
 } from './types';
+
+/**
+ * Helper to create a minimal QueryAST for testing.
+ */
+function createMockQueryAST(name = 'test-query'): QueryAST {
+  return {
+    name,
+    blocks: [],
+    filters: {},
+    overrides: {},
+  };
+}
 
 describe('Provider Types', () => {
   describe('ProviderName', () => {
@@ -106,7 +119,7 @@ describe('Provider Types', () => {
     it('contains native query string and AST reference', () => {
       const query: TranslatedQuery = {
         native: '(covid[Title/Abstract]) AND (vaccine[MeSH Terms])',
-        originalAst: { type: 'and', children: [] },
+        originalAst: createMockQueryAST('covid-vaccine-query'),
         provider: 'pubmed',
       };
       expect(query.native).toContain('covid');
@@ -299,7 +312,7 @@ describe('Provider Types', () => {
     it('has correct structure with required fields', () => {
       const query: TranslatedQuery = {
         native: 'covid[Title]',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'pubmed',
       };
 
@@ -322,7 +335,7 @@ describe('Provider Types', () => {
     it('accepts provider-specific state', () => {
       const query: TranslatedQuery = {
         native: 'covid[Title]',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'pubmed',
       };
 
@@ -347,7 +360,7 @@ describe('Provider Types', () => {
     it('accepts offset-based provider state', () => {
       const query: TranslatedQuery = {
         native: 'education policy',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'eric',
       };
 

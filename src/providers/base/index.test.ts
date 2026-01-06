@@ -9,6 +9,7 @@ import {
   type ProviderError,
   type SearchState,
   type SearchResumeResult,
+  type QueryAST,
   // Type guards
   createProviderError,
   isProviderError,
@@ -26,6 +27,18 @@ import {
   serializeState,
   deserializeState,
 } from './index';
+
+/**
+ * Helper to create a minimal QueryAST for testing.
+ */
+function createMockQueryAST(name = 'test-query'): QueryAST {
+  return {
+    name,
+    blocks: [],
+    filters: {},
+    overrides: {},
+  };
+}
 
 describe('Module exports', () => {
   describe('types', () => {
@@ -53,7 +66,7 @@ describe('Module exports', () => {
     it('exports TranslatedQuery type', () => {
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: { type: 'term' },
+        originalAst: createMockQueryAST(),
         provider: 'pubmed',
       };
       expect(query.native).toBe('test');
@@ -79,7 +92,7 @@ describe('Module exports', () => {
         provider: 'pubmed',
         query: {
           native: 'test',
-          originalAst: { type: 'term' },
+          originalAst: createMockQueryAST(),
           provider: 'pubmed',
         },
         totalResults: 100,
@@ -155,7 +168,7 @@ describe('Module exports', () => {
         provider: 'pubmed',
         query: {
           native: 'test',
-          originalAst: { type: 'term' },
+          originalAst: createMockQueryAST(),
           provider: 'pubmed',
         },
         totalResults: 100,
@@ -172,7 +185,7 @@ describe('Module exports', () => {
         provider: 'pubmed',
         query: {
           native: 'test',
-          originalAst: { type: 'term' },
+          originalAst: createMockQueryAST(),
           provider: 'pubmed',
         },
         totalResults: 100,
@@ -202,7 +215,7 @@ describe('Module exports', () => {
 
       expect(provider.name).toBe('eric');
 
-      const query = provider.translateQuery({ type: 'term', value: 'test' });
+      const query = provider.translateQuery(createMockQueryAST());
       expect(query.provider).toBe('eric');
 
       const articles = [];
