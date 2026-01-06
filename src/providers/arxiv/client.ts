@@ -86,12 +86,17 @@ export class ArxivClient {
 
       if (!response.ok) {
         const body = await response.text();
-        throw createProviderError(
+        const error = createProviderError(
           response.status === 503 ? 'RATE_LIMIT_EXCEEDED' : 'SERVER_ERROR',
           `arXiv API error: ${response.status} ${response.statusText}`,
           'arxiv',
           { retryable: response.status >= 500, cause: new Error(body) }
         );
+        // arXiv recommends waiting 30 seconds on 503 errors
+        if (response.status === 503) {
+          (error as typeof error & { retryAfter: number }).retryAfter = 30000;
+        }
+        throw error;
       }
 
       const xml = await response.text();

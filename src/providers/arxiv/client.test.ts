@@ -122,6 +122,23 @@ describe('ArxivClient', () => {
 
       await expect(client.search('invalid', { start: 0, maxResults: 10 })).rejects.toThrow();
     });
+
+    it('should set retryAfter to 30s on 503 error', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: 'Service Unavailable',
+        text: () => Promise.resolve('Server busy'),
+      });
+
+      try {
+        await client.search('ti:test', { start: 0, maxResults: 10 });
+        expect.fail('Should have thrown');
+      } catch (error) {
+        expect(error).toHaveProperty('code', 'RATE_LIMIT_EXCEEDED');
+        expect(error).toHaveProperty('retryAfter', 30000);
+      }
+    });
   });
 
   describe('rate limiting', () => {
