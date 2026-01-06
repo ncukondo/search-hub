@@ -40,6 +40,7 @@ export class PubMedProvider extends BaseProvider {
 
   /**
    * Search PubMed and stream results.
+   * Uses NCBI history server for efficient pagination of large result sets.
    */
   async *search(
     query: TranslatedQuery,
@@ -50,73 +51,114 @@ export class PubMedProvider extends BaseProvider {
     let retstart = 0;
     let totalRetrieved = 0;
 
-    // Initial search to get total count and first batch of PMIDs
+    // Initial search with history server enabled
     const initialResult = await this.client.search(query.native, {
-      retstart,
+      retstart: 0,
       retmax: pageSize,
-      useHistory: false,
+      useHistory: true,
     });
 
     const totalCount = initialResult.count;
+    const webenv = initialResult.webenv;
+    const querykey = initialResult.querykey;
 
-    // Update state
-    this.currentState = this.createBaseState(query, totalCount, 0);
+    // Initialize state with provider-specific history server info
+    const providerState: PubMedProviderState = {
+      retstart: 0,
+      useHistory: !!(webenv && querykey),
+      ...(webenv && { webenv }),
+      ...(querykey && { querykey }),
+    };
+
+    this.currentState = {
+      ...this.createBaseState(query, totalCount, 0),
+      providerState,
+    };
 
     // If no results, return early
     if (totalCount === 0 || initialResult.idlist.length === 0) {
       return;
     }
 
-    // Process first page
-    let currentPmids = initialResult.idlist;
+    // Fetch first page of articles using PMIDs from initial search
+    const firstPageArticles = await this.client.fetch(initialResult.idlist);
 
-    while (currentPmids.length > 0) {
-      // Check if we've hit maxResults
-      const remainingToFetch = maxResults !== undefined
-        ? Math.min(currentPmids.length, maxResults - totalRetrieved)
-        : currentPmids.length;
+    for (const article of firstPageArticles) {
+      totalRetrieved++;
+      retstart++;
 
-      if (remainingToFetch <= 0) {
+      this.updateState(totalRetrieved, retstart, providerState);
+
+      yield article;
+
+      if (maxResults !== undefined && totalRetrieved >= maxResults) {
+        return;
+      }
+    }
+
+    // Continue with subsequent pages using history server if available
+    while (retstart < totalCount) {
+      if (maxResults !== undefined && totalRetrieved >= maxResults) {
         break;
       }
 
-      const pmidsToFetch = currentPmids.slice(0, remainingToFetch);
+      const remainingToFetch = maxResults !== undefined
+        ? Math.min(pageSize, maxResults - totalRetrieved)
+        : pageSize;
 
-      // Fetch full article data
-      const articles = await this.client.fetch(pmidsToFetch);
+      let articles: Article[];
+
+      if (webenv && querykey) {
+        // Use history server for efficient pagination
+        articles = await this.client.fetchFromHistory({
+          webenv,
+          querykey,
+          retstart,
+          retmax: remainingToFetch,
+        });
+      } else {
+        // Fallback to offset-based pagination
+        const result = await this.client.search(query.native, {
+          retstart,
+          retmax: remainingToFetch,
+        });
+        articles = await this.client.fetch(result.idlist);
+      }
+
+      if (articles.length === 0) {
+        break;
+      }
 
       for (const article of articles) {
         totalRetrieved++;
+        retstart++;
 
-        // Update state before yield so it's visible when iterator returns
-        if (this.currentState) {
-          this.currentState.retrievedCount = totalRetrieved;
-          this.currentState.lastUpdated = new Date();
-        }
+        this.updateState(totalRetrieved, retstart, providerState);
 
         yield article;
 
-        // Check maxResults
         if (maxResults !== undefined && totalRetrieved >= maxResults) {
           return;
         }
       }
+    }
+  }
 
-      // Move to next page
-      retstart += pageSize;
-
-      // Check if we need more pages
-      if (retstart >= totalCount) {
-        break;
-      }
-
-      // Fetch next page of PMIDs
-      const nextResult = await this.client.search(query.native, {
+  /**
+   * Update current state with progress information.
+   */
+  private updateState(
+    retrievedCount: number,
+    retstart: number,
+    providerState: PubMedProviderState
+  ): void {
+    if (this.currentState) {
+      this.currentState.retrievedCount = retrievedCount;
+      this.currentState.lastUpdated = new Date();
+      this.currentState.providerState = {
+        ...providerState,
         retstart,
-        retmax: pageSize,
-      });
-
-      currentPmids = nextResult.idlist;
+      };
     }
   }
 
