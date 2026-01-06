@@ -4,7 +4,7 @@
  * Handles HTTP communication with the Scopus Search API.
  */
 
-import type { ScopusConfig, ScopusSearchResponse, ScopusRawEntry } from './types';
+import type { ScopusConfig, ScopusSearchResponse } from './types';
 import { parseSearchResponse } from './parser';
 import { createProviderError, type ProviderError, type RateLimitError } from '../base/types';
 

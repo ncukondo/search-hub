@@ -5,14 +5,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ScopusProvider } from './provider';
 import type { ScopusConfig } from './types';
 import type { QueryAST } from '../../query/types';
-import type { QueryAstNode } from '../base/types';
-
-/**
- * Convert QueryAST to QueryAstNode for testing.
- */
-function toQueryAstNode(ast: QueryAST): QueryAstNode {
-  return { type: 'QueryAST', ...ast } as QueryAstNode;
-}
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -57,7 +49,7 @@ describe('ScopusProvider', () => {
         overrides: {},
       };
 
-      const result = provider.translateQuery(toQueryAstNode(ast));
+      const result = provider.translateQuery(ast);
       expect(result.native).toBe('TITLE(diabetes)');
       expect(result.provider).toBe('scopus');
     });
@@ -96,7 +88,7 @@ describe('ScopusProvider', () => {
         filters: {},
         overrides: {},
       };
-      const query = provider.translateQuery(toQueryAstNode(ast));
+      const query = provider.translateQuery(ast);
 
       const articles: unknown[] = [];
       for await (const article of provider.search(query)) {
@@ -153,7 +145,7 @@ describe('ScopusProvider', () => {
         filters: {},
         overrides: {},
       };
-      const query = provider.translateQuery(toQueryAstNode(ast));
+      const query = provider.translateQuery(ast);
 
       const articles: unknown[] = [];
       for await (const article of provider.search(query)) {
@@ -188,7 +180,7 @@ describe('ScopusProvider', () => {
         filters: {},
         overrides: {},
       };
-      const query = provider.translateQuery(toQueryAstNode(ast));
+      const query = provider.translateQuery(ast);
 
       const articles: unknown[] = [];
       for await (const article of provider.search(query, { maxResults: 10 })) {
@@ -249,7 +241,7 @@ describe('ScopusProvider', () => {
         filters: {},
         overrides: {},
       };
-      const query = provider.translateQuery(toQueryAstNode(ast));
+      const query = provider.translateQuery(ast);
 
       await expect(async () => {
         for await (const _ of provider.search(query)) {
@@ -295,7 +287,7 @@ describe('ScopusProvider', () => {
         filters: {},
         overrides: {},
       };
-      const query = provider.translateQuery(toQueryAstNode(ast));
+      const query = provider.translateQuery(ast);
 
       const articles: unknown[] = [];
       for await (const article of provider.search(query)) {

@@ -389,8 +389,8 @@ describe('Scopus Query Translator', () => {
       };
 
       const result = translateQuery(ast);
-      expect(result.originalAst.type).toBe('QueryAST');
-      expect((result.originalAst as unknown as QueryAST).name).toBe('test');
+      expect(result.originalAst).toBe(ast);
+      expect(result.originalAst.name).toBe('test');
     });
   });
 

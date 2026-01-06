@@ -9,15 +9,14 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
-  QueryAstNode,
+  QueryAST,
   SearchState,
   SearchResumeResult,
 } from '../base/types';
 import { ScopusClient } from './client';
 import { parseDocument } from './parser';
 import { translateQuery } from './translator';
-import type { ScopusConfig, ScopusDocument, ScopusProviderState } from './types';
-import type { QueryAST } from '../../query/types';
+import type { ScopusConfig, ScopusProviderState } from './types';
 
 /** Default page size for Scopus (max 25 for COMPLETE view) */
 const DEFAULT_PAGE_SIZE = 25;
@@ -60,10 +59,8 @@ export class ScopusProvider extends BaseProvider {
   /**
    * Translate QueryAST to Scopus search syntax.
    */
-  translateQuery(ast: QueryAstNode): TranslatedQuery {
-    // Cast to QueryAST for the translator
-    const queryAst = ast as unknown as QueryAST;
-    return translateQuery(queryAst);
+  translateQuery(ast: QueryAST): TranslatedQuery {
+    return translateQuery(ast);
   }
 
   /**

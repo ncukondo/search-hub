@@ -1,7 +1,7 @@
 /**
  * Scopus Module Export Tests
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   ScopusProvider,
   ScopusClient,
@@ -10,15 +10,8 @@ import {
   parseDocument,
   registerScopusProvider,
 } from './index';
-import type {
-  ScopusConfig,
-  ScopusDocument,
-  ScopusSearchResponse,
-  ScopusAuthor,
-  ScopusProviderState,
-} from './index';
+import type { ScopusConfig, ScopusDocument } from './index';
 import { createProviderRegistry } from '../base/registry';
-import type { QueryAST } from '../../query/types';
 
 describe('Scopus Module Exports', () => {
   describe('Classes', () => {

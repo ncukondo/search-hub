@@ -12,19 +12,11 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ScopusProvider } from './provider';
 import type { ScopusConfig } from './types';
 import type { QueryAST } from '../../query/types';
-import type { QueryAstNode } from '../base/types';
 
 const SCOPUS_API_KEY = process.env['SCOPUS_API_KEY'];
 const SCOPUS_INST_TOKEN = process.env['SCOPUS_INST_TOKEN'];
 
 const skip = !SCOPUS_API_KEY;
-
-/**
- * Convert QueryAST to QueryAstNode.
- */
-function toQueryAstNode(ast: QueryAST): QueryAstNode {
-  return { type: 'QueryAST', ...ast } as QueryAstNode;
-}
 
 describe.skipIf(skip)('Scopus Provider E2E', () => {
   let provider: ScopusProvider;
@@ -64,7 +56,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(toQueryAstNode(ast));
+    const query = provider.translateQuery(ast);
     expect(query.native).toContain('TITLE');
     expect(query.native).toContain('machine learning');
 
@@ -102,7 +94,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(toQueryAstNode(ast));
+    const query = provider.translateQuery(ast);
     expect(query.native).toContain('TITLE-ABS-KEY');
 
     const articles = [];
@@ -130,7 +122,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(toQueryAstNode(ast));
+    const query = provider.translateQuery(ast);
     expect(query.native).toContain('PUBYEAR > 2019');
     expect(query.native).toContain('PUBYEAR < 2022');
 
@@ -166,7 +158,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(toQueryAstNode(ast));
+    const query = provider.translateQuery(ast);
 
     // Request more than one page (25 per page)
     const articles = [];
@@ -198,7 +190,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(toQueryAstNode(ast));
+    const query = provider.translateQuery(ast);
 
     const startTime = Date.now();
     const articles = [];
@@ -232,7 +224,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(toQueryAstNode(ast));
+    const query = provider.translateQuery(ast);
 
     // Start search and interrupt after 5 articles
     const initialArticles = [];

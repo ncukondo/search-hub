@@ -5,7 +5,7 @@
  */
 
 import type { QueryAST, FieldType, QueryBlock, Filters, OverrideBlock } from '../../query/types';
-import type { TranslatedQuery, QueryAstNode } from '../base/types';
+import type { TranslatedQuery } from '../base/types';
 
 /**
  * Field function mappings for Scopus.
@@ -131,7 +131,7 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
 
   return {
     native,
-    originalAst: { type: 'QueryAST', ...ast } as QueryAstNode,
+    originalAst: ast,
     provider: 'scopus',
   };
 }
