@@ -17,7 +17,7 @@
  */
 
 import type { QueryAST, QueryBlock, FieldType, Operator } from '../../query/types.js';
-import type { TranslatedQuery, QueryAstNode } from '../base/types.js';
+import type { TranslatedQuery } from '../base/types.js';
 
 /**
  * Field prefix mappings for arXiv API.
@@ -189,7 +189,7 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
 
   return {
     native,
-    originalAst: ast as unknown as QueryAstNode,
+    originalAst: ast,
     provider: 'arxiv',
   };
 }

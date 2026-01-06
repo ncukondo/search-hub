@@ -13,9 +13,8 @@ import type {
   SearchOptions,
   SearchState,
   SearchResumeResult,
-  QueryAstNode,
+  QueryAST,
 } from '../base/types.js';
-import type { QueryAST } from '../../query/types.js';
 import { ArxivClient } from './client.js';
 import { translateQuery } from './translator.js';
 import type { ArxivConfig, ArxivProviderState } from './types.js';
@@ -59,9 +58,8 @@ export class ArxivProvider extends BaseProvider {
   /**
    * Translate QueryAST to arXiv-native query syntax.
    */
-  translateQuery(ast: QueryAstNode): TranslatedQuery {
-    // Cast to QueryAST (our internal type)
-    return translateQuery(ast as unknown as QueryAST);
+  translateQuery(ast: QueryAST): TranslatedQuery {
+    return translateQuery(ast);
   }
 
   /**

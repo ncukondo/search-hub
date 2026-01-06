@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ArxivProvider } from './provider.js';
 import type { QueryAST } from '../../query/types.js';
-import type { TranslatedQuery, SearchState, QueryAstNode } from '../base/types.js';
+import type { TranslatedQuery, SearchState } from '../base/types.js';
 
 // Mock the client module
 vi.mock('./client.js', () => {
@@ -38,7 +38,7 @@ function createQueryAST(): QueryAST {
 function createTranslatedQuery(): TranslatedQuery {
   return {
     native: 'ti:quantum',
-    originalAst: createQueryAST() as unknown as QueryAstNode,
+    originalAst: createQueryAST(),
     provider: 'arxiv',
   };
 }
@@ -102,7 +102,7 @@ describe('ArxivProvider', () => {
 
   describe('translateQuery', () => {
     it('should translate QueryAST to arXiv query', () => {
-      const ast = createQueryAST() as unknown as QueryAstNode;
+      const ast = createQueryAST();
       const result = provider.translateQuery(ast);
 
       expect(result.native).toBe('ti:quantum');
