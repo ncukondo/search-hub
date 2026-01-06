@@ -74,11 +74,18 @@ export interface ArxivConfig extends BaseProviderConfig {
 }
 
 /**
+ * arXiv API requires a minimum of 3 seconds between requests.
+ * See: https://info.arxiv.org/help/api/user-manual.html#paging
+ */
+export const ARXIV_MIN_REQUEST_INTERVAL_MS = 3000;
+
+/**
  * Default arXiv configuration values.
  */
 export const DEFAULT_ARXIV_CONFIG: Required<ArxivConfig> = {
   baseUrl: 'http://export.arxiv.org/api/query',
-  rateLimit: 0.33, // 1 request per 3 seconds (strictly enforced by arXiv)
+  // Convert interval to requests per second: 1000ms / 3000ms = 0.33 req/s
+  rateLimit: 1000 / ARXIV_MIN_REQUEST_INTERVAL_MS,
   timeout: 60000, // arXiv can be slow
   retries: 3,
   maxResults: 10000,
