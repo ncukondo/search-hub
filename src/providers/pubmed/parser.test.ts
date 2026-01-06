@@ -488,5 +488,55 @@ describe('PubMed Parser', () => {
       expect(article.abstract).toContain('RESULTS: Results text here.');
       expect(article.abstract).toContain('CONCLUSIONS: Conclusions text here.');
     });
+
+    it('should skip malformed articles missing MedlineCitation', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">11111111</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">22222222</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Valid Article</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">22222222</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+
+      // Should only contain the valid article, malformed one is skipped
+      expect(result.articles).toHaveLength(1);
+      expect(result.articles[0]!.pmid).toBe('22222222');
+      expect(result.articles[0]!.title).toBe('Valid Article');
+    });
+
+    it('should skip malformed articles missing Article element', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">33333333</PMID>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">33333333</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+
+      // Should be empty as the article is malformed
+      expect(result.articles).toHaveLength(0);
+    });
   });
 });

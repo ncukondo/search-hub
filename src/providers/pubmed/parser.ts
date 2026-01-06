@@ -192,6 +192,7 @@ function getArticleId(
 
 /**
  * Parse a single PubMed article from efetch response.
+ * Returns null if required fields are missing.
  */
 function parsePubMedArticle(articleData: {
   MedlineCitation?: {
@@ -217,9 +218,13 @@ function parsePubMedArticle(articleData: {
   PubmedData?: {
     ArticleIdList?: { ArticleId?: unknown[] };
   };
-}): PubMedArticle {
-  const citation = articleData.MedlineCitation!;
-  const articleContent = citation.Article!;
+}): PubMedArticle | null {
+  const citation = articleData.MedlineCitation;
+  if (!citation?.Article) {
+    // Skip malformed article data missing required fields
+    return null;
+  }
+  const articleContent = citation.Article;
   const journalIssue = articleContent.Journal?.JournalIssue;
 
   // Extract PMID (can be object with #text or direct value)
@@ -312,9 +317,14 @@ export function parseEFetchResponse(xml: string): EFetchResult {
   const parsed = parser.parse(xml);
   const articleSet = parsed.PubmedArticleSet?.PubmedArticle ?? [];
 
-  const articles = articleSet.map((article: unknown) =>
-    parsePubMedArticle(article as Parameters<typeof parsePubMedArticle>[0])
-  );
+  const articles = articleSet
+    .map((article: unknown) =>
+      parsePubMedArticle(article as Parameters<typeof parsePubMedArticle>[0])
+    )
+    .filter(
+      (article: PubMedArticle | null): article is PubMedArticle =>
+        article !== null
+    );
 
   return { articles };
 }
