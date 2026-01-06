@@ -152,7 +152,7 @@ Implement the arXiv provider to search the arXiv preprint server. arXiv hosts pr
   - Test rate limiting is strictly enforced
   - Test connection test works
   - Test session resume from saved offset
-- [ ] Verify tests pass with `npm run test:e2e`
+- [x] Verify tests pass with `npm run test:e2e`
 - [x] Acceptance: E2E tests pass against live arXiv API
 
 ### Step 7: Provider Registration & Module Export
