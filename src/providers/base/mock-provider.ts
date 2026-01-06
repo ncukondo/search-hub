@@ -12,7 +12,7 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
-  QueryAstNode,
+  QueryAST,
   ProviderError,
   SearchState,
   SearchResumeResult,
@@ -88,7 +88,12 @@ export class MockProvider extends BaseProvider {
     this.mockArticles = options.articles ?? [...DEFAULT_ARTICLES];
     this.translatedQueryResponse = options.translatedQuery ?? {
       native: 'mock query',
-      originalAst: { type: 'mock' },
+      originalAst: {
+        name: 'mock-query',
+        blocks: [],
+        filters: {},
+        overrides: {},
+      },
       provider: this.name,
     };
     this.connectionStatus = options.connectionStatus ?? true;
@@ -136,7 +141,7 @@ export class MockProvider extends BaseProvider {
     }
   }
 
-  translateQuery(ast: QueryAstNode): TranslatedQuery {
+  translateQuery(ast: QueryAST): TranslatedQuery {
     return {
       ...this.translatedQueryResponse,
       originalAst: ast,

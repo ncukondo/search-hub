@@ -9,7 +9,7 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
-  QueryAstNode,
+  QueryAST,
   ProviderError,
   SearchState,
   SearchResumeResult,
@@ -83,7 +83,7 @@ export abstract class BaseProvider implements Provider {
   /**
    * Convert QueryAST to database-native syntax.
    */
-  abstract translateQuery(ast: QueryAstNode): TranslatedQuery;
+  abstract translateQuery(ast: QueryAST): TranslatedQuery;
 
   /**
    * Verify API access and credentials.
@@ -197,11 +197,7 @@ export abstract class BaseProvider implements Provider {
  */
 interface SerializedSearchState {
   provider: string;
-  query: {
-    native: string;
-    originalAst: Record<string, unknown>;
-    provider: string;
-  };
+  query: TranslatedQuery;
   totalResults: number;
   retrievedCount: number;
   lastUpdated: string; // ISO 8601 string
@@ -232,7 +228,7 @@ export function deserializeState(json: string): SearchState {
   const parsed = JSON.parse(json) as SerializedSearchState;
   return {
     provider: parsed.provider as SearchState['provider'],
-    query: parsed.query as SearchState['query'],
+    query: parsed.query,
     totalResults: parsed.totalResults,
     retrievedCount: parsed.retrievedCount,
     lastUpdated: new Date(parsed.lastUpdated),
