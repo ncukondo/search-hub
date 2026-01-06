@@ -42,10 +42,11 @@ describe('ERIC Query Translator', () => {
       expect(result.native).toBe('title:education');
     });
 
-    it('should map abstract field to abstract:', () => {
+    it('should map abstract field to description:', () => {
+      // ERIC uses 'description' field for abstracts
       const ast = createQueryAST([createBlock('abstract', ['learning'])]);
       const result = translateQueryAST(ast);
-      expect(result.native).toBe('abstract:learning');
+      expect(result.native).toBe('description:learning');
     });
 
     it('should map author field to author:', () => {
@@ -67,10 +68,11 @@ describe('ERIC Query Translator', () => {
       expect(result.native).toBe('technology');
     });
 
-    it('should expand title_abstract to title OR abstract', () => {
+    it('should expand title_abstract to title OR description', () => {
+      // ERIC uses 'description' field for abstracts
       const ast = createQueryAST([createBlock('title_abstract', ['diabetes'])]);
       const result = translateQueryAST(ast);
-      expect(result.native).toBe('(title:diabetes OR abstract:diabetes)');
+      expect(result.native).toBe('(title:diabetes OR description:diabetes)');
     });
   });
 
@@ -152,11 +154,11 @@ describe('ERIC Query Translator', () => {
         createBlock('title_abstract', ['diabetes', 'education'], 'OR'),
       ]);
       const result = translateQueryAST(ast);
-      // Should be: ((title:diabetes OR abstract:diabetes) OR (title:education OR abstract:education))
+      // Should be: ((title:diabetes OR description:diabetes) OR (title:education OR description:education))
       expect(result.native).toContain('title:diabetes');
-      expect(result.native).toContain('abstract:diabetes');
+      expect(result.native).toContain('description:diabetes');
       expect(result.native).toContain('title:education');
-      expect(result.native).toContain('abstract:education');
+      expect(result.native).toContain('description:education');
     });
 
     it('should expand title_abstract with AND for multiple terms', () => {
@@ -164,7 +166,7 @@ describe('ERIC Query Translator', () => {
         createBlock('title_abstract', ['diabetes', 'prevention'], 'AND'),
       ]);
       const result = translateQueryAST(ast);
-      // Each term expanded to (title:X OR abstract:X), joined by AND
+      // Each term expanded to (title:X OR description:X), joined by AND
       expect(result.native).toContain('AND');
     });
   });

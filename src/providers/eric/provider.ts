@@ -198,10 +198,42 @@ export class ERICProvider extends BaseProvider {
     this.currentTotalResults = state.totalResults;
     this.currentRetrievedCount = state.retrievedCount;
 
-    // Continue from where we left off
     const maxResults = this.currentTotalResults - this.currentRetrievedCount;
+    const pageSize = providerState.pageSize ?? this.pageSize;
+    let retrieved = 0;
 
-    yield* this.search(state.query, { maxResults });
+    // Continue from saved offset
+    while (retrieved < maxResults) {
+      await this.rateLimiter.acquire();
+
+      const searchOptions: ERICSearchOptions = {
+        start: this.currentOffset,
+        rows: Math.min(pageSize, maxResults - retrieved),
+      };
+
+      const result = await this.withRetry(() =>
+        this.client.search(state.query.native, searchOptions)
+      );
+
+      if (result.documents.length === 0) {
+        break;
+      }
+
+      for (const doc of result.documents) {
+        if (retrieved >= maxResults) {
+          break;
+        }
+        yield doc;
+        retrieved++;
+        this.currentRetrievedCount++;
+      }
+
+      this.currentOffset += result.documents.length;
+
+      if (this.currentOffset >= this.currentTotalResults) {
+        break;
+      }
+    }
   }
 
   /**

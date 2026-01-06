@@ -12,7 +12,7 @@ import type { TranslatedQuery } from '../base/types';
  */
 const FIELD_PREFIXES: Record<string, string> = {
   title: 'title:',
-  abstract: 'abstract:',
+  abstract: 'description:', // ERIC uses 'description' field for abstracts
   author: 'author:',
   keyword: 'subject:', // ERIC uses subject for descriptors
   all: '', // No prefix for all-field search
@@ -36,11 +36,12 @@ function formatTerm(term: string, prefix: string): string {
 
 /**
  * Translate a single term for title_abstract field.
- * Expands to (title:term OR abstract:term).
+ * Expands to (title:term OR description:term).
+ * Note: ERIC uses 'description' field for abstracts.
  */
 function translateTitleAbstractTerm(term: string): string {
   const quoted = needsQuotes(term) ? `"${term}"` : term;
-  return `(title:${quoted} OR abstract:${quoted})`;
+  return `(title:${quoted} OR description:${quoted})`;
 }
 
 /**

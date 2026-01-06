@@ -69,7 +69,7 @@ describe('ERIC Provider E2E', () => {
 
     const query = provider.translateQuery(ast);
     expect(query.native).toContain('title:');
-    expect(query.native).toContain('abstract:');
+    expect(query.native).toContain('description:');
 
     const articles: unknown[] = [];
     for await (const article of provider.search(query, { maxResults: 3 })) {

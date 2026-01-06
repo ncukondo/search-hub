@@ -92,7 +92,7 @@ describe('ERIC Provider', () => {
       const result = provider.translateQuery(ast);
 
       expect(result.native).toContain('title:');
-      expect(result.native).toContain('abstract:');
+      expect(result.native).toContain('description:');
       expect(result.native).toContain('publicationdateyear:[2020 TO 2024]');
     });
   });
