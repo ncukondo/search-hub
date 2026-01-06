@@ -89,9 +89,9 @@ export class ArxivProvider extends BaseProvider {
       totalResults = response.totalResults;
 
       // Update state for session resume
-      this.currentState = this.createBaseState(query, totalResults, retrievedCount);
-      (this.currentState as SearchState & { providerState: ArxivProviderState }).providerState = {
-        offset,
+      this.currentState = {
+        ...this.createBaseState(query, totalResults, retrievedCount),
+        providerState: { offset } as ArxivProviderState,
       };
 
       // Yield articles from this page
@@ -106,9 +106,9 @@ export class ArxivProvider extends BaseProvider {
       // Update state after yielding
       if (this.currentState) {
         this.currentState.retrievedCount = retrievedCount;
-        (this.currentState as SearchState & { providerState: ArxivProviderState }).providerState = {
+        this.currentState.providerState = {
           offset: offset + response.entries.length,
-        };
+        } as ArxivProviderState;
       }
 
       // Check if we've retrieved all available results
@@ -184,9 +184,9 @@ export class ArxivProvider extends BaseProvider {
       // Update state after yielding
       if (this.currentState) {
         this.currentState.retrievedCount = state.retrievedCount + retrievedCount;
-        (this.currentState as SearchState & { providerState: ArxivProviderState }).providerState = {
+        this.currentState.providerState = {
           offset: offset + response.entries.length,
-        };
+        } as ArxivProviderState;
       }
 
       // Check if done
