@@ -115,13 +115,14 @@ export class ScopusProvider extends BaseProvider {
 
         const doc = parseDocument(entry);
         retrievedCount++;
-        yield doc;
 
-        // Update state after each article
+        // Update state before yield so it's available when consumer breaks
         if (this.currentState) {
           this.currentState.retrievedCount = retrievedCount;
           this.currentState.lastUpdated = new Date();
         }
+
+        yield doc;
       }
 
       // Move to next page
@@ -205,13 +206,14 @@ export class ScopusProvider extends BaseProvider {
 
         const doc = parseDocument(entry);
         retrievedCount++;
-        yield doc;
 
-        // Update state after each article
+        // Update state before yield so it's available when consumer breaks
         if (this.currentState) {
           this.currentState.retrievedCount = retrievedCount;
           this.currentState.lastUpdated = new Date();
         }
+
+        yield doc;
       }
 
       // Move to next page

@@ -88,7 +88,8 @@ export class ScopusClient {
    */
   async testConnection(): Promise<boolean> {
     try {
-      await this.search('*', { count: 1, view: 'STANDARD' });
+      // Use a simple valid query instead of '*' which Scopus may reject
+      await this.search('ALL(test)', { count: 1, view: 'STANDARD' });
       return true;
     } catch {
       return false;
