@@ -169,7 +169,7 @@ export class ScopusProvider extends BaseProvider {
     const maxResults = state.totalResults;
     const pageSize = DEFAULT_PAGE_SIZE;
 
-    let offset = providerState.offset + state.retrievedCount;
+    let offset = state.retrievedCount;
     let retrievedCount = state.retrievedCount;
 
     // Restore state

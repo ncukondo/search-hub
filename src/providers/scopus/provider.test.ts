@@ -298,4 +298,121 @@ describe('ScopusProvider', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('session resume', () => {
+    it('should resume from correct offset after multi-page interruption', async () => {
+      // Setup: simulate interruption after 30 articles (25 from page 1 + 5 from page 2)
+      const provider = new ScopusProvider(config);
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        filters: {},
+        overrides: {},
+      };
+      const query = provider.translateQuery(ast);
+
+      // Create a state simulating interruption after 30 articles
+      const savedState = {
+        provider: 'scopus' as const,
+        query,
+        totalResults: 50,
+        retrievedCount: 30,
+        lastUpdated: new Date(),
+        providerState: {
+          offset: 25, // Page 2 start position
+          totalResults: 50,
+          query: query.native,
+        },
+      };
+
+      // Mock response for resumed search (should start at offset 30, not 55)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '50',
+            'opensearch:startIndex': '30',
+            'opensearch:itemsPerPage': '20',
+            entry: Array.from({ length: 20 }, (_, i) => ({
+              'dc:identifier': `SCOPUS_ID:${i + 30}`,
+              'dc:title': `Article ${i + 30}`,
+            })),
+          },
+        }),
+      });
+
+      const articles: unknown[] = [];
+      for await (const article of provider.resumeSearch(savedState)) {
+        articles.push(article);
+      }
+
+      expect(articles).toHaveLength(20);
+
+      // Verify the API was called with correct start offset (30, not 55)
+      const calledUrl = mockFetch.mock.calls[0]![0] as URL;
+      expect(calledUrl.searchParams.get('start')).toBe('30');
+    });
+
+    it('should get correct state during search for later resume', async () => {
+      // First page
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '50',
+            'opensearch:startIndex': '0',
+            'opensearch:itemsPerPage': '25',
+            entry: Array.from({ length: 25 }, (_, i) => ({
+              'dc:identifier': `SCOPUS_ID:${i}`,
+              'dc:title': `Article ${i}`,
+            })),
+          },
+        }),
+      });
+
+      // Second page
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '50',
+            'opensearch:startIndex': '25',
+            'opensearch:itemsPerPage': '25',
+            entry: Array.from({ length: 25 }, (_, i) => ({
+              'dc:identifier': `SCOPUS_ID:${i + 25}`,
+              'dc:title': `Article ${i + 25}`,
+            })),
+          },
+        }),
+      });
+
+      const provider = new ScopusProvider(config);
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        filters: {},
+        overrides: {},
+      };
+      const query = provider.translateQuery(ast);
+
+      const articles: unknown[] = [];
+      let capturedState = null;
+
+      for await (const article of provider.search(query)) {
+        articles.push(article);
+        // Capture state after 30 articles (into second page)
+        if (articles.length === 30) {
+          capturedState = provider.getSearchState();
+          break;
+        }
+      }
+
+      expect(articles).toHaveLength(30);
+      expect(capturedState).not.toBeNull();
+      expect(capturedState!.retrievedCount).toBe(30);
+    });
+  });
 });
