@@ -69,8 +69,9 @@ export class ArxivClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     // Combine with external signal if provided
+    const abortHandler = () => controller.abort();
     if (options.signal) {
-      options.signal.addEventListener('abort', () => controller.abort());
+      options.signal.addEventListener('abort', abortHandler);
     }
 
     try {
@@ -107,6 +108,10 @@ export class ArxivClient {
       throw error;
     } finally {
       clearTimeout(timeoutId);
+      // Clean up abort listener to prevent memory leaks
+      if (options.signal) {
+        options.signal.removeEventListener('abort', abortHandler);
+      }
     }
   }
 
