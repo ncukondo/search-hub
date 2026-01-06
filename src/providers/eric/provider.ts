@@ -8,7 +8,7 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
-  QueryAstNode,
+  QueryAST,
   SearchState,
   SearchResumeResult,
 } from '../base/types';
@@ -79,7 +79,7 @@ export class ERICProvider extends BaseProvider {
   /**
    * Translate a QueryAST to ERIC-native query syntax.
    */
-  translateQuery(ast: QueryAstNode): TranslatedQuery {
+  translateQuery(ast: QueryAST): TranslatedQuery {
     return translateQuery(ast);
   }
 

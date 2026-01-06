@@ -39,7 +39,7 @@ describe('ERIC Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(ast as unknown as Parameters<typeof provider.translateQuery>[0]);
+    const query = provider.translateQuery(ast);
     expect(query.native).toContain('title:education');
     expect(query.native).toContain('publicationdateyear:[2020 TO 2024]');
 
@@ -67,7 +67,7 @@ describe('ERIC Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(ast as unknown as Parameters<typeof provider.translateQuery>[0]);
+    const query = provider.translateQuery(ast);
     expect(query.native).toContain('title:');
     expect(query.native).toContain('abstract:');
 
@@ -95,7 +95,7 @@ describe('ERIC Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(ast as unknown as Parameters<typeof provider.translateQuery>[0]);
+    const query = provider.translateQuery(ast);
 
     const articles: unknown[] = [];
     for await (const article of provider.search(query, { maxResults: 2 })) {
@@ -134,7 +134,7 @@ describe('ERIC Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(ast as unknown as Parameters<typeof provider.translateQuery>[0]);
+    const query = provider.translateQuery(ast);
 
     // Use small page size to force pagination
     const articles: unknown[] = [];
@@ -162,7 +162,7 @@ describe('ERIC Provider E2E', () => {
       overrides: {},
     };
 
-    const query = provider.translateQuery(ast as unknown as Parameters<typeof provider.translateQuery>[0]);
+    const query = provider.translateQuery(ast);
 
     // First search - get 3 results
     const firstBatch: unknown[] = [];

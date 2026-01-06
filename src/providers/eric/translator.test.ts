@@ -183,11 +183,10 @@ describe('ERIC Query Translator', () => {
     });
   });
 
-  describe('translateQuery (QueryAstNode wrapper)', () => {
-    it('should handle QueryAstNode input', () => {
+  describe('translateQuery (QueryAST wrapper)', () => {
+    it('should handle QueryAST input', () => {
       const ast = createQueryAST([createBlock('title', ['education'])]);
-      // Cast to unknown first to satisfy TypeScript when using as QueryAstNode
-      const result = translateQuery(ast as unknown as Parameters<typeof translateQuery>[0]);
+      const result = translateQuery(ast);
       expect(result.native).toBe('title:education');
       expect(result.provider).toBe('eric');
     });

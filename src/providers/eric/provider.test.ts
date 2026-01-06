@@ -4,9 +4,20 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ERICProvider, type IERICClient } from './provider';
-import type { TranslatedQuery, SearchOptions } from '../base/types';
-import type { QueryAST } from '../../query/types';
+import type { TranslatedQuery, SearchOptions, QueryAST } from '../base/types';
 import type { ERICSearchResult } from './parser';
+
+/**
+ * Helper to create a minimal QueryAST for testing.
+ */
+function createMockQueryAST(name = 'test-query'): QueryAST {
+  return {
+    name,
+    blocks: [],
+    filters: {},
+    overrides: {},
+  };
+}
 
 // Mock fetch globally for testConnection
 const mockFetch = vi.fn();
@@ -55,7 +66,7 @@ describe('ERIC Provider', () => {
         overrides: {},
       };
 
-      const result = provider.translateQuery(ast as unknown as Parameters<typeof provider.translateQuery>[0]);
+      const result = provider.translateQuery(ast);
 
       expect(result.provider).toBe('eric');
       expect(result.native).toBe('title:education');
@@ -78,7 +89,7 @@ describe('ERIC Provider', () => {
         overrides: {},
       };
 
-      const result = provider.translateQuery(ast as unknown as Parameters<typeof provider.translateQuery>[0]);
+      const result = provider.translateQuery(ast);
 
       expect(result.native).toContain('title:');
       expect(result.native).toContain('abstract:');
@@ -112,7 +123,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:education',
-        originalAst: { type: 'query' },
+        originalAst: createMockQueryAST(),
         provider: 'eric',
       };
 
@@ -157,7 +168,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:education',
-        originalAst: { type: 'query' },
+        originalAst: createMockQueryAST(),
         provider: 'eric',
       };
 
@@ -187,7 +198,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:education',
-        originalAst: { type: 'query' },
+        originalAst: createMockQueryAST(),
         provider: 'eric',
       };
 
@@ -210,7 +221,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:nonexistent',
-        originalAst: { type: 'query' },
+        originalAst: createMockQueryAST(),
         provider: 'eric',
       };
 
@@ -265,7 +276,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:test',
-        originalAst: { type: 'query' },
+        originalAst: createMockQueryAST(),
         provider: 'eric',
       };
 
@@ -300,7 +311,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:education',
-        originalAst: { type: 'query' },
+        originalAst: createMockQueryAST(),
         provider: 'eric',
       };
 
@@ -328,7 +339,7 @@ describe('ERIC Provider', () => {
         provider: 'eric' as const,
         query: {
           native: 'title:test',
-          originalAst: { type: 'query' },
+          originalAst: createMockQueryAST(),
           provider: 'eric' as const,
         },
         totalResults: 100,
@@ -361,7 +372,7 @@ describe('ERIC Provider', () => {
         provider: 'eric' as const,
         query: {
           native: 'title:education',
-          originalAst: { type: 'query' },
+          originalAst: createMockQueryAST(),
           provider: 'eric' as const,
         },
         totalResults: 100,

@@ -4,7 +4,7 @@
  */
 
 import type { QueryAST, QueryBlock, Filters } from '../../query/types';
-import type { QueryAstNode, TranslatedQuery } from '../base/types';
+import type { TranslatedQuery } from '../base/types';
 
 /**
  * Field prefix mappings for ERIC.
@@ -120,15 +120,15 @@ export function translateQueryAST(ast: QueryAST): TranslatedQuery {
 
   return {
     native,
-    originalAst: ast as unknown as QueryAstNode,
+    originalAst: ast,
     provider: 'eric',
   };
 }
 
 /**
- * Translate a QueryAstNode (generic interface) to ERIC query.
+ * Translate a QueryAST to ERIC query.
  * This is the Provider interface method signature.
  */
-export function translateQuery(ast: QueryAstNode): TranslatedQuery {
-  return translateQueryAST(ast as unknown as QueryAST);
+export function translateQuery(ast: QueryAST): TranslatedQuery {
+  return translateQueryAST(ast);
 }
