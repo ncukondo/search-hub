@@ -4,19 +4,78 @@
  * Parses Scopus API JSON responses into typed structures.
  */
 
+import { z } from 'zod';
 import type { ScopusSearchResponse, ScopusDocument, ScopusRawEntry, ScopusAuthor } from './types';
 
 /**
+ * Zod schema for Scopus author in API response.
+ */
+const ScopusAuthorSchema = z.object({
+  authname: z.string().optional(),
+  authid: z.string().optional(),
+  afid: z.array(z.object({ $: z.string().optional() })).optional(),
+});
+
+/**
+ * Zod schema for Scopus entry in API response.
+ */
+const ScopusRawEntrySchema = z.object({
+  'dc:identifier': z.string().optional(),
+  'dc:title': z.string().optional(),
+  'dc:creator': z.string().optional(),
+  'dc:description': z.string().optional(),
+  'prism:doi': z.string().optional(),
+  'prism:coverDate': z.string().optional(),
+  'prism:publicationName': z.string().optional(),
+  'prism:volume': z.string().optional(),
+  'prism:issueIdentifier': z.string().optional(),
+  'prism:pageRange': z.string().optional(),
+  'citedby-count': z.string().optional(),
+  eid: z.string().optional(),
+  subtypeDescription: z.string().optional(),
+  author: z.array(ScopusAuthorSchema).optional(),
+});
+
+/**
+ * Zod schema for Scopus search results wrapper.
+ */
+const ScopusSearchResultsSchema = z.object({
+  'opensearch:totalResults': z.string().optional(),
+  'opensearch:startIndex': z.string().optional(),
+  'opensearch:itemsPerPage': z.string().optional(),
+  entry: z.array(ScopusRawEntrySchema).optional(),
+});
+
+/**
+ * Zod schema for full Scopus API response.
+ */
+const ScopusApiResponseSchema = z.object({
+  'search-results': ScopusSearchResultsSchema,
+});
+
+/**
  * Parse the raw Scopus API search response.
+ * Validates the response structure using Zod before parsing.
  */
 export function parseSearchResponse(json: unknown): ScopusSearchResponse {
-  const data = json as Record<string, unknown>;
-  const searchResults = data['search-results'] as Record<string, unknown>;
+  const parseResult = ScopusApiResponseSchema.safeParse(json);
 
-  const totalResults = parseInt(searchResults['opensearch:totalResults'] as string, 10) || 0;
-  const startIndex = parseInt(searchResults['opensearch:startIndex'] as string, 10) || 0;
-  const itemsPerPage = parseInt(searchResults['opensearch:itemsPerPage'] as string, 10) || 25;
-  const entries = (searchResults['entry'] as ScopusRawEntry[]) || [];
+  if (!parseResult.success) {
+    // Fallback to empty response on invalid structure
+    return {
+      totalResults: 0,
+      startIndex: 0,
+      itemsPerPage: 25,
+      entries: [],
+    };
+  }
+
+  const searchResults = parseResult.data['search-results'];
+
+  const totalResults = parseInt(searchResults['opensearch:totalResults'] ?? '0', 10) || 0;
+  const startIndex = parseInt(searchResults['opensearch:startIndex'] ?? '0', 10) || 0;
+  const itemsPerPage = parseInt(searchResults['opensearch:itemsPerPage'] ?? '25', 10) || 25;
+  const entries = (searchResults.entry as ScopusRawEntry[]) ?? [];
 
   return {
     totalResults,

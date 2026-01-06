@@ -215,4 +215,70 @@ describe('Scopus Response Parser', () => {
       expect(() => new Date(result.retrievedAt)).not.toThrow();
     });
   });
+
+  describe('Zod validation', () => {
+    it('should return empty response for completely invalid JSON', () => {
+      const result = parseSearchResponse('not json');
+      expect(result.totalResults).toBe(0);
+      expect(result.entries).toHaveLength(0);
+    });
+
+    it('should return empty response for missing search-results', () => {
+      const json = { wrongKey: 'value' };
+      const result = parseSearchResponse(json);
+      expect(result.totalResults).toBe(0);
+      expect(result.entries).toHaveLength(0);
+    });
+
+    it('should return empty response for null input', () => {
+      const result = parseSearchResponse(null);
+      expect(result.totalResults).toBe(0);
+      expect(result.entries).toHaveLength(0);
+    });
+
+    it('should return empty response for undefined input', () => {
+      const result = parseSearchResponse(undefined);
+      expect(result.totalResults).toBe(0);
+      expect(result.entries).toHaveLength(0);
+    });
+
+    it('should handle array input gracefully', () => {
+      const result = parseSearchResponse([1, 2, 3]);
+      expect(result.totalResults).toBe(0);
+      expect(result.entries).toHaveLength(0);
+    });
+
+    it('should handle partial valid structure', () => {
+      const json = {
+        'search-results': {
+          'opensearch:totalResults': '10',
+          // missing other fields
+        },
+      };
+      const result = parseSearchResponse(json);
+      expect(result.totalResults).toBe(10);
+      expect(result.entries).toHaveLength(0);
+    });
+
+    it('should handle entry with unexpected extra fields', () => {
+      const json = {
+        'search-results': {
+          'opensearch:totalResults': '1',
+          'opensearch:startIndex': '0',
+          'opensearch:itemsPerPage': '25',
+          entry: [
+            {
+              'dc:identifier': 'SCOPUS_ID:12345',
+              'dc:title': 'Test',
+              unexpectedField: 'should be ignored',
+            },
+          ],
+        },
+      };
+      const result = parseSearchResponse(json);
+      expect(result.totalResults).toBe(1);
+      expect(result.entries).toHaveLength(1);
+      expect(result.entries[0]!['dc:identifier']).toBe('SCOPUS_ID:12345');
+    });
+  });
 });
