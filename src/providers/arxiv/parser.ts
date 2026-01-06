@@ -66,6 +66,7 @@ function parsePublicationDate(dateStr: string): string {
     const date = new Date(dateStr);
     return date.toISOString().split('T')[0]!;
   } catch {
+    // If date parsing fails (invalid format), return original string as fallback
     return dateStr;
   }
 }
