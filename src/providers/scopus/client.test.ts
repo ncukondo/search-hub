@@ -341,4 +341,85 @@ describe('ScopusClient', () => {
       expect(result).toBe(false);
     });
   });
+
+  describe('timeout', () => {
+    it('should throw TIMEOUT error when request times out', async () => {
+      // Mock fetch to respect AbortSignal
+      mockFetch.mockImplementationOnce((_url: URL, options: RequestInit) => {
+        return new Promise((resolve, reject) => {
+          const signal = options.signal;
+          if (signal) {
+            signal.addEventListener('abort', () => {
+              const error = new Error('The operation was aborted');
+              error.name = 'AbortError';
+              reject(error);
+            });
+          }
+          // Never resolves naturally - will be aborted by timeout
+        });
+      });
+
+      const shortTimeoutConfig: ScopusConfig = {
+        ...config,
+        timeout: 100, // 100ms timeout
+      };
+      const client = new ScopusClient(shortTimeoutConfig);
+
+      await expect(client.search('TITLE(test)')).rejects.toMatchObject({
+        code: 'TIMEOUT',
+        retryable: true,
+      });
+    });
+
+    it('should use default timeout when not configured', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '0',
+            'opensearch:startIndex': '0',
+            'opensearch:itemsPerPage': '25',
+            entry: [],
+          },
+        }),
+      });
+
+      const configWithoutTimeout: ScopusConfig = {
+        apiKey: 'test-api-key',
+        rateLimit: 2,
+        // timeout not specified
+      };
+      const client = new ScopusClient(configWithoutTimeout);
+
+      // Should succeed without error (uses default 30s timeout)
+      await expect(client.search('TITLE(test)')).resolves.toBeDefined();
+    });
+
+    it('should clear timeout after successful response', async () => {
+      vi.useFakeTimers();
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '0',
+            'opensearch:startIndex': '0',
+            'opensearch:itemsPerPage': '25',
+            entry: [],
+          },
+        }),
+      });
+
+      const client = new ScopusClient(config);
+      const promise = client.search('TITLE(test)');
+
+      // Advance timers and resolve
+      await vi.runAllTimersAsync();
+      await expect(promise).resolves.toBeDefined();
+
+      vi.useRealTimers();
+    });
+  });
 });

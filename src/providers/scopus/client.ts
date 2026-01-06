@@ -10,6 +10,7 @@ import { createProviderError, type ProviderError, type RateLimitError } from '..
 
 const SCOPUS_API_BASE = 'https://api.elsevier.com';
 const SCOPUS_SEARCH_ENDPOINT = '/content/search/scopus';
+const DEFAULT_TIMEOUT_MS = 30000;
 
 /**
  * Rate limit information from response headers.
@@ -64,23 +65,42 @@ export class ScopusClient {
   ): Promise<ScopusClientResponse> {
     const url = this.buildSearchUrl(query, options);
     const headers = this.buildHeaders();
+    const timeoutMs = this.config.timeout ?? DEFAULT_TIMEOUT_MS;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!response.ok) {
-      throw this.handleErrorResponse(response);
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw this.handleErrorResponse(response);
+      }
+
+      const json = await response.json();
+      const parsed = parseSearchResponse(json);
+
+      return {
+        ...parsed,
+        rateLimit: this.parseRateLimitHeaders(response.headers),
+      };
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw createProviderError(
+          'TIMEOUT',
+          `Scopus API request timed out after ${timeoutMs}ms`,
+          'scopus',
+          { retryable: true }
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const json = await response.json();
-    const parsed = parseSearchResponse(json);
-
-    return {
-      ...parsed,
-      rateLimit: this.parseRateLimitHeaders(response.headers),
-    };
   }
 
   /**
