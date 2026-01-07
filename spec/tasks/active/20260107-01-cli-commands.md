@@ -109,15 +109,15 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 4: query translate Command
 
-- [ ] Step 4: Implement query translate subcommand
-  - [ ] Write test: `src/cli/commands/query/translate.test.ts`
-  - [ ] Create stub: `src/cli/commands/query/translate.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement query translation display for each provider
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `query translate <file> [--db <provider>]` shows translated queries
+- [x] Step 4: Implement query translate subcommand
+  - [x] Write test: `src/cli/commands/query/translate.test.ts`
+  - [x] Create stub: `src/cli/commands/query/translate.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement query translation display for each provider
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `query translate <file> [--db <provider>]` shows translated queries
 
 ---
 
