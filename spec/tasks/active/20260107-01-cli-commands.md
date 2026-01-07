@@ -384,18 +384,16 @@ Use import.meta.url for reliable CLI entry point detection.
 
 Add ability to persist config changes to file.
 
-- [ ] Step 19: Implement config save
-  - [ ] Add `saveConfig` function to `src/config/loader.ts`:
-    ```typescript
-    export async function saveConfig(config: Config, path?: string): Promise<void>;
-    ```
-  - [ ] Write tests for `saveConfig` in `src/config/loader.test.ts`
-  - [ ] Update `src/cli/index.ts` config command:
-    - [ ] After `setConfigKey`, call `saveConfig` to persist changes
-    - [ ] Handle file write errors appropriately
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Run `npm test`
-  - [ ] Acceptance: `config <key> <value>` persists changes to config file
+- [x] Step 19: Implement config save
+  - [x] Add `saveConfig` function to `src/config/loader.ts`
+  - [x] Write tests for `saveConfig` in `src/config/loader.test.ts` (4 tests)
+  - [x] Export `saveConfig` from `src/config/index.ts`
+  - [x] Update `src/cli/index.ts` config command:
+    - [x] After `setConfigKey`, call `saveConfig` to persist changes
+    - [x] Handle file write errors appropriately
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: `config <key> <value>` persists changes to config file
 
 ---
 

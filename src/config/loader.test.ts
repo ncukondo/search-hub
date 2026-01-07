@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { loadTomlFile, loadConfig } from './loader';
-import { writeFile, mkdir, rm } from 'node:fs/promises';
+import { loadTomlFile, loadConfig, saveConfig } from './loader';
+import { writeFile, mkdir, rm, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -254,5 +254,89 @@ rate_limit = 8
     expect(typeof config.output.color).toBe('boolean');
     expect(typeof config.providers.pubmed.rate_limit).toBe('number');
     expect(typeof config.session.directory).toBe('string');
+  });
+});
+
+describe('saveConfig', () => {
+  let testDir: string;
+
+  beforeEach(async () => {
+    testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+    await mkdir(testDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(testDir, { recursive: true, force: true });
+  });
+
+  it('saves config to TOML file', async () => {
+    const configPath = join(testDir, 'config.toml');
+    const config = await loadConfig({
+      globalConfigPath: join(testDir, 'nonexistent.toml'),
+      localConfigPath: join(testDir, 'nonexistent.toml'),
+    });
+
+    // Modify some values
+    config.log.level = 'debug';
+    config.providers.pubmed.rate_limit = 10;
+
+    await saveConfig(config, { path: configPath });
+
+    // Verify file was created
+    const content = await readFile(configPath, 'utf-8');
+    expect(content).toContain('[log]');
+    expect(content).toContain('level = "debug"');
+    expect(content).toContain('[providers.pubmed]');
+    expect(content).toContain('rate_limit = 10');
+  });
+
+  it('creates directory if it does not exist', async () => {
+    const nestedPath = join(testDir, 'nested', 'dir', 'config.toml');
+    const config = await loadConfig({
+      globalConfigPath: join(testDir, 'nonexistent.toml'),
+      localConfigPath: join(testDir, 'nonexistent.toml'),
+    });
+
+    await saveConfig(config, { path: nestedPath, createDir: true });
+
+    // Verify file was created
+    const content = await readFile(nestedPath, 'utf-8');
+    expect(content).toContain('[session]');
+  });
+
+  it('can round-trip config through save and load', async () => {
+    const configPath = join(testDir, 'config.toml');
+    const originalConfig = await loadConfig({
+      globalConfigPath: join(testDir, 'nonexistent.toml'),
+      localConfigPath: join(testDir, 'nonexistent.toml'),
+    });
+
+    // Modify some values
+    originalConfig.log.level = 'warn';
+    originalConfig.session.directory = '/custom/sessions';
+    originalConfig.providers.pubmed.api_key = 'test-key';
+    originalConfig.providers.pubmed.rate_limit = 7;
+
+    await saveConfig(originalConfig, { path: configPath });
+
+    // Load back and compare
+    const loadedConfig = await loadConfig({
+      globalConfigPath: configPath,
+      localConfigPath: join(testDir, 'nonexistent.toml'),
+    });
+
+    expect(loadedConfig.log.level).toBe('warn');
+    expect(loadedConfig.session.directory).toBe('/custom/sessions');
+    expect(loadedConfig.providers.pubmed.api_key).toBe('test-key');
+    expect(loadedConfig.providers.pubmed.rate_limit).toBe(7);
+  });
+
+  it('throws on invalid config', async () => {
+    const configPath = join(testDir, 'config.toml');
+    const invalidConfig = {
+      log: { level: 'invalid-level' },
+    } as unknown as Awaited<ReturnType<typeof loadConfig>>;
+
+    await expect(saveConfig(invalidConfig, { path: configPath })).rejects.toThrow();
   });
 });

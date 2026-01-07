@@ -5,7 +5,7 @@
 import { Command } from 'commander';
 import { init } from './commands/init.js';
 import { EXIT_CODES } from './exit-codes.js';
-import { loadConfig, getDefaultConfig } from '../config/index.js';
+import { loadConfig, saveConfig, getDefaultConfig } from '../config/index.js';
 import {
   viewConfig,
   viewConfigKey,
@@ -152,10 +152,23 @@ export function createProgram(): Command {
           // Set key value
           const result = setConfigKey(config, key, value);
           if (result.success) {
-            if (!globalOpts.quiet) {
-              console.log(`Set ${key} = ${result.value}`);
+            // Save the modified config to file
+            const configPath = globalOpts.config ?? '~/.search-hub/config.toml';
+            try {
+              await saveConfig(config, { path: configPath });
+              if (!globalOpts.quiet) {
+                console.log(`Set ${key} = ${result.value}`);
+                console.log(`Saved to ${configPath}`);
+              }
+            } catch (saveError) {
+              if (!globalOpts.quiet) {
+                console.error(
+                  `Error saving config: ${saveError instanceof Error ? saveError.message : saveError}`
+                );
+              }
+              process.exitCode = EXIT_CODES.CONFIG_ERROR;
+              return;
             }
-            // Note: Saving config to file would require additional implementation
           } else {
             if (!globalOpts.quiet) {
               console.error(`Error: ${result.error}`);
