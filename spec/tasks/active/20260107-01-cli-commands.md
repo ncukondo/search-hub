@@ -81,15 +81,15 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 2: config Command
 
-- [ ] Step 2: Implement config view/edit command
-  - [ ] Write test: `src/cli/commands/config.test.ts`
-  - [ ] Create stub: `src/cli/commands/config.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement config command (view all, view key, set key)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `config`, `config <key>`, `config <key> <value>` work
+- [x] Step 2: Implement config view/edit command
+  - [x] Write test: `src/cli/commands/config.test.ts`
+  - [x] Create stub: `src/cli/commands/config.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement config command (view all, view key, set key)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `config`, `config <key>`, `config <key> <value>` work
 
 ---
 
