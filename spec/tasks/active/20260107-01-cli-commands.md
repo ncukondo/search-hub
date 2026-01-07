@@ -183,16 +183,16 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 8: resume Command
 
-- [ ] Step 8: Implement resume command for continuing interrupted sessions
-  - [ ] Write test: `src/cli/commands/resume.test.ts`
-  - [ ] Create stub: `src/cli/commands/resume.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement session resume using Provider Session Resume functionality
-  - [ ] Use MultiProviderProgress for display
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `resume <session-id>`, `--db`, `--retry-failed` work
+- [x] Step 8: Implement resume command for continuing interrupted sessions
+  - [x] Write test: `src/cli/commands/resume.test.ts`
+  - [x] Create stub: `src/cli/commands/resume.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement session resume using Provider Session Resume functionality
+  - [x] Use MultiProviderProgress for display
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `resume <session-id>`, `--db`, `--retry-failed` work
 
 ---
 
