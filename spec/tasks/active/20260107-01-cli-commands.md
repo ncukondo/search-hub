@@ -67,15 +67,15 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 1: CLI Entry Point & Global Options
 
-- [ ] Step 1: Set up CLI framework with global options
-  - [ ] Write test: `src/cli/index.test.ts`
-  - [ ] Create/update: `src/cli/index.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement CLI entry point with commander.js
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: CLI responds to `--help`, `--version`, global options work
+- [x] Step 1: Set up CLI framework with global options
+  - [x] Write test: `src/cli/index.test.ts`
+  - [x] Create/update: `src/cli/index.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement CLI entry point with commander.js
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: CLI responds to `--help`, `--version`, global options work
 
 ---
 
