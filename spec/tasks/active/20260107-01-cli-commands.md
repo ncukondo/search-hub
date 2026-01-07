@@ -123,15 +123,15 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 5: status Command
 
-- [ ] Step 5: Implement status command for session listing/details
-  - [ ] Write test: `src/cli/commands/status.test.ts`
-  - [ ] Create stub: `src/cli/commands/status.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement session list and session detail views
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `status`, `status <session-id>`, `--json`, `--all` work
+- [x] Step 5: Implement status command for session listing/details
+  - [x] Write test: `src/cli/commands/status.test.ts`
+  - [x] Create stub: `src/cli/commands/status.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement session list and session detail views
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `status`, `status <session-id>`, `--json`, `--all` work
 
 ---
 
