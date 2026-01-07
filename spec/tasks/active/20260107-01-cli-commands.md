@@ -442,8 +442,8 @@ Implement actual search execution (non-dry-run mode).
 
 Implement actual resume execution.
 
-- [ ] Step 21: Implement resume execution
-  - [ ] Create `src/cli/commands/resume-executor.ts`:
+- [x] Step 21: Implement resume execution
+  - [x] Create `src/cli/commands/resume-executor.ts`:
     ```typescript
     import type { ResumeCommandOptions } from './resume.js';
     import type { Config } from '../../config/index.js';
@@ -461,19 +461,19 @@ Implement actual resume execution.
       config: Config
     ): Promise<ResumeExecutionResult>;
     ```
-  - [ ] Write tests: `src/cli/commands/resume-executor.test.ts`
-  - [ ] Implementation steps:
-    - [ ] Load session using `loadSession`
-    - [ ] Get resumable providers
-    - [ ] Initialize providers and resume from saved state
-    - [ ] Use `MultiProviderProgress` for display
-    - [ ] Update session status on completion
-  - [ ] Update `src/cli/index.ts` resume command:
-    - [ ] Remove "not yet implemented" message
-    - [ ] Call `executeResume`
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Run `npm test`
-  - [ ] Acceptance: `resume <session-id>` continues interrupted sessions
+  - [x] Write tests: `src/cli/commands/resume-executor.test.ts`
+  - [x] Implementation steps:
+    - [x] Load session using `loadSession`
+    - [x] Get resumable providers
+    - [x] Initialize providers and resume from saved state
+    - [x] Use `MultiProviderProgress` for display
+    - [x] Update session status on completion
+  - [x] Update `src/cli/index.ts` resume command:
+    - [x] Remove "not yet implemented" message
+    - [x] Call `executeResume`
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: `resume <session-id>` continues interrupted sessions
 
 ---
 

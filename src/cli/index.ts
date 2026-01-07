@@ -37,6 +37,7 @@ import {
   validateResumeInput,
   getResumableProvidersForCommand,
 } from './commands/resume.js';
+import { executeResume } from './commands/resume-executor.js';
 import {
   parseExportOptions,
   validateExportInput,
@@ -487,7 +488,7 @@ export function createProgram(): Command {
 
           // Show resumable providers
           if (!globalOpts.quiet) {
-            console.log(`Session ${sessionId} has ${result.providers.length} provider(s) to resume:`);
+            console.log(`Resuming session ${sessionId} with ${result.providers.length} provider(s):`);
             for (const p of result.providers) {
               const details = p.cursor
                 ? `cursor: ${p.cursor}`
@@ -496,9 +497,43 @@ export function createProgram(): Command {
                   : '';
               console.log(`  - ${p.provider}: ${p.strategy}${details ? ` (${details})` : ''}`);
             }
-            console.log('\nResume execution not yet implemented.');
+            console.log('');
           }
-          process.exitCode = EXIT_CODES.SUCCESS;
+
+          // Execute resume
+          let config;
+          try {
+            config = await loadConfig(
+              globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
+            );
+          } catch {
+            config = getDefaultConfig();
+          }
+
+          const showProgress = !globalOpts.quiet && process.stdout.isTTY;
+          const execResult = await executeResume(
+            resumeOpts,
+            sessionsDir,
+            config,
+            showProgress
+          );
+
+          if (execResult.success) {
+            if (!globalOpts.quiet) {
+              console.log(`\nResume completed. ${execResult.resumed} provider(s) resumed.`);
+              if (execResult.results) {
+                for (const [provider, stats] of Object.entries(execResult.results)) {
+                  console.log(`  ${provider}: ${stats.retrieved} results`);
+                }
+              }
+            }
+            process.exitCode = EXIT_CODES.SUCCESS;
+          } else {
+            if (!globalOpts.quiet) {
+              console.error(`Error: ${execResult.error}`);
+            }
+            process.exitCode = EXIT_CODES.NETWORK_ERROR;
+          }
         } catch (error) {
           if (!globalOpts.quiet) {
             console.error(
