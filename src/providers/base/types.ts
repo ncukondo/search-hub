@@ -67,8 +67,8 @@ export interface Article {
 export interface TranslatedQuery {
   /** Database-native query string */
   native: string;
-  /** Reference to original AST */
-  originalAst: QueryAST;
+  /** Reference to original AST (optional for direct query mode) */
+  originalAst?: QueryAST;
   /** Provider that produced this translation */
   provider: ProviderName;
 }
