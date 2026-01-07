@@ -1,5 +1,6 @@
 import type { ProviderName } from '../../session/types.js';
 import type { Article } from '../../providers/base/types.js';
+import { parseProviderNames } from '../utils/validation.js';
 
 export type ExportFormat = 'ids' | 'json' | 'jsonl';
 export type IdType = 'doi' | 'pmid' | 'all';
@@ -41,7 +42,7 @@ export function parseExportOptions(
   }
 
   if (options.db) {
-    result.providers = options.db.split(',').map((p) => p.trim()) as ProviderName[];
+    result.providers = parseProviderNames(options.db);
   }
 
   if (options.idType) {

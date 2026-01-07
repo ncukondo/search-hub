@@ -1,4 +1,5 @@
 import type { ProviderName } from '../../session/types.js';
+import { parseProviderNames } from '../utils/validation.js';
 
 export interface SearchCommandOptions {
   queryFile?: string;
@@ -44,7 +45,7 @@ export function parseSearchOptions(
   }
 
   if (options.db) {
-    result.providers = options.db.split(',').map((p) => p.trim()) as ProviderName[];
+    result.providers = parseProviderNames(options.db);
   }
 
   if (options.name) {

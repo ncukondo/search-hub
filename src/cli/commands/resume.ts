@@ -1,5 +1,6 @@
 import { loadSession, getResumableProviders } from '../../session/manager.js';
 import type { ProviderName, ResumableProvider } from '../../session/types.js';
+import { parseProviderNames } from '../utils/validation.js';
 
 export interface ResumeCommandOptions {
   sessionId: string;
@@ -32,7 +33,7 @@ export function parseResumeOptions(
   };
 
   if (options.db) {
-    result.providers = options.db.split(',').map((p) => p.trim()) as ProviderName[];
+    result.providers = parseProviderNames(options.db);
   }
 
   if (options.retryFailed) {
