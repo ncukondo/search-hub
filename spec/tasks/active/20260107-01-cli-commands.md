@@ -95,15 +95,15 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 3: query validate Command
 
-- [ ] Step 3: Implement query validate subcommand
-  - [ ] Write test: `src/cli/commands/query/validate.test.ts`
-  - [ ] Create stub: `src/cli/commands/query/validate.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement query validation using existing QueryParser
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `query validate <file>` validates YAML and reports errors
+- [x] Step 3: Implement query validate subcommand
+  - [x] Write test: `src/cli/commands/query/validate.test.ts`
+  - [x] Create stub: `src/cli/commands/query/validate.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement query validation using existing QueryParser
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `query validate <file>` validates YAML and reports errors
 
 ---
 
