@@ -166,18 +166,18 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 7: search Command
 
-- [ ] Step 7: Implement search command for executing searches
-  - [ ] Write test: `src/cli/commands/search.test.ts`
-  - [ ] Create stub: `src/cli/commands/search.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement search execution with MultiProviderProgress
-  - [ ] Support both query file and direct query modes:
+- [x] Step 7: Implement search command for executing searches
+  - [x] Write test: `src/cli/commands/search.test.ts`
+  - [x] Create stub: `src/cli/commands/search.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement search execution with MultiProviderProgress
+  - [x] Support both query file and direct query modes:
     - `search <query.yaml>` - from YAML file
     - `search --db <provider> --query <string>` - direct query (uses optional originalAst)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `search <query.yaml>`, `--db`, `--query`, `--dry-run`, `--max-results` work
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `search <query.yaml>`, `--db`, `--query`, `--dry-run`, `--max-results` work
 
 ---
 
