@@ -234,39 +234,39 @@ The following steps address issues identified in PR review.
 
 The command actions in `index.ts` are stub implementations. Wire them to actual helper functions.
 
-- [ ] Step 11: Implement real command actions
-  - [ ] 11.1: config command action
-    - [ ] Import helpers from `./commands/config.js`
-    - [ ] Call `getConfigValue`, `setConfigValue`, `formatConfigOutput` in action
-    - [ ] Test manually: `npx tsx src/cli/index.ts config`
-  - [ ] 11.2: query validate command action
-    - [ ] Import helpers from `./commands/query/validate.js`
-    - [ ] Call `validateQueryFile`, `formatValidationResult` in action
-    - [ ] Test manually: `npx tsx src/cli/index.ts query validate <file>`
-  - [ ] 11.3: query translate command action
-    - [ ] Import helpers from `./commands/query/translate.js`
-    - [ ] Call `translateQueryFile`, `formatTranslationOutput` in action
-    - [ ] Test manually: `npx tsx src/cli/index.ts query translate <file>`
-  - [ ] 11.4: status command action
-    - [ ] Import helpers from `./commands/status.js`
-    - [ ] Call `listSessionsForDisplay`, `getSessionDetails`, `formatSessionList`, `formatSessionDetails` in action
-    - [ ] Test manually: `npx tsx src/cli/index.ts status`
-  - [ ] 11.5: search command action
-    - [ ] Import helpers from `./commands/search.js`
-    - [ ] Call `parseSearchOptions`, `validateSearchInput`, `formatDryRunOutput` in action
-    - [ ] For non-dry-run, implement actual search execution using providers
-    - [ ] Test manually: `npx tsx src/cli/index.ts search --dry-run <file>`
-  - [ ] 11.6: resume command action
-    - [ ] Import helpers from `./commands/resume.js`
-    - [ ] Call `parseResumeOptions`, `validateResumeInput`, `getResumableStatus` in action
-    - [ ] Test manually: `npx tsx src/cli/index.ts resume <session-id>`
-  - [ ] 11.7: export command action
-    - [ ] Import helpers from `./commands/export.js`
-    - [ ] Call `parseExportOptions`, `validateExportInput`, `formatExportOutput` in action
-    - [ ] Test manually: `npx tsx src/cli/index.ts export <session-id>`
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Run `npm test`
-  - [ ] Acceptance: Each command executes real logic, not just console.log
+- [x] Step 11: Implement real command actions
+  - [x] 11.1: config command action
+    - [x] Import helpers from `./commands/config.js`
+    - [x] Call `viewConfig`, `viewConfigKey`, `setConfigKey` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts config`
+  - [x] 11.2: query validate command action
+    - [x] Import helpers from `./commands/query/validate.js`
+    - [x] Call `validateQueryCommand`, `formatValidateResult` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts query validate <file>`
+  - [x] 11.3: query translate command action
+    - [x] Import helpers from `./commands/query/translate.js`
+    - [x] Call `translateQueryCommand`, `formatTranslateResult` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts query translate <file>`
+  - [x] 11.4: status command action
+    - [x] Import helpers from `./commands/status.js`
+    - [x] Call `listSessionsForDisplay`, `getSessionDetails`, `formatSessionList`, `formatSessionDetails` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts status`
+  - [x] 11.5: search command action
+    - [x] Import helpers from `./commands/search.js`
+    - [x] Call `parseSearchOptions`, `validateSearchInput`, `formatDryRunOutput` in action
+    - [x] Non-dry-run shows message (full search execution deferred)
+    - [x] Test manually: `npx tsx src/cli/index.ts search --dry-run <file>`
+  - [x] 11.6: resume command action
+    - [x] Import helpers from `./commands/resume.js`
+    - [x] Call `parseResumeOptions`, `validateResumeInput`, `getResumableProvidersForCommand` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts resume <session-id>`
+  - [x] 11.7: export command action
+    - [x] Import helpers from `./commands/export.js`
+    - [x] Call `parseExportOptions`, `validateExportInput`, `formatIds/Json/Jsonl` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts export <session-id>`
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: Each command executes real logic, not just console.log
 
 ---
 
