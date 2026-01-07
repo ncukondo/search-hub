@@ -4,7 +4,16 @@
 import type { ProviderName } from '../../providers/base/types.js';
 
 /**
- * Valid provider names.
+ * Currently implemented providers available at runtime.
+ *
+ * Note: The ProviderName type in `providers/base/types.ts` includes
+ * additional providers ('wos', 'embase') that are planned but not yet
+ * implemented. This constant only includes providers that have working
+ * implementations and can be used in CLI commands.
+ *
+ * When adding a new provider implementation:
+ * 1. Implement the provider in `src/providers/{name}/`
+ * 2. Add it to this list to make it available via CLI
  */
 const VALID_PROVIDERS: readonly ProviderName[] = [
   'pubmed',

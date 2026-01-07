@@ -313,6 +313,250 @@ Ensure consistent error message formatting.
 
 ---
 
+## Code Quality Fixes (PR #13 Review Round 2)
+
+The following steps address code quality issues identified in the second review.
+
+---
+
+### Step 15: Clarify VALID_PROVIDERS Intent
+
+Document that `wos` and `embase` are planned but not yet implemented.
+
+- [x] Step 15: Add documentation for provider availability
+  - [x] Update `src/cli/utils/validation.ts`:
+    - [x] Add comment explaining `wos` and `embase` are defined in types but not yet implemented
+    - [x] Keep VALID_PROVIDERS as the runtime-available providers
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Intent is clear in code comments
+
+---
+
+### Step 16: Consolidate ProviderName Type Definitions
+
+Remove duplicate ProviderName definitions and use a single source of truth.
+
+- [ ] Step 16: Consolidate ProviderName type
+  - [ ] Keep `src/providers/base/types.ts` as the authoritative source
+  - [ ] Update `src/session/types.ts`:
+    - [ ] Remove local ProviderName definition
+    - [ ] Add `export type { ProviderName } from '../providers/base/types.js';`
+  - [ ] Update `src/query/types.ts`:
+    - [ ] Remove local ProviderName definition
+    - [ ] Add `export type { ProviderName } from '../providers/base/types.js';`
+  - [ ] Run `npm run typecheck` - verify no errors
+  - [ ] Run `npm test` - verify all tests pass
+  - [ ] Acceptance: Single definition, re-exported from other modules
+
+---
+
+### Step 17: Extract Sessions Directory Helper
+
+Remove code duplication for getting sessions directory.
+
+- [ ] Step 17: Create getSessionsDir helper
+  - [ ] Create helper in `src/cli/utils/sessions-dir.ts`:
+    ```typescript
+    import { loadConfig, getDefaultConfig } from '../../config/index.js';
+    import type { GlobalOptions } from '../index.js';
+
+    export async function getSessionsDir(globalOpts: GlobalOptions): Promise<string> {
+      if (globalOpts.sessionDir) return globalOpts.sessionDir;
+      try {
+        const config = await loadConfig(
+          globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
+        );
+        return config.session.directory;
+      } catch {
+        return getDefaultConfig().session.directory;
+      }
+    }
+    ```
+  - [ ] Write test: `src/cli/utils/sessions-dir.test.ts`
+  - [ ] Update `src/cli/index.ts`:
+    - [ ] Import `getSessionsDir`
+    - [ ] Replace 3 duplicated IIFE patterns with `getSessionsDir(globalOpts)`
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Run `npm test`
+  - [ ] Acceptance: No duplicated code for sessions directory resolution
+
+---
+
+### Step 18: Fix Direct Execution Detection
+
+Use import.meta.url for reliable CLI entry point detection.
+
+- [ ] Step 18: Fix main execution detection
+  - [ ] Update `src/cli/index.ts` (lines 635-644):
+    ```typescript
+    import { fileURLToPath } from 'node:url';
+
+    // Run main if executed directly
+    const currentFile = fileURLToPath(import.meta.url);
+    if (process.argv[1] === currentFile) {
+      main().catch((error) => {
+        console.error('Fatal error:', error);
+        process.exit(EXIT_CODES.GENERAL_ERROR);
+      });
+    }
+    ```
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Run `npm test`
+  - [ ] Acceptance: CLI works correctly when executed directly or via symlink
+
+---
+
+### Step 19: Implement Config Save Functionality
+
+Add ability to persist config changes to file.
+
+- [ ] Step 19: Implement config save
+  - [ ] Add `saveConfig` function to `src/config/loader.ts`:
+    ```typescript
+    export async function saveConfig(config: Config, path?: string): Promise<void>;
+    ```
+  - [ ] Write tests for `saveConfig` in `src/config/loader.test.ts`
+  - [ ] Update `src/cli/index.ts` config command:
+    - [ ] After `setConfigKey`, call `saveConfig` to persist changes
+    - [ ] Handle file write errors appropriately
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Run `npm test`
+  - [ ] Acceptance: `config <key> <value>` persists changes to config file
+
+---
+
+### Step 20: Implement Search Execution
+
+Implement actual search execution (non-dry-run mode).
+
+- [ ] Step 20: Implement search execution
+  - [ ] Create `src/cli/commands/search-executor.ts`:
+    ```typescript
+    import { MultiProviderProgress } from '../utils/progress.js';
+    import type { SearchCommandOptions } from './search.js';
+    import type { ProviderName } from '../../providers/base/types.js';
+    import type { Config } from '../../config/index.js';
+
+    export interface SearchExecutionResult {
+      success: boolean;
+      sessionId?: string;
+      results?: Record<ProviderName, { hits: number; retrieved: number }>;
+      error?: string;
+    }
+
+    export async function executeSearch(
+      options: SearchCommandOptions,
+      sessionsDir: string,
+      config: Config
+    ): Promise<SearchExecutionResult>;
+    ```
+  - [ ] Write tests: `src/cli/commands/search-executor.test.ts`
+  - [ ] Implementation steps:
+    - [ ] Create session using `createSession`
+    - [ ] Initialize providers based on config
+    - [ ] Create `MultiProviderProgress` instance
+    - [ ] Execute search for each provider with progress updates
+    - [ ] Update session status on completion/failure
+  - [ ] Update `src/cli/index.ts` search command:
+    - [ ] Remove "not yet implemented" message
+    - [ ] Call `executeSearch` for non-dry-run mode
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Run `npm test`
+  - [ ] Acceptance: `search <query.yaml>` executes actual searches
+
+---
+
+### Step 21: Implement Resume Execution
+
+Implement actual resume execution.
+
+- [ ] Step 21: Implement resume execution
+  - [ ] Create `src/cli/commands/resume-executor.ts`:
+    ```typescript
+    import type { ResumeCommandOptions } from './resume.js';
+    import type { Config } from '../../config/index.js';
+
+    export interface ResumeExecutionResult {
+      success: boolean;
+      resumed: number;
+      results?: Record<string, { hits: number; retrieved: number }>;
+      error?: string;
+    }
+
+    export async function executeResume(
+      options: ResumeCommandOptions,
+      sessionsDir: string,
+      config: Config
+    ): Promise<ResumeExecutionResult>;
+    ```
+  - [ ] Write tests: `src/cli/commands/resume-executor.test.ts`
+  - [ ] Implementation steps:
+    - [ ] Load session using `loadSession`
+    - [ ] Get resumable providers
+    - [ ] Initialize providers and resume from saved state
+    - [ ] Use `MultiProviderProgress` for display
+    - [ ] Update session status on completion
+  - [ ] Update `src/cli/index.ts` resume command:
+    - [ ] Remove "not yet implemented" message
+    - [ ] Call `executeResume`
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Run `npm test`
+  - [ ] Acceptance: `resume <session-id>` continues interrupted sessions
+
+---
+
+### Step 22: CLI Integration Tests
+
+Add comprehensive integration tests for CLI commands.
+
+- [ ] Step 22: Implement CLI integration tests
+  - [ ] Create `src/cli/cli-execution.integration.test.ts`:
+    ```typescript
+    import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+    import { mkdtemp, rm, writeFile, readFile, mkdir } from 'node:fs/promises';
+    import { tmpdir } from 'node:os';
+    import { join } from 'node:path';
+    import { createProgram } from './index.js';
+
+    describe('CLI Execution Integration', () => {
+      let tempDir: string;
+      let sessionsDir: string;
+      let configPath: string;
+
+      beforeEach(async () => {
+        tempDir = await mkdtemp(join(tmpdir(), 'search-hub-test-'));
+        sessionsDir = join(tempDir, 'sessions');
+        configPath = join(tempDir, 'config.toml');
+        await mkdir(sessionsDir, { recursive: true });
+      });
+
+      afterEach(async () => {
+        await rm(tempDir, { recursive: true, force: true });
+      });
+
+      // Test cases...
+    });
+    ```
+  - [ ] Test cases to implement:
+    - [ ] `config` command: view all, view key, set key with persistence
+    - [ ] `query validate` command: valid file, invalid file, non-existent file
+    - [ ] `query translate` command: translate all providers, translate single provider
+    - [ ] `status` command: empty sessions, list sessions, session details
+    - [ ] `search --dry-run` command: from file, direct query
+    - [ ] `search` command: actual execution with mock provider
+    - [ ] `resume` command: resume interrupted session
+    - [ ] `export` command: ids format, json format, jsonl format
+  - [ ] Test exit codes:
+    - [ ] SUCCESS (0) for successful operations
+    - [ ] CONFIG_ERROR (2) for config issues
+    - [ ] QUERY_ERROR (3) for invalid queries
+    - [ ] SESSION_ERROR (5) for session issues
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Run `npm test`
+  - [ ] Acceptance: All CLI commands have execution integration tests
+
+---
+
 ## Exit Codes Reference
 
 | Code | Meaning |
