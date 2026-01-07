@@ -32,6 +32,7 @@ import { translateQuery as translatePubmed } from '../../providers/pubmed/transl
 import { translateQuery as translateEric } from '../../providers/eric/translator.js';
 import { translateQuery as translateArxiv } from '../../providers/arxiv/translator.js';
 import { translateQuery as translateScopus } from '../../providers/scopus/translator.js';
+import { stringify as stringifyYaml } from 'yaml';
 
 /**
  * Result of a search execution.
@@ -59,6 +60,11 @@ export function createProviderInstance(
 
   switch (name) {
     case 'pubmed': {
+      if (!providerConfig.email) {
+        console.warn(
+          'Warning: No email configured for PubMed. Set providers.pubmed.email in config.'
+        );
+      }
       const pubmedOpts: PubMedConfig = {
         email: providerConfig.email ?? 'search-hub@example.com',
         rateLimit: providerConfig.rate_limit,
@@ -153,7 +159,6 @@ export async function executeSearch(
 
   // Handle direct query mode
   if (options.directQuery && options.providers && options.providers.length === 1) {
-    queryContent = `name: direct-query\nblocks:\n  - field: all\n    terms:\n      keywords:\n        - "${options.directQuery}"\n    operator: AND\nfilters: {}`;
     queryFile = 'direct-query';
 
     // For direct query, we create a minimal AST structure
@@ -169,6 +174,13 @@ export async function executeSearch(
       filters: {},
       overrides: {},
     };
+
+    // Generate YAML safely using yaml library to handle special characters
+    queryContent = stringifyYaml({
+      name: ast.name,
+      blocks: ast.blocks,
+      filters: ast.filters,
+    });
   } else if (options.queryFile) {
     // Parse query file
     try {

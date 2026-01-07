@@ -49,6 +49,7 @@ import { loadSession } from '../session/manager.js';
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { getSessionsDir } from './utils/sessions-dir.js';
+import { expandPath } from '../utils/path.js';
 
 /**
  * Global CLI options available to all commands.
@@ -155,7 +156,7 @@ export function createProgram(): Command {
           const result = setConfigKey(config, key, value);
           if (result.success) {
             // Save the modified config to file
-            const configPath = globalOpts.config ?? '~/.search-hub/config.toml';
+            const configPath = expandPath(globalOpts.config ?? '~/.search-hub/config.toml');
             try {
               await saveConfig(config, { path: configPath });
               if (!globalOpts.quiet) {

@@ -1,4 +1,4 @@
-import type { ProviderName } from '../../session/types.js';
+import type { ProviderName } from '../../providers/base/types.js';
 import type { Article } from '../../providers/base/types.js';
 import { parseProviderNames } from '../utils/validation.js';
 
