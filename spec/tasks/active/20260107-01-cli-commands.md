@@ -288,33 +288,15 @@ Confirm `loadSession` and `getResumableProviders` exist in session manager.
 
 Replace type assertions with runtime validation.
 
-- [ ] Step 13: Add ProviderName validation
-  - [ ] Create validation utility: `src/cli/utils/validation.ts`
-    ```typescript
-    import type { ProviderName } from '../../providers/base/types.js';
-
-    const VALID_PROVIDERS: readonly ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopus'];
-
-    export function isValidProviderName(value: string): value is ProviderName {
-      return VALID_PROVIDERS.includes(value as ProviderName);
-    }
-
-    export function parseProviderNames(input: string): ProviderName[] {
-      const names = input.split(',').map(p => p.trim().toLowerCase());
-      const invalid = names.filter(n => !isValidProviderName(n));
-      if (invalid.length > 0) {
-        throw new Error(`Invalid provider(s): ${invalid.join(', ')}. Valid: ${VALID_PROVIDERS.join(', ')}`);
-      }
-      return names as ProviderName[];
-    }
-    ```
-  - [ ] Write test: `src/cli/utils/validation.test.ts`
-  - [ ] Update `search.ts` to use `parseProviderNames`
-  - [ ] Update `resume.ts` to use `parseProviderNames`
-  - [ ] Update `export.ts` to use `parseProviderNames`
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Run `npm test`
-  - [ ] Acceptance: Invalid provider names throw descriptive errors
+- [x] Step 13: Add ProviderName validation
+  - [x] Create validation utility: `src/cli/utils/validation.ts`
+  - [x] Write test: `src/cli/utils/validation.test.ts` (11 tests)
+  - [x] Update `search.ts` to use `parseProviderNames`
+  - [x] Update `resume.ts` to use `parseProviderNames`
+  - [x] Update `export.ts` to use `parseProviderNames`
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: Invalid provider names throw descriptive errors
 
 ---
 
