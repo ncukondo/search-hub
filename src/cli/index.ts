@@ -45,6 +45,7 @@ import {
 } from './commands/export.js';
 import { loadSession } from '../session/manager.js';
 import { writeFile } from 'node:fs/promises';
+import { getSessionsDir } from './utils/sessions-dir.js';
 
 /**
  * Global CLI options available to all commands.
@@ -243,19 +244,7 @@ export function createProgram(): Command {
     .action(async (sessionId?: string, options?: { json?: boolean; all?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
-        // Determine sessions directory (always has a value from defaults)
-        const sessionsDir = await (async (): Promise<string> => {
-          if (globalOpts.sessionDir) return globalOpts.sessionDir;
-          try {
-            const config = await loadConfig(
-              globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
-            );
-            return config.session.directory;
-          } catch {
-            return getDefaultConfig().session.directory;
-          }
-        })();
-
+        const sessionsDir = await getSessionsDir(globalOpts);
         const formatOpts = { json: options?.json ?? false };
 
         if (sessionId) {
@@ -427,18 +416,7 @@ export function createProgram(): Command {
             return;
           }
 
-          // Determine sessions directory (always has a value from defaults)
-          const sessionsDir = await (async (): Promise<string> => {
-            if (globalOpts.sessionDir) return globalOpts.sessionDir;
-            try {
-              const config = await loadConfig(
-                globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
-              );
-              return config.session.directory;
-            } catch {
-              return getDefaultConfig().session.directory;
-            }
-          })();
+          const sessionsDir = await getSessionsDir(globalOpts);
 
           // Get resumable providers
           const result = await getResumableProvidersForCommand(
@@ -530,18 +508,7 @@ export function createProgram(): Command {
             return;
           }
 
-          // Determine sessions directory (always has a value from defaults)
-          const sessionsDir = await (async (): Promise<string> => {
-            if (globalOpts.sessionDir) return globalOpts.sessionDir;
-            try {
-              const config = await loadConfig(
-                globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
-              );
-              return config.session.directory;
-            } catch {
-              return getDefaultConfig().session.directory;
-            }
-          })();
+          const sessionsDir = await getSessionsDir(globalOpts);
 
           // Load session
           let session;

@@ -354,31 +354,15 @@ Remove duplicate ProviderName definitions and use a single source of truth.
 
 Remove code duplication for getting sessions directory.
 
-- [ ] Step 17: Create getSessionsDir helper
-  - [ ] Create helper in `src/cli/utils/sessions-dir.ts`:
-    ```typescript
-    import { loadConfig, getDefaultConfig } from '../../config/index.js';
-    import type { GlobalOptions } from '../index.js';
-
-    export async function getSessionsDir(globalOpts: GlobalOptions): Promise<string> {
-      if (globalOpts.sessionDir) return globalOpts.sessionDir;
-      try {
-        const config = await loadConfig(
-          globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
-        );
-        return config.session.directory;
-      } catch {
-        return getDefaultConfig().session.directory;
-      }
-    }
-    ```
-  - [ ] Write test: `src/cli/utils/sessions-dir.test.ts`
-  - [ ] Update `src/cli/index.ts`:
-    - [ ] Import `getSessionsDir`
-    - [ ] Replace 3 duplicated IIFE patterns with `getSessionsDir(globalOpts)`
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Run `npm test`
-  - [ ] Acceptance: No duplicated code for sessions directory resolution
+- [x] Step 17: Create getSessionsDir helper
+  - [x] Create helper in `src/cli/utils/sessions-dir.ts`
+  - [x] Write test: `src/cli/utils/sessions-dir.test.ts` (5 tests)
+  - [x] Update `src/cli/index.ts`:
+    - [x] Import `getSessionsDir`
+    - [x] Replace 3 duplicated IIFE patterns with `getSessionsDir(globalOpts)`
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: No duplicated code for sessions directory resolution
 
 ---
 
