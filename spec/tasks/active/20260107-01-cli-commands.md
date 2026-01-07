@@ -198,15 +198,15 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 9: export Command
 
-- [ ] Step 9: Implement export command for result output
-  - [ ] Write test: `src/cli/commands/export.test.ts`
-  - [ ] Create stub: `src/cli/commands/export.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement export in ids, json, jsonl formats
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `export <session-id>`, `--format`, `--output`, `--db`, `--id-type` work
+- [x] Step 9: Implement export command for result output
+  - [x] Write test: `src/cli/commands/export.test.ts`
+  - [x] Create stub: `src/cli/commands/export.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement export in ids, json, jsonl formats
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `export <session-id>`, `--format`, `--output`, `--db`, `--id-type` work
 
 ---
 
