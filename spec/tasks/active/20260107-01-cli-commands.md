@@ -224,6 +224,113 @@ Enable direct query string support for CLI `--query` option.
 
 ---
 
+## PR Review Fixes (PR #13)
+
+The following steps address issues identified in PR review.
+
+---
+
+### Step 11: Wire Command Actions to Helper Functions
+
+The command actions in `index.ts` are stub implementations. Wire them to actual helper functions.
+
+- [ ] Step 11: Implement real command actions
+  - [ ] 11.1: config command action
+    - [ ] Import helpers from `./commands/config.js`
+    - [ ] Call `getConfigValue`, `setConfigValue`, `formatConfigOutput` in action
+    - [ ] Test manually: `npx tsx src/cli/index.ts config`
+  - [ ] 11.2: query validate command action
+    - [ ] Import helpers from `./commands/query/validate.js`
+    - [ ] Call `validateQueryFile`, `formatValidationResult` in action
+    - [ ] Test manually: `npx tsx src/cli/index.ts query validate <file>`
+  - [ ] 11.3: query translate command action
+    - [ ] Import helpers from `./commands/query/translate.js`
+    - [ ] Call `translateQueryFile`, `formatTranslationOutput` in action
+    - [ ] Test manually: `npx tsx src/cli/index.ts query translate <file>`
+  - [ ] 11.4: status command action
+    - [ ] Import helpers from `./commands/status.js`
+    - [ ] Call `listSessionsForDisplay`, `getSessionDetails`, `formatSessionList`, `formatSessionDetails` in action
+    - [ ] Test manually: `npx tsx src/cli/index.ts status`
+  - [ ] 11.5: search command action
+    - [ ] Import helpers from `./commands/search.js`
+    - [ ] Call `parseSearchOptions`, `validateSearchInput`, `formatDryRunOutput` in action
+    - [ ] For non-dry-run, implement actual search execution using providers
+    - [ ] Test manually: `npx tsx src/cli/index.ts search --dry-run <file>`
+  - [ ] 11.6: resume command action
+    - [ ] Import helpers from `./commands/resume.js`
+    - [ ] Call `parseResumeOptions`, `validateResumeInput`, `getResumableStatus` in action
+    - [ ] Test manually: `npx tsx src/cli/index.ts resume <session-id>`
+  - [ ] 11.7: export command action
+    - [ ] Import helpers from `./commands/export.js`
+    - [ ] Call `parseExportOptions`, `validateExportInput`, `formatExportOutput` in action
+    - [ ] Test manually: `npx tsx src/cli/index.ts export <session-id>`
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Run `npm test`
+  - [ ] Acceptance: Each command executes real logic, not just console.log
+
+---
+
+### Step 12: Verify Session Manager Dependencies
+
+Confirm `loadSession` and `getResumableProviders` exist in session manager.
+
+- [ ] Step 12: Verify or implement session manager functions
+  - [ ] Check `src/session/manager.ts` for `loadSession` function
+  - [ ] Check `src/session/manager.ts` for `getResumableProviders` function
+  - [ ] If missing, implement them following existing patterns
+  - [ ] Update imports in `resume.ts` if function names differ
+  - [ ] Run `npm run typecheck`
+  - [ ] Acceptance: `resume.ts` compiles without import errors
+
+---
+
+### Step 13: Add Runtime Validation for ProviderName
+
+Replace type assertions with runtime validation.
+
+- [ ] Step 13: Add ProviderName validation
+  - [ ] Create validation utility: `src/cli/utils/validation.ts`
+    ```typescript
+    import type { ProviderName } from '../../providers/base/types.js';
+
+    const VALID_PROVIDERS: readonly ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopus'];
+
+    export function isValidProviderName(value: string): value is ProviderName {
+      return VALID_PROVIDERS.includes(value as ProviderName);
+    }
+
+    export function parseProviderNames(input: string): ProviderName[] {
+      const names = input.split(',').map(p => p.trim().toLowerCase());
+      const invalid = names.filter(n => !isValidProviderName(n));
+      if (invalid.length > 0) {
+        throw new Error(`Invalid provider(s): ${invalid.join(', ')}. Valid: ${VALID_PROVIDERS.join(', ')}`);
+      }
+      return names as ProviderName[];
+    }
+    ```
+  - [ ] Write test: `src/cli/utils/validation.test.ts`
+  - [ ] Update `search.ts` to use `parseProviderNames`
+  - [ ] Update `resume.ts` to use `parseProviderNames`
+  - [ ] Update `export.ts` to use `parseProviderNames`
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Run `npm test`
+  - [ ] Acceptance: Invalid provider names throw descriptive errors
+
+---
+
+### Step 14: Standardize Error Messages
+
+Ensure consistent error message formatting.
+
+- [ ] Step 14: Standardize error messages
+  - [ ] Review all error messages in command files
+  - [ ] Ensure no trailing periods (or all have them - pick one style)
+  - [ ] Use consistent capitalization (sentence case)
+  - [ ] Run `npm run lint`
+  - [ ] Acceptance: Error messages follow consistent style
+
+---
+
 ## Exit Codes Reference
 
 | Code | Meaning |
