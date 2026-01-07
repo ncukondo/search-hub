@@ -274,13 +274,13 @@ The command actions in `index.ts` are stub implementations. Wire them to actual 
 
 Confirm `loadSession` and `getResumableProviders` exist in session manager.
 
-- [ ] Step 12: Verify or implement session manager functions
-  - [ ] Check `src/session/manager.ts` for `loadSession` function
-  - [ ] Check `src/session/manager.ts` for `getResumableProviders` function
-  - [ ] If missing, implement them following existing patterns
-  - [ ] Update imports in `resume.ts` if function names differ
-  - [ ] Run `npm run typecheck`
-  - [ ] Acceptance: `resume.ts` compiles without import errors
+- [x] Step 12: Verify or implement session manager functions
+  - [x] Check `src/session/manager.ts` for `loadSession` function (line 152)
+  - [x] Check `src/session/manager.ts` for `getResumableProviders` function (line 293)
+  - [x] Functions exist, no implementation needed
+  - [x] Imports in `resume.ts` and `status.ts` work correctly
+  - [x] Run `npm run typecheck`
+  - [x] Acceptance: `resume.ts` compiles without import errors
 
 ---
 
