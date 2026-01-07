@@ -7,16 +7,9 @@
  * - Event logging
  */
 
-/**
- * Supported database provider names.
- */
-export type ProviderName =
-  | 'pubmed'
-  | 'eric'
-  | 'arxiv'
-  | 'scopus'
-  | 'wos'
-  | 'embase';
+// Import and re-export ProviderName from the authoritative source
+import type { ProviderName } from '../providers/base/types.js';
+export type { ProviderName };
 
 /**
  * Overall session status.

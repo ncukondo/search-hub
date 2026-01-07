@@ -336,17 +336,17 @@ Document that `wos` and `embase` are planned but not yet implemented.
 
 Remove duplicate ProviderName definitions and use a single source of truth.
 
-- [ ] Step 16: Consolidate ProviderName type
-  - [ ] Keep `src/providers/base/types.ts` as the authoritative source
-  - [ ] Update `src/session/types.ts`:
-    - [ ] Remove local ProviderName definition
-    - [ ] Add `export type { ProviderName } from '../providers/base/types.js';`
-  - [ ] Update `src/query/types.ts`:
-    - [ ] Remove local ProviderName definition
-    - [ ] Add `export type { ProviderName } from '../providers/base/types.js';`
-  - [ ] Run `npm run typecheck` - verify no errors
-  - [ ] Run `npm test` - verify all tests pass
-  - [ ] Acceptance: Single definition, re-exported from other modules
+- [x] Step 16: Consolidate ProviderName type
+  - [x] Keep `src/providers/base/types.ts` as the authoritative source
+  - [x] Update `src/session/types.ts`:
+    - [x] Remove local ProviderName definition
+    - [x] Import and re-export from '../providers/base/types.js'
+  - [x] Update `src/query/types.ts`:
+    - [x] Remove local ProviderName definition
+    - [x] Import and re-export from '../providers/base/types.js'
+  - [x] Run `npm run typecheck` - verify no errors
+  - [x] Run `npm test` - verify all tests pass
+  - [x] Acceptance: Single definition, re-exported from other modules
 
 ---
 

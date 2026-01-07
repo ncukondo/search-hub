@@ -5,10 +5,9 @@
  * See spec/models/query-dsl.md for the full specification.
  */
 
-/**
- * Supported database provider names.
- */
-export type ProviderName = 'pubmed' | 'scopus' | 'eric' | 'arxiv' | 'wos' | 'embase';
+// Import and re-export ProviderName from the authoritative source
+import type { ProviderName } from '../providers/base/types.js';
+export type { ProviderName };
 
 /**
  * Field types for query targeting.
