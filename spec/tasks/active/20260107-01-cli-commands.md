@@ -212,15 +212,15 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 10: Integration & Exit Codes
 
-- [ ] Step 10: Wire all commands together and implement exit codes
-  - [ ] Write integration test: `src/cli/cli.integration.test.ts`
-  - [ ] Update `src/cli/index.ts` to register all commands
-  - [ ] Verify test fails (Red)
-  - [ ] Implement proper exit codes (0-5 per spec)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: All commands accessible, exit codes correct
+- [x] Step 10: Wire all commands together and implement exit codes
+  - [x] Write integration test: `src/cli/cli.integration.test.ts`
+  - [x] Update `src/cli/index.ts` to register all commands
+  - [x] Verify test fails (Red)
+  - [x] Implement proper exit codes (0-5 per spec)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: All commands accessible, exit codes correct
 
 ---
 
