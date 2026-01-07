@@ -370,23 +370,13 @@ Remove code duplication for getting sessions directory.
 
 Use import.meta.url for reliable CLI entry point detection.
 
-- [ ] Step 18: Fix main execution detection
-  - [ ] Update `src/cli/index.ts` (lines 635-644):
-    ```typescript
-    import { fileURLToPath } from 'node:url';
-
-    // Run main if executed directly
-    const currentFile = fileURLToPath(import.meta.url);
-    if (process.argv[1] === currentFile) {
-      main().catch((error) => {
-        console.error('Fatal error:', error);
-        process.exit(EXIT_CODES.GENERAL_ERROR);
-      });
-    }
-    ```
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Run `npm test`
-  - [ ] Acceptance: CLI works correctly when executed directly or via symlink
+- [x] Step 18: Fix main execution detection
+  - [x] Update `src/cli/index.ts`:
+    - [x] Import `fileURLToPath` from 'node:url'
+    - [x] Use `import.meta.url` for reliable detection
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: CLI works correctly when executed directly or via symlink
 
 ---
 

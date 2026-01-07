@@ -45,6 +45,7 @@ import {
 } from './commands/export.js';
 import { loadSession } from '../session/manager.js';
 import { writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { getSessionsDir } from './utils/sessions-dir.js';
 
 /**
@@ -599,11 +600,8 @@ export async function main(): Promise<void> {
 }
 
 // Run main if executed directly
-if (
-  process.argv[1] &&
-  (process.argv[1].endsWith('/cli/index.js') ||
-    process.argv[1].endsWith('/cli/index.ts'))
-) {
+const currentFile = fileURLToPath(import.meta.url);
+if (process.argv[1] === currentFile) {
   main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(EXIT_CODES.GENERAL_ERROR);
