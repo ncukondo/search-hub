@@ -31,6 +31,7 @@ import {
   validateSearchInput,
   formatDryRunOutput,
 } from './commands/search.js';
+import { executeSearch } from './commands/search-executor.js';
 import {
   parseResumeOptions,
   validateResumeInput,
@@ -381,14 +382,40 @@ export function createProgram(): Command {
           }
 
           // Non-dry-run: actual search execution
-          // Note: Full search execution requires provider orchestration
-          // which is beyond the scope of Step 11 (wiring helpers)
-          if (!globalOpts.quiet) {
-            console.log(
-              'Search execution not yet implemented. Use --dry-run to preview queries.'
+          const sessionsDir = await getSessionsDir(globalOpts);
+          let config;
+          try {
+            config = await loadConfig(
+              globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
             );
+          } catch {
+            config = getDefaultConfig();
           }
-          process.exitCode = EXIT_CODES.SUCCESS;
+
+          const showProgress = !globalOpts.quiet && process.stdout.isTTY;
+          const result = await executeSearch(
+            searchOpts,
+            sessionsDir,
+            config,
+            showProgress
+          );
+
+          if (result.success) {
+            if (!globalOpts.quiet) {
+              console.log(`\nSearch completed. Session: ${result.sessionId}`);
+              if (result.results) {
+                for (const [provider, stats] of Object.entries(result.results)) {
+                  console.log(`  ${provider}: ${stats.retrieved} results`);
+                }
+              }
+            }
+            process.exitCode = EXIT_CODES.SUCCESS;
+          } else {
+            if (!globalOpts.quiet) {
+              console.error(`Error: ${result.error}`);
+            }
+            process.exitCode = EXIT_CODES.NETWORK_ERROR;
+          }
         } catch (error) {
           if (!globalOpts.quiet) {
             console.error(

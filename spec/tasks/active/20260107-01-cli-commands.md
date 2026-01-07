@@ -401,8 +401,8 @@ Add ability to persist config changes to file.
 
 Implement actual search execution (non-dry-run mode).
 
-- [ ] Step 20: Implement search execution
-  - [ ] Create `src/cli/commands/search-executor.ts`:
+- [x] Step 20: Implement search execution
+  - [x] Create `src/cli/commands/search-executor.ts`:
     ```typescript
     import { MultiProviderProgress } from '../utils/progress.js';
     import type { SearchCommandOptions } from './search.js';
@@ -422,19 +422,19 @@ Implement actual search execution (non-dry-run mode).
       config: Config
     ): Promise<SearchExecutionResult>;
     ```
-  - [ ] Write tests: `src/cli/commands/search-executor.test.ts`
-  - [ ] Implementation steps:
-    - [ ] Create session using `createSession`
-    - [ ] Initialize providers based on config
-    - [ ] Create `MultiProviderProgress` instance
-    - [ ] Execute search for each provider with progress updates
-    - [ ] Update session status on completion/failure
-  - [ ] Update `src/cli/index.ts` search command:
-    - [ ] Remove "not yet implemented" message
-    - [ ] Call `executeSearch` for non-dry-run mode
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Run `npm test`
-  - [ ] Acceptance: `search <query.yaml>` executes actual searches
+  - [x] Write tests: `src/cli/commands/search-executor.test.ts`
+  - [x] Implementation steps:
+    - [x] Create session using `createSession`
+    - [x] Initialize providers based on config
+    - [x] Create `MultiProviderProgress` instance
+    - [x] Execute search for each provider with progress updates
+    - [x] Update session status on completion/failure
+  - [x] Update `src/cli/index.ts` search command:
+    - [x] Remove "not yet implemented" message
+    - [x] Call `executeSearch` for non-dry-run mode
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: `search <query.yaml>` executes actual searches
 
 ---
 
