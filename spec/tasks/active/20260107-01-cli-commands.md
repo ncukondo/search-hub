@@ -50,8 +50,8 @@ Each step follows the TDD cycle:
 
 Enable direct query string support for CLI `--query` option.
 
-- [ ] Step 0: Modify TranslatedQuery to allow direct queries
-  - [ ] Update type: `src/providers/base/types.ts`
+- [x] Step 0: Modify TranslatedQuery to allow direct queries
+  - [x] Update type: `src/providers/base/types.ts`
     ```typescript
     export interface TranslatedQuery {
       native: string;
@@ -59,9 +59,9 @@ Enable direct query string support for CLI `--query` option.
       provider: ProviderName;
     }
     ```
-  - [ ] Run `npm run typecheck` - verify no errors
-  - [ ] Run `npm test` - verify all tests pass
-  - [ ] Acceptance: Direct query without AST is type-valid
+  - [x] Run `npm run typecheck` - verify no errors
+  - [x] Run `npm test` - verify all tests pass
+  - [x] Acceptance: Direct query without AST is type-valid
 
 ---
 
