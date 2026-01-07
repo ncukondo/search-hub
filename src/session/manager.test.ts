@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, rm, readFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { randomUUID } from 'node:crypto';
 import {
   generateSessionId,
   sanitizeName,
@@ -105,7 +106,7 @@ describe('Session Manager', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}-${randomUUID()}`);
       await mkdir(testDir, { recursive: true });
     });
 
@@ -223,7 +224,7 @@ describe('Session Manager', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}-${randomUUID()}`);
       await mkdir(testDir, { recursive: true });
     });
 
@@ -281,7 +282,7 @@ describe('Session Manager', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}-${randomUUID()}`);
       await mkdir(testDir, { recursive: true });
     });
 
@@ -314,7 +315,7 @@ describe('Session Manager', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}-${randomUUID()}`);
       await mkdir(testDir, { recursive: true });
     });
 
@@ -384,7 +385,7 @@ describe('Session Manager', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}-${randomUUID()}`);
       await mkdir(testDir, { recursive: true });
     });
 
@@ -531,7 +532,7 @@ describe('Session Manager', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}-${randomUUID()}`);
       await mkdir(testDir, { recursive: true });
     });
 
@@ -593,7 +594,7 @@ describe('Session Manager', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}-${randomUUID()}`);
       await mkdir(testDir, { recursive: true });
     });
 
@@ -668,7 +669,7 @@ describe('Session Manager', () => {
     let testDir: string;
 
     beforeEach(async () => {
-      testDir = join(tmpdir(), `search-hub-test-${Date.now()}`);
+      testDir = join(tmpdir(), `search-hub-test-${Date.now()}-${randomUUID()}`);
       await mkdir(testDir, { recursive: true });
     });
 

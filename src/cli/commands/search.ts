@@ -11,12 +11,12 @@ export interface SearchCommandOptions {
 }
 
 export interface CommandLineOptions {
-  db?: string;
-  query?: string;
-  name?: string;
-  maxResults?: string;
-  dryRun?: boolean;
-  noResume?: boolean;
+  db?: string | undefined;
+  query?: string | undefined;
+  name?: string | undefined;
+  maxResults?: string | undefined;
+  dryRun?: boolean | undefined;
+  noResume?: boolean | undefined;
 }
 
 export interface TranslationResult {

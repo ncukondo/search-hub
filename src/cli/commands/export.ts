@@ -13,10 +13,10 @@ export interface ExportCommandOptions {
 }
 
 export interface CommandLineOptions {
-  format?: string;
-  output?: string;
-  db?: string;
-  idType?: string;
+  format?: string | undefined;
+  output?: string | undefined;
+  db?: string | undefined;
+  idType?: string | undefined;
 }
 
 export interface ValidationResult {

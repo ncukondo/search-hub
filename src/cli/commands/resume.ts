@@ -8,8 +8,8 @@ export interface ResumeCommandOptions {
 }
 
 export interface CommandLineOptions {
-  db?: string;
-  retryFailed?: boolean;
+  db?: string | undefined;
+  retryFailed?: boolean | undefined;
 }
 
 export interface ValidationResult {
@@ -56,7 +56,7 @@ export function validateResumeInput(options: ResumeCommandOptions): ValidationRe
 export async function getResumableProvidersForCommand(
   sessionId: string,
   sessionsDir: string,
-  options: { providers?: ProviderName[]; retryFailed?: boolean }
+  options: { providers?: ProviderName[] | undefined; retryFailed?: boolean | undefined }
 ): Promise<ResumeResult> {
   try {
     const session = await loadSession(sessionId, sessionsDir);
