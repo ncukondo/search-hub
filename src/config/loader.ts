@@ -1,5 +1,6 @@
-import { readFile } from 'node:fs/promises';
-import { parse as parseToml } from '@iarna/toml';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import { parse as parseToml, stringify as stringifyToml } from '@iarna/toml';
 import { ConfigSchema, type Config } from './schema';
 import { getDefaultConfig } from './defaults';
 import { applyEnvVars } from './env';
@@ -97,4 +98,53 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Confi
 
   // 6. Validate and return
   return ConfigSchema.parse(config);
+}
+
+/**
+ * Options for saveConfig function.
+ */
+export interface SaveConfigOptions {
+  /** Path to save config file (default: ~/.search-hub/config.toml) */
+  path?: string;
+  /** Create directory if it doesn't exist (default: true) */
+  createDir?: boolean;
+}
+
+// Re-define JsonMap type to match @iarna/toml's expected input
+// This is necessary because the library's JsonMap type is not exported
+type TomlValue = boolean | number | string | Date | TomlMap | TomlValue[];
+interface TomlMap {
+  [key: string]: TomlValue;
+}
+
+/**
+ * Save configuration to a TOML file.
+ *
+ * @param config - Configuration object to save
+ * @param options - Save options
+ * @throws Error if config is invalid or file write fails
+ */
+export async function saveConfig(
+  config: Config,
+  options: SaveConfigOptions = {}
+): Promise<void> {
+  const {
+    path = DEFAULT_GLOBAL_CONFIG_PATH,
+    createDir = true,
+  } = options;
+
+  // Validate config before saving
+  ConfigSchema.parse(config);
+
+  // Expand path and ensure directory exists
+  const expandedPath = expandPath(path);
+  if (createDir) {
+    await mkdir(dirname(expandedPath), { recursive: true });
+  }
+
+  // Convert to TOML and write
+  // Config structure is compatible with TOML's JsonMap type
+  // The cast is safe because Config only contains TOML-compatible types
+  const tomlContent = stringifyToml(config as TomlMap);
+  await writeFile(expandedPath, tomlContent, 'utf-8');
 }

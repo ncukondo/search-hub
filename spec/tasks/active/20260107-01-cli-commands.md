@@ -50,8 +50,8 @@ Each step follows the TDD cycle:
 
 Enable direct query string support for CLI `--query` option.
 
-- [ ] Step 0: Modify TranslatedQuery to allow direct queries
-  - [ ] Update type: `src/providers/base/types.ts`
+- [x] Step 0: Modify TranslatedQuery to allow direct queries
+  - [x] Update type: `src/providers/base/types.ts`
     ```typescript
     export interface TranslatedQuery {
       native: string;
@@ -59,90 +59,90 @@ Enable direct query string support for CLI `--query` option.
       provider: ProviderName;
     }
     ```
-  - [ ] Run `npm run typecheck` - verify no errors
-  - [ ] Run `npm test` - verify all tests pass
-  - [ ] Acceptance: Direct query without AST is type-valid
+  - [x] Run `npm run typecheck` - verify no errors
+  - [x] Run `npm test` - verify all tests pass
+  - [x] Acceptance: Direct query without AST is type-valid
 
 ---
 
 ### Step 1: CLI Entry Point & Global Options
 
-- [ ] Step 1: Set up CLI framework with global options
-  - [ ] Write test: `src/cli/index.test.ts`
-  - [ ] Create/update: `src/cli/index.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement CLI entry point with commander.js
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: CLI responds to `--help`, `--version`, global options work
+- [x] Step 1: Set up CLI framework with global options
+  - [x] Write test: `src/cli/index.test.ts`
+  - [x] Create/update: `src/cli/index.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement CLI entry point with commander.js
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: CLI responds to `--help`, `--version`, global options work
 
 ---
 
 ### Step 2: config Command
 
-- [ ] Step 2: Implement config view/edit command
-  - [ ] Write test: `src/cli/commands/config.test.ts`
-  - [ ] Create stub: `src/cli/commands/config.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement config command (view all, view key, set key)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `config`, `config <key>`, `config <key> <value>` work
+- [x] Step 2: Implement config view/edit command
+  - [x] Write test: `src/cli/commands/config.test.ts`
+  - [x] Create stub: `src/cli/commands/config.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement config command (view all, view key, set key)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `config`, `config <key>`, `config <key> <value>` work
 
 ---
 
 ### Step 3: query validate Command
 
-- [ ] Step 3: Implement query validate subcommand
-  - [ ] Write test: `src/cli/commands/query/validate.test.ts`
-  - [ ] Create stub: `src/cli/commands/query/validate.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement query validation using existing QueryParser
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `query validate <file>` validates YAML and reports errors
+- [x] Step 3: Implement query validate subcommand
+  - [x] Write test: `src/cli/commands/query/validate.test.ts`
+  - [x] Create stub: `src/cli/commands/query/validate.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement query validation using existing QueryParser
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `query validate <file>` validates YAML and reports errors
 
 ---
 
 ### Step 4: query translate Command
 
-- [ ] Step 4: Implement query translate subcommand
-  - [ ] Write test: `src/cli/commands/query/translate.test.ts`
-  - [ ] Create stub: `src/cli/commands/query/translate.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement query translation display for each provider
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `query translate <file> [--db <provider>]` shows translated queries
+- [x] Step 4: Implement query translate subcommand
+  - [x] Write test: `src/cli/commands/query/translate.test.ts`
+  - [x] Create stub: `src/cli/commands/query/translate.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement query translation display for each provider
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `query translate <file> [--db <provider>]` shows translated queries
 
 ---
 
 ### Step 5: status Command
 
-- [ ] Step 5: Implement status command for session listing/details
-  - [ ] Write test: `src/cli/commands/status.test.ts`
-  - [ ] Create stub: `src/cli/commands/status.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement session list and session detail views
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `status`, `status <session-id>`, `--json`, `--all` work
+- [x] Step 5: Implement status command for session listing/details
+  - [x] Write test: `src/cli/commands/status.test.ts`
+  - [x] Create stub: `src/cli/commands/status.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement session list and session detail views
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `status`, `status <session-id>`, `--json`, `--all` work
 
 ---
 
 ### Step 6: Progress Display Utility
 
-- [ ] Step 6: Implement multi-provider progress display with cli-progress
-  - [ ] Install: `npm install cli-progress && npm install -D @types/cli-progress`
-  - [ ] Write test: `src/cli/utils/progress.test.ts`
-  - [ ] Create: `src/cli/utils/progress.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement MultiProviderProgress class:
+- [x] Step 6: Implement multi-provider progress display with cli-progress
+  - [x] Install: `npm install cli-progress && npm install -D @types/cli-progress`
+  - [x] Write test: `src/cli/utils/progress.test.ts`
+  - [x] Create: `src/cli/utils/progress.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement MultiProviderProgress class:
     ```typescript
     import { MultiBar, SingleBar, Presets } from 'cli-progress';
 
@@ -157,70 +157,374 @@ Enable direct query string support for CLI `--query` option.
       stop(): void;
     }
     ```
-  - [ ] Status icons: `⠋` (progress), `✓` (completed), `✗` (failed), `◼` (pending), `⚠` (partial)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Progress bars display correctly for multiple providers
+  - [x] Status icons: `⠋` (progress), `✓` (completed), `✗` (failed), `◼` (pending), `⚠` (partial)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Progress bars display correctly for multiple providers
 
 ---
 
 ### Step 7: search Command
 
-- [ ] Step 7: Implement search command for executing searches
-  - [ ] Write test: `src/cli/commands/search.test.ts`
-  - [ ] Create stub: `src/cli/commands/search.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement search execution with MultiProviderProgress
-  - [ ] Support both query file and direct query modes:
+- [x] Step 7: Implement search command for executing searches
+  - [x] Write test: `src/cli/commands/search.test.ts`
+  - [x] Create stub: `src/cli/commands/search.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement search execution with MultiProviderProgress
+  - [x] Support both query file and direct query modes:
     - `search <query.yaml>` - from YAML file
     - `search --db <provider> --query <string>` - direct query (uses optional originalAst)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `search <query.yaml>`, `--db`, `--query`, `--dry-run`, `--max-results` work
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `search <query.yaml>`, `--db`, `--query`, `--dry-run`, `--max-results` work
 
 ---
 
 ### Step 8: resume Command
 
-- [ ] Step 8: Implement resume command for continuing interrupted sessions
-  - [ ] Write test: `src/cli/commands/resume.test.ts`
-  - [ ] Create stub: `src/cli/commands/resume.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement session resume using Provider Session Resume functionality
-  - [ ] Use MultiProviderProgress for display
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `resume <session-id>`, `--db`, `--retry-failed` work
+- [x] Step 8: Implement resume command for continuing interrupted sessions
+  - [x] Write test: `src/cli/commands/resume.test.ts`
+  - [x] Create stub: `src/cli/commands/resume.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement session resume using Provider Session Resume functionality
+  - [x] Use MultiProviderProgress for display
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `resume <session-id>`, `--db`, `--retry-failed` work
 
 ---
 
 ### Step 9: export Command
 
-- [ ] Step 9: Implement export command for result output
-  - [ ] Write test: `src/cli/commands/export.test.ts`
-  - [ ] Create stub: `src/cli/commands/export.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement export in ids, json, jsonl formats
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: `export <session-id>`, `--format`, `--output`, `--db`, `--id-type` work
+- [x] Step 9: Implement export command for result output
+  - [x] Write test: `src/cli/commands/export.test.ts`
+  - [x] Create stub: `src/cli/commands/export.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement export in ids, json, jsonl formats
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: `export <session-id>`, `--format`, `--output`, `--db`, `--id-type` work
 
 ---
 
 ### Step 10: Integration & Exit Codes
 
-- [ ] Step 10: Wire all commands together and implement exit codes
-  - [ ] Write integration test: `src/cli/cli.integration.test.ts`
-  - [ ] Update `src/cli/index.ts` to register all commands
-  - [ ] Verify test fails (Red)
-  - [ ] Implement proper exit codes (0-5 per spec)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Acceptance: All commands accessible, exit codes correct
+- [x] Step 10: Wire all commands together and implement exit codes
+  - [x] Write integration test: `src/cli/cli.integration.test.ts`
+  - [x] Update `src/cli/index.ts` to register all commands
+  - [x] Verify test fails (Red)
+  - [x] Implement proper exit codes (0-5 per spec)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Acceptance: All commands accessible, exit codes correct
+
+---
+
+## PR Review Fixes (PR #13)
+
+The following steps address issues identified in PR review.
+
+---
+
+### Step 11: Wire Command Actions to Helper Functions
+
+The command actions in `index.ts` are stub implementations. Wire them to actual helper functions.
+
+- [x] Step 11: Implement real command actions
+  - [x] 11.1: config command action
+    - [x] Import helpers from `./commands/config.js`
+    - [x] Call `viewConfig`, `viewConfigKey`, `setConfigKey` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts config`
+  - [x] 11.2: query validate command action
+    - [x] Import helpers from `./commands/query/validate.js`
+    - [x] Call `validateQueryCommand`, `formatValidateResult` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts query validate <file>`
+  - [x] 11.3: query translate command action
+    - [x] Import helpers from `./commands/query/translate.js`
+    - [x] Call `translateQueryCommand`, `formatTranslateResult` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts query translate <file>`
+  - [x] 11.4: status command action
+    - [x] Import helpers from `./commands/status.js`
+    - [x] Call `listSessionsForDisplay`, `getSessionDetails`, `formatSessionList`, `formatSessionDetails` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts status`
+  - [x] 11.5: search command action
+    - [x] Import helpers from `./commands/search.js`
+    - [x] Call `parseSearchOptions`, `validateSearchInput`, `formatDryRunOutput` in action
+    - [x] Non-dry-run shows message (full search execution deferred)
+    - [x] Test manually: `npx tsx src/cli/index.ts search --dry-run <file>`
+  - [x] 11.6: resume command action
+    - [x] Import helpers from `./commands/resume.js`
+    - [x] Call `parseResumeOptions`, `validateResumeInput`, `getResumableProvidersForCommand` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts resume <session-id>`
+  - [x] 11.7: export command action
+    - [x] Import helpers from `./commands/export.js`
+    - [x] Call `parseExportOptions`, `validateExportInput`, `formatIds/Json/Jsonl` in action
+    - [x] Test manually: `npx tsx src/cli/index.ts export <session-id>`
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: Each command executes real logic, not just console.log
+
+---
+
+### Step 12: Verify Session Manager Dependencies
+
+Confirm `loadSession` and `getResumableProviders` exist in session manager.
+
+- [x] Step 12: Verify or implement session manager functions
+  - [x] Check `src/session/manager.ts` for `loadSession` function (line 152)
+  - [x] Check `src/session/manager.ts` for `getResumableProviders` function (line 293)
+  - [x] Functions exist, no implementation needed
+  - [x] Imports in `resume.ts` and `status.ts` work correctly
+  - [x] Run `npm run typecheck`
+  - [x] Acceptance: `resume.ts` compiles without import errors
+
+---
+
+### Step 13: Add Runtime Validation for ProviderName
+
+Replace type assertions with runtime validation.
+
+- [x] Step 13: Add ProviderName validation
+  - [x] Create validation utility: `src/cli/utils/validation.ts`
+  - [x] Write test: `src/cli/utils/validation.test.ts` (11 tests)
+  - [x] Update `search.ts` to use `parseProviderNames`
+  - [x] Update `resume.ts` to use `parseProviderNames`
+  - [x] Update `export.ts` to use `parseProviderNames`
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: Invalid provider names throw descriptive errors
+
+---
+
+### Step 14: Standardize Error Messages
+
+Ensure consistent error message formatting.
+
+- [x] Step 14: Standardize error messages
+  - [x] Review all error messages in command files
+  - [x] Verified: no trailing periods (consistent style)
+  - [x] Verified: consistent capitalization (sentence case)
+  - [x] Run `npm run lint`
+  - [x] Acceptance: Error messages follow consistent style
+
+---
+
+## Code Quality Fixes (PR #13 Review Round 2)
+
+The following steps address code quality issues identified in the second review.
+
+---
+
+### Step 15: Clarify VALID_PROVIDERS Intent
+
+Document that `wos` and `embase` are planned but not yet implemented.
+
+- [x] Step 15: Add documentation for provider availability
+  - [x] Update `src/cli/utils/validation.ts`:
+    - [x] Add comment explaining `wos` and `embase` are defined in types but not yet implemented
+    - [x] Keep VALID_PROVIDERS as the runtime-available providers
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Intent is clear in code comments
+
+---
+
+### Step 16: Consolidate ProviderName Type Definitions
+
+Remove duplicate ProviderName definitions and use a single source of truth.
+
+- [x] Step 16: Consolidate ProviderName type
+  - [x] Keep `src/providers/base/types.ts` as the authoritative source
+  - [x] Update `src/session/types.ts`:
+    - [x] Remove local ProviderName definition
+    - [x] Import and re-export from '../providers/base/types.js'
+  - [x] Update `src/query/types.ts`:
+    - [x] Remove local ProviderName definition
+    - [x] Import and re-export from '../providers/base/types.js'
+  - [x] Run `npm run typecheck` - verify no errors
+  - [x] Run `npm test` - verify all tests pass
+  - [x] Acceptance: Single definition, re-exported from other modules
+
+---
+
+### Step 17: Extract Sessions Directory Helper
+
+Remove code duplication for getting sessions directory.
+
+- [x] Step 17: Create getSessionsDir helper
+  - [x] Create helper in `src/cli/utils/sessions-dir.ts`
+  - [x] Write test: `src/cli/utils/sessions-dir.test.ts` (5 tests)
+  - [x] Update `src/cli/index.ts`:
+    - [x] Import `getSessionsDir`
+    - [x] Replace 3 duplicated IIFE patterns with `getSessionsDir(globalOpts)`
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: No duplicated code for sessions directory resolution
+
+---
+
+### Step 18: Fix Direct Execution Detection
+
+Use import.meta.url for reliable CLI entry point detection.
+
+- [x] Step 18: Fix main execution detection
+  - [x] Update `src/cli/index.ts`:
+    - [x] Import `fileURLToPath` from 'node:url'
+    - [x] Use `import.meta.url` for reliable detection
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: CLI works correctly when executed directly or via symlink
+
+---
+
+### Step 19: Implement Config Save Functionality
+
+Add ability to persist config changes to file.
+
+- [x] Step 19: Implement config save
+  - [x] Add `saveConfig` function to `src/config/loader.ts`
+  - [x] Write tests for `saveConfig` in `src/config/loader.test.ts` (4 tests)
+  - [x] Export `saveConfig` from `src/config/index.ts`
+  - [x] Update `src/cli/index.ts` config command:
+    - [x] After `setConfigKey`, call `saveConfig` to persist changes
+    - [x] Handle file write errors appropriately
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: `config <key> <value>` persists changes to config file
+
+---
+
+### Step 20: Implement Search Execution
+
+Implement actual search execution (non-dry-run mode).
+
+- [x] Step 20: Implement search execution
+  - [x] Create `src/cli/commands/search-executor.ts`:
+    ```typescript
+    import { MultiProviderProgress } from '../utils/progress.js';
+    import type { SearchCommandOptions } from './search.js';
+    import type { ProviderName } from '../../providers/base/types.js';
+    import type { Config } from '../../config/index.js';
+
+    export interface SearchExecutionResult {
+      success: boolean;
+      sessionId?: string;
+      results?: Record<ProviderName, { hits: number; retrieved: number }>;
+      error?: string;
+    }
+
+    export async function executeSearch(
+      options: SearchCommandOptions,
+      sessionsDir: string,
+      config: Config
+    ): Promise<SearchExecutionResult>;
+    ```
+  - [x] Write tests: `src/cli/commands/search-executor.test.ts`
+  - [x] Implementation steps:
+    - [x] Create session using `createSession`
+    - [x] Initialize providers based on config
+    - [x] Create `MultiProviderProgress` instance
+    - [x] Execute search for each provider with progress updates
+    - [x] Update session status on completion/failure
+  - [x] Update `src/cli/index.ts` search command:
+    - [x] Remove "not yet implemented" message
+    - [x] Call `executeSearch` for non-dry-run mode
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: `search <query.yaml>` executes actual searches
+
+---
+
+### Step 21: Implement Resume Execution
+
+Implement actual resume execution.
+
+- [x] Step 21: Implement resume execution
+  - [x] Create `src/cli/commands/resume-executor.ts`:
+    ```typescript
+    import type { ResumeCommandOptions } from './resume.js';
+    import type { Config } from '../../config/index.js';
+
+    export interface ResumeExecutionResult {
+      success: boolean;
+      resumed: number;
+      results?: Record<string, { hits: number; retrieved: number }>;
+      error?: string;
+    }
+
+    export async function executeResume(
+      options: ResumeCommandOptions,
+      sessionsDir: string,
+      config: Config
+    ): Promise<ResumeExecutionResult>;
+    ```
+  - [x] Write tests: `src/cli/commands/resume-executor.test.ts`
+  - [x] Implementation steps:
+    - [x] Load session using `loadSession`
+    - [x] Get resumable providers
+    - [x] Initialize providers and resume from saved state
+    - [x] Use `MultiProviderProgress` for display
+    - [x] Update session status on completion
+  - [x] Update `src/cli/index.ts` resume command:
+    - [x] Remove "not yet implemented" message
+    - [x] Call `executeResume`
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: `resume <session-id>` continues interrupted sessions
+
+---
+
+### Step 22: CLI Integration Tests
+
+Add comprehensive integration tests for CLI commands.
+
+- [x] Step 22: Implement CLI integration tests
+  - [x] Create `src/cli/cli-execution.integration.test.ts`:
+    ```typescript
+    import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+    import { mkdtemp, rm, writeFile, readFile, mkdir } from 'node:fs/promises';
+    import { tmpdir } from 'node:os';
+    import { join } from 'node:path';
+    import { createProgram } from './index.js';
+
+    describe('CLI Execution Integration', () => {
+      let tempDir: string;
+      let sessionsDir: string;
+      let configPath: string;
+
+      beforeEach(async () => {
+        tempDir = await mkdtemp(join(tmpdir(), 'search-hub-test-'));
+        sessionsDir = join(tempDir, 'sessions');
+        configPath = join(tempDir, 'config.toml');
+        await mkdir(sessionsDir, { recursive: true });
+      });
+
+      afterEach(async () => {
+        await rm(tempDir, { recursive: true, force: true });
+      });
+
+      // Test cases...
+    });
+    ```
+  - [x] Test cases implemented:
+    - [x] `config` command: view all, view key, set key with persistence
+    - [x] `query validate` command: valid file, invalid file, non-existent file
+    - [x] `query translate` command: translate all providers, translate single provider
+    - [x] `status` command: empty sessions, list sessions, session details
+    - [x] `search --dry-run` command: from file, direct query
+    - [x] `search` command: actual execution with real PubMed API (E2E)
+    - [x] `resume` command: resume interrupted session (E2E)
+    - [x] `export` command: ids format, jsonl format (E2E)
+  - [x] Test exit codes:
+    - [x] SUCCESS (0) for successful operations
+    - [x] QUERY_ERROR (3) for invalid queries
+    - [x] SESSION_ERROR (5) for session issues
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Run `npm test`
+  - [x] Acceptance: All CLI commands have execution integration tests
 
 ---
 

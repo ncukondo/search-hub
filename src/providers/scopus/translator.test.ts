@@ -390,7 +390,6 @@ describe('Scopus Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.originalAst).toBe(ast);
-      expect(result.originalAst.name).toBe('test');
     });
   });
 
