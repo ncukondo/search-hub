@@ -304,12 +304,12 @@ Replace type assertions with runtime validation.
 
 Ensure consistent error message formatting.
 
-- [ ] Step 14: Standardize error messages
-  - [ ] Review all error messages in command files
-  - [ ] Ensure no trailing periods (or all have them - pick one style)
-  - [ ] Use consistent capitalization (sentence case)
-  - [ ] Run `npm run lint`
-  - [ ] Acceptance: Error messages follow consistent style
+- [x] Step 14: Standardize error messages
+  - [x] Review all error messages in command files
+  - [x] Verified: no trailing periods (consistent style)
+  - [x] Verified: consistent capitalization (sentence case)
+  - [x] Run `npm run lint`
+  - [x] Acceptance: Error messages follow consistent style
 
 ---
 
