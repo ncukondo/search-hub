@@ -137,12 +137,12 @@ Enable direct query string support for CLI `--query` option.
 
 ### Step 6: Progress Display Utility
 
-- [ ] Step 6: Implement multi-provider progress display with cli-progress
-  - [ ] Install: `npm install cli-progress && npm install -D @types/cli-progress`
-  - [ ] Write test: `src/cli/utils/progress.test.ts`
-  - [ ] Create: `src/cli/utils/progress.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement MultiProviderProgress class:
+- [x] Step 6: Implement multi-provider progress display with cli-progress
+  - [x] Install: `npm install cli-progress && npm install -D @types/cli-progress`
+  - [x] Write test: `src/cli/utils/progress.test.ts`
+  - [x] Create: `src/cli/utils/progress.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement MultiProviderProgress class:
     ```typescript
     import { MultiBar, SingleBar, Presets } from 'cli-progress';
 
@@ -157,10 +157,10 @@ Enable direct query string support for CLI `--query` option.
       stop(): void;
     }
     ```
-  - [ ] Status icons: `⠋` (progress), `✓` (completed), `✗` (failed), `◼` (pending), `⚠` (partial)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Progress bars display correctly for multiple providers
+  - [x] Status icons: `⠋` (progress), `✓` (completed), `✗` (failed), `◼` (pending), `⚠` (partial)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Progress bars display correctly for multiple providers
 
 ---
 
