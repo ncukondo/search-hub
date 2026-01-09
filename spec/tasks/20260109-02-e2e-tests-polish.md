@@ -27,18 +27,18 @@ Each step follows the TDD cycle:
 
 ### Step 1: E2E Test Infrastructure Setup
 
-- [ ] Create test helpers: `src/cli/e2e-helpers.ts`
+- [x] Create test helpers: `src/cli/e2e-helpers.ts`
   - Helper to create temp directories
   - Helper to create test query files
   - Helper to create test session data
   - Helper to execute CLI commands as subprocess
   - Helper to clean up test artifacts
-- [ ] Create fixture data: `src/cli/fixtures/` (if needed)
+- [x] Create fixture data: `src/cli/fixtures/` (if needed)
   - Sample query YAML files
   - Sample config files
-- [ ] Verify infrastructure works with simple test
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Test helpers are reusable across all E2E tests
+- [x] Verify infrastructure works with simple test
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Test helpers are reusable across all E2E tests
 
 ```typescript
 // Key helpers in src/cli/e2e-helpers.ts:
