@@ -91,13 +91,13 @@ async function createConfig(tempDir: string, config: Partial<Config>): Promise<s
 
 ### Step 5: E2E Tests for `search-hub query translate`
 
-- [ ] Write test: `src/cli/commands/query/translate.e2e.test.ts`
+- [x] Write test: `src/cli/commands/query/translate.e2e.test.ts`
   - Test translates to all databases
   - Test `--db` filters to specific database
   - Test shows native syntax for each database
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Query translation shows correct native syntax
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Query translation shows correct native syntax
 
 ---
 
