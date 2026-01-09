@@ -35,6 +35,20 @@ Each step follows the TDD cycle:
   - [ ] Verify test still passes
   - [ ] Acceptance: (specific criteria)
 
+### Final Step: E2E Integration Tests (MANDATORY)
+
+**This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
+
+- [ ] Write E2E test: `src/xxx/feature.e2e.test.ts`
+  - **Minimize mocks** - Only mock external services when absolutely necessary
+  - **Follow user flows** - Test the same paths users will take
+  - **Use real file I/O** - Test actual file operations with temp directories
+  - **Execute real commands** - Test actual CLI execution where possible
+- [ ] Verify all E2E tests pass
+- [ ] Run full test suite: `npm test`
+- [ ] **Manual verification**: Test the feature manually as a user would
+- [ ] Acceptance: All tests pass, feature works in real usage
+
 ## TDD Cycle Reference
 
 ```
@@ -58,4 +72,6 @@ Each step follows the TDD cycle:
 ## Notes
 
 - Test files are co-located with source files (`*.test.ts` next to `*.ts`)
+- **E2E integration tests are critical** - Mock-based unit tests often miss real-world issues
+- Always complete the Final Step (E2E tests) before marking the task complete
 - Any additional context or considerations
