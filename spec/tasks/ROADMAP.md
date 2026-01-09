@@ -19,6 +19,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 10 | CLI Commands | 2-4, 6-9 | ✅ Completed | [20260107-01](completed/20260107-01-cli-commands.md) |
 | 11 | Reference Manager Integration | 10 | ✅ Completed | [20260109-01](completed/20260109-01-reference-manager-integration.md) |
 | 12 | E2E Tests & Polish | All | Pending | [20260109-02](20260109-02-e2e-tests-polish.md) |
+| 13 | XDG Base Directory Paths | 2 | Pending | [20260109-03](20260109-03-xdg-paths.md) |
 
 ## Development Flow
 
