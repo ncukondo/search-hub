@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { appPaths } from '../utils/app-paths';
 
 /**
  * Default values for provider configuration.
@@ -42,9 +43,9 @@ function getDefaultProviderConfig(): ProviderConfig {
 export const ConfigSchema = z.object({
   session: z
     .object({
-      directory: z.string().default('~/.search-hub/sessions'),
+      directory: z.string().default(appPaths.sessionsDir),
     })
-    .default(() => ({ directory: '~/.search-hub/sessions' })),
+    .default(() => ({ directory: appPaths.sessionsDir })),
 
   log: z
     .object({

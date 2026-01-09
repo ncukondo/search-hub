@@ -17,7 +17,7 @@ import { join } from 'node:path';
  *   config: %APPDATA%\search-hub\Config\
  *   data: %APPDATA%\search-hub\Data\
  */
-const paths = envPaths('search-hub');
+const paths = envPaths('search-hub', { suffix: '' });
 
 export const appPaths = {
   /** Directory for configuration files */

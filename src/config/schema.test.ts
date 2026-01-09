@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ConfigSchema, ProviderConfigSchema, type Config } from './schema';
+import { appPaths } from '../utils/app-paths';
 
 describe('ProviderConfigSchema', () => {
   it('applies default values for empty object', () => {
@@ -59,8 +60,8 @@ describe('ConfigSchema', () => {
   it('returns full default config for empty object', () => {
     const result = ConfigSchema.parse({});
 
-    // Session defaults
-    expect(result.session.directory).toBe('~/.search-hub/sessions');
+    // Session defaults (XDG-compliant path)
+    expect(result.session.directory).toBe(appPaths.sessionsDir);
 
     // Log defaults
     expect(result.log.level).toBe('info');
