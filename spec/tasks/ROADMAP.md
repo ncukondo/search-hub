@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-This file tracks high-level progress. For implementation details, see individual task files in `spec/tasks/active/`.
+This file tracks high-level progress. For implementation details, see individual task files in `spec/tasks/`.
 
 ## Progress
 
@@ -22,7 +22,7 @@ This file tracks high-level progress. For implementation details, see individual
 
 ## Development Flow
 
-1. **Create task file**: `spec/tasks/active/YYYYMMDD-NN-task-name.md` using `_template.md`
+1. **Create task file**: `spec/tasks/YYYYMMDD-NN-task-name.md` using `_template.md`
 2. **Link in roadmap**: Update "Task File" column above
 3. **Implement with TDD**: Follow the cycle in `_template.md` (Red → Green → Refactor)
 4. **Update checkboxes**: Mark steps complete in task file

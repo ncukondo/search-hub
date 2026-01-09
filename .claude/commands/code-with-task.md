@@ -1,1 +1,1 @@
-CLAUDE.md,spec/README.mdを起点として必要事項を確認後、git worktree $ARGUMENTS で、spec/tasks/active内の$ARGUMENTS の実装に取り組んで下さい。ステップ一つが完了する毎にtasksを更新し、commit。残りのcontextを確認し、次の作業の完了までにcompactが必要になってしまいそうならその時点で作業を中断して下さい
+CLAUDE.md,spec/README.mdを起点として必要事項を確認後、git worktree $ARGUMENTS で、spec/tasks内の$ARGUMENTS の実装に取り組んで下さい。ステップ一つが完了する毎にtasksを更新し、commit。残りのcontextを確認し、次の作業の完了までにcompactが必要になってしまいそうならその時点で作業を中断して下さい

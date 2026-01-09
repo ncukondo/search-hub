@@ -36,8 +36,8 @@ spec/
 ├── tasks/                 # Implementation tasks
 │   ├── ROADMAP.md         # Progress tracking & task dependencies
 │   ├── _template.md       # Task file template
-│   ├── active/            # Current/pending tasks
-│   └── completed/         # Archived tasks
+│   ├── YYYYMMDD-NN-*.md   # Active task files (directly under tasks/)
+│   └── completed/         # Archived completed tasks
 │
 └── decisions/             # Architecture Decision Records
     └── *.md               # Individual ADRs
@@ -58,7 +58,7 @@ spec/
    - Add new tasks with dependencies
    - Update status of existing tasks
 
-4. **Task Creation** - Create task files in `tasks/active/` using `tasks/_template.md`
+4. **Task Creation** - Create task files in `tasks/` using `tasks/_template.md`
    - Order tasks by dependency (least dependent first)
    - Include test cases for TDD
 
