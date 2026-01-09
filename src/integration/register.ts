@@ -6,7 +6,7 @@
 import * as path from 'node:path';
 import type { Article } from '../providers/base/types.js';
 import type { RegistrationRecord } from './types.js';
-import { refAdd } from './ref-cli.js';
+import { refAdd, refExport, refUpdate } from './ref-cli.js';
 
 /**
  * Options for registerArticles function.
@@ -37,12 +37,34 @@ function getRegistrationId(article: Article): string | null {
  * Register articles with reference-manager.
  * Processes each article and aggregates results.
  */
+/**
+ * Check if the ref entry already has an abstract.
+ * Returns false if we can't determine (e.g., export fails).
+ */
+async function hasExistingAbstract(
+  refId: string,
+  env: { REFERENCE_MANAGER_LIBRARY: string }
+): Promise<boolean> {
+  try {
+    const data = await refExport(refId, { env }) as { abstract?: string };
+    return !!data.abstract;
+  } catch {
+    // If export fails, assume no abstract so we try to update
+    return false;
+  }
+}
+
+/**
+ * Register articles with reference-manager.
+ * Processes each article and aggregates results.
+ */
 export async function registerArticles(
   articles: Article[],
   options: RegisterOptions
 ): Promise<RegistrationRecord> {
-  const { sessionId, sessionDir, onProgress } = options;
+  const { sessionId, sessionDir, withAbstracts, onProgress } = options;
   const libraryPath = path.join(sessionDir, 'references.json');
+  const env = { REFERENCE_MANAGER_LIBRARY: libraryPath };
 
   const record: RegistrationRecord = {
     sessionId,
@@ -75,22 +97,32 @@ export async function registerArticles(
     }
 
     try {
-      const output = await refAdd(id, {
-        env: { REFERENCE_MANAGER_LIBRARY: libraryPath },
-      });
+      const output = await refAdd(id, { env });
 
       // Aggregate results
       record.summary.added += output.summary.added;
       record.summary.skipped += output.summary.skipped;
       record.summary.failed += output.summary.failed;
 
-      // Record added items
+      // Record added items and update abstracts if requested
       for (const item of output.added) {
         record.added.push({
           source: item.source,
           id: item.id,
           title: item.title,
         });
+
+        // Update abstract if withAbstracts is enabled and article has abstract
+        if (withAbstracts && article.abstract) {
+          const alreadyHasAbstract = await hasExistingAbstract(item.id, env);
+          if (!alreadyHasAbstract) {
+            try {
+              await refUpdate(item.id, 'abstract', article.abstract, { env });
+            } catch {
+              // Log warning but continue - abstract update failure is non-fatal
+            }
+          }
+        }
       }
 
       // Record duplicates

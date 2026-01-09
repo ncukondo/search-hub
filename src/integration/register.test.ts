@@ -71,9 +71,8 @@ function createFailedOutput(
 
 describe('registerArticles', () => {
   const mockRefAdd = vi.mocked(refAdd);
-  // mockRefUpdate and mockRefExport will be used in later tests (Step 4)
-  const _mockRefUpdate = vi.mocked(refUpdate);
-  const _mockRefExport = vi.mocked(refExport);
+  const mockRefUpdate = vi.mocked(refUpdate);
+  const mockRefExport = vi.mocked(refExport);
 
   const baseOptions: RegisterOptions = {
     sessionId: 'test-session-123',
@@ -354,6 +353,155 @@ describe('registerArticles', () => {
       const result = await registerArticles(articles, baseOptions);
 
       expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    });
+  });
+
+  describe('withAbstracts option', () => {
+    it('should call ref update with abstract when withAbstracts is enabled', async () => {
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          title: 'Article with Abstract',
+          abstract: 'This is the abstract text.',
+        }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article with Abstract')
+      );
+      mockRefExport.mockResolvedValueOnce({ abstract: undefined }); // No existing abstract
+      mockRefUpdate.mockResolvedValueOnce(undefined);
+
+      await registerArticles(articles, { ...baseOptions, withAbstracts: true });
+
+      expect(mockRefUpdate).toHaveBeenCalledTimes(1);
+      expect(mockRefUpdate).toHaveBeenCalledWith(
+        'smith2024',
+        'abstract',
+        'This is the abstract text.',
+        expect.any(Object)
+      );
+    });
+
+    it('should not call ref update when withAbstracts is disabled', async () => {
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          abstract: 'Abstract text',
+        }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article')
+      );
+
+      await registerArticles(articles, baseOptions); // withAbstracts is false by default
+
+      expect(mockRefUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should skip ref update if article has no abstract', async () => {
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          title: 'Article without Abstract',
+        }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article without Abstract')
+      );
+
+      await registerArticles(articles, { ...baseOptions, withAbstracts: true });
+
+      expect(mockRefUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should skip ref update if ref entry already has abstract', async () => {
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          abstract: 'New abstract',
+        }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article')
+      );
+      mockRefExport.mockResolvedValueOnce({ abstract: 'Existing abstract' });
+
+      await registerArticles(articles, { ...baseOptions, withAbstracts: true });
+
+      expect(mockRefUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should handle special characters in abstract', async () => {
+      const abstractWithSpecialChars = 'Abstract with "quotes" and \\backslash\\ and $pecial chars.';
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          abstract: abstractWithSpecialChars,
+        }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article')
+      );
+      mockRefExport.mockResolvedValueOnce({ abstract: undefined });
+      mockRefUpdate.mockResolvedValueOnce(undefined);
+
+      await registerArticles(articles, { ...baseOptions, withAbstracts: true });
+
+      expect(mockRefUpdate).toHaveBeenCalledWith(
+        'smith2024',
+        'abstract',
+        abstractWithSpecialChars,
+        expect.any(Object)
+      );
+    });
+
+    it('should continue with other articles if ref update fails', async () => {
+      const articles = [
+        createArticle({ pmid: '11111111', title: 'Article 1', abstract: 'Abstract 1' }),
+        createArticle({ pmid: '22222222', title: 'Article 2', abstract: 'Abstract 2' }),
+      ];
+
+      mockRefAdd
+        .mockResolvedValueOnce(createRefAddOutput('pmid:11111111', 'smith2024', 'Article 1'))
+        .mockResolvedValueOnce(createRefAddOutput('pmid:22222222', 'jones2024', 'Article 2'));
+      mockRefExport
+        .mockResolvedValueOnce({ abstract: undefined })
+        .mockResolvedValueOnce({ abstract: undefined });
+      mockRefUpdate
+        .mockRejectedValueOnce(new Error('Update failed'))
+        .mockResolvedValueOnce(undefined);
+
+      const result = await registerArticles(articles, { ...baseOptions, withAbstracts: true });
+
+      // Both articles should still be registered successfully
+      expect(result.summary.added).toBe(2);
+      expect(mockRefUpdate).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle ref export failure gracefully', async () => {
+      const articles = [
+        createArticle({ pmid: '12345678', title: 'Article', abstract: 'Abstract' }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article')
+      );
+      mockRefExport.mockRejectedValueOnce(new Error('Export failed'));
+      // Should still try to update if export fails
+      mockRefUpdate.mockResolvedValueOnce(undefined);
+
+      await registerArticles(articles, { ...baseOptions, withAbstracts: true });
+
+      // Should still try to update since we can't confirm there's an existing abstract
+      expect(mockRefUpdate).toHaveBeenCalledTimes(1);
     });
   });
 });
