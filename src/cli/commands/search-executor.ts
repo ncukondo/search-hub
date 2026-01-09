@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 import type { SearchCommandOptions } from './search.js';
 import type { Config } from '../../config/index.js';
 import type {
+  Article,
   Provider,
   ProviderName,
   TranslatedQuery,
@@ -33,6 +34,9 @@ import { translateQuery as translateEric } from '../../providers/eric/translator
 import { translateQuery as translateArxiv } from '../../providers/arxiv/translator.js';
 import { translateQuery as translateScopus } from '../../providers/scopus/translator.js';
 import { stringify as stringifyYaml } from 'yaml';
+import { registerArticles, saveRegistrationRecord } from '../../integration/register.js';
+import type { RegistrationRecord } from '../../integration/types.js';
+import { checkRefAvailable } from '../../integration/ref-cli.js';
 
 /**
  * Result of a search execution.
@@ -42,6 +46,7 @@ export interface SearchExecutionResult {
   sessionId?: string;
   results?: Record<string, { hits: number; retrieved: number }>;
   error?: string;
+  autoRegisterResult?: RegistrationRecord;
 }
 
 /**
@@ -387,9 +392,69 @@ export async function executeSearch(
     };
   }
 
-  return {
+  // Auto-register if enabled
+  let autoRegisterResult: RegistrationRecord | undefined;
+  if (
+    config.integration.reference_manager.enabled &&
+    config.integration.reference_manager.auto_register
+  ) {
+    const refAvailable = await checkRefAvailable();
+    if (refAvailable) {
+      // Load all articles from results files
+      const allArticles = await loadArticlesFromSession(sessionsDir, sessionId, providers);
+
+      if (allArticles.length > 0) {
+        autoRegisterResult = await registerArticles(allArticles, {
+          sessionId,
+          sessionDir: join(sessionsDir, sessionId),
+        });
+
+        // Save registration record
+        await saveRegistrationRecord(join(sessionsDir, sessionId), autoRegisterResult);
+      }
+    }
+  }
+
+  const result: SearchExecutionResult = {
     success: true,
     sessionId,
     results,
   };
+
+  if (autoRegisterResult) {
+    result.autoRegisterResult = autoRegisterResult;
+  }
+
+  return result;
+}
+
+/**
+ * Load all articles from a session's results files.
+ */
+async function loadArticlesFromSession(
+  sessionsDir: string,
+  sessionId: string,
+  providers: ProviderName[]
+): Promise<Article[]> {
+  const articles: Article[] = [];
+
+  for (const provider of providers) {
+    const resultsPath = join(sessionsDir, sessionId, `${provider}_results.jsonl`);
+    try {
+      const content = await readFile(resultsPath, 'utf-8');
+      const lines = content.trim().split('\n').filter((line) => line.length > 0);
+      for (const line of lines) {
+        try {
+          const article = JSON.parse(line) as Article;
+          articles.push(article);
+        } catch {
+          // Skip invalid JSON lines
+        }
+      }
+    } catch {
+      // Skip if file doesn't exist
+    }
+  }
+
+  return articles;
 }
