@@ -78,14 +78,14 @@ async function createConfig(tempDir: string, config: Partial<Config>): Promise<s
 
 ### Step 4: E2E Tests for `search-hub query validate`
 
-- [ ] Write test: `src/cli/commands/query/validate.e2e.test.ts`
+- [x] Write test: `src/cli/commands/query/validate.e2e.test.ts`
   - Test valid query file passes
   - Test invalid query file shows errors
   - Test missing file shows error
   - Test helpful error messages for common mistakes
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Query validation provides useful feedback
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Query validation provides useful feedback
 
 ---
 
