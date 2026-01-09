@@ -113,6 +113,26 @@ export async function execCli(
 }
 
 /**
+ * YAML format for query files (different from internal QueryAST).
+ * Uses 'query' key instead of 'blocks', and snake_case for filters.
+ */
+interface QueryYaml {
+  name: string;
+  description?: string | undefined;
+  query: QueryAST['blocks'];
+  filters?: {
+    year_from?: number | undefined;
+    year_to?: number | undefined;
+    language?: string[] | undefined;
+    publication_types?: {
+      include?: string[] | undefined;
+      exclude?: string[] | undefined;
+    } | undefined;
+  } | undefined;
+  overrides?: Record<string, unknown> | undefined;
+}
+
+/**
  * Creates a query YAML file in the temp directory.
  * Returns the absolute path to the created file.
  */
@@ -123,7 +143,34 @@ export async function createQueryFile(
 ): Promise<string> {
   const { stringify } = await import('yaml');
   const filePath = join(tempDir, filename);
-  await writeFile(filePath, stringify(query), 'utf-8');
+
+  // Convert internal QueryAST format to YAML format
+  const pubTypes = query.filters?.publicationTypes;
+  const yamlObj: QueryYaml = {
+    name: query.name,
+    description: query.description,
+    query: query.blocks,
+    filters: {
+      year_from: query.filters?.yearFrom,
+      year_to: query.filters?.yearTo,
+      language: query.filters?.languages,
+      publication_types: pubTypes
+        ? { include: pubTypes.include, exclude: pubTypes.exclude }
+        : undefined,
+    },
+    overrides: query.overrides,
+  };
+
+  // Clean up undefined values
+  if (!yamlObj.description) delete yamlObj.description;
+  if (!yamlObj.filters?.year_from) delete yamlObj.filters?.year_from;
+  if (!yamlObj.filters?.year_to) delete yamlObj.filters?.year_to;
+  if (!yamlObj.filters?.language) delete yamlObj.filters?.language;
+  if (!yamlObj.filters?.publication_types) delete yamlObj.filters?.publication_types;
+  if (Object.keys(yamlObj.filters ?? {}).length === 0) delete yamlObj.filters;
+  if (Object.keys(yamlObj.overrides ?? {}).length === 0) delete yamlObj.overrides;
+
+  await writeFile(filePath, stringify(yamlObj), 'utf-8');
   return filePath;
 }
 
