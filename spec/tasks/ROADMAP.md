@@ -17,7 +17,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 8 | arXiv Provider | 3, 5a | ✅ Completed | [20260105-06](completed/20260105-06-arxiv-provider.md) |
 | 9 | Scopus Provider | 3, 5a | ✅ Completed | [20260105-07](completed/20260105-07-scopus-provider.md) |
 | 10 | CLI Commands | 2-4, 6-9 | ✅ Completed | [20260107-01](completed/20260107-01-cli-commands.md) |
-| 11 | Reference Manager Integration | 10 | Pending | - |
+| 11 | Reference Manager Integration | 10 | Pending | [20260109-01](20260109-01-reference-manager-integration.md) |
 | 12 | E2E Tests & Polish | All | Pending | - |
 
 ## Development Flow
