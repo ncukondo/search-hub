@@ -219,19 +219,17 @@ Please install Node.js first: https://nodejs.org/
 
 ### Step 7a: Add Configuration Schema
 
-**Status: Not implemented (deferred)**
-
-- [ ] Write test: `src/config/schema.test.ts` (add to existing)
+- [x] Write test: `src/config/schema.test.ts` (add to existing)
   - Test integration.reference_manager config section
   - Test enabled, command, auto_register options
-- [ ] Update config schema in `src/config/schema.ts`
-- [ ] Update defaults in `src/config/defaults.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Write integration test: verify config is loaded correctly in CLI
-- [ ] Acceptance: Config supports reference_manager settings
+- [x] Update config schema in `src/config/schema.ts`
+- [x] Update defaults in `src/config/defaults.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Write integration test: verify config is loaded correctly in CLI
+- [x] Acceptance: Config supports reference_manager settings
 
 ```toml
 [integration.reference_manager]
