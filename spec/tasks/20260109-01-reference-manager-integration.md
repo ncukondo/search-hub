@@ -33,17 +33,17 @@ Each step follows the TDD cycle:
 
 ### Step 1: Define Registration Record Types
 
-- [ ] Write test: `src/integration/types.test.ts`
+- [x] Write test: `src/integration/types.test.ts`
   - Test RegistrationRecord schema validation with zod
   - Test RefAddOutput schema (JSON output from `ref add -o json`)
-- [ ] Create stub: `src/integration/types.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement types and zod schemas
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: Types exported and validated with zod
+- [x] Create stub: `src/integration/types.ts`
+- [x] Verify test fails (Red)
+- [x] Implement types and zod schemas
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: Types exported and validated with zod
 
 ```typescript
 // Key types to define:
@@ -69,7 +69,7 @@ interface RefAddOutput {
 
 ### Step 2: Implement ref CLI Wrapper
 
-- [ ] Write test: `src/integration/ref-cli.test.ts`
+- [x] Write test: `src/integration/ref-cli.test.ts`
   - Test `checkRefAvailable()` - detects if ref command exists
   - Test `checkNpmAvailable()` - detects if npm command exists
   - Test `installRefManager()` - executes `npm i -g @ncukondo/reference-manager`
@@ -78,14 +78,14 @@ interface RefAddOutput {
   - Test `refExport(id)` - executes ref export
   - Test error handling (command not found, execution error)
   - Mock child_process.exec for unit tests
-- [ ] Create stub: `src/integration/ref-cli.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement ref CLI wrapper
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: Can execute ref commands and parse JSON output
+- [x] Create stub: `src/integration/ref-cli.ts`
+- [x] Verify test fails (Red)
+- [x] Implement ref CLI wrapper
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: Can execute ref commands and parse JSON output
 
 ```typescript
 // Key functions:
@@ -101,7 +101,7 @@ async function refExport(id: string, options?: { env?: NodeJS.ProcessEnv }): Pro
 
 ### Step 3: Implement Registration Logic
 
-- [ ] Write test: `src/integration/register.test.ts`
+- [x] Write test: `src/integration/register.test.ts`
   - Test ID selection (PMID preferred over DOI)
   - Test articles without identifiers (noId count)
   - Test aggregation of results from multiple ref add calls
@@ -109,14 +109,14 @@ async function refExport(id: string, options?: { env?: NodeJS.ProcessEnv }): Pro
   - Test failure handling
   - Test session-specific library path (REFERENCE_MANAGER_LIBRARY env)
   - Mock ref-cli functions for unit tests
-- [ ] Create stub: `src/integration/register.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement registration logic
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: Can register articles and aggregate results
+- [x] Create stub: `src/integration/register.ts`
+- [x] Verify test fails (Red)
+- [x] Implement registration logic
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: Can register articles and aggregate results
 
 ```typescript
 // Key function:
@@ -134,38 +134,38 @@ async function registerArticles(
 
 ### Step 4: Implement Abstract Update
 
-- [ ] Write test: `src/integration/register.test.ts` (add to existing)
+- [x] Write test: `src/integration/register.test.ts` (add to existing)
   - Test withAbstracts option triggers ref update
   - Test abstract escaping (special characters)
   - Test skips update if article has no abstract
   - Test skips update if ref entry already has abstract
-- [ ] Implement abstract update in register.ts
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: Abstracts are updated when option is enabled
+- [x] Implement abstract update in register.ts
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: Abstracts are updated when option is enabled
 
 ---
 
 ### Step 5: Implement Registration Record Storage
 
-- [ ] Write test: `src/integration/register.test.ts` (add to existing)
+- [x] Write test: `src/integration/register.test.ts` (add to existing)
   - Test `saveRegistrationRecord()` saves to session directory
   - Test `loadRegistrationRecord()` loads from session directory
   - Test file path: `{sessionDir}/registration.json`
-- [ ] Implement record storage functions
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: Registration records are persisted
+- [x] Implement record storage functions
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: Registration records are persisted
 
 ---
 
 ### Step 6: Implement register CLI Command
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test command parses session-id argument
   - Test --db option filters databases
   - Test --dry-run shows what would be registered
@@ -176,14 +176,14 @@ async function registerArticles(
     - If npm not available, prompt to install Node.js
   - Test error when session not found
   - Test output formatting (summary, duplicates list, etc.)
-- [ ] Create stub: `src/cli/commands/register.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement register command
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: `search-hub register <session-id>` works
+- [x] Create stub: `src/cli/commands/register.ts`
+- [x] Verify test fails (Red)
+- [x] Implement register command
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: `search-hub register <session-id>` works
 
 #### ref Not Found Flow
 
@@ -241,27 +241,27 @@ auto_register = false
 
 ### Step 8: Integrate into CLI
 
-- [ ] Write test: `src/cli/index.test.ts` (add to existing)
+- [x] Write test: `src/cli/index.test.ts` (add to existing)
   - Test register command is registered
-- [ ] Add register command to CLI in `src/cli/index.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Verify all tests pass
-- [ ] Acceptance: `search-hub register --help` shows usage
+- [x] Add register command to CLI in `src/cli/index.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Verify all tests pass
+- [x] Acceptance: `search-hub register --help` shows usage
 
 ---
 
 ### Step 9: Progress Display
 
-- [ ] Write test: `src/cli/commands/register.test.ts` (add to existing)
+- [x] Write test: `src/cli/commands/register.test.ts` (add to existing)
   - Test progress callback updates display
   - Test final summary output format
-- [ ] Implement progress display using existing progress utilities
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: Progress bar shows during registration
+- [x] Implement progress display using existing progress utilities
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: Progress bar shows during registration
 
 ---
 
@@ -269,7 +269,7 @@ auto_register = false
 
 **This step is MANDATORY before completion.** Unit tests with mocks often pass while real usage fails. Minimize mocks and test real user flows.
 
-- [ ] Write test: `src/integration/register.e2e.test.ts`
+- [x] Write test: `src/integration/register.e2e.test.ts`
   - **Real CLI execution** - Execute `search-hub register` as subprocess
   - **Real session data** - Create actual session directory with results
   - **Real ref execution** - Execute actual ref commands (skip if ref not installed)
@@ -330,10 +330,10 @@ describe('register with real ref command', () => {
 });
 ```
 
-- [ ] Verify all e2e tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all e2e tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Run `search-hub register` with real session
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## TDD Cycle Reference
 
