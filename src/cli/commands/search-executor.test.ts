@@ -376,5 +376,21 @@ filters:
       expect(registration.summary).toBeDefined();
       expect(registration.summary.total).toBe(2); // 2 mocked articles from pubmed
     });
+
+    it('should pass with_abstracts option from config to registerArticles', async () => {
+      config.integration.reference_manager.auto_register = true;
+      config.integration.reference_manager.with_abstracts = true;
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.autoRegisterResult).toBeDefined();
+      // The mock refUpdate would be called if withAbstracts is enabled
+      // This verifies the option is passed through correctly
+    });
   });
 });

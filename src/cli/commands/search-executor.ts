@@ -407,6 +407,7 @@ export async function executeSearch(
         autoRegisterResult = await registerArticles(allArticles, {
           sessionId,
           sessionDir: join(sessionsDir, sessionId),
+          withAbstracts: config.integration.reference_manager.with_abstracts,
         });
 
         // Save registration record
