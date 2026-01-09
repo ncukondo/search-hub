@@ -65,14 +65,14 @@ async function createConfig(tempDir: string, config: Partial<Config>): Promise<s
 
 ### Step 3: E2E Tests for `search-hub config`
 
-- [ ] Write test: `src/cli/commands/config.e2e.test.ts`
+- [x] Write test: `src/cli/commands/config.e2e.test.ts`
   - Test shows full config
   - Test shows specific key
   - Test sets value
   - Test error for invalid key
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub config` works correctly
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub config` works correctly
 
 ---
 
