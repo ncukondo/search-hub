@@ -6,6 +6,7 @@ import { getDefaultConfig } from './defaults';
 import { applyEnvVars } from './env';
 import { deepMerge, type DeepPartial } from '../utils/deep-merge';
 import { expandPath } from '../utils/path';
+import { appPaths } from '../utils/app-paths';
 
 export type RawConfig = Partial<Config>;
 
@@ -13,7 +14,7 @@ export type RawConfig = Partial<Config>;
  * Options for loadConfig function.
  */
 export interface LoadConfigOptions {
-  /** Path to global config file (default: ~/.search-hub/config.toml) */
+  /** Path to global config file (default: XDG-compliant path via appPaths.configFile) */
   globalConfigPath?: string;
   /** Path to local config file (default: ./search-hub.config.toml) */
   localConfigPath?: string;
@@ -56,7 +57,7 @@ export async function loadTomlFile(path: string): Promise<RawConfig> {
 /**
  * Default config file paths.
  */
-const DEFAULT_GLOBAL_CONFIG_PATH = '~/.search-hub/config.toml';
+const DEFAULT_GLOBAL_CONFIG_PATH = appPaths.configFile;
 const DEFAULT_LOCAL_CONFIG_PATH = './search-hub.config.toml';
 
 /**
@@ -66,7 +67,7 @@ const DEFAULT_LOCAL_CONFIG_PATH = './search-hub.config.toml';
  * 1. CLI options
  * 2. Environment variables
  * 3. Local config (./search-hub.config.toml)
- * 4. Global config (~/.search-hub/config.toml)
+ * 4. Global config (XDG-compliant path)
  * 5. Default values
  */
 export async function loadConfig(options: LoadConfigOptions = {}): Promise<Config> {

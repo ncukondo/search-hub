@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getDefaultConfig, DEFAULT_CONFIG } from './defaults';
 import { ConfigSchema } from './schema';
+import { appPaths } from '../utils/app-paths';
 
 describe('DEFAULT_CONFIG', () => {
   it('is a valid Config object', () => {
@@ -30,8 +31,8 @@ describe('getDefaultConfig', () => {
   it('has all required fields present', () => {
     const config = getDefaultConfig();
 
-    // Session
-    expect(config.session.directory).toBe('~/.search-hub/sessions');
+    // Session (XDG-compliant path)
+    expect(config.session.directory).toBe(appPaths.sessionsDir);
 
     // Log
     expect(config.log.level).toBe('info');

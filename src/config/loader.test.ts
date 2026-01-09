@@ -3,6 +3,7 @@ import { loadTomlFile, loadConfig, saveConfig } from './loader';
 import { writeFile, mkdir, rm, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { appPaths } from '../utils/app-paths';
 
 describe('loadTomlFile', () => {
   let testDir: string;
@@ -106,7 +107,7 @@ describe('loadConfig', () => {
     });
 
     expect(config.log.level).toBe('info');
-    expect(config.session.directory).toBe('~/.search-hub/sessions');
+    expect(config.session.directory).toBe(appPaths.sessionsDir);
     expect(config.providers.pubmed.rate_limit).toBe(3);
   });
 
