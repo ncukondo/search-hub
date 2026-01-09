@@ -6,16 +6,28 @@
 Highest ──► CLI arguments
          │  Environment variables
          │  Local config (./search-hub.config.toml)
-Lowest  ──► Global config (~/.search-hub/config.toml)
+Lowest  ──► Global config (XDG-compliant path)
 ```
 
 Later sources override earlier ones at the field level (deep merge).
 
 ## Config File Locations
 
+Follows [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/latest/) on Linux,
+and platform conventions on macOS/Windows via [env-paths](https://github.com/sindresorhus/env-paths).
+
+### Global Config (per-user)
+
+| OS | Config File | Data Directory |
+|----|-------------|----------------|
+| Linux | `~/.config/search-hub/config.toml` | `~/.local/share/search-hub/` |
+| macOS | `~/Library/Preferences/search-hub/config.toml` | `~/Library/Application Support/search-hub/` |
+| Windows | `%APPDATA%\search-hub\Config\config.toml` | `%APPDATA%\search-hub\Data\` |
+
+### Local Config (per-project)
+
 | Location | Purpose |
 |----------|---------|
-| `~/.search-hub/config.toml` | Global defaults, API keys |
 | `./search-hub.config.toml` | Project-specific overrides |
 
 ## Environment Variables
@@ -50,11 +62,11 @@ Provider-specific:
 ## TOML Schema
 
 ```toml
-# ~/.search-hub/config.toml
+# Global config file (location varies by OS, see "Config File Locations")
 
 # Session storage
 [session]
-directory = "~/.search-hub/sessions"    # Default session location
+directory = ""    # Default: XDG data directory (e.g., ~/.local/share/search-hub/sessions)
 
 # Logging
 [log]
@@ -130,7 +142,7 @@ const ProviderConfigSchema = z.object({
 
 const ConfigSchema = z.object({
   session: z.object({
-    directory: z.string().default('~/.search-hub/sessions'),
+    directory: z.string().default(appPaths.sessionsDir), // XDG-compliant
   }).default({}),
 
   log: z.object({
@@ -166,12 +178,14 @@ type Config = z.infer<typeof ConfigSchema>;
 ## Config Loading Logic
 
 ```typescript
+import { appPaths } from './utils/app-paths';
+
 async function loadConfig(cliOptions: CLIOptions): Promise<Config> {
   // 1. Start with defaults
   let config = getDefaultConfig();
 
-  // 2. Load global config
-  const globalPath = expandPath('~/.search-hub/config.toml');
+  // 2. Load global config (XDG-compliant path)
+  const globalPath = appPaths.configFile;
   if (await exists(globalPath)) {
     config = deepMerge(config, await loadToml(globalPath));
   }
@@ -199,7 +213,11 @@ async function loadConfig(cliOptions: CLIOptions): Promise<Config> {
 search-hub init
 ```
 
-Creates `~/.search-hub/config.toml` with defaults and prompts for API keys:
+Creates config and data directories in XDG-compliant locations:
+- Config: `~/.config/search-hub/config.toml` (Linux)
+- Data: `~/.local/share/search-hub/sessions/` (Linux)
+
+Prompts for API keys:
 
 ```
 ? PubMed API key (optional): [input]
