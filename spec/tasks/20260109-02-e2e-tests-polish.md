@@ -52,14 +52,14 @@ async function createConfig(tempDir: string, config: Partial<Config>): Promise<s
 
 ### Step 2: E2E Tests for `search-hub init`
 
-- [ ] Write test: `src/cli/commands/init.e2e.test.ts`
+- [x] Write test: `src/cli/commands/init.e2e.test.ts`
   - Test creates config file at default location
   - Test creates config file at custom location with `--config`
   - Test `--force` overwrites existing config
   - Test error when config exists without `--force`
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub init` works in all scenarios
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub init` works in all scenarios
 
 ---
 
