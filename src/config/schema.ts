@@ -84,11 +84,22 @@ export const ConfigSchema = z.object({
           enabled: z.boolean().default(true),
           command: z.string().default('ref'),
           auto_register: z.boolean().default(false),
+          with_abstracts: z.boolean().default(false),
         })
-        .default(() => ({ enabled: true, command: 'ref', auto_register: false })),
+        .default(() => ({
+          enabled: true,
+          command: 'ref',
+          auto_register: false,
+          with_abstracts: false,
+        })),
     })
     .default(() => ({
-      reference_manager: { enabled: true, command: 'ref', auto_register: false },
+      reference_manager: {
+        enabled: true,
+        command: 'ref',
+        auto_register: false,
+        with_abstracts: false,
+      },
     })),
 });
 

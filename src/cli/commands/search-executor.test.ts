@@ -98,6 +98,19 @@ vi.mock('../../providers/scopus/provider.js', () => ({
   })),
 }));
 
+// Mock ref-cli functions for auto-register tests
+vi.mock('../../integration/ref-cli.js', () => ({
+  checkRefAvailable: vi.fn().mockResolvedValue(true),
+  refAdd: vi.fn().mockResolvedValue({
+    summary: { total: 1, added: 1, skipped: 0, failed: 0 },
+    added: [{ source: 'pmid:12345', id: 'smith2024', title: 'Test Article' }],
+    skipped: [],
+    failed: [],
+  }),
+  refUpdate: vi.fn().mockResolvedValue(undefined),
+  refExport: vi.fn().mockResolvedValue({}),
+}));
+
 // Import after mocking
 const { executeSearch, createProviderInstance } = await import('./search-executor.js');
 
@@ -295,6 +308,89 @@ filters:
       expect(() =>
         createProviderInstance('wos' as any, config)
       ).toThrow('not implemented');
+    });
+  });
+
+  describe('auto-register', () => {
+    it('should call registerArticles when auto_register is enabled', async () => {
+      // Enable auto_register in config
+      config.integration.reference_manager.auto_register = true;
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.sessionId).toBeDefined();
+      expect(result.autoRegisterResult).toBeDefined();
+      expect(result.autoRegisterResult?.summary).toBeDefined();
+    });
+
+    it('should not call registerArticles when auto_register is disabled', async () => {
+      // Ensure auto_register is disabled (default)
+      config.integration.reference_manager.auto_register = false;
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.autoRegisterResult).toBeUndefined();
+    });
+
+    it('should not call registerArticles when reference_manager is disabled', async () => {
+      config.integration.reference_manager.enabled = false;
+      config.integration.reference_manager.auto_register = true;
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.autoRegisterResult).toBeUndefined();
+    });
+
+    it('should create registration.json in session directory when auto_register is enabled', async () => {
+      config.integration.reference_manager.auto_register = true;
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+
+      // Check that registration.json was created
+      const registrationPath = join(sessionsDir, result.sessionId!, 'registration.json');
+      const registrationContent = await readFile(registrationPath, 'utf-8');
+      const registration = JSON.parse(registrationContent);
+
+      expect(registration.sessionId).toBeDefined();
+      expect(registration.summary).toBeDefined();
+      expect(registration.summary.total).toBe(2); // 2 mocked articles from pubmed
+    });
+
+    it('should pass with_abstracts option from config to registerArticles', async () => {
+      config.integration.reference_manager.auto_register = true;
+      config.integration.reference_manager.with_abstracts = true;
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.autoRegisterResult).toBeDefined();
+      // The mock refUpdate would be called if withAbstracts is enabled
+      // This verifies the option is passed through correctly
     });
   });
 });

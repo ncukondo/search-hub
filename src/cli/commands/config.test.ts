@@ -73,6 +73,7 @@ const mockConfig: Config = {
       enabled: false,
       command: 'ref',
       auto_register: false,
+      with_abstracts: false,
     },
   },
 };

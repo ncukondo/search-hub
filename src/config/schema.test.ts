@@ -81,6 +81,7 @@ describe('ConfigSchema', () => {
     expect(result.integration.reference_manager.enabled).toBe(true);
     expect(result.integration.reference_manager.command).toBe('ref');
     expect(result.integration.reference_manager.auto_register).toBe(false);
+    expect(result.integration.reference_manager.with_abstracts).toBe(false);
   });
 
   it('validates log level enum', () => {

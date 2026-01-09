@@ -45,6 +45,14 @@ import {
   formatJson,
   formatJsonl,
 } from './commands/export.js';
+import {
+  parseRegisterOptions,
+  validateRegisterInput,
+  formatRegistrationSummary,
+  formatDryRunOutput as formatRegisterDryRunOutput,
+} from './commands/register.js';
+import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
+import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
 import { loadSession } from '../session/manager.js';
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -649,6 +657,176 @@ export function createProgram(): Command {
             }
           } else {
             console.log(output);
+          }
+
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error(
+              'Error:',
+              error instanceof Error ? error.message : error
+            );
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+        }
+      }
+    );
+
+  // Register register command
+  program
+    .command('register')
+    .description('Register results with reference-manager')
+    .argument('<session-id>', 'session ID to register')
+    .option('--db <providers>', 'register only specific database(s)')
+    .option('--dry-run', 'show what would be registered without executing', false)
+    .option('--with-abstracts', 'also update abstracts via ref update', false)
+    .action(
+      async (
+        sessionId: string,
+        options?: {
+          db?: string;
+          dryRun?: boolean;
+          withAbstracts?: boolean;
+        }
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          // Parse and validate options
+          const registerOpts = parseRegisterOptions(sessionId, {
+            db: options?.db,
+            dryRun: options?.dryRun,
+            withAbstracts: options?.withAbstracts,
+          });
+
+          const validation = validateRegisterInput(registerOpts);
+          if (!validation.valid) {
+            if (!globalOpts.quiet) {
+              console.error(`Error: ${validation.error}`);
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          // Check if ref command is available
+          const refAvailable = await checkRefAvailable();
+          if (!refAvailable && !registerOpts.dryRun) {
+            if (!globalOpts.quiet) {
+              console.error('Error: reference-manager (ref) command not found.\n');
+              console.error('reference-manager is required to register search results.');
+              console.error('Would you like to install it now? (npm i -g @ncukondo/reference-manager) [Y/n]: ');
+            }
+
+            // For non-interactive mode, suggest installation
+            const npmAvailable = await checkNpmAvailable();
+            if (!npmAvailable) {
+              if (!globalOpts.quiet) {
+                console.error('\nError: npm command not found.');
+                console.error('Please install Node.js first: https://nodejs.org/');
+              }
+              process.exitCode = EXIT_CODES.GENERAL_ERROR;
+              return;
+            }
+
+            // Try to install
+            try {
+              if (!globalOpts.quiet) {
+                console.log('\nInstalling reference-manager...');
+              }
+              await installRefManager();
+              if (!globalOpts.quiet) {
+                console.log('✓ reference-manager installed successfully.\n');
+              }
+            } catch (installError) {
+              if (!globalOpts.quiet) {
+                console.error(
+                  `\nFailed to install reference-manager: ${installError instanceof Error ? installError.message : 'Unknown error'}`
+                );
+              }
+              process.exitCode = EXIT_CODES.GENERAL_ERROR;
+              return;
+            }
+          }
+
+          const sessionsDir = await getSessionsDir(globalOpts);
+
+          // Load session
+          let session;
+          try {
+            session = await loadSession(sessionId, sessionsDir);
+          } catch (error) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`
+              );
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          // Collect articles from result files
+          const { readFile } = await import('node:fs/promises');
+          const { join } = await import('node:path');
+          const articles: import('../providers/base/types.js').Article[] = [];
+
+          // Determine which providers to register
+          const providersToRegister = registerOpts.providers
+            ? registerOpts.providers
+            : (Object.keys(session.databases) as ProviderName[]);
+
+          for (const provider of providersToRegister) {
+            const dbStatus = session.databases[provider];
+            if (!dbStatus || !dbStatus.files?.results) continue;
+
+            const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
+            try {
+              const content = await readFile(resultsPath, 'utf-8');
+              const lines = content.trim().split('\n').filter((line) => line);
+              for (const line of lines) {
+                try {
+                  articles.push(JSON.parse(line));
+                } catch {
+                  // Skip invalid JSON lines
+                }
+              }
+            } catch {
+              // Results file may not exist yet
+            }
+          }
+
+          // Dry run mode
+          if (registerOpts.dryRun) {
+            if (!globalOpts.quiet) {
+              console.log(formatRegisterDryRunOutput(articles));
+            }
+            process.exitCode = EXIT_CODES.SUCCESS;
+            return;
+          }
+
+          // Register articles
+          if (!globalOpts.quiet) {
+            console.log(`Registering ${articles.length} references to reference-manager...`);
+          }
+
+          const sessionDir = join(sessionsDir, sessionId);
+          const registerOptions: import('../integration/register.js').RegisterOptions = {
+            sessionId,
+            sessionDir,
+            withAbstracts: registerOpts.withAbstracts,
+          };
+          if (!globalOpts.quiet) {
+            registerOptions.onProgress = (current, total) => {
+              process.stdout.write(`\rProgress: ${current}/${total}`);
+            };
+          }
+          const record = await registerArticles(articles, registerOptions);
+
+          // Save registration record
+          await saveRegistrationRecord(sessionDir, record);
+
+          if (!globalOpts.quiet) {
+            console.log('\n');
+            console.log(formatRegistrationSummary(record.summary));
+            console.log(`\nResults saved to: ${join(sessionDir, 'registration.json')}`);
           }
 
           process.exitCode = EXIT_CODES.SUCCESS;
