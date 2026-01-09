@@ -13,9 +13,13 @@ search-hub exports identifiers (DOI/PMID) that reference-manager can import. The
 
 | Command | Purpose |
 |---------|---------|
-| `ref add <id>` | Add reference by DOI or `pmid:<pmid>` |
+| `ref add <id>` | Add reference by DOI, `pmid:<pmid>`, or `ISBN:<isbn>` |
+| `ref add <id> -o json` | Add reference with JSON output (machine-readable) |
+| `ref export <id>` | Export reference metadata as JSON (default), YAML, or BibTeX |
 | `ref update <id> --set "field=value"` | Update reference field (e.g., abstract) |
-| `ref list --format json` | List references |
+| `ref list --format json` | List all references |
+| `ref search "<query>"` | Search references (e.g., `"author:smith 2024"`) |
+| `ref fulltext attach <id> <path>` | Attach PDF/Markdown to reference |
 
 ### ID Format Requirements
 
@@ -35,6 +39,25 @@ Skipped 1 duplicate(s):
 - Duplicates are skipped (not an error)
 - Existing entry is not updated
 
+### JSON Output Format
+
+`ref add -o json` returns structured results:
+
+```json
+{
+  "summary": { "total": 3, "added": 2, "skipped": 1, "failed": 0 },
+  "added": [
+    { "source": "10.1234/example", "id": "smith2024", "title": "..." }
+  ],
+  "skipped": [
+    { "source": "10.5678/existing", "existingId": "jones2023", "duplicateType": "doi" }
+  ],
+  "failed": []
+}
+```
+
+Use `--full` flag to include complete CSL-JSON in `added[].item`.
+
 ## Integration Flows
 
 ### Flow 1: Export and Pipe
@@ -53,10 +76,10 @@ search-hub export 20240115_diabetes-ai_a3f2c1 --format ids --id-type pmid | xarg
 # Register all results
 search-hub register 20240115_diabetes-ai_a3f2c1
 
-# Internally executes:
-# ref add "10.1234/example1"
-# ref add "10.1234/example2"
+# Internally executes (PMID preferred):
 # ref add "pmid:12345678"
+# ref add "pmid:87654321"
+# ref add "10.1234/example1"  # DOI fallback when no PMID
 # ...
 ```
 
@@ -65,45 +88,27 @@ search-hub register 20240115_diabetes-ai_a3f2c1
 ```bash
 search-hub register 20240115_diabetes-ai_a3f2c1 --with-abstracts
 
-# Internally executes:
-# ref add "10.1234/example1"
-# ref update "10.1234/example1" --set "abstract=..."
-# ref add "10.1234/example2"
-# ref update "10.1234/example2" --set "abstract=..."
+# Internally executes (PMID preferred):
+# ref add "pmid:12345678"
+# ref update "smith2024" --set "abstract=..."
+# ref add "pmid:87654321"
+# ref update "jones2024" --set "abstract=..."
 # ...
 ```
 
 ## Implementation Details
 
-### Register Command
-
-```typescript
-async function register(sessionId: string, options: RegisterOptions) {
-  const session = await loadSession(sessionId);
-  const articles = await loadAllResults(session);
-
-  for (const article of articles) {
-    // DOI preferred, PMID requires prefix
-    const id = article.doi || (article.pmid ? `pmid:${article.pmid}` : null);
-    if (!id) continue;
-
-    // Add reference
-    await exec(`ref add "${id}"`);
-
-    // Update abstract if requested and available
-    if (options.withAbstracts && article.abstract) {
-      await exec(`ref update "${id}" --set "abstract=${escape(article.abstract)}"`);
-    }
-  }
-}
-```
-
 ### ID Priority
 
 When registering:
-1. Use DOI if available (preferred)
-2. Fall back to PMID with `pmid:` prefix
+1. Use PMID if available (preferred) - PubMed metadata is higher quality and more complete
+2. Fall back to DOI
 3. Skip if neither available (log warning)
+
+Rationale for PMID preference:
+- PubMed metadata is standardized and complete for medical literature
+- Abstracts are almost always present
+- Author name format is consistent (family/given separated)
 
 ### Error Handling
 
@@ -112,6 +117,155 @@ When registering:
 | ref not found | Error with instruction to install |
 | ref add fails | Log warning, continue with next |
 | Duplicate ID | Skipped by ref (not an error) |
+
+### Registration Record
+
+Each registration saves a detailed record for auditing and reproducibility.
+
+#### Data Structure
+
+```typescript
+interface RegistrationRecord {
+  sessionId: string;
+  timestamp: string;
+  summary: {
+    total: number;      // Total articles processed
+    added: number;      // Successfully added to library
+    skipped: number;    // Duplicates (already in library)
+    failed: number;     // Failed to fetch/add
+    noId: number;       // Articles without DOI/PMID
+  };
+  added: Array<{
+    source: string;     // Input identifier (DOI or pmid:...)
+    id: string;         // Generated citation key (e.g., "smith2024")
+    title: string;
+  }>;
+  duplicates: Array<{
+    source: string;     // Input identifier
+    existingId: string; // Existing citation key in library
+    duplicateType: string; // "doi" | "pmid" | "isbn"
+  }>;
+  failed: Array<{
+    source: string;
+    reason: string;     // "not_found" | "fetch_error" | "parse_error"
+    error?: string;     // Detailed error message
+  }>;
+}
+```
+
+#### Storage Location
+
+```
+sessions/
+  20240115_diabetes-ai_a3f2c1/
+    references.json         # Session-specific CSL JSON library
+    registration.json       # Registration record
+    registration-log.txt    # Human-readable log (optional)
+```
+
+#### Session-Specific Library
+
+Each session uses its own CSL JSON library for accurate duplicate detection within the session scope.
+
+```bash
+# Set library path via environment variable
+export REFERENCE_MANAGER_LIBRARY=./sessions/20240115_diabetes-ai_a3f2c1/references.json
+ref add "pmid:12345678"
+```
+
+Benefits:
+- Accurate duplicate detection per search session
+- Isolated from user's main library
+- Reproducible results
+- Can be merged into main library later if needed
+
+#### CLI Output
+
+```
+Registering 100 references to reference-manager...
+
+Registration complete:
+  ✓ 95 added
+  ⚠ 4 duplicates (already in library):
+    - 10.1234/example → existing 'smith2024'
+    - 10.5678/another → existing 'jones2023'
+    - pmid:12345678 → existing 'chen2024'
+    - pmid:87654321 → existing 'lee2024'
+  ✗ 1 failed (not found)
+
+Results saved to: sessions/20240115_diabetes-ai_a3f2c1/registration.json
+```
+
+#### Implementation
+
+```typescript
+// Reference implementation - actual implementation should use zod
+// to validate ref command output, as the format may change between versions.
+
+async function register(sessionId: string, options: RegisterOptions): Promise<RegistrationRecord> {
+  const session = await loadSession(sessionId);
+  const articles = await loadAllResults(session);
+
+  // Use session-specific library for accurate duplicate detection
+  const libraryPath = path.join(session.dir, 'references.json');
+  const env = { ...process.env, REFERENCE_MANAGER_LIBRARY: libraryPath };
+
+  const record: RegistrationRecord = {
+    sessionId,
+    timestamp: new Date().toISOString(),
+    summary: { total: articles.length, added: 0, skipped: 0, failed: 0, noId: 0 },
+    added: [],
+    duplicates: [],
+    failed: [],
+  };
+
+  for (const article of articles) {
+    // PMID preferred for better metadata quality from PubMed
+    const id = article.pmid ? `pmid:${article.pmid}` : article.doi ?? null;
+    if (!id) {
+      record.summary.noId++;
+      continue;
+    }
+
+    // NOTE: Use zod schema validation in production (e.g., RefAddOutputSchema.parse())
+    const output = JSON.parse(await exec(`ref add "${id}" -o json`, { env }));
+
+    // Aggregate results
+    record.summary.added += output.summary.added;
+    record.summary.skipped += output.summary.skipped;
+    record.summary.failed += output.summary.failed;
+
+    // Record added items
+    for (const item of output.added) {
+      record.added.push({ source: item.source, id: item.id, title: item.title });
+
+      // Update abstract if available
+      if (options.withAbstracts && article.abstract) {
+        await exec(`ref update "${item.id}" --set "abstract=${escape(article.abstract)}"`, { env });
+      }
+    }
+
+    // Record duplicates
+    for (const item of output.skipped) {
+      record.duplicates.push({
+        source: item.source,
+        existingId: item.existingId,
+        duplicateType: item.duplicateType,
+      });
+    }
+
+    // Record failures
+    for (const item of output.failed) {
+      record.failed.push({ source: item.source, reason: item.reason, error: item.error });
+    }
+  }
+
+  // Save record
+  await saveRegistrationRecord(session, record);
+
+  return record;
+}
+```
 
 ### Progress Display
 
@@ -153,11 +307,11 @@ Registered 100 references:
 If search-hub has abstract but reference-manager entry does not, auto-fill:
 
 ```typescript
-// After ref add
-const refData = await exec(`ref show "${refId}" --output json`);
+// After ref add (env contains REFERENCE_MANAGER_LIBRARY)
+const refData = JSON.parse(await exec(`ref export "${refId}"`, { env }));
 
 if (article.abstract && !refData.abstract) {
-  await exec(`ref update "${refId}" --set "abstract=${escape(article.abstract)}"`);
+  await exec(`ref update "${refId}" --set "abstract=${escape(article.abstract)}"`, { env });
 }
 ```
 
@@ -197,15 +351,16 @@ search-hub output formats compatible with ref:
 | `ids` (pmid) | `cat ids.txt \| xargs -I{} ref add "pmid:{}"` |
 | `json` | Future: `ref import --format json` |
 
-## Recommended reference-manager Enhancements
+## reference-manager Feature Status
 
-The following features would improve integration:
+Features relevant to search-hub integration:
 
-| Feature | Purpose | Priority |
-|---------|---------|----------|
-| `ref add --output json` | Machine-readable add result (added/skipped counts) | High |
-| `ref show <id> --output json` | Get entry metadata for diff detection | High |
-| `ref update --set` | Update arbitrary fields | Existing |
+| Feature | Status | Notes |
+|---------|--------|-------|
+| `ref add -o json` | ✅ Implemented | Returns `{ summary, added[], skipped[], failed[] }` |
+| `ref export <id>` | ✅ Implemented | Get entry metadata as JSON/YAML/BibTeX |
+| `ref update --set` | ✅ Implemented | Update arbitrary fields |
+| `ref fulltext attach` | ✅ Implemented | Attach PDF/Markdown to references |
 
 ## Future Considerations
 
