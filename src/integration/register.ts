@@ -3,10 +3,48 @@
  * Handles registering articles with the ref CLI.
  */
 
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { Article } from '../providers/base/types.js';
-import type { RegistrationRecord } from './types.js';
+import { RegistrationRecordSchema, type RegistrationRecord } from './types.js';
 import { refAdd, refExport, refUpdate } from './ref-cli.js';
+
+const REGISTRATION_FILE = 'registration.json';
+
+/**
+ * Save registration record to session directory.
+ */
+export async function saveRegistrationRecord(
+  sessionDir: string,
+  record: RegistrationRecord
+): Promise<void> {
+  await fs.mkdir(sessionDir, { recursive: true });
+  const filePath = path.join(sessionDir, REGISTRATION_FILE);
+  await fs.writeFile(filePath, JSON.stringify(record, null, 2));
+}
+
+/**
+ * Load registration record from session directory.
+ * Returns null if file does not exist.
+ * Throws if file exists but is invalid.
+ */
+export async function loadRegistrationRecord(
+  sessionDir: string
+): Promise<RegistrationRecord | null> {
+  const filePath = path.join(sessionDir, REGISTRATION_FILE);
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(content);
+    return RegistrationRecordSchema.parse(data);
+  } catch (error) {
+    // File not found - return null
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      return null;
+    }
+    // Parse or validation error - re-throw
+    throw error;
+  }
+}
 
 /**
  * Options for registerArticles function.

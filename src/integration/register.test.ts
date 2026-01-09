@@ -14,7 +14,12 @@ vi.mock('./ref-cli.js', () => ({
 }));
 
 import { refAdd, refUpdate, refExport } from './ref-cli.js';
-import { registerArticles, type RegisterOptions } from './register.js';
+import {
+  registerArticles,
+  saveRegistrationRecord,
+  loadRegistrationRecord,
+  type RegisterOptions,
+} from './register.js';
 
 // Helper to create test articles
 function createArticle(overrides: Partial<Article> = {}): Article {
@@ -502,6 +507,132 @@ describe('registerArticles', () => {
 
       // Should still try to update since we can't confirm there's an existing abstract
       expect(mockRefUpdate).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
+describe('Registration Record Storage', () => {
+  let tempDir: string;
+
+  beforeEach(async () => {
+    const fs = await import('node:fs/promises');
+    const path = await import('node:path');
+    const os = await import('node:os');
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'search-hub-test-'));
+  });
+
+  afterEach(async () => {
+    const fs = await import('node:fs/promises');
+    await fs.rm(tempDir, { recursive: true, force: true });
+  });
+
+  describe('saveRegistrationRecord', () => {
+    it('should save record to session directory as registration.json', async () => {
+      const fs = await import('node:fs/promises');
+      const path = await import('node:path');
+      const record = {
+        sessionId: 'test-session',
+        timestamp: '2024-01-15T10:00:00.000Z',
+        summary: { total: 1, added: 1, skipped: 0, failed: 0, noId: 0 },
+        added: [{ source: 'pmid:12345678', id: 'smith2024', title: 'Test' }],
+        duplicates: [],
+        failed: [],
+      };
+
+      await saveRegistrationRecord(tempDir, record);
+
+      const filePath = path.join(tempDir, 'registration.json');
+      const content = await fs.readFile(filePath, 'utf-8');
+      const savedRecord = JSON.parse(content);
+
+      expect(savedRecord).toEqual(record);
+    });
+
+    it('should create directory if it does not exist', async () => {
+      const fs = await import('node:fs/promises');
+      const path = await import('node:path');
+      const nestedDir = path.join(tempDir, 'nested', 'session');
+      const record = {
+        sessionId: 'test-session',
+        timestamp: '2024-01-15T10:00:00.000Z',
+        summary: { total: 0, added: 0, skipped: 0, failed: 0, noId: 0 },
+        added: [],
+        duplicates: [],
+        failed: [],
+      };
+
+      await saveRegistrationRecord(nestedDir, record);
+
+      const filePath = path.join(nestedDir, 'registration.json');
+      expect(await fs.access(filePath).then(() => true).catch(() => false)).toBe(true);
+    });
+
+    it('should format JSON with indentation', async () => {
+      const fs = await import('node:fs/promises');
+      const path = await import('node:path');
+      const record = {
+        sessionId: 'test-session',
+        timestamp: '2024-01-15T10:00:00.000Z',
+        summary: { total: 0, added: 0, skipped: 0, failed: 0, noId: 0 },
+        added: [],
+        duplicates: [],
+        failed: [],
+      };
+
+      await saveRegistrationRecord(tempDir, record);
+
+      const filePath = path.join(tempDir, 'registration.json');
+      const content = await fs.readFile(filePath, 'utf-8');
+
+      // Check that JSON is formatted with indentation
+      expect(content).toContain('\n');
+      expect(content).toMatch(/^\{\n\s+"sessionId"/);
+    });
+  });
+
+  describe('loadRegistrationRecord', () => {
+    it('should load record from session directory', async () => {
+      const fs = await import('node:fs/promises');
+      const path = await import('node:path');
+      const record = {
+        sessionId: 'test-session',
+        timestamp: '2024-01-15T10:00:00.000Z',
+        summary: { total: 2, added: 1, skipped: 1, failed: 0, noId: 0 },
+        added: [{ source: 'pmid:12345678', id: 'smith2024', title: 'Test' }],
+        duplicates: [{ source: '10.1234/x', existingId: 'jones2023', duplicateType: 'doi' }],
+        failed: [],
+      };
+
+      const filePath = path.join(tempDir, 'registration.json');
+      await fs.writeFile(filePath, JSON.stringify(record));
+
+      const loaded = await loadRegistrationRecord(tempDir);
+
+      expect(loaded).toEqual(record);
+    });
+
+    it('should return null if file does not exist', async () => {
+      const result = await loadRegistrationRecord(tempDir);
+
+      expect(result).toBeNull();
+    });
+
+    it('should throw error if file contains invalid JSON', async () => {
+      const fs = await import('node:fs/promises');
+      const path = await import('node:path');
+      const filePath = path.join(tempDir, 'registration.json');
+      await fs.writeFile(filePath, 'not valid json');
+
+      await expect(loadRegistrationRecord(tempDir)).rejects.toThrow();
+    });
+
+    it('should throw error if file contains invalid schema', async () => {
+      const fs = await import('node:fs/promises');
+      const path = await import('node:path');
+      const filePath = path.join(tempDir, 'registration.json');
+      await fs.writeFile(filePath, JSON.stringify({ invalid: 'data' }));
+
+      await expect(loadRegistrationRecord(tempDir)).rejects.toThrow();
     });
   });
 });
