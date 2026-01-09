@@ -1,0 +1,359 @@
+/**
+ * Tests for registration logic.
+ */
+
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { Article } from '../providers/base/types.js';
+import type { RefAddOutput } from './types.js';
+
+// Mock ref-cli module
+vi.mock('./ref-cli.js', () => ({
+  refAdd: vi.fn(),
+  refUpdate: vi.fn(),
+  refExport: vi.fn(),
+}));
+
+import { refAdd, refUpdate, refExport } from './ref-cli.js';
+import { registerArticles, type RegisterOptions } from './register.js';
+
+// Helper to create test articles
+function createArticle(overrides: Partial<Article> = {}): Article {
+  return {
+    title: 'Test Article',
+    authors: [{ family: 'Test', given: 'Author' }],
+    source: 'pubmed',
+    retrievedAt: '2024-01-15T10:00:00.000Z',
+    ...overrides,
+  };
+}
+
+// Helper to create successful ref add output
+function createRefAddOutput(
+  source: string,
+  id: string,
+  title: string
+): RefAddOutput {
+  return {
+    summary: { total: 1, added: 1, skipped: 0, failed: 0 },
+    added: [{ source, id, title }],
+    skipped: [],
+    failed: [],
+  };
+}
+
+// Helper to create duplicate ref add output
+function createDuplicateOutput(
+  source: string,
+  existingId: string,
+  duplicateType: string
+): RefAddOutput {
+  return {
+    summary: { total: 1, added: 0, skipped: 1, failed: 0 },
+    added: [],
+    skipped: [{ source, existingId, duplicateType }],
+    failed: [],
+  };
+}
+
+// Helper to create failed ref add output
+function createFailedOutput(
+  source: string,
+  reason: string,
+  error?: string
+): RefAddOutput {
+  return {
+    summary: { total: 1, added: 0, skipped: 0, failed: 1 },
+    added: [],
+    skipped: [],
+    failed: [{ source, reason, error }],
+  };
+}
+
+describe('registerArticles', () => {
+  const mockRefAdd = vi.mocked(refAdd);
+  // mockRefUpdate and mockRefExport will be used in later tests (Step 4)
+  const _mockRefUpdate = vi.mocked(refUpdate);
+  const _mockRefExport = vi.mocked(refExport);
+
+  const baseOptions: RegisterOptions = {
+    sessionId: 'test-session-123',
+    sessionDir: '/tmp/sessions/test-session-123',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('ID selection', () => {
+    it('should prefer PMID over DOI when both are available', async () => {
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          doi: '10.1234/example',
+          title: 'Article with both IDs',
+        }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article with both IDs')
+      );
+
+      await registerArticles(articles, baseOptions);
+
+      expect(mockRefAdd).toHaveBeenCalledTimes(1);
+      expect(mockRefAdd).toHaveBeenCalledWith('pmid:12345678', expect.any(Object));
+    });
+
+    it('should use DOI when PMID is not available', async () => {
+      const articles = [
+        createArticle({
+          doi: '10.1234/example',
+          title: 'Article with DOI only',
+        }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('10.1234/example', 'jones2024', 'Article with DOI only')
+      );
+
+      await registerArticles(articles, baseOptions);
+
+      expect(mockRefAdd).toHaveBeenCalledTimes(1);
+      expect(mockRefAdd).toHaveBeenCalledWith('10.1234/example', expect.any(Object));
+    });
+  });
+
+  describe('articles without identifiers', () => {
+    it('should count articles without DOI or PMID as noId', async () => {
+      const articles = [
+        createArticle({ title: 'No ID Article 1' }),
+        createArticle({ title: 'No ID Article 2' }),
+        createArticle({ pmid: '12345678', title: 'With PMID' }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'With PMID')
+      );
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.summary.noId).toBe(2);
+      expect(result.summary.total).toBe(3);
+      expect(mockRefAdd).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not call ref add for articles without identifiers', async () => {
+      const articles = [
+        createArticle({ title: 'No ID Article' }),
+      ];
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(mockRefAdd).not.toHaveBeenCalled();
+      expect(result.summary.noId).toBe(1);
+      expect(result.summary.added).toBe(0);
+    });
+  });
+
+  describe('result aggregation', () => {
+    it('should aggregate results from multiple ref add calls', async () => {
+      const articles = [
+        createArticle({ pmid: '11111111', title: 'Article 1' }),
+        createArticle({ pmid: '22222222', title: 'Article 2' }),
+        createArticle({ doi: '10.1234/example', title: 'Article 3' }),
+      ];
+
+      mockRefAdd
+        .mockResolvedValueOnce(createRefAddOutput('pmid:11111111', 'smith2024', 'Article 1'))
+        .mockResolvedValueOnce(createRefAddOutput('pmid:22222222', 'jones2024', 'Article 2'))
+        .mockResolvedValueOnce(createRefAddOutput('10.1234/example', 'chen2024', 'Article 3'));
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.summary.total).toBe(3);
+      expect(result.summary.added).toBe(3);
+      expect(result.summary.skipped).toBe(0);
+      expect(result.summary.failed).toBe(0);
+      expect(result.added).toHaveLength(3);
+    });
+
+    it('should record added items correctly', async () => {
+      const articles = [
+        createArticle({ pmid: '12345678', title: 'Test Article' }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Test Article')
+      );
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.added).toEqual([
+        { source: 'pmid:12345678', id: 'smith2024', title: 'Test Article' },
+      ]);
+    });
+  });
+
+  describe('duplicate handling', () => {
+    it('should record duplicates correctly', async () => {
+      const articles = [
+        createArticle({ pmid: '12345678', title: 'Duplicate Article' }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createDuplicateOutput('pmid:12345678', 'existing2023', 'pmid')
+      );
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.summary.skipped).toBe(1);
+      expect(result.duplicates).toEqual([
+        { source: 'pmid:12345678', existingId: 'existing2023', duplicateType: 'pmid' },
+      ]);
+    });
+
+    it('should handle mixed results with duplicates and new entries', async () => {
+      const articles = [
+        createArticle({ pmid: '11111111', title: 'New Article' }),
+        createArticle({ pmid: '22222222', title: 'Duplicate Article' }),
+      ];
+
+      mockRefAdd
+        .mockResolvedValueOnce(createRefAddOutput('pmid:11111111', 'new2024', 'New Article'))
+        .mockResolvedValueOnce(createDuplicateOutput('pmid:22222222', 'existing2023', 'pmid'));
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.summary.added).toBe(1);
+      expect(result.summary.skipped).toBe(1);
+      expect(result.added).toHaveLength(1);
+      expect(result.duplicates).toHaveLength(1);
+    });
+  });
+
+  describe('failure handling', () => {
+    it('should record failures correctly', async () => {
+      const articles = [
+        createArticle({ pmid: '12345678', title: 'Article' }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createFailedOutput('pmid:12345678', 'not_found', 'PMID not found in database')
+      );
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.summary.failed).toBe(1);
+      expect(result.failed).toEqual([
+        { source: 'pmid:12345678', reason: 'not_found', error: 'PMID not found in database' },
+      ]);
+    });
+
+    it('should continue processing after a failure', async () => {
+      const articles = [
+        createArticle({ pmid: '11111111', title: 'Failing Article' }),
+        createArticle({ pmid: '22222222', title: 'Successful Article' }),
+      ];
+
+      mockRefAdd
+        .mockResolvedValueOnce(createFailedOutput('pmid:11111111', 'not_found'))
+        .mockResolvedValueOnce(createRefAddOutput('pmid:22222222', 'smith2024', 'Successful Article'));
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.summary.failed).toBe(1);
+      expect(result.summary.added).toBe(1);
+      expect(mockRefAdd).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle ref add throwing an error', async () => {
+      const articles = [
+        createArticle({ pmid: '11111111', title: 'Error Article' }),
+        createArticle({ pmid: '22222222', title: 'Successful Article' }),
+      ];
+
+      mockRefAdd
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce(createRefAddOutput('pmid:22222222', 'smith2024', 'Successful Article'));
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.summary.failed).toBe(1);
+      expect(result.summary.added).toBe(1);
+      expect(result.failed[0]).toMatchObject({
+        source: 'pmid:11111111',
+        reason: 'execution_error',
+      });
+    });
+  });
+
+  describe('session-specific library path', () => {
+    it('should pass REFERENCE_MANAGER_LIBRARY env to ref add', async () => {
+      const articles = [
+        createArticle({ pmid: '12345678', title: 'Article' }),
+      ];
+
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article')
+      );
+
+      await registerArticles(articles, baseOptions);
+
+      expect(mockRefAdd).toHaveBeenCalledWith('pmid:12345678', {
+        env: expect.objectContaining({
+          REFERENCE_MANAGER_LIBRARY: '/tmp/sessions/test-session-123/references.json',
+        }),
+      });
+    });
+  });
+
+  describe('progress callback', () => {
+    it('should call onProgress callback for each article', async () => {
+      const articles = [
+        createArticle({ pmid: '11111111', title: 'Article 1' }),
+        createArticle({ pmid: '22222222', title: 'Article 2' }),
+        createArticle({ title: 'No ID' }), // Should also trigger progress
+      ];
+
+      mockRefAdd
+        .mockResolvedValueOnce(createRefAddOutput('pmid:11111111', 'smith2024', 'Article 1'))
+        .mockResolvedValueOnce(createRefAddOutput('pmid:22222222', 'jones2024', 'Article 2'));
+
+      const onProgress = vi.fn();
+      await registerArticles(articles, { ...baseOptions, onProgress });
+
+      expect(onProgress).toHaveBeenCalledTimes(3);
+      expect(onProgress).toHaveBeenNthCalledWith(1, 1, 3);
+      expect(onProgress).toHaveBeenNthCalledWith(2, 2, 3);
+      expect(onProgress).toHaveBeenNthCalledWith(3, 3, 3);
+    });
+  });
+
+  describe('registration record metadata', () => {
+    it('should include sessionId in the record', async () => {
+      const articles = [createArticle({ pmid: '12345678', title: 'Article' })];
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article')
+      );
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.sessionId).toBe('test-session-123');
+    });
+
+    it('should include timestamp in ISO format', async () => {
+      const articles = [createArticle({ pmid: '12345678', title: 'Article' })];
+      mockRefAdd.mockResolvedValueOnce(
+        createRefAddOutput('pmid:12345678', 'smith2024', 'Article')
+      );
+
+      const result = await registerArticles(articles, baseOptions);
+
+      expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    });
+  });
+});
