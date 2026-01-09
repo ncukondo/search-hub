@@ -133,4 +133,42 @@ describe('CLI Entry Point', () => {
       expect(forceOption).toBeDefined();
     });
   });
+
+  describe('register command', () => {
+    it('should have register command registered', () => {
+      const program = createProgram();
+      const registerCommand = program.commands.find((cmd) => cmd.name() === 'register');
+      expect(registerCommand).toBeDefined();
+    });
+
+    it('should have --db option on register command', () => {
+      const program = createProgram();
+      const registerCommand = program.commands.find((cmd) => cmd.name() === 'register');
+      expect(registerCommand).toBeDefined();
+      const dbOption = registerCommand?.options.find(
+        (opt) => opt.long === '--db'
+      );
+      expect(dbOption).toBeDefined();
+    });
+
+    it('should have --dry-run option on register command', () => {
+      const program = createProgram();
+      const registerCommand = program.commands.find((cmd) => cmd.name() === 'register');
+      expect(registerCommand).toBeDefined();
+      const dryRunOption = registerCommand?.options.find(
+        (opt) => opt.long === '--dry-run'
+      );
+      expect(dryRunOption).toBeDefined();
+    });
+
+    it('should have --with-abstracts option on register command', () => {
+      const program = createProgram();
+      const registerCommand = program.commands.find((cmd) => cmd.name() === 'register');
+      expect(registerCommand).toBeDefined();
+      const withAbstractsOption = registerCommand?.options.find(
+        (opt) => opt.long === '--with-abstracts'
+      );
+      expect(withAbstractsOption).toBeDefined();
+    });
+  });
 });
