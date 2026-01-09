@@ -81,10 +81,10 @@ function getRegistrationId(article: Article): string | null {
  */
 async function hasExistingAbstract(
   refId: string,
-  env: { REFERENCE_MANAGER_LIBRARY: string }
+  libraryPath: string
 ): Promise<boolean> {
   try {
-    const data = await refExport(refId, { env }) as { abstract?: string };
+    const data = await refExport(refId, { libraryPath }) as { abstract?: string };
     return !!data.abstract;
   } catch {
     // If export fails, assume no abstract so we try to update
@@ -102,7 +102,6 @@ export async function registerArticles(
 ): Promise<RegistrationRecord> {
   const { sessionId, sessionDir, withAbstracts, onProgress } = options;
   const libraryPath = path.join(sessionDir, 'references.json');
-  const env = { REFERENCE_MANAGER_LIBRARY: libraryPath };
 
   const record: RegistrationRecord = {
     sessionId,
@@ -135,7 +134,7 @@ export async function registerArticles(
     }
 
     try {
-      const output = await refAdd(id, { env });
+      const output = await refAdd(id, { libraryPath });
 
       // Aggregate results
       record.summary.added += output.summary.added;
@@ -145,17 +144,17 @@ export async function registerArticles(
       // Record added items and update abstracts if requested
       for (const item of output.added) {
         record.added.push({
-          source: item.source,
+          source: id, // Use the identifier we sent to ref CLI
           id: item.id,
           title: item.title,
         });
 
         // Update abstract if withAbstracts is enabled and article has abstract
         if (withAbstracts && article.abstract) {
-          const alreadyHasAbstract = await hasExistingAbstract(item.id, env);
+          const alreadyHasAbstract = await hasExistingAbstract(item.id, libraryPath);
           if (!alreadyHasAbstract) {
             try {
-              await refUpdate(item.id, 'abstract', article.abstract, { env });
+              await refUpdate(item.id, 'abstract', article.abstract, { libraryPath });
             } catch {
               // Log warning but continue - abstract update failure is non-fatal
             }
@@ -166,7 +165,7 @@ export async function registerArticles(
       // Record duplicates
       for (const item of output.skipped) {
         record.duplicates.push({
-          source: item.source,
+          source: id, // Use the identifier we sent to ref CLI
           existingId: item.existingId,
           duplicateType: item.duplicateType,
         });
@@ -175,7 +174,7 @@ export async function registerArticles(
       // Record failures from ref output
       for (const item of output.failed) {
         record.failed.push({
-          source: item.source,
+          source: id, // Use the identifier we sent to ref CLI
           reason: item.reason,
           error: item.error,
         });

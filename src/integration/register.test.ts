@@ -296,7 +296,7 @@ describe('registerArticles', () => {
   });
 
   describe('session-specific library path', () => {
-    it('should pass REFERENCE_MANAGER_LIBRARY env to ref add', async () => {
+    it('should pass libraryPath option to ref add', async () => {
       const articles = [
         createArticle({ pmid: '12345678', title: 'Article' }),
       ];
@@ -308,9 +308,7 @@ describe('registerArticles', () => {
       await registerArticles(articles, baseOptions);
 
       expect(mockRefAdd).toHaveBeenCalledWith('pmid:12345678', {
-        env: expect.objectContaining({
-          REFERENCE_MANAGER_LIBRARY: '/tmp/sessions/test-session-123/references.json',
-        }),
+        libraryPath: '/tmp/sessions/test-session-123/references.json',
       });
     });
   });

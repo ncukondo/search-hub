@@ -392,7 +392,7 @@ describe('register with real ref command', () => {
 
 - [x] Verify all e2e tests pass
 - [x] Run full test suite: `npm test`
-- [ ] **Manual verification**: Run `search-hub register` with real session
+- [x] **Manual verification**: Run `search-hub register` with real session
 - [x] Acceptance: All tests pass, feature works in real usage
 
 ## TDD Cycle Reference

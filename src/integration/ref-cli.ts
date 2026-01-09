@@ -65,6 +65,14 @@ export async function installRefManager(): Promise<void> {
 }
 
 /**
+ * Options for ref CLI commands.
+ */
+export interface RefCliOptions {
+  /** Path to the library file (uses --library option) */
+  libraryPath?: string;
+}
+
+/**
  * Escape a string for use in shell command.
  */
 function escapeShellArg(arg: string): string {
@@ -73,18 +81,26 @@ function escapeShellArg(arg: string): string {
 }
 
 /**
+ * Build library option string for ref commands.
+ */
+function buildLibraryOption(libraryPath?: string): string {
+  if (!libraryPath) return '';
+  return `--library "${escapeShellArg(libraryPath)}" `;
+}
+
+/**
  * Execute ref add command and return parsed output.
  */
 export async function refAdd(
   id: string,
-  options?: { env?: NodeJS.ProcessEnv }
+  options?: RefCliOptions
 ): Promise<RefAddOutput> {
   const escapedId = escapeShellArg(id);
-  const cmd = `ref add "${escapedId}" -o json`;
-  const env = options?.env ? { ...process.env, ...options.env } : process.env;
+  const libraryOpt = buildLibraryOption(options?.libraryPath);
+  const cmd = `ref ${libraryOpt}add "${escapedId}" -o json`;
 
   return new Promise((resolve, reject) => {
-    exec(cmd, { env }, (error, stdout, stderr) => {
+    exec(cmd, (error, stdout, stderr) => {
       if (error) {
         reject(new RefCliError(
           `ref add failed: ${stderr || error.message}`,
@@ -116,16 +132,16 @@ export async function refUpdate(
   id: string,
   field: string,
   value: string,
-  options?: { env?: NodeJS.ProcessEnv }
+  options?: RefCliOptions
 ): Promise<void> {
   const escapedId = escapeShellArg(id);
   const escapedField = escapeShellArg(field);
   const escapedValue = escapeShellArg(value);
-  const cmd = `ref update "${escapedId}" --set "${escapedField}=${escapedValue}"`;
-  const env = options?.env ? { ...process.env, ...options.env } : process.env;
+  const libraryOpt = buildLibraryOption(options?.libraryPath);
+  const cmd = `ref ${libraryOpt}update "${escapedId}" --set "${escapedField}=${escapedValue}"`;
 
   return new Promise((resolve, reject) => {
-    exec(cmd, { env }, (error, stdout, stderr) => {
+    exec(cmd, (error, stdout, stderr) => {
       if (error) {
         reject(new RefCliError(
           `ref update failed: ${stderr || error.message}`,
@@ -144,14 +160,14 @@ export async function refUpdate(
  */
 export async function refExport(
   id: string,
-  options?: { env?: NodeJS.ProcessEnv }
+  options?: RefCliOptions
 ): Promise<unknown> {
   const escapedId = escapeShellArg(id);
-  const cmd = `ref export "${escapedId}"`;
-  const env = options?.env ? { ...process.env, ...options.env } : process.env;
+  const libraryOpt = buildLibraryOption(options?.libraryPath);
+  const cmd = `ref ${libraryOpt}export "${escapedId}"`;
 
   return new Promise((resolve, reject) => {
-    exec(cmd, { env }, (error, stdout, stderr) => {
+    exec(cmd, (error, stdout, stderr) => {
       if (error) {
         reject(new RefCliError(
           `ref export failed: ${stderr || error.message}`,

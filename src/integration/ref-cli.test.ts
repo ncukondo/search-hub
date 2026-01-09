@@ -146,25 +146,20 @@ describe('ref-cli', () => {
 
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(null, JSON.stringify(mockOutput), '');
-        }
+        callback(null, JSON.stringify(mockOutput), '');
       });
 
       const result = await refAdd('pmid:12345678');
       expect(result).toEqual(mockOutput);
       expect(mockExecFn).toHaveBeenCalledWith(
         'ref add "pmid:12345678" -o json',
-        expect.any(Object),
         expect.any(Function)
       );
     });
 
-    it('executes ref add with custom environment', async () => {
+    it('executes ref add with libraryPath option', async () => {
       const mockOutput = {
         summary: { total: 1, added: 1, skipped: 0, failed: 0 },
         added: [{ source: '10.1234/test', id: 'test2024', title: 'Test' }],
@@ -174,21 +169,16 @@ describe('ref-cli', () => {
 
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(null, JSON.stringify(mockOutput), '');
-        }
+        callback(null, JSON.stringify(mockOutput), '');
       });
 
-      const customEnv = { REFERENCE_MANAGER_LIBRARY: '/path/to/library.json' };
-      await refAdd('10.1234/test', { env: customEnv });
+      const libraryPath = '/path/to/library.json';
+      await refAdd('10.1234/test', { libraryPath });
 
       expect(mockExecFn).toHaveBeenCalledWith(
-        'ref add "10.1234/test" -o json',
-        expect.objectContaining({ env: expect.objectContaining(customEnv) }),
+        'ref --library "/path/to/library.json" add "10.1234/test" -o json',
         expect.any(Function)
       );
     });
@@ -196,13 +186,9 @@ describe('ref-cli', () => {
     it('throws RefCliError when ref add fails', async () => {
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(new Error('Network error') as ExecException, '', 'Network error');
-        }
+        callback(new Error('Network error') as ExecException, '', 'Network error');
       });
 
       await expect(refAdd('pmid:12345678')).rejects.toThrow(RefCliError);
@@ -211,13 +197,9 @@ describe('ref-cli', () => {
     it('throws RefCliError when output is not valid JSON', async () => {
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(null, 'not valid json', '');
-        }
+        callback(null, 'not valid json', '');
       });
 
       await expect(refAdd('pmid:12345678')).rejects.toThrow(RefCliError);
@@ -233,19 +215,14 @@ describe('ref-cli', () => {
 
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(null, JSON.stringify(mockOutput), '');
-        }
+        callback(null, JSON.stringify(mockOutput), '');
       });
 
       await refAdd('10.1234/test$pecial');
       expect(mockExecFn).toHaveBeenCalledWith(
         expect.stringContaining('ref add'),
-        expect.any(Object),
         expect.any(Function)
       );
     });
@@ -255,19 +232,14 @@ describe('ref-cli', () => {
     it('executes ref update with field and value', async () => {
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(null, '', '');
-        }
+        callback(null, '', '');
       });
 
       await refUpdate('smith2024', 'abstract', 'This is an abstract.');
       expect(mockExecFn).toHaveBeenCalledWith(
         expect.stringMatching(/ref update "smith2024" --set "abstract=This is an abstract\."/),
-        expect.any(Object),
         expect.any(Function)
       );
     });
@@ -275,13 +247,9 @@ describe('ref-cli', () => {
     it('escapes special characters in value', async () => {
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(null, '', '');
-        }
+        callback(null, '', '');
       });
 
       await refUpdate('test2024', 'abstract', 'Contains "quotes" and $pecial chars');
@@ -291,13 +259,9 @@ describe('ref-cli', () => {
     it('throws RefCliError when update fails', async () => {
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(new Error('Entry not found') as ExecException, '', 'Entry not found');
-        }
+        callback(new Error('Entry not found') as ExecException, '', 'Entry not found');
       });
 
       await expect(refUpdate('nonexistent', 'abstract', 'value')).rejects.toThrow(RefCliError);
@@ -315,20 +279,15 @@ describe('ref-cli', () => {
 
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(null, JSON.stringify(mockEntry), '');
-        }
+        callback(null, JSON.stringify(mockEntry), '');
       });
 
       const result = await refExport('smith2024');
       expect(result).toEqual(mockEntry);
       expect(mockExecFn).toHaveBeenCalledWith(
         'ref export "smith2024"',
-        expect.any(Object),
         expect.any(Function)
       );
     });
@@ -336,13 +295,9 @@ describe('ref-cli', () => {
     it('throws RefCliError when export fails', async () => {
       mockExecFn.mockImplementation((
         _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback,
-        maybeCallback?: ExecCallback
+        callback: ExecCallback
       ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : maybeCallback;
-        if (callback) {
-          callback(new Error('Entry not found') as ExecException, '', '');
-        }
+        callback(new Error('Entry not found') as ExecException, '', '');
       });
 
       await expect(refExport('nonexistent')).rejects.toThrow(RefCliError);
