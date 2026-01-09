@@ -217,7 +217,9 @@ Please install Node.js first: https://nodejs.org/
 
 ---
 
-### Step 7: Add Configuration Support
+### Step 7a: Add Configuration Schema
+
+**Status: Not implemented (deferred)**
 
 - [ ] Write test: `src/config/schema.test.ts` (add to existing)
   - Test integration.reference_manager config section
@@ -228,6 +230,7 @@ Please install Node.js first: https://nodejs.org/
 - [ ] Run `npm run lint && npm run typecheck`
 - [ ] Refactor if needed
 - [ ] Verify test still passes
+- [ ] Write integration test: verify config is loaded correctly in CLI
 - [ ] Acceptance: Config supports reference_manager settings
 
 ```toml
@@ -236,6 +239,70 @@ enabled = true
 command = "ref"
 auto_register = false
 ```
+
+#### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enabled` | boolean | `true` | Enable reference-manager integration |
+| `command` | string | `"ref"` | CLI command name for reference-manager |
+| `auto_register` | boolean | `false` | Automatically register results after search completes |
+
+---
+
+### Step 7b: Implement Auto-register After Search
+
+**Status: Not implemented (deferred)**
+
+- [ ] Write test: `src/cli/commands/search-executor.test.ts` (add to existing)
+  - Test auto_register=true triggers registration after search
+  - Test auto_register=false does not trigger registration
+  - Test registration uses session-specific library path
+  - Test registration summary is shown in output
+- [ ] Implement auto_register in search-executor.ts
+  - Read config for auto_register setting
+  - Call registerArticles() after successful search if enabled
+  - Display registration summary
+- [ ] Verify test passes (Green)
+- [ ] Run `npm run lint && npm run typecheck`
+- [ ] Refactor if needed
+- [ ] Verify test still passes
+- [ ] Write integration test: `src/cli/cli-execution.integration.test.ts`
+  - Test full search flow with auto_register enabled
+  - Verify registration.json is created
+- [ ] Write E2E test: `src/integration/auto-register.e2e.test.ts`
+  - Test real search + auto-register flow (skip if ref not installed)
+- [ ] Acceptance: `search-hub search` auto-registers when configured
+
+#### Auto-register Behavior
+
+When `auto_register = true`:
+
+1. After `search-hub search` completes successfully, automatically run registration
+2. Equivalent to running `search-hub register <session-id>` after search
+3. Use session-specific library path for duplicate detection
+4. Show registration summary in search output
+
+```bash
+# With auto_register = true:
+$ search-hub search ./query.yaml
+
+Searching...
+✓ PubMed: 150 results
+✓ ERIC: 45 results
+
+Auto-registering 195 references...
+✓ 190 added
+⚠ 5 duplicates
+
+Results saved to: sessions/20240115_diabetes-ai_a3f2c1/
+```
+
+#### Implementation Notes
+
+- Read config in search-executor.ts
+- Call registerArticles() after successful search if auto_register enabled
+- Pass withAbstracts option from config (optional future enhancement)
 
 ---
 
