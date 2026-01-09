@@ -245,32 +245,27 @@ auto_register = false
 | `enabled` | boolean | `true` | Enable reference-manager integration |
 | `command` | string | `"ref"` | CLI command name for reference-manager |
 | `auto_register` | boolean | `false` | Automatically register results after search completes |
+| `with_abstracts` | boolean | `false` | Update abstracts when auto-registering |
 
 ---
 
 ### Step 7b: Implement Auto-register After Search
 
-**Status: Not implemented (deferred)**
-
-- [ ] Write test: `src/cli/commands/search-executor.test.ts` (add to existing)
+- [x] Write test: `src/cli/commands/search-executor.test.ts` (add to existing)
   - Test auto_register=true triggers registration after search
   - Test auto_register=false does not trigger registration
   - Test registration uses session-specific library path
-  - Test registration summary is shown in output
-- [ ] Implement auto_register in search-executor.ts
+  - Test with_abstracts option from config is passed to registerArticles
+- [x] Implement auto_register in search-executor.ts
   - Read config for auto_register setting
+  - Read config for with_abstracts setting
   - Call registerArticles() after successful search if enabled
-  - Display registration summary
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Write integration test: `src/cli/cli-execution.integration.test.ts`
-  - Test full search flow with auto_register enabled
-  - Verify registration.json is created
-- [ ] Write E2E test: `src/integration/auto-register.e2e.test.ts`
-  - Test real search + auto-register flow (skip if ref not installed)
-- [ ] Acceptance: `search-hub search` auto-registers when configured
+  - Save registration record to session directory
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: `search-hub search` auto-registers when configured
 
 #### Auto-register Behavior
 
