@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { loadTomlFile, loadConfig, saveConfig } from './loader';
+import { loadTomlFile, loadConfig, saveConfig } from './loader.js';
+import { getDefaultSessionsDir } from './paths.js';
 import { writeFile, mkdir, rm, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -106,7 +107,8 @@ describe('loadConfig', () => {
     });
 
     expect(config.log.level).toBe('info');
-    expect(config.session.directory).toBe('~/.search-hub/sessions');
+    // Empty session.directory is resolved to platform default
+    expect(config.session.directory).toBe(getDefaultSessionsDir());
     expect(config.providers.pubmed.rate_limit).toBe(3);
   });
 
