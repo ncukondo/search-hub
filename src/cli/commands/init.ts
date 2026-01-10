@@ -1,15 +1,18 @@
 import { mkdir, writeFile, access, constants } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyToml } from '@iarna/toml';
-import { getDefaultConfig } from '../../config';
-import type { Config } from '../../config';
+import { getDefaultConfig } from '../../config/index.js';
+import { getConfigDir, getDataDir } from '../../config/paths.js';
+import type { Config } from '../../config/index.js';
 
 /**
  * Options for the init command.
  */
 export interface InitOptions {
-  /** Base directory to create .search-hub in (defaults to home dir) */
-  baseDir?: string;
+  /** Config directory (defaults to platform-specific via getConfigDir()) */
+  configDir?: string;
+  /** Data directory (defaults to platform-specific via getDataDir()) */
+  dataDir?: string;
   /** Force overwrite if directory already exists */
   force?: boolean;
 }
@@ -24,8 +27,10 @@ export interface InitResult {
   configPath: string;
   /** Path to the sessions directory */
   sessionsDir: string;
-  /** Path to the .search-hub directory */
-  baseDir: string;
+  /** Path to the config directory */
+  configDir: string;
+  /** Path to the data directory */
+  dataDir: string;
   /** Whether files already existed (only when success=false) */
   alreadyExists?: boolean;
   /** Whether existing files were overwritten (only when force=true) */
@@ -137,42 +142,52 @@ function generateConfigContent(config: Config): string {
  * Initialize the search-hub configuration directory.
  *
  * Creates:
- * - ~/.search-hub/ directory
- * - ~/.search-hub/config.toml with default configuration
- * - ~/.search-hub/sessions/ directory for session storage
+ * - Config directory with config.toml
+ * - Data directory with sessions/ subdirectory
+ *
+ * On Linux (XDG):
+ * - ~/.config/search-hub/config.toml
+ * - ~/.local/share/search-hub/sessions/
  */
 export async function init(options: InitOptions = {}): Promise<InitResult> {
-  const { baseDir = process.env['HOME'] ?? '', force = false } = options;
+  const {
+    configDir = getConfigDir(),
+    dataDir = getDataDir(),
+    force = false,
+  } = options;
 
-  const searchHubDir = join(baseDir, '.search-hub');
-  const configPath = join(searchHubDir, 'config.toml');
-  const sessionsDir = join(searchHubDir, 'sessions');
+  const configPath = join(configDir, 'config.toml');
+  const sessionsDir = join(dataDir, 'sessions');
 
   const result: InitResult = {
     success: false,
     configPath,
     sessionsDir,
-    baseDir: searchHubDir,
+    configDir,
+    dataDir,
   };
 
-  // Check if already exists
-  if (await exists(searchHubDir)) {
+  // Check if config directory already exists
+  if (await exists(configDir)) {
     if (!force) {
       return {
         ...result,
         alreadyExists: true,
-        message: `Configuration directory already exists at ${searchHubDir}. Use --force to overwrite.`,
+        message: `Configuration directory already exists at ${configDir}. Use --force to overwrite.`,
       };
     }
     result.overwritten = true;
   }
 
   // Create directories
-  await mkdir(searchHubDir, { recursive: true });
+  await mkdir(configDir, { recursive: true });
   await mkdir(sessionsDir, { recursive: true });
 
   // Generate and write config file
+  // Use the default sessions directory for the saved config
   const defaultConfig = getDefaultConfig();
+  // Set session.directory to the actual sessions path for the config file
+  defaultConfig.session.directory = sessionsDir;
   const configContent = generateConfigContent(defaultConfig);
   await writeFile(configPath, configContent, 'utf-8');
 
@@ -180,7 +195,7 @@ export async function init(options: InitOptions = {}): Promise<InitResult> {
     ...result,
     success: true,
     message: result.overwritten
-      ? `Configuration overwritten at ${searchHubDir}`
-      : `Configuration created at ${searchHubDir}`,
+      ? `Configuration overwritten at ${configDir}`
+      : `Configuration created at ${configDir}`,
   };
 }
