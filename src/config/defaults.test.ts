@@ -30,8 +30,8 @@ describe('getDefaultConfig', () => {
   it('has all required fields present', () => {
     const config = getDefaultConfig();
 
-    // Session
-    expect(config.session.directory).toBe('~/.search-hub/sessions');
+    // Session - empty means platform default (resolved in loader)
+    expect(config.session.directory).toBe('');
 
     // Log
     expect(config.log.level).toBe('info');
