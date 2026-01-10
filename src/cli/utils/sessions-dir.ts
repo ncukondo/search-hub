@@ -1,7 +1,8 @@
 /**
  * Sessions directory resolution utility.
  */
-import { loadConfig, getDefaultConfig } from '../../config/index.js';
+import { loadConfig } from '../../config/index.js';
+import { getDefaultSessionsDir } from '../../config/paths.js';
 import type { GlobalOptions } from '../index.js';
 
 /**
@@ -10,7 +11,7 @@ import type { GlobalOptions } from '../index.js';
  * Resolution order:
  * 1. Explicit --session-dir option
  * 2. session.directory from config file
- * 3. Default config value
+ * 3. Platform-specific default via getDefaultSessionsDir()
  *
  * @param globalOpts - Global CLI options
  * @returns Resolved sessions directory path
@@ -25,6 +26,8 @@ export async function getSessionsDir(globalOpts: GlobalOptions): Promise<string>
     );
     return config.session.directory;
   } catch {
-    return getDefaultConfig().session.directory;
+    // loadConfig already resolves empty to platform default, but if config
+    // loading fails entirely, use the platform default directly
+    return getDefaultSessionsDir();
   }
 }
