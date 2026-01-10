@@ -42,9 +42,10 @@ function getDefaultProviderConfig(): ProviderConfig {
 export const ConfigSchema = z.object({
   session: z
     .object({
-      directory: z.string().default('~/.search-hub/sessions'),
+      // Empty string means use platform default (resolved in loader.ts)
+      directory: z.string().default(''),
     })
-    .default(() => ({ directory: '~/.search-hub/sessions' })),
+    .default(() => ({ directory: '' })),
 
   log: z
     .object({

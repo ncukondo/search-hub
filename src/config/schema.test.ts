@@ -59,8 +59,8 @@ describe('ConfigSchema', () => {
   it('returns full default config for empty object', () => {
     const result = ConfigSchema.parse({});
 
-    // Session defaults
-    expect(result.session.directory).toBe('~/.search-hub/sessions');
+    // Session defaults - empty string means platform default (resolved in loader)
+    expect(result.session.directory).toBe('');
 
     // Log defaults
     expect(result.log.level).toBe('info');
