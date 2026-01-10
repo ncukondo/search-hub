@@ -31,7 +31,7 @@ This creates config and data directories in platform-specific locations:
 |----------|--------|------|
 | Linux | `~/.config/search-hub/` | `~/.local/share/search-hub/` |
 | macOS | `~/Library/Preferences/search-hub/` | `~/Library/Application Support/search-hub/` |
-| Windows | `%APPDATA%/search-hub/Config/` | `%APPDATA%/search-hub/Data/` |
+| Windows | `%APPDATA%/search-hub/Config/` | `%LOCALAPPDATA%/search-hub/Data/` |
 
 2. Create a query file (`query.yaml`):
 ```yaml
