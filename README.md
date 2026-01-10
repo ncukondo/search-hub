@@ -25,6 +25,14 @@ Requires Node.js 22+.
 search-hub init
 ```
 
+This creates config and data directories in platform-specific locations:
+
+| Platform | Config | Data |
+|----------|--------|------|
+| Linux | `~/.config/search-hub/` | `~/.local/share/search-hub/` |
+| macOS | `~/Library/Preferences/search-hub/` | `~/Library/Application Support/search-hub/` |
+| Windows | `%APPDATA%/search-hub/Config/` | `%APPDATA%/search-hub/Data/` |
+
 2. Create a query file (`query.yaml`):
 ```yaml
 name: my_review
