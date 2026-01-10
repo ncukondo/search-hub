@@ -6,17 +6,33 @@
 Highest ──► CLI arguments
          │  Environment variables
          │  Local config (./search-hub.config.toml)
-Lowest  ──► Global config (~/.search-hub/config.toml)
+Lowest  ──► Global config (<config-dir>/config.toml)
 ```
 
 Later sources override earlier ones at the field level (deep merge).
+
+## Platform-Specific Directories
+
+Uses [env-paths](https://github.com/sindresorhus/env-paths) for XDG-compliant paths.
+
+| Platform | Config Directory | Data Directory |
+|----------|------------------|----------------|
+| Linux | `~/.config/search-hub` | `~/.local/share/search-hub` |
+| macOS | `~/Library/Preferences/search-hub` | `~/Library/Application Support/search-hub` |
+| Windows | `%APPDATA%/search-hub/Config` | `%APPDATA%/search-hub/Data` |
 
 ## Config File Locations
 
 | Location | Purpose |
 |----------|---------|
-| `~/.search-hub/config.toml` | Global defaults, API keys |
+| `<config-dir>/config.toml` | Global defaults, API keys |
 | `./search-hub.config.toml` | Project-specific overrides |
+
+## Data Directories
+
+| Directory | Purpose |
+|-----------|---------|
+| `<data-dir>/sessions/` | Session storage |
 
 ## Environment Variables
 
@@ -50,11 +66,11 @@ Provider-specific:
 ## TOML Schema
 
 ```toml
-# ~/.search-hub/config.toml
+# <config-dir>/config.toml (platform-specific, see above)
 
 # Session storage
 [session]
-directory = "~/.search-hub/sessions"    # Default session location
+directory = ""    # Default: <data-dir>/sessions (platform-specific)
 
 # Logging
 [log]
@@ -130,7 +146,7 @@ const ProviderConfigSchema = z.object({
 
 const ConfigSchema = z.object({
   session: z.object({
-    directory: z.string().default('~/.search-hub/sessions'),
+    directory: z.string().default(''),  // Empty = use platform default
   }).default({}),
 
   log: z.object({
@@ -166,12 +182,18 @@ type Config = z.infer<typeof ConfigSchema>;
 ## Config Loading Logic
 
 ```typescript
+import envPaths from 'env-paths';
+
+const paths = envPaths('search-hub');
+// paths.config = platform-specific config dir
+// paths.data = platform-specific data dir
+
 async function loadConfig(cliOptions: CLIOptions): Promise<Config> {
   // 1. Start with defaults
   let config = getDefaultConfig();
 
   // 2. Load global config
-  const globalPath = expandPath('~/.search-hub/config.toml');
+  const globalPath = join(paths.config, 'config.toml');
   if (await exists(globalPath)) {
     config = deepMerge(config, await loadToml(globalPath));
   }
@@ -188,7 +210,12 @@ async function loadConfig(cliOptions: CLIOptions): Promise<Config> {
   // 5. Apply CLI arguments
   config = applyCLIOptions(config, cliOptions);
 
-  // 6. Validate
+  // 6. Resolve session directory (if not set, use platform default)
+  if (!config.session.directory) {
+    config.session.directory = join(paths.data, 'sessions');
+  }
+
+  // 7. Validate
   return ConfigSchema.parse(config);
 }
 ```
@@ -199,7 +226,7 @@ async function loadConfig(cliOptions: CLIOptions): Promise<Config> {
 search-hub init
 ```
 
-Creates `~/.search-hub/config.toml` with defaults and prompts for API keys:
+Creates `<config-dir>/config.toml` with defaults and prompts for API keys:
 
 ```
 ? PubMed API key (optional): [input]
