@@ -25,17 +25,11 @@ Each step follows the TDD cycle:
 
 ---
 
-## Current Progress (2026-01-22)
+## Current Progress (2026-01-10)
 
-**Completed Steps:** 1-16 (All steps complete)
-**Current Step:** None - Task Complete
-**Remaining:** None
-
-### Additional Fixes Applied:
-- **arXiv HTTPS**: Changed API URL from http to https (301 redirect fix)
-- **arXiv Date Filter**: Fixed wildcard (*) issue - arXiv API doesn't support wildcards
-  - Uses 1991 as default start year, current year + 1 as default end year
-- **Real API E2E Tests Added**: ERIC, arXiv, multi-provider (PubMed+ERIC+arXiv), resume
+**Completed Steps:** 1-11 (all E2E tests for individual commands)
+**Current Step:** 12 (CLI Polish - Help Messages) - IN PROGRESS
+**Remaining:** 12-16
 
 ### Next Actions After Container Rebuild:
 
@@ -229,71 +223,69 @@ Note: Basic E2E tests already exist in `src/integration/register.e2e.test.ts`. T
 
 ### Step 12: CLI Polish - Help Messages
 
-- [x] Review all `--help` output for clarity
-- [x] Ensure consistent option naming across commands
-- [x] Add examples to help text where useful (added via addHelpText)
-- [x] Verify version output (`--version`) is correct
-- [x] Run `npm run lint && npm run typecheck`
-- [x] Acceptance: Help is clear and consistent
+- [ ] Review all `--help` output for clarity
+- [ ] Ensure consistent option naming across commands
+- [ ] Add examples to help text where useful
+- [ ] Verify version output (`--version`) is correct
+- [ ] Run `npm run lint && npm run typecheck`
+- [ ] Acceptance: Help is clear and consistent
 
 ---
 
 ### Step 13: CLI Polish - Error Messages
 
-- [x] Write test: `src/cli/error-messages.e2e.test.ts`
+- [ ] Write test: `src/cli/error-messages.e2e.test.ts`
   - Test error messages include actionable guidance
   - Test exit codes match specification
   - Test network errors show retry hints
   - Test config errors show config path
   - Test validation errors show line numbers
-- [x] Review and improve error messages
-  - Fixed bug: `config set` now rejects unknown keys
-  - Created `src/index.ts` to fix build (missing library entry point)
-- [x] Verify tests pass
-- [x] Run `npm run lint && npm run typecheck`
-- [x] Acceptance: Errors help users fix problems
+- [ ] Review and improve error messages
+- [ ] Verify tests pass
+- [ ] Run `npm run lint && npm run typecheck`
+- [ ] Acceptance: Errors help users fix problems
 
 ---
 
 ### Step 14: CLI Polish - Progress & Output
 
-- [x] Verify progress bars display correctly (TTY-only by design)
-- [x] Verify `--quiet` suppresses non-error output
-- [x] Verify `--verbose` shows additional debug info (limited implementation, search-focused)
-- [x] Verify `--no-color` disables ANSI colors
-- [x] Test output in non-TTY environment (piped output) - colors auto-disabled
-- [x] Run `npm run lint && npm run typecheck`
-- [x] Acceptance: Output adapts to terminal capabilities
+- [ ] Verify progress bars display correctly
+- [ ] Verify `--quiet` suppresses non-error output
+- [ ] Verify `--verbose` shows additional debug info
+- [ ] Verify `--no-color` disables ANSI colors
+- [ ] Test output in non-TTY environment (piped output)
+- [ ] Run `npm run lint && npm run typecheck`
+- [ ] Acceptance: Output adapts to terminal capabilities
 
 ---
 
 ### Step 15: Full Workflow E2E Test
 
-- [x] Write test: `src/cli/workflow.e2e.test.ts`
-  - Complete user workflow using subprocess execution (avoids vi.mock issues):
-    1. `search-hub query validate`
-    2. `search-hub search` (real API with --max-results limit)
-    3. `search-hub status`
-    4. `search-hub export` (jsonl, json, ids formats)
-    5. `search-hub register --dry-run`
+- [ ] Write test: `src/cli/workflow.e2e.test.ts`
+  - Complete user workflow from init to register:
+    1. `search-hub init`
+    2. `search-hub query validate`
+    3. `search-hub search` (with mocked API)
+    4. `search-hub status`
+    5. `search-hub export`
+    6. `search-hub register --dry-run`
   - Verify all commands work together
   - Verify session data flows correctly between commands
-  - Added error handling tests for invalid inputs
-- [x] Verify test passes (5 tests, ~20s)
-- [x] Run `npm run lint && npm run typecheck`
-- [x] Acceptance: Complete workflow succeeds
+- [ ] Verify test passes
+- [ ] Run `npm run lint && npm run typecheck`
+- [ ] Acceptance: Complete workflow succeeds
 
 ---
 
 ### Step 16: Final Verification
 
-- [x] Run full test suite: `npm test` (1008 tests passed)
-- [x] Run linter: `npm run lint` (0 warnings, 0 errors)
-- [x] Run typecheck: `npm run typecheck` (passed)
-- [x] Manual testing of complete workflow (query validate/translate, search --dry-run, status, help messages)
-- [x] Verify all exit codes per specification (tested in cli.integration.test.ts)
-- [x] Update any outdated documentation (help text examples added)
-- [x] Acceptance: All tests pass, tool ready for use
+- [ ] Run full test suite: `npm test`
+- [ ] Run linter: `npm run lint`
+- [ ] Run typecheck: `npm run typecheck`
+- [ ] Manual testing of complete workflow
+- [ ] Verify all exit codes per specification
+- [ ] Update any outdated documentation
+- [ ] Acceptance: All tests pass, tool ready for use
 
 ## TDD Cycle Reference
 
