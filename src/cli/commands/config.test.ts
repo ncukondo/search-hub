@@ -10,7 +10,7 @@ import type { Config } from '../../config/index.js';
 
 const mockConfig: Config = {
   session: {
-    directory: '~/.search-hub/sessions',
+    directory: '/test/sessions',
   },
   log: {
     level: 'info',
@@ -82,7 +82,7 @@ describe('config command helpers', () => {
   describe('getNestedValue', () => {
     it('should get top-level value', () => {
       const result = getNestedValue(mockConfig, 'session');
-      expect(result).toEqual({ directory: '~/.search-hub/sessions' });
+      expect(result).toEqual({ directory: '/test/sessions' });
     });
 
     it('should get nested value with dot notation', () => {
@@ -130,7 +130,7 @@ describe('config command helpers', () => {
     it('should format config as readable string', () => {
       const result = viewConfig(mockConfig);
       expect(result).toContain('session.directory');
-      expect(result).toContain('~/.search-hub/sessions');
+      expect(result).toContain('/test/sessions');
       expect(result).toContain('providers.pubmed.enabled');
       expect(result).toContain('true');
     });

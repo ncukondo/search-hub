@@ -135,7 +135,7 @@ search-hub/
 ```
 1. User runs: search-hub resume <session-id>
 
-2. Load session from ~/.search-hub/sessions/<id>/
+2. Load session from <data-dir>/sessions/<id>/
 
 3. For each DB with status != "completed":
    ├── Load last page cursor
@@ -161,8 +161,10 @@ Failed DBs are recorded in session.json and can be retried with `resume`.
 Highest ──► CLI arguments (--api-key)
          │  Environment variables (SEARCH_HUB_PUBMED_API_KEY)
          │  Local config (./search-hub.config.toml)
-Lowest  ──► Global config (~/.search-hub/config.toml)
+Lowest  ──► Global config (<config-dir>/config.toml)
 ```
+
+See [config.md](models/config.md#platform-specific-directories) for platform-specific paths.
 
 ## Key Interfaces
 

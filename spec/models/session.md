@@ -6,8 +6,10 @@ Sessions track search progress, enable resume, and provide audit trails for PRIS
 
 ## Session Directory Structure
 
+Default location is `<data-dir>/sessions/` (platform-specific, see [config.md](config.md#platform-specific-directories)).
+
 ```
-~/.search-hub/sessions/
+<data-dir>/sessions/
 └── {session-id}/
     ├── session.json              # Session metadata & status
     ├── query_common.yaml         # Original query file (copy)

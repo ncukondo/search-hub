@@ -21,7 +21,7 @@ Priority (highest to lowest):
 1. CLI arguments
 2. Environment variables
 3. Local config (`./search-hub.config.toml`)
-4. Global config (`~/.search-hub/config.toml`)
+4. Global config (platform-specific, e.g., `~/.config/search-hub/config.toml` on Linux)
 5. Built-in defaults
 
 Implementation:

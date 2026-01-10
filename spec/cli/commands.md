@@ -264,9 +264,9 @@ search-hub init [options]
 
 ### Behavior
 
-1. Creates `~/.search-hub/config.toml` with defaults
+1. Creates config file in platform-specific config directory (see spec/models/config.md)
 2. Prompts for API keys interactively
-3. Creates session directory structure
+3. Creates session directory in platform-specific data directory
 
 ---
 

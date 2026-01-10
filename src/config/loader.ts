@@ -1,11 +1,12 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { parse as parseToml, stringify as stringifyToml } from '@iarna/toml';
-import { ConfigSchema, type Config } from './schema';
-import { getDefaultConfig } from './defaults';
-import { applyEnvVars } from './env';
-import { deepMerge, type DeepPartial } from '../utils/deep-merge';
-import { expandPath } from '../utils/path';
+import { ConfigSchema, type Config } from './schema.js';
+import { getDefaultConfig } from './defaults.js';
+import { applyEnvVars } from './env.js';
+import { getDefaultConfigPath, getDefaultSessionsDir } from './paths.js';
+import { deepMerge, type DeepPartial } from '../utils/deep-merge.js';
+import { expandPath } from '../utils/path.js';
 
 export type RawConfig = Partial<Config>;
 
@@ -13,7 +14,7 @@ export type RawConfig = Partial<Config>;
  * Options for loadConfig function.
  */
 export interface LoadConfigOptions {
-  /** Path to global config file (default: ~/.search-hub/config.toml) */
+  /** Path to global config file (default: platform-specific via getDefaultConfigPath()) */
   globalConfigPath?: string;
   /** Path to local config file (default: ./search-hub.config.toml) */
   localConfigPath?: string;
@@ -54,9 +55,8 @@ export async function loadTomlFile(path: string): Promise<RawConfig> {
 }
 
 /**
- * Default config file paths.
+ * Default local config file path.
  */
-const DEFAULT_GLOBAL_CONFIG_PATH = '~/.search-hub/config.toml';
 const DEFAULT_LOCAL_CONFIG_PATH = './search-hub.config.toml';
 
 /**
@@ -66,12 +66,12 @@ const DEFAULT_LOCAL_CONFIG_PATH = './search-hub.config.toml';
  * 1. CLI options
  * 2. Environment variables
  * 3. Local config (./search-hub.config.toml)
- * 4. Global config (~/.search-hub/config.toml)
+ * 4. Global config (platform-specific, e.g. ~/.config/search-hub/config.toml on Linux)
  * 5. Default values
  */
 export async function loadConfig(options: LoadConfigOptions = {}): Promise<Config> {
   const {
-    globalConfigPath = DEFAULT_GLOBAL_CONFIG_PATH,
+    globalConfigPath = getDefaultConfigPath(),
     localConfigPath = DEFAULT_LOCAL_CONFIG_PATH,
     cliOptions,
   } = options;
@@ -96,15 +96,22 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Confi
     config = deepMerge(config, cliOptions);
   }
 
-  // 6. Validate and return
-  return ConfigSchema.parse(config);
+  // 6. Validate
+  config = ConfigSchema.parse(config);
+
+  // 7. Resolve empty session.directory to platform default
+  if (!config.session.directory) {
+    config.session.directory = getDefaultSessionsDir();
+  }
+
+  return config;
 }
 
 /**
  * Options for saveConfig function.
  */
 export interface SaveConfigOptions {
-  /** Path to save config file (default: ~/.search-hub/config.toml) */
+  /** Path to save config file (default: platform-specific via getDefaultConfigPath()) */
   path?: string;
   /** Create directory if it doesn't exist (default: true) */
   createDir?: boolean;
@@ -129,7 +136,7 @@ export async function saveConfig(
   options: SaveConfigOptions = {}
 ): Promise<void> {
   const {
-    path = DEFAULT_GLOBAL_CONFIG_PATH,
+    path = getDefaultConfigPath(),
     createDir = true,
   } = options;
 
