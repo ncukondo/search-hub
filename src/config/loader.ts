@@ -66,7 +66,7 @@ const DEFAULT_LOCAL_CONFIG_PATH = './search-hub.config.toml';
  * 1. CLI options
  * 2. Environment variables
  * 3. Local config (./search-hub.config.toml)
- * 4. Global config (~/.search-hub/config.toml)
+ * 4. Global config (platform-specific, e.g. ~/.config/search-hub/config.toml on Linux)
  * 5. Default values
  */
 export async function loadConfig(options: LoadConfigOptions = {}): Promise<Config> {

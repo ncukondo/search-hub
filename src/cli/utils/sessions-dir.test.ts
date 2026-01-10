@@ -8,23 +8,23 @@ import type { GlobalOptions } from '../index.js';
 // Mock the config module
 vi.mock('../../config/index.js', () => ({
   loadConfig: vi.fn(),
-  getDefaultConfig: vi.fn().mockReturnValue({
-    session: { directory: '~/.search-hub/sessions' },
-  }),
 }));
 
-import { loadConfig, getDefaultConfig } from '../../config/index.js';
+// Mock the paths module
+vi.mock('../../config/paths.js', () => ({
+  getDefaultSessionsDir: vi.fn().mockReturnValue('/mock/default/sessions'),
+}));
+
+import { loadConfig } from '../../config/index.js';
+import { getDefaultSessionsDir } from '../../config/paths.js';
 
 describe('getSessionsDir', () => {
   const mockLoadConfig = vi.mocked(loadConfig);
-  const mockGetDefaultConfig = vi.mocked(getDefaultConfig);
+  const mockGetDefaultSessionsDir = vi.mocked(getDefaultSessionsDir);
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetDefaultConfig.mockReturnValue({
-      session: { directory: '~/.search-hub/sessions' },
-      providers: {},
-    } as ReturnType<typeof getDefaultConfig>);
+    mockGetDefaultSessionsDir.mockReturnValue('/mock/default/sessions');
   });
 
   afterEach(() => {
@@ -81,7 +81,7 @@ describe('getSessionsDir', () => {
     });
   });
 
-  it('should return default config value if loadConfig fails', async () => {
+  it('should return platform default if loadConfig fails', async () => {
     mockLoadConfig.mockRejectedValue(new Error('Config not found'));
 
     const options: GlobalOptions = {
@@ -91,8 +91,8 @@ describe('getSessionsDir', () => {
     };
 
     const result = await getSessionsDir(options);
-    expect(result).toBe('~/.search-hub/sessions');
-    expect(mockGetDefaultConfig).toHaveBeenCalled();
+    expect(result).toBe('/mock/default/sessions');
+    expect(mockGetDefaultSessionsDir).toHaveBeenCalled();
   });
 
   it('should prioritize sessionDir option over config file', async () => {
