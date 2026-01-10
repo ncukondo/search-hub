@@ -6,6 +6,7 @@ import { Command } from 'commander';
 import { init } from './commands/init.js';
 import { EXIT_CODES } from './exit-codes.js';
 import { loadConfig, saveConfig, getDefaultConfig } from '../config/index.js';
+import { getDefaultConfigPath } from '../config/paths.js';
 import {
   viewConfig,
   viewConfigKey,
@@ -164,7 +165,7 @@ export function createProgram(): Command {
           const result = setConfigKey(config, key, value);
           if (result.success) {
             // Save the modified config to file
-            const configPath = expandPath(globalOpts.config ?? '~/.search-hub/config.toml');
+            const configPath = globalOpts.config ? expandPath(globalOpts.config) : getDefaultConfigPath();
             try {
               await saveConfig(config, { path: configPath });
               if (!globalOpts.quiet) {
