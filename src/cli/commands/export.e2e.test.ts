@@ -24,7 +24,6 @@ import {
   formatIds,
   formatJson,
   formatJsonl,
-  type ExportCommandOptions,
 } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 

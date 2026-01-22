@@ -19,7 +19,6 @@ import {
   parseResumeOptions,
   validateResumeInput,
   getResumableProvidersForCommand,
-  type ResumeCommandOptions,
 } from './resume.js';
 
 // Mock provider modules before importing executeResume

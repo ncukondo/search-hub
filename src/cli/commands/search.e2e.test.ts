@@ -619,8 +619,13 @@ describe('search-hub search (Live with Mock API) E2E', () => {
           native: 'test query',
           provider: 'eric',
         }),
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('Network timeout: Connection refused');
+        search: vi.fn().mockReturnValue({
+          async next() {
+            throw new Error('Network timeout: Connection refused');
+          },
+          [Symbol.asyncIterator]() {
+            return this;
+          },
         }),
         testConnection: vi.fn().mockResolvedValue(false),
       }));
@@ -664,8 +669,13 @@ describe('search-hub search (Live with Mock API) E2E', () => {
           native: 'test query',
           provider: 'eric',
         }),
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('ERIC API temporarily unavailable');
+        search: vi.fn().mockReturnValue({
+          async next() {
+            throw new Error('ERIC API temporarily unavailable');
+          },
+          [Symbol.asyncIterator]() {
+            return this;
+          },
         }),
         testConnection: vi.fn().mockResolvedValue(false),
       }));

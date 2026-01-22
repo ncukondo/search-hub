@@ -8,7 +8,7 @@
  * - --all includes completed sessions
  * - Helpful message when no sessions exist
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
@@ -22,8 +22,6 @@ import {
   formatSessionDetails,
   type SessionListItem,
   type SessionDetails,
-  type FormatOptions,
-  type ListOptions,
 } from './status.js';
 
 describe('search-hub status E2E', () => {
