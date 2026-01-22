@@ -27,9 +27,9 @@ Each step follows the TDD cycle:
 
 ## Current Progress (2026-01-22)
 
-**Completed Steps:** 1-12 (E2E tests and help message review)
-**Current Step:** 13 (CLI Polish - Error Messages) - IN PROGRESS
-**Remaining:** 13-16
+**Completed Steps:** 1-13 (E2E tests, help messages, error messages)
+**Current Step:** 14 (CLI Polish - Progress & Output) - IN PROGRESS
+**Remaining:** 14-16
 
 ### Next Actions After Container Rebuild:
 
@@ -234,16 +234,18 @@ Note: Basic E2E tests already exist in `src/integration/register.e2e.test.ts`. T
 
 ### Step 13: CLI Polish - Error Messages
 
-- [ ] Write test: `src/cli/error-messages.e2e.test.ts`
+- [x] Write test: `src/cli/error-messages.e2e.test.ts`
   - Test error messages include actionable guidance
   - Test exit codes match specification
   - Test network errors show retry hints
   - Test config errors show config path
   - Test validation errors show line numbers
-- [ ] Review and improve error messages
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Errors help users fix problems
+- [x] Review and improve error messages
+  - Fixed bug: `config set` now rejects unknown keys
+  - Created `src/index.ts` to fix build (missing library entry point)
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Errors help users fix problems
 
 ---
 
