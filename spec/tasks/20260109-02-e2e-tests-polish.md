@@ -31,6 +31,12 @@ Each step follows the TDD cycle:
 **Current Step:** None - Task Complete
 **Remaining:** None
 
+### Additional Fixes Applied:
+- **arXiv HTTPS**: Changed API URL from http to https (301 redirect fix)
+- **arXiv Date Filter**: Fixed wildcard (*) issue - arXiv API doesn't support wildcards
+  - Uses 1991 as default start year, current year + 1 as default end year
+- **Real API E2E Tests Added**: ERIC, arXiv, multi-provider (PubMed+ERIC+arXiv), resume
+
 ### Next Actions After Container Rebuild:
 
 1. **Manual test: ref auto-install** (Docker enabled after rebuild)
