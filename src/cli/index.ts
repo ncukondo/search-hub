@@ -99,6 +99,10 @@ export function createProgram(): Command {
     .command('init')
     .description('Initialize configuration directory')
     .option('-f, --force', 'overwrite existing configuration', false)
+    .addHelpText('after', `
+Examples:
+  $ search-hub init                 # Initialize with default settings
+  $ search-hub init --force         # Overwrite existing configuration`)
     .action(async (options: { force: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -128,6 +132,11 @@ export function createProgram(): Command {
     .description('View and edit configuration')
     .argument('[key]', 'configuration key to view or set')
     .argument('[value]', 'value to set for the key')
+    .addHelpText('after', `
+Examples:
+  $ search-hub config                              # Show all config
+  $ search-hub config providers.pubmed             # Show PubMed config
+  $ search-hub config providers.pubmed.api_key KEY # Set API key`)
     .action(async (key?: string, value?: string) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -210,6 +219,9 @@ export function createProgram(): Command {
     .command('validate')
     .description('Validate query YAML file')
     .argument('<file>', 'path to query YAML file')
+    .addHelpText('after', `
+Examples:
+  $ search-hub query validate ./diabetes-ai.yaml`)
     .action(async (file: string) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -236,6 +248,10 @@ export function createProgram(): Command {
     .description('Show translated queries for each database')
     .argument('<file>', 'path to query YAML file')
     .option('--db <provider>', 'show translation for specific provider only')
+    .addHelpText('after', `
+Examples:
+  $ search-hub query translate ./diabetes-ai.yaml            # All databases
+  $ search-hub query translate ./diabetes-ai.yaml --db pubmed # PubMed only`)
     .action(async (file: string, options: { db?: string }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -267,6 +283,11 @@ export function createProgram(): Command {
     .argument('[session-id]', 'session ID to show details for')
     .option('--json', 'output as JSON')
     .option('--all', 'include completed sessions')
+    .addHelpText('after', `
+Examples:
+  $ search-hub status                           # List recent sessions
+  $ search-hub status 20240115_diabetes-ai_a3f2 # Show session details
+  $ search-hub status --json                    # JSON output for scripting`)
     .action(async (sessionId?: string, options?: { json?: boolean; all?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -318,6 +339,13 @@ export function createProgram(): Command {
     .option('--max-results <n>', 'limit results per database')
     .option('--dry-run', 'show translated queries without executing')
     .option('--no-resume', 'start fresh even if session exists')
+    .addHelpText('after', `
+Examples:
+  $ search-hub search ./diabetes-ai.yaml                # Search all databases
+  $ search-hub search ./query.yaml --db pubmed,eric     # Specific databases
+  $ search-hub search --db pubmed --query "diabetes[tiab]"  # Direct query
+  $ search-hub search ./query.yaml --dry-run            # Preview translations
+  $ search-hub search ./query.yaml --max-results 100    # Limit results`)
     .action(
       async (
         queryFile?: string,
@@ -446,6 +474,11 @@ export function createProgram(): Command {
     .argument('<session-id>', 'session ID to resume')
     .option('--db <providers>', 'resume only specific database(s)')
     .option('--retry-failed', 'retry failed databases')
+    .addHelpText('after', `
+Examples:
+  $ search-hub resume 20240115_diabetes-ai_a3f2   # Resume session
+  $ search-hub resume SESSION_ID --retry-failed   # Retry failed databases
+  $ search-hub resume SESSION_ID --db scopus      # Resume specific database`)
     .action(
       async (
         sessionId: string,
@@ -565,6 +598,11 @@ export function createProgram(): Command {
     .option('-o, --output <path>', 'output file path')
     .option('--db <providers>', 'export only specific database(s)')
     .option('--id-type <type>', 'for ids format: doi, pmid, all')
+    .addHelpText('after', `
+Examples:
+  $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs
+  $ search-hub export SESSION_ID --format json -o results.json
+  $ search-hub export SESSION_ID --db pubmed --format jsonl`)
     .action(
       async (
         sessionId: string,
@@ -681,6 +719,11 @@ export function createProgram(): Command {
     .option('--db <providers>', 'register only specific database(s)')
     .option('--dry-run', 'show what would be registered without executing', false)
     .option('--with-abstracts', 'also update abstracts via ref update', false)
+    .addHelpText('after', `
+Examples:
+  $ search-hub register SESSION_ID                # Register all results
+  $ search-hub register SESSION_ID --with-abstracts
+  $ search-hub register SESSION_ID --dry-run      # Preview only`)
     .action(
       async (
         sessionId: string,
