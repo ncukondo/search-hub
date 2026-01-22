@@ -225,7 +225,7 @@ Note: Basic E2E tests already exist in `src/integration/register.e2e.test.ts`. T
 
 - [x] Review all `--help` output for clarity
 - [x] Ensure consistent option naming across commands
-- [x] Add examples to help text where useful (not needed - help is clear as-is)
+- [x] Add examples to help text where useful (added via addHelpText)
 - [x] Verify version output (`--version`) is correct
 - [x] Run `npm run lint && npm run typecheck`
 - [x] Acceptance: Help is clear and consistent
