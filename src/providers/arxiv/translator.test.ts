@@ -218,7 +218,9 @@ describe('translateQuery', () => {
         yearFrom: 2020,
       });
       const result = translateQuery(ast);
-      expect(result.native).toContain('submittedDate:[202001010000 TO *]');
+      // End year is dynamically set to current year + 1
+      const expectedEndYear = new Date().getFullYear() + 1;
+      expect(result.native).toContain(`submittedDate:[202001010000 TO ${expectedEndYear}12312359]`);
     });
 
     it('should handle yearTo only', () => {
@@ -226,7 +228,8 @@ describe('translateQuery', () => {
         yearTo: 2024,
       });
       const result = translateQuery(ast);
-      expect(result.native).toContain('submittedDate:[* TO 202412312359]');
+      // Start year defaults to 1991 (arXiv founding year)
+      expect(result.native).toContain('submittedDate:[199101010000 TO 202412312359]');
     });
 
     it('should AND date filter with main query', () => {

@@ -116,14 +116,20 @@ function translateTitleAbstract(keywords: string[], operator: Operator): string 
 /**
  * Translate date filter to arXiv submittedDate range.
  * Format: submittedDate:[YYYYMMDDHHmm TO YYYYMMDDHHmm]
+ * Note: arXiv API does not support wildcards (*), so we use concrete dates:
+ * - Start: 1991 (arXiv's founding year)
+ * - End: current year + 1 (to include all future submissions)
  */
 function translateDateFilter(yearFrom?: number, yearTo?: number): string {
   if (yearFrom === undefined && yearTo === undefined) {
     return '';
   }
 
-  const fromDate = yearFrom !== undefined ? `${yearFrom}01010000` : '*';
-  const toDate = yearTo !== undefined ? `${yearTo}12312359` : '*';
+  // arXiv was founded in 1991, use as default start
+  const fromDate = yearFrom !== undefined ? `${yearFrom}01010000` : '199101010000';
+  // Use next year as default end to include all current submissions
+  const defaultEndYear = new Date().getFullYear() + 1;
+  const toDate = yearTo !== undefined ? `${yearTo}12312359` : `${defaultEndYear}12312359`;
 
   return `submittedDate:[${fromDate} TO ${toDate}]`;
 }

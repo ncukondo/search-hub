@@ -220,4 +220,215 @@ enabled = false
     expect(registerResult.exitCode).toBe(0);
     expect(registerResult.stdout.toLowerCase()).toMatch(/would|dry|reference/i);
   }, 60000);
+
+  it('should search ERIC with real API', async () => {
+    // Create ERIC-enabled config
+    const ericConfigPath = join(tempDir, 'eric-config.toml');
+    const ericConfig = `
+[session]
+directory = "${sessionsDir}"
+
+[providers.pubmed]
+enabled = false
+
+[providers.eric]
+enabled = true
+rate_limit = 5
+
+[providers.arxiv]
+enabled = false
+
+[providers.scopus]
+enabled = false
+`;
+    await writeFile(ericConfigPath, ericConfig, 'utf-8');
+
+    // Search ERIC with real API
+    const searchResult = await runCli(
+      `search "${queryPath}" --db eric --max-results 3 -c "${ericConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    expect(searchResult.exitCode).toBe(0);
+    expect(searchResult.stdout).toContain('Search completed');
+    expect(searchResult.stdout).toContain('eric:');
+
+    // Extract session ID and verify export
+    const sessionMatch = searchResult.stdout.match(/Session:\s*(\S+)/);
+    expect(sessionMatch).toBeTruthy();
+    const sessionId = sessionMatch![1];
+
+    const exportPath = join(tempDir, 'eric-export.jsonl');
+    const exportResult = await runCli(
+      `export "${sessionId}" --format jsonl -o "${exportPath}" -c "${ericConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    expect(exportResult.exitCode).toBe(0);
+
+    const exportContent = await readFile(exportPath, 'utf-8');
+    expect(exportContent.trim().length).toBeGreaterThan(0);
+  }, 60000);
+
+  it('should search arXiv with real API', async () => {
+    // Create arXiv-enabled config
+    const arxivConfigPath = join(tempDir, 'arxiv-config.toml');
+    const arxivConfig = `
+[session]
+directory = "${sessionsDir}"
+
+[providers.pubmed]
+enabled = false
+
+[providers.eric]
+enabled = false
+
+[providers.arxiv]
+enabled = true
+rate_limit = 3
+
+[providers.scopus]
+enabled = false
+`;
+    await writeFile(arxivConfigPath, arxivConfig, 'utf-8');
+
+    // Search arXiv with real API
+    const searchResult = await runCli(
+      `search "${queryPath}" --db arxiv --max-results 3 -c "${arxivConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    expect(searchResult.exitCode).toBe(0);
+    expect(searchResult.stdout).toContain('Search completed');
+    expect(searchResult.stdout).toContain('arxiv:');
+
+    // Extract session ID and verify export
+    const sessionMatch = searchResult.stdout.match(/Session:\s*(\S+)/);
+    expect(sessionMatch).toBeTruthy();
+    const sessionId = sessionMatch![1];
+
+    const exportPath = join(tempDir, 'arxiv-export.jsonl');
+    const exportResult = await runCli(
+      `export "${sessionId}" --format jsonl -o "${exportPath}" -c "${arxivConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    expect(exportResult.exitCode).toBe(0);
+
+    const exportContent = await readFile(exportPath, 'utf-8');
+    expect(exportContent.trim().length).toBeGreaterThan(0);
+  }, 60000);
+
+  it('should search multiple providers simultaneously with real APIs', async () => {
+    // Create multi-provider config (PubMed + ERIC + arXiv)
+    const multiConfigPath = join(tempDir, 'multi-config.toml');
+    const multiConfig = `
+[session]
+directory = "${sessionsDir}"
+
+[providers.pubmed]
+enabled = true
+rate_limit = 3
+
+[providers.eric]
+enabled = true
+rate_limit = 3
+
+[providers.arxiv]
+enabled = true
+rate_limit = 3
+
+[providers.scopus]
+enabled = false
+`;
+    await writeFile(multiConfigPath, multiConfig, 'utf-8');
+
+    // Search all three providers with real APIs
+    const searchResult = await runCli(
+      `search "${queryPath}" --db pubmed,eric,arxiv --max-results 2 -c "${multiConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    expect(searchResult.exitCode).toBe(0);
+    expect(searchResult.stdout).toContain('Search completed');
+    // Check that results from multiple providers are reported
+    expect(searchResult.stdout).toContain('pubmed:');
+    expect(searchResult.stdout).toContain('eric:');
+    expect(searchResult.stdout).toContain('arxiv:');
+
+    // Extract session ID
+    const sessionMatch = searchResult.stdout.match(/Session:\s*(\S+)/);
+    expect(sessionMatch).toBeTruthy();
+    const sessionId = sessionMatch![1];
+
+    // Verify status shows all providers
+    const statusResult = await runCli(
+      `status "${sessionId}" -c "${multiConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    expect(statusResult.exitCode).toBe(0);
+
+    // Export and verify combined results
+    const exportPath = join(tempDir, 'multi-export.jsonl');
+    const exportResult = await runCli(
+      `export "${sessionId}" --format jsonl -o "${exportPath}" -c "${multiConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    expect(exportResult.exitCode).toBe(0);
+
+    const exportContent = await readFile(exportPath, 'utf-8');
+    const lines = exportContent.trim().split('\n').filter(l => l);
+    // Should have results from multiple providers
+    expect(lines.length).toBeGreaterThan(0);
+  }, 120000);
+
+  it('should resume an interrupted session with real API', async () => {
+    // Create config with only PubMed
+    const resumeConfigPath = join(tempDir, 'resume-config.toml');
+    const resumeConfig = `
+[session]
+directory = "${sessionsDir}"
+
+[providers.pubmed]
+enabled = true
+rate_limit = 3
+max_results = 5
+
+[providers.eric]
+enabled = false
+
+[providers.arxiv]
+enabled = false
+
+[providers.scopus]
+enabled = false
+`;
+    await writeFile(resumeConfigPath, resumeConfig, 'utf-8');
+
+    // First search with very limited results
+    const searchResult = await runCli(
+      `search "${queryPath}" --db pubmed --max-results 2 -c "${resumeConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    expect(searchResult.exitCode).toBe(0);
+
+    const sessionMatch = searchResult.stdout.match(/Session:\s*(\S+)/);
+    expect(sessionMatch).toBeTruthy();
+    const sessionId = sessionMatch![1];
+
+    // Check status before resume
+    const statusBefore = await runCli(
+      `status "${sessionId}" -c "${resumeConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    expect(statusBefore.exitCode).toBe(0);
+
+    // Attempt resume (may say "no providers need resuming" if already complete)
+    const resumeResult = await runCli(
+      `resume "${sessionId}" -c "${resumeConfigPath}" --session-dir "${sessionsDir}"`,
+      projectRoot
+    );
+    // Resume should either succeed or indicate nothing to resume
+    expect(resumeResult.exitCode).toBe(0);
+    expect(
+      resumeResult.stdout.toLowerCase().includes('no providers') ||
+      resumeResult.stdout.toLowerCase().includes('resume') ||
+      resumeResult.stdout.toLowerCase().includes('completed')
+    ).toBe(true);
+  }, 60000);
 });

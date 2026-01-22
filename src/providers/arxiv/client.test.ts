@@ -48,7 +48,7 @@ describe('ArxivClient', () => {
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const url = new URL(mockFetch.mock.calls[0]![0] as string);
-      expect(url.origin).toBe('http://export.arxiv.org');
+      expect(url.origin).toBe('https://export.arxiv.org');
       expect(url.pathname).toBe('/api/query');
     });
 

@@ -37,7 +37,7 @@ export interface ArxivClientConfig {
   timeout?: number;
 }
 
-const DEFAULT_BASE_URL = 'http://export.arxiv.org/api/query';
+const DEFAULT_BASE_URL = 'https://export.arxiv.org/api/query';
 const DEFAULT_MIN_REQUEST_INTERVAL = 3000; // 3 seconds
 const DEFAULT_TIMEOUT = 60000; // 60 seconds
 

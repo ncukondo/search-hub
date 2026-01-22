@@ -83,7 +83,7 @@ export const ARXIV_MIN_REQUEST_INTERVAL_MS = 3000;
  * Default arXiv configuration values.
  */
 export const DEFAULT_ARXIV_CONFIG: Required<ArxivConfig> = {
-  baseUrl: 'http://export.arxiv.org/api/query',
+  baseUrl: 'https://export.arxiv.org/api/query',
   // Convert interval to requests per second: 1000ms / 3000ms = 0.33 req/s
   rateLimit: 1000 / ARXIV_MIN_REQUEST_INTERVAL_MS,
   timeout: 60000, // arXiv can be slow
