@@ -27,9 +27,9 @@ Each step follows the TDD cycle:
 
 ## Current Progress (2026-01-22)
 
-**Completed Steps:** 1-13 (E2E tests, help messages, error messages)
-**Current Step:** 14 (CLI Polish - Progress & Output) - IN PROGRESS
-**Remaining:** 14-16
+**Completed Steps:** 1-14 (E2E tests, help/error messages, progress/output)
+**Current Step:** 15 (Full Workflow E2E Test) - IN PROGRESS
+**Remaining:** 15-16
 
 ### Next Actions After Container Rebuild:
 
@@ -251,13 +251,13 @@ Note: Basic E2E tests already exist in `src/integration/register.e2e.test.ts`. T
 
 ### Step 14: CLI Polish - Progress & Output
 
-- [ ] Verify progress bars display correctly
-- [ ] Verify `--quiet` suppresses non-error output
-- [ ] Verify `--verbose` shows additional debug info
-- [ ] Verify `--no-color` disables ANSI colors
-- [ ] Test output in non-TTY environment (piped output)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Output adapts to terminal capabilities
+- [x] Verify progress bars display correctly (TTY-only by design)
+- [x] Verify `--quiet` suppresses non-error output
+- [x] Verify `--verbose` shows additional debug info (limited implementation, search-focused)
+- [x] Verify `--no-color` disables ANSI colors
+- [x] Test output in non-TTY environment (piped output) - colors auto-disabled
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Output adapts to terminal capabilities
 
 ---
 
