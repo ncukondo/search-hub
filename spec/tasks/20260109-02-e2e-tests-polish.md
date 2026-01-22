@@ -27,9 +27,9 @@ Each step follows the TDD cycle:
 
 ## Current Progress (2026-01-22)
 
-**Completed Steps:** 1-14 (E2E tests, help/error messages, progress/output)
-**Current Step:** 15 (Full Workflow E2E Test) - IN PROGRESS
-**Remaining:** 15-16
+**Completed Steps:** 1-15 (E2E tests, CLI polish, workflow test)
+**Current Step:** 16 (Final Verification) - IN PROGRESS
+**Remaining:** 16
 
 ### Next Actions After Container Rebuild:
 
@@ -263,19 +263,19 @@ Note: Basic E2E tests already exist in `src/integration/register.e2e.test.ts`. T
 
 ### Step 15: Full Workflow E2E Test
 
-- [ ] Write test: `src/cli/workflow.e2e.test.ts`
-  - Complete user workflow from init to register:
-    1. `search-hub init`
-    2. `search-hub query validate`
-    3. `search-hub search` (with mocked API)
-    4. `search-hub status`
-    5. `search-hub export`
-    6. `search-hub register --dry-run`
+- [x] Write test: `src/cli/workflow.e2e.test.ts`
+  - Complete user workflow using subprocess execution (avoids vi.mock issues):
+    1. `search-hub query validate`
+    2. `search-hub search` (real API with --max-results limit)
+    3. `search-hub status`
+    4. `search-hub export` (jsonl, json, ids formats)
+    5. `search-hub register --dry-run`
   - Verify all commands work together
   - Verify session data flows correctly between commands
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Complete workflow succeeds
+  - Added error handling tests for invalid inputs
+- [x] Verify test passes (5 tests, ~20s)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Complete workflow succeeds
 
 ---
 
