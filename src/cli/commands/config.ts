@@ -155,6 +155,7 @@ function parseValue(value: string, existingValue: unknown): unknown {
 
 /**
  * Set a configuration key to a new value.
+ * Only allows setting keys that already exist in the configuration.
  */
 export function setConfigKey(
   config: Config,
@@ -172,6 +173,15 @@ export function setConfigKey(
     config as unknown as Record<string, unknown>,
     key
   );
+
+  // Reject unknown keys
+  if (existingValue === undefined) {
+    return {
+      success: false,
+      error: `Unknown configuration key: "${key}". Use "search-hub config" to see available keys.`,
+    };
+  }
+
   const parsedValue = parseValue(value, existingValue);
 
   setNestedValue(

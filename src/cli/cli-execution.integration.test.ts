@@ -517,7 +517,7 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'config', 'search.max_results', '500', '--config', configPath]);
+        await program.parseAsync(['node', 'test', 'config', 'providers.pubmed.max_results', '500', '--config', configPath]);
       } catch {
         // exitOverride may throw
       }

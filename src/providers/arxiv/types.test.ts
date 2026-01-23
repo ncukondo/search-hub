@@ -78,7 +78,7 @@ describe('ArxivSearchResponse', () => {
 describe('ArxivConfig', () => {
   it('should have default configuration values', () => {
     const config: ArxivConfig = {
-      baseUrl: 'http://export.arxiv.org/api/query',
+      baseUrl: 'https://export.arxiv.org/api/query',
       rateLimit: 0.33, // 1 request per 3 seconds
       timeout: 60000,
       retries: 3,
