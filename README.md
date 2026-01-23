@@ -64,7 +64,10 @@ search-hub export <session-id> --format ids
 
 ## Documentation
 
-See [spec/](./spec/) for detailed specifications.
+- [Query Guide](./docs/query-guide.md) - How to write query files
+- [Command Reference](./docs/commands.md) - All CLI commands and options
+- [Configuration](./docs/configuration.md) - Setup and configuration
+- [Databases](./docs/databases.md) - Supported databases and tips
 
 ## Development
 
