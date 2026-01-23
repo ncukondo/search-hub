@@ -1,5 +1,5 @@
 {
-  "name": "search-hub",
+  "name": "@ncukondo/search-hub",
   "version": "0.1.0",
   "description": "A CLI tool for systematic literature searching across multiple academic databases",
   "type": "module",
@@ -18,6 +18,17 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ncukondo/search-hub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ncukondo/search-hub/issues"
+  },
+  "homepage": "https://github.com/ncukondo/search-hub#readme",
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
@@ -45,7 +56,7 @@
     "research",
     "cli"
   ],
-  "author": "",
+  "author": "ncukondo",
   "license": "MIT",
   "dependencies": {
     "@iarna/toml": "^3.0.0",

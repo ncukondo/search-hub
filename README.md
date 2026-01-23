@@ -1,4 +1,7 @@
-# search-hub
+# @ncukondo/search-hub
+
+[![npm version](https://img.shields.io/npm/v/@ncukondo/search-hub.svg)](https://www.npmjs.com/package/@ncukondo/search-hub)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A CLI tool for systematic literature searching across multiple academic databases.
 
@@ -13,7 +16,7 @@ A CLI tool for systematic literature searching across multiple academic database
 ## Installation
 
 ```bash
-npm install -g search-hub
+npm install -g @ncukondo/search-hub
 ```
 
 Requires Node.js 22+.
