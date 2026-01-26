@@ -226,6 +226,80 @@ describe('ref-cli', () => {
         expect.any(Function)
       );
     });
+
+    it('parses JSON output even when exit code is 1 (partial failure)', async () => {
+      // ref add returns exit code 1 when there are failures, but still outputs valid JSON
+      const mockOutput = {
+        summary: { total: 1, added: 0, skipped: 0, failed: 1 },
+        added: [],
+        skipped: [],
+        failed: [{ source: '10.9999/nonexistent', reason: 'fetch_error', error: 'Not found' }],
+      };
+
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        // Simulate exit code 1 with valid JSON output
+        const error = new Error('Command failed') as ExecException;
+        error.code = 1;
+        callback(error, JSON.stringify(mockOutput), '');
+      });
+
+      const result = await refAdd('10.9999/nonexistent');
+      expect(result.summary.failed).toBe(1);
+      expect(result.failed).toHaveLength(1);
+      expect(result.failed[0]!.source).toBe('10.9999/nonexistent');
+    });
+
+    it('includes uuid field when present in output', async () => {
+      const mockOutput = {
+        summary: { total: 1, added: 1, skipped: 0, failed: 0 },
+        added: [{ source: 'pmid:12345678', id: 'smith2024', title: 'Test', uuid: 'abc-123' }],
+        skipped: [],
+        failed: [],
+      };
+
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(null, JSON.stringify(mockOutput), '');
+      });
+
+      const result = await refAdd('pmid:12345678');
+      expect(result.added[0]!.uuid).toBe('abc-123');
+    });
+
+    it('includes reason field in skipped items when present', async () => {
+      const mockOutput = {
+        summary: { total: 1, added: 0, skipped: 1, failed: 0 },
+        added: [],
+        skipped: [{ source: '10.1234/test', existingId: 'test2024', duplicateType: 'doi', reason: 'duplicate' }],
+        failed: [],
+      };
+
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(null, JSON.stringify(mockOutput), '');
+      });
+
+      const result = await refAdd('10.1234/test');
+      expect(result.skipped[0]!.reason).toBe('duplicate');
+    });
+
+    it('throws RefCliError when no stdout and exec error', async () => {
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(new Error('Command not found') as ExecException, '', 'ref: command not found');
+      });
+
+      await expect(refAdd('pmid:12345678')).rejects.toThrow(RefCliError);
+    });
   });
 
   describe('refUpdate', () => {

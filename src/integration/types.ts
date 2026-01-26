@@ -8,20 +8,24 @@ import { z } from 'zod';
 
 /**
  * Schema for items added by ref add command.
+ * Note: uuid field was added in reference-manager v0.16.x
  */
 const RefAddedItemSchema = z.object({
   source: z.string(),
   id: z.string(),
   title: z.string(),
+  uuid: z.string().optional(),
 });
 
 /**
  * Schema for items skipped (duplicates) by ref add command.
+ * Note: reason field was added in reference-manager v0.16.x
  */
 const RefSkippedItemSchema = z.object({
   source: z.string(),
   existingId: z.string(),
   duplicateType: z.string(),
+  reason: z.string().optional(),
 });
 
 /**

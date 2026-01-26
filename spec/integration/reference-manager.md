@@ -47,14 +47,20 @@ Skipped 1 duplicate(s):
 {
   "summary": { "total": 3, "added": 2, "skipped": 1, "failed": 0 },
   "added": [
-    { "source": "10.1234/example", "id": "smith2024", "title": "..." }
+    { "source": "10.1234/example", "id": "smith2024", "uuid": "abc-123-...", "title": "..." }
   ],
   "skipped": [
-    { "source": "10.5678/existing", "existingId": "jones2023", "duplicateType": "doi" }
+    { "source": "10.5678/existing", "reason": "duplicate", "existingId": "jones2023", "duplicateType": "doi" }
   ],
-  "failed": []
+  "failed": [
+    { "source": "10.9999/invalid", "reason": "fetch_error", "error": "Server responded with status code 404" }
+  ]
 }
 ```
+
+Note: `uuid` field in `added` and `reason` field in `skipped`/`failed` were added in v0.16.x.
+
+**Exit code behavior**: `ref add` returns exit code 1 when there are failures, but still outputs valid JSON. The integration handles this by parsing stdout even when exit code is non-zero.
 
 Use `--full` flag to include complete CSL-JSON in `added[].item`.
 

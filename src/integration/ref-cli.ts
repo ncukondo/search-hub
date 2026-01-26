@@ -90,6 +90,9 @@ function buildLibraryOption(libraryPath?: string): string {
 
 /**
  * Execute ref add command and return parsed output.
+ *
+ * Note: ref add returns exit code 1 when there are failures (e.g., fetch errors),
+ * but still outputs valid JSON. We parse stdout even when exit code is non-zero.
  */
 export async function refAdd(
   id: string,
@@ -101,6 +104,35 @@ export async function refAdd(
 
   return new Promise((resolve, reject) => {
     exec(cmd, (error, stdout, stderr) => {
+      // ref add returns exit code 1 when there are failures, but still outputs valid JSON.
+      // Try to parse stdout first, even if there's an error.
+      if (stdout) {
+        try {
+          const parsed = JSON.parse(stdout);
+          const validated = RefAddOutputSchema.parse(parsed);
+          resolve(validated);
+          return;
+        } catch (parseError) {
+          // If parsing fails and we had an exec error, report the exec error
+          if (error) {
+            reject(new RefCliError(
+              `ref add failed: ${stderr || error.message}`,
+              'REF_ADD_FAILED',
+              error
+            ));
+            return;
+          }
+          // Otherwise report the parse error
+          reject(new RefCliError(
+            `Failed to parse ref add output: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+            'PARSE_ERROR',
+            parseError instanceof Error ? parseError : undefined
+          ));
+          return;
+        }
+      }
+
+      // No stdout - report the exec error
       if (error) {
         reject(new RefCliError(
           `ref add failed: ${stderr || error.message}`,
@@ -110,17 +142,11 @@ export async function refAdd(
         return;
       }
 
-      try {
-        const parsed = JSON.parse(stdout);
-        const validated = RefAddOutputSchema.parse(parsed);
-        resolve(validated);
-      } catch (parseError) {
-        reject(new RefCliError(
-          `Failed to parse ref add output: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
-          'PARSE_ERROR',
-          parseError instanceof Error ? parseError : undefined
-        ));
-      }
+      // No stdout and no error - unexpected
+      reject(new RefCliError(
+        'ref add produced no output',
+        'NO_OUTPUT'
+      ));
     });
   });
 }
