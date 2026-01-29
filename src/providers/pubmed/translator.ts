@@ -142,10 +142,13 @@ function translatePublicationTypeFilters(
     }
   }
 
-  // Exclude filters
+  // Exclude filters - single grouped NOT clause
   if (pubTypes.exclude && pubTypes.exclude.length > 0) {
-    for (const pt of pubTypes.exclude) {
-      filters.push(`NOT ${pt.toLowerCase()}[pt]`);
+    const excludeTerms = pubTypes.exclude.map((pt) => `${pt.toLowerCase()}[pt]`);
+    if (excludeTerms.length === 1) {
+      filters.push(`NOT ${excludeTerms[0]}`);
+    } else {
+      filters.push(`NOT (${excludeTerms.join(" OR ")})`);
     }
   }
 
@@ -217,8 +220,15 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
   const pubTypeFilters = translatePublicationTypeFilters(filters.publicationTypes);
   parts.push(...pubTypeFilters);
 
-  // Combine all parts with AND
-  const native = parts.join(' AND ');
+  // Separate NOT clauses from AND-joined parts
+  // PubMed treats NOT as a standalone binary operator, not AND NOT
+  const notParts = parts.filter((p) => p.startsWith('NOT '));
+  const andParts = parts.filter((p) => !p.startsWith('NOT '));
+
+  let native = andParts.join(' AND ');
+  if (notParts.length > 0) {
+    native = native + ' ' + notParts.join(' ');
+  }
 
   return {
     native,
