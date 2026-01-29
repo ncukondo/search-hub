@@ -28,24 +28,32 @@ const mockConfig: Config = {
       timeout: 30000,
       retries: 3,
       max_results: 10000,
+      inst_token: '',
     },
     eric: {
       enabled: false,
+      api_key: '',
+      email: '',
       rate_limit: 10,
       timeout: 30000,
       retries: 3,
       max_results: 2000,
+      inst_token: '',
     },
     arxiv: {
       enabled: true,
+      api_key: '',
+      email: '',
       rate_limit: 1,
       timeout: 30000,
       retries: 3,
       max_results: 10000,
+      inst_token: '',
     },
     scopus: {
       enabled: false,
       api_key: '',
+      email: '',
       inst_token: '',
       rate_limit: 5,
       timeout: 30000,
@@ -55,6 +63,8 @@ const mockConfig: Config = {
     wos: {
       enabled: false,
       api_key: '',
+      email: '',
+      inst_token: '',
       rate_limit: 1,
       timeout: 30000,
       retries: 3,
@@ -62,6 +72,9 @@ const mockConfig: Config = {
     },
     embase: {
       enabled: false,
+      api_key: '',
+      email: '',
+      inst_token: '',
       rate_limit: 1,
       timeout: 30000,
       retries: 3,
@@ -134,6 +147,13 @@ describe('config command helpers', () => {
       expect(result).toContain('providers.pubmed.enabled');
       expect(result).toContain('true');
     });
+
+    it('should include optional provider keys in output', () => {
+      const result = viewConfig(mockConfig);
+      expect(result).toContain('providers.pubmed.email');
+      expect(result).toContain('providers.pubmed.api_key');
+      expect(result).toContain('providers.scopus.inst_token');
+    });
   });
 
   describe('viewConfigKey', () => {
@@ -189,6 +209,20 @@ describe('config command helpers', () => {
       const config = structuredClone(mockConfig);
       const result = setConfigKey(config, '', 'value');
       expect(result.success).toBe(false);
+    });
+
+    it('should set providers.pubmed.email', () => {
+      const config = structuredClone(mockConfig);
+      const result = setConfigKey(config, 'providers.pubmed.email', 'new@example.com');
+      expect(result.success).toBe(true);
+      expect(config.providers.pubmed.email).toBe('new@example.com');
+    });
+
+    it('should set providers.pubmed.api_key', () => {
+      const config = structuredClone(mockConfig);
+      const result = setConfigKey(config, 'providers.pubmed.api_key', 'my-new-key');
+      expect(result.success).toBe(true);
+      expect(config.providers.pubmed.api_key).toBe('my-new-key');
     });
   });
 });

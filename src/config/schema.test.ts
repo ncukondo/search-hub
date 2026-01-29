@@ -12,6 +12,18 @@ describe('ProviderConfigSchema', () => {
     expect(result.max_results).toBe(10000);
   });
 
+  it('includes optional string fields with empty string defaults', () => {
+    const result = ProviderConfigSchema.parse({});
+    expect(result.email).toBe('');
+    expect(result.api_key).toBe('');
+    expect(result.inst_token).toBe('');
+  });
+
+  it('allows empty string for email field', () => {
+    const result = ProviderConfigSchema.parse({ email: '' });
+    expect(result.email).toBe('');
+  });
+
   it('accepts valid provider config with all fields', () => {
     const input = {
       enabled: false,
@@ -28,7 +40,7 @@ describe('ProviderConfigSchema', () => {
     expect(result).toEqual(input);
   });
 
-  it('validates email format', () => {
+  it('validates email format when non-empty', () => {
     expect(() => {
       ProviderConfigSchema.parse({ email: 'invalid-email' });
     }).toThrow();

@@ -284,4 +284,36 @@ describe('search-hub config E2E', () => {
       expect(result.value).toBe('30000');
     });
   });
+
+  describe('config - optional provider keys', () => {
+    it('should include providers.pubmed.email in full config output', () => {
+      const config = getDefaultConfig();
+      const output = viewConfig(config);
+
+      expect(output).toContain('providers.pubmed.email');
+    });
+
+    it('should set providers.pubmed.email to a valid email', () => {
+      const config = getDefaultConfig();
+      const result = setConfigKey(config, 'providers.pubmed.email', 'test@example.com');
+
+      expect(result.success).toBe(true);
+      expect(result.value).toBe('test@example.com');
+      expect(config.providers.pubmed.email).toBe('test@example.com');
+    });
+
+    it('should include providers.pubmed.api_key in full config output', () => {
+      const config = getDefaultConfig();
+      const output = viewConfig(config);
+
+      expect(output).toContain('providers.pubmed.api_key');
+    });
+
+    it('should include providers.scopus.inst_token in full config output', () => {
+      const config = getDefaultConfig();
+      const output = viewConfig(config);
+
+      expect(output).toContain('providers.scopus.inst_token');
+    });
+  });
 });
