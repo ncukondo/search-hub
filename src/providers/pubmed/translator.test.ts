@@ -467,6 +467,16 @@ describe('PubMed Query Translator', () => {
       expect(result.native).toBe('("Diabetes Mellitus"[mh])');
     });
 
+    it('should handle exclude-only query without leading space', () => {
+      const ast = createQueryAST(
+        [], // no query blocks
+        { publicationTypes: { exclude: ['Review'] } }
+      );
+      const result = translateQuery(ast);
+      expect(result.native).toBe('NOT review[pt]');
+      expect(result.native).not.toMatch(/^\s/); // no leading whitespace
+    });
+
     it('should handle complex combined query', () => {
       const ast = createQueryAST(
         [

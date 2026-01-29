@@ -59,7 +59,7 @@ PubMed:
 | `year_from: 2020` | `2020:3000[dp]` |
 | `year_to: 2024` | `1900:2024[dp]` |
 | `language: [en]` | `english[la]` |
-| `exclude: Review` | `NOT review[pt]` |
+| `exclude: [Review, Comment]` | `NOT (review[pt] OR comment[pt])` |
 
 ## API Parameters
 

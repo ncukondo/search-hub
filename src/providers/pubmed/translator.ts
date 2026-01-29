@@ -225,9 +225,15 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
   const notParts = parts.filter((p) => p.startsWith('NOT '));
   const andParts = parts.filter((p) => !p.startsWith('NOT '));
 
-  let native = andParts.join(' AND ');
-  if (notParts.length > 0) {
-    native = native + ' ' + notParts.join(' ');
+  const andSection = andParts.join(' AND ');
+  const notSection = notParts.join(' ');
+  let native: string;
+  if (andSection && notSection) {
+    native = andSection + ' ' + notSection;
+  } else if (notSection) {
+    native = notSection;
+  } else {
+    native = andSection;
   }
 
   return {
