@@ -457,6 +457,16 @@ Examples:
           } else {
             if (!globalOpts.quiet) {
               console.error(`Error: ${result.error}`);
+              if (globalOpts.verbose && result.results) {
+                console.error('\nPer-provider details:');
+                for (const [provider, stats] of Object.entries(result.results)) {
+                  if (stats.error) {
+                    console.error(`  ${provider}: FAILED - ${stats.error}`);
+                  } else {
+                    console.error(`  ${provider}: ${stats.retrieved} results`);
+                  }
+                }
+              }
             }
             process.exitCode = EXIT_CODES.NETWORK_ERROR;
           }
@@ -579,6 +589,16 @@ Examples:
           } else {
             if (!globalOpts.quiet) {
               console.error(`Error: ${execResult.error}`);
+              if (globalOpts.verbose && execResult.results) {
+                console.error('\nPer-provider details:');
+                for (const [provider, stats] of Object.entries(execResult.results)) {
+                  if (stats.error) {
+                    console.error(`  ${provider}: FAILED - ${stats.error}`);
+                  } else {
+                    console.error(`  ${provider}: ${stats.retrieved} results`);
+                  }
+                }
+              }
             }
             process.exitCode = EXIT_CODES.NETWORK_ERROR;
           }
