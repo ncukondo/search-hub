@@ -41,6 +41,8 @@ export interface ESearchResponse {
   webenv?: string;
   /** Query key for history server */
   querykey?: string;
+  /** Warnings from PubMed (e.g., unrecognized operators, quoted phrases not found) */
+  warnings?: string[];
 }
 
 /**
