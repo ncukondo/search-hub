@@ -331,8 +331,53 @@ describe('PubMed Query Translator', () => {
       );
 
       const result = translateQuery(ast);
-      expect(result.native).toContain('NOT review[pt]');
-      expect(result.native).toContain('NOT meta-analysis[pt]');
+      // Should use single NOT with grouped OR, not AND NOT
+      expect(result.native).toContain('NOT (review[pt] OR meta-analysis[pt])');
+      expect(result.native).not.toContain('AND NOT');
+    });
+
+    it('should translate single exclude publication type filter', () => {
+      const ast = createQueryAST(
+        [
+          {
+            field: 'title',
+            terms: { keywords: ['diabetes'] },
+            operator: 'OR',
+          },
+        ],
+        {
+          publicationTypes: {
+            exclude: ['Comment'],
+          },
+        }
+      );
+
+      const result = translateQuery(ast);
+      expect(result.native).toContain('NOT comment[pt]');
+      expect(result.native).not.toContain('AND NOT');
+    });
+
+    it('should translate combined include and exclude publication type filters', () => {
+      const ast = createQueryAST(
+        [
+          {
+            field: 'title',
+            terms: { keywords: ['diabetes'] },
+            operator: 'OR',
+          },
+        ],
+        {
+          publicationTypes: {
+            include: ['Journal Article'],
+            exclude: ['Review', 'Comment'],
+          },
+        }
+      );
+
+      const result = translateQuery(ast);
+      expect(result.native).toContain('"journal article"[pt]');
+      expect(result.native).toContain('NOT (review[pt] OR comment[pt])');
+      expect(result.native).not.toContain('AND NOT');
     });
 
     it('should translate include publication type filter', () => {
@@ -383,8 +428,8 @@ describe('PubMed Query Translator', () => {
       );
 
       const result = translateQuery(ast);
-      expect(result.native).toContain('NOT comment[pt]');
-      expect(result.native).toContain('NOT letter[pt]');
+      expect(result.native).toContain('NOT (comment[pt] OR letter[pt])');
+      expect(result.native).not.toContain('AND NOT');
     });
   });
 
@@ -420,6 +465,16 @@ describe('PubMed Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.native).toBe('("Diabetes Mellitus"[mh])');
+    });
+
+    it('should handle exclude-only query without leading space', () => {
+      const ast = createQueryAST(
+        [], // no query blocks
+        { publicationTypes: { exclude: ['Review'] } }
+      );
+      const result = translateQuery(ast);
+      expect(result.native).toBe('NOT review[pt]');
+      expect(result.native).not.toMatch(/^\s/); // no leading whitespace
     });
 
     it('should handle complex combined query', () => {
@@ -460,6 +515,8 @@ describe('PubMed Query Translator', () => {
       expect(result.native).toContain('2020:2024[dp]');
       expect(result.native).toContain('english[la]');
       expect(result.native).toContain('NOT review[pt]');
+      // Should not use AND NOT
+      expect(result.native).not.toContain('AND NOT');
     });
   });
 });
