@@ -22,9 +22,9 @@ This file tracks high-level progress. For implementation details, see individual
 | 13 | E2E Tests & Polish | All | ✅ Completed | [20260109-02](completed/20260109-02-e2e-tests-polish.md) |
 | 14 | Fix PubMed NOT Operator Syntax | 6 | ✅ Completed | [20260129-01](completed/20260129-01-fix-pubmed-not-operator.md) |
 | 15 | Distinguish Zero Results from Provider Failure | 10 | ✅ Completed | [20260129-02](completed/20260129-02-search-executor-zero-results-handling.md) |
-| 16 | Show Detailed Error Information on Search Failure | 15 | 🔲 Pending | [20260129-03](active/20260129-03-search-error-detail-reporting.md) |
+| 16 | Show Detailed Error Information on Search Failure | 15 | ✅ Completed | [20260129-03](completed/20260129-03-search-error-detail-reporting.md) |
 | 17 | Support Optional Config Keys in CLI | 2 | ✅ Completed | [20260129-04](completed/20260129-04-config-optional-keys.md) |
-| 18 | Add `query init` Command for YAML Template Generation | 10 | 🔲 Pending | [20260129-05](active/20260129-05-query-init-template.md) |
+| 18 | Add `query init` Command for YAML Template Generation | 10 | ✅ Completed | [20260129-05](completed/20260129-05-query-init-template.md) |
 | 19 | Show Actionable Error Messages with Suggested Next Steps | 16 | 🔲 Pending | [20260129-06](active/20260129-06-actionable-error-messages.md) |
 | 20 | Enhance `--dry-run` with Provider Readiness and Query Diagnostics | 10 | 🔲 Pending | [20260129-07](active/20260129-07-dry-run-diagnostics.md) |
 | 21 | Fix ProviderError Serialization to `[object Object]` | 5 | ✅ Completed | [20260129-08](completed/20260129-08-fix-provider-error-serialization.md) |
