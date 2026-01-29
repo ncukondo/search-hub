@@ -1,0 +1,42 @@
+spec/tasks/ROADMAP.md を確認し、並列実装可能なタスクを分析して実装を進めて下さい。
+
+## 手順
+
+### 1. タスク分析
+- spec/tasks/ROADMAP.md を確認し、"Pending" のタスクを全て洗い出す
+- 依存関係が満たされているタスクを特定（並列実行候補）
+- 実装するタスクを選択
+
+### 2. ブランチ & worktree セットアップ
+git worktree(無ければ作成, ブランチ名も無ければ適切なものを作成, ブランチの作成を直接行うのでは無くgit worktree addで行う)内で行います。git worktree作成時にはnpm install等の初期セットアップも行って下さい。
+
+### 3. TDD実装サイクル
+各ステップについて:
+1. **Red**: 失敗するテストを書く
+2. **Green**: テストを通す最小限の実装
+3. **Refactor**: リファクタリング
+4. 各ステップ完了後にcommit
+
+### 4. 完了前チェック
+```bash
+npm run test:all
+npm run lint
+npm run typecheck
+```
+
+### 5. PR作成
+- 全テスト通過を確認
+- gh pr create でPR作成
+
+### 6. マージ後（mainブランチで）
+- ROADMAP.md のステータスを "Done" に更新
+- タスクファイルを `spec/tasks/completed/` に移動
+- worktree と ブランチを cleanup
+
+## 並列実行について
+- 複数セッションで別々のworktreeを使って並列作業可能
+- 依存関係のconflictに注意
+- マージ時の調整を意識する
+
+## context管理
+次の作業の完了までにcompactが必要になりそうなら、その時点で作業を中断し、進捗を報告して下さい。
