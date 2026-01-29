@@ -17,13 +17,18 @@ const PROVIDER_DEFAULTS = {
  */
 export const ProviderConfigSchema = z.object({
   enabled: z.boolean().default(PROVIDER_DEFAULTS.enabled),
-  api_key: z.string().optional(),
-  email: z.string().email().optional(),
+  api_key: z.string().default(''),
+  email: z
+    .string()
+    .refine((val) => val === '' || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val), {
+      message: 'Invalid email',
+    })
+    .default(''),
   rate_limit: z.number().positive().default(PROVIDER_DEFAULTS.rate_limit),
   timeout: z.number().positive().default(PROVIDER_DEFAULTS.timeout),
   retries: z.number().int().min(0).default(PROVIDER_DEFAULTS.retries),
   max_results: z.number().int().positive().default(PROVIDER_DEFAULTS.max_results),
-  inst_token: z.string().optional(),
+  inst_token: z.string().default(''),
 });
 
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;

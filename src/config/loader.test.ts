@@ -80,6 +80,19 @@ this is not valid toml
 
     expect(result).toEqual({});
   });
+
+  it('loads TOML with empty email string without validation errors', async () => {
+    const tomlContent = `
+[providers.pubmed]
+email = ""
+api_key = "test-key"
+`;
+    const filePath = join(testDir, 'config.toml');
+    await writeFile(filePath, tomlContent);
+
+    const result = await loadTomlFile(filePath);
+    expect(result.providers?.pubmed?.email).toBe('');
+  });
 });
 
 describe('loadConfig', () => {
