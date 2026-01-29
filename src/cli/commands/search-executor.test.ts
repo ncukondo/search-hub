@@ -277,6 +277,51 @@ filters:
       expect(result.success).toBe(false);
       expect(result.error).toContain('No providers');
     });
+
+    it('should extract error message from ProviderError plain objects', async () => {
+      // Override PubMed mock to throw a plain ProviderError object (not an Error instance)
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const mockedPubMed = vi.mocked(PubMedProvider);
+      // Save original implementation to restore later
+      const originalImpl = mockedPubMed.getMockImplementation();
+      mockedPubMed.mockImplementation(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({
+          native: 'test query',
+          provider: 'pubmed',
+        }),
+        search: vi.fn().mockImplementation(async function* () {
+          throw {
+            code: 'NETWORK_ERROR',
+            message: 'Connection refused to PubMed API',
+            provider: 'pubmed',
+            retryable: true,
+          };
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      // Restore original mock implementation before assertions
+      if (originalImpl) {
+        mockedPubMed.mockImplementation(originalImpl);
+      }
+
+      expect(result.sessionId).toBeDefined();
+
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const session = JSON.parse(sessionContent);
+
+      expect(session.databases.pubmed.status).toBe('failed');
+      expect(session.databases.pubmed.error.message).not.toBe('[object Object]');
+      expect(session.databases.pubmed.error.message).toBe('Connection refused to PubMed API');
+    });
   });
 
   describe('createProviderInstance', () => {

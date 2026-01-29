@@ -15,6 +15,7 @@ import type {
   ProviderName,
   TranslatedQuery,
 } from '../../providers/base/types.js';
+import { isProviderError } from '../../providers/base/types.js';
 import type { QueryAST } from '../../query/types.js';
 import { parseQueryString } from '../../query/index.js';
 import {
@@ -334,7 +335,11 @@ export async function executeSearch(
 
       results[providerName] = { hits: totalHits, retrieved: retrievedCount };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error
+          ? error.message
+          : isProviderError(error)
+            ? error.message
+            : String(error);
 
       progress?.fail(providerName, errorMessage);
 

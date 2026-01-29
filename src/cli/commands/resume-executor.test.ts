@@ -399,6 +399,98 @@ describe('resume-executor', () => {
       expect(session.databases.pubmed.status).toBe('completed');
     });
 
+
+    it('should extract error message from ProviderError plain objects', async () => {
+      // Override PubMed mock to throw a plain ProviderError object (not an Error instance)
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const mockedPubMed = vi.mocked(PubMedProvider);
+      const originalImpl = mockedPubMed.getMockImplementation();
+      mockedPubMed.mockImplementation(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({
+          native: 'test query',
+          provider: 'pubmed',
+        }),
+        search: vi.fn().mockImplementation(async function* () {
+          throw {
+            code: 'NETWORK_ERROR',
+            message: 'Connection refused to PubMed API',
+            provider: 'pubmed',
+            retryable: true,
+          };
+        }),
+        resumeSearch: vi.fn().mockImplementation(async function* () {
+          throw {
+            code: 'NETWORK_ERROR',
+            message: 'Connection refused to PubMed API',
+            provider: 'pubmed',
+            retryable: true,
+          };
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+
+      // Update session to have failed provider for retry
+      const sessionDir = join(sessionsDir, sessionId);
+      const session: SessionFile = {
+        version: 1,
+        id: sessionId,
+        name: 'test-session',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        query: {
+          file: 'test-query.yaml',
+          hash: 'abc123',
+          targets: ['pubmed'],
+        },
+        databases: {
+          pubmed: {
+            status: 'failed',
+            startedAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+            totalHits: 0,
+            retrievedCount: 0,
+            files: {
+              query: 'pubmed_query.txt',
+              results: 'pubmed_results.jsonl',
+            },
+            error: {
+              code: 'NETWORK_ERROR',
+              message: 'Previous failure',
+              retryable: true,
+            },
+          },
+        },
+        summary: {
+          totalHits: 0,
+          totalRetrieved: 0,
+          status: 'failed',
+        },
+      };
+      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+
+      const options: ResumeCommandOptions = {
+        sessionId,
+        retryFailed: true,
+      };
+
+      await executeResume(options, sessionsDir, config, false);
+
+      // Restore original mock implementation
+      if (originalImpl) {
+        mockedPubMed.mockImplementation(originalImpl);
+      }
+
+      // Check that the session file records the actual error message, not [object Object]
+      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const updatedSession = JSON.parse(sessionContent);
+
+      expect(updatedSession.databases.pubmed.status).toBe('failed');
+      expect(updatedSession.databases.pubmed.error.message).not.toBe('[object Object]');
+      expect(updatedSession.databases.pubmed.error.message).toBe('Connection refused to PubMed API');
+    });
+
     it('should append results to existing results file', async () => {
       // Add existing results
       const resultsPath = join(sessionsDir, sessionId, 'pubmed_results.jsonl');
