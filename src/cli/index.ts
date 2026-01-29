@@ -899,9 +899,13 @@ export async function main(): Promise<void> {
 
 // Run main if executed directly
 const currentFile = fileURLToPath(import.meta.url);
-if (process.argv[1] === currentFile) {
-  main().catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(EXIT_CODES.GENERAL_ERROR);
-  });
+const executedFile = process.argv[1];
+if (executedFile) {
+  const { realpathSync } = await import('node:fs');
+  if (realpathSync(executedFile) === realpathSync(currentFile)) {
+    main().catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(EXIT_CODES.GENERAL_ERROR);
+    });
+  }
 }

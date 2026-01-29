@@ -21,7 +21,11 @@ export default defineConfig({
       external: [
         /^node:/,
         "@iarna/toml",
+        "cli-progress",
         "commander",
+        "dotenv",
+        "env-paths",
+        "fast-xml-parser",
         "ora",
         "yaml",
         "zod",
