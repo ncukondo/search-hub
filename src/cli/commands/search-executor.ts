@@ -36,6 +36,7 @@ import { translateQuery as translateArxiv } from '../../providers/arxiv/translat
 import { translateQuery as translateScopus } from '../../providers/scopus/translator.js';
 import { stringify as stringifyYaml } from 'yaml';
 import { registerArticles, saveRegistrationRecord } from '../../integration/register.js';
+import { buildFailureErrorMessage } from './search-utils.js';
 import type { RegistrationRecord } from '../../integration/types.js';
 import { checkRefAvailable } from '../../integration/ref-cli.js';
 
@@ -45,7 +46,7 @@ import { checkRefAvailable } from '../../integration/ref-cli.js';
 export interface SearchExecutionResult {
   success: boolean;
   sessionId?: string;
-  results?: Record<string, { hits: number; retrieved: number; error?: string }>;
+  results?: Record<string, { hits: number; retrieved: number; error?: string; warnings?: string[] }>;
   error?: string;
   autoRegisterResult?: RegistrationRecord;
 }
@@ -242,7 +243,7 @@ export async function executeSearch(
   }
 
   const sessionId = session.id;
-  const results: Record<string, { hits: number; retrieved: number; error?: string }> = {};
+  const results: Record<string, { hits: number; retrieved: number; error?: string; warnings?: string[] }> = {};
 
   // Create progress display if enabled
   let progress: MultiProviderProgress | undefined;
@@ -333,7 +334,11 @@ export async function executeSearch(
         sessionsDir
       );
 
-      results[providerName] = { hits: totalHits, retrieved: retrievedCount };
+      // Collect warnings if provider supports them
+      const providerWarnings = 'getWarnings' in provider && typeof (provider as any).getWarnings === 'function'
+        ? (provider as any).getWarnings() as string[]
+        : undefined;
+      results[providerName] = { hits: totalHits, retrieved: retrievedCount, ...(providerWarnings && providerWarnings.length > 0 && { warnings: providerWarnings }) };
     } catch (error) {
       const errorMessage = error instanceof Error
           ? error.message
@@ -432,23 +437,6 @@ export async function executeSearch(
   }
 
   return result;
-}
-
-/**
- * Build a detailed error message listing per-provider failures.
- */
-function buildFailureErrorMessage(
-  results: Record<string, { hits: number; retrieved: number; error?: string }>
-): string {
-  const errorLines = Object.entries(results)
-    .filter(([, r]) => r.error)
-    .map(([provider, r]) => `  ${provider}: ${r.error}`);
-
-  if (errorLines.length === 0) {
-    return 'All providers failed';
-  }
-
-  return 'All providers failed:\n' + errorLines.join('\n');
 }
 
 /**

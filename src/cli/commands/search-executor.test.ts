@@ -418,7 +418,7 @@ filters:
       expect(result.error).toContain('Timeout');
     });
 
-        it('should mark session as completed when one provider succeeds and another returns 0 results (no error)', async () => {
+    it('should mark session as completed when one provider succeeds and another returns 0 results (no error)', async () => {
       config.providers.eric.enabled = true;
       const { ERICProvider } = await import('../../providers/eric/provider.js');
       const mockedEric = vi.mocked(ERICProvider);

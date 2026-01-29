@@ -64,7 +64,7 @@ describe('PubMed Parser', () => {
       expect(result.idlist).toEqual([]);
     });
 
-    it("should parse WarningList with OutputMessage entries", () => {
+    it('should parse WarningList with OutputMessage entries', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <eSearchResult>
   <Count>0</Count>
@@ -82,11 +82,11 @@ describe('PubMed Parser', () => {
       expect(result.count).toBe(0);
       expect(result.warnings).toBeDefined();
       expect(result.warnings).toHaveLength(2);
-      expect(result.warnings![0]).toContain("NOT is not a recognized operator");
-      expect(result.warnings![1]).toContain("Query syntax error detected");
+      expect(result.warnings![0]).toContain('NOT is not a recognized operator');
+      expect(result.warnings![1]).toContain('Query syntax error detected');
     });
 
-    it("should parse WarningList with QuotedPhraseNotFound entries", () => {
+    it('should parse WarningList with QuotedPhraseNotFound entries', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <eSearchResult>
   <Count>5</Count>
@@ -106,11 +106,11 @@ describe('PubMed Parser', () => {
       expect(result.count).toBe(5);
       expect(result.warnings).toBeDefined();
       expect(result.warnings).toHaveLength(2);
-      expect(result.warnings![0]).toContain("\"nonexistent phrase\"");
-      expect(result.warnings![1]).toContain("\"another missing term\"");
+      expect(result.warnings![0]).toContain('"nonexistent phrase"');
+      expect(result.warnings![1]).toContain('"another missing term"');
     });
 
-    it("should handle esearch response with no WarningList", () => {
+    it('should handle esearch response with no WarningList', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <eSearchResult>
   <Count>100</Count>

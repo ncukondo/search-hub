@@ -44,6 +44,7 @@ import {
   getResumableProvidersForCommand,
 } from './commands/resume.js';
 import { executeResume } from './commands/resume-executor.js';
+import { formatVerboseProviderDetails } from './commands/search-utils.js';
 import {
   parseExportOptions,
   validateExportInput,
@@ -458,14 +459,7 @@ Examples:
             if (!globalOpts.quiet) {
               console.error(`Error: ${result.error}`);
               if (globalOpts.verbose && result.results) {
-                console.error('\nPer-provider details:');
-                for (const [provider, stats] of Object.entries(result.results)) {
-                  if (stats.error) {
-                    console.error(`  ${provider}: FAILED - ${stats.error}`);
-                  } else {
-                    console.error(`  ${provider}: ${stats.retrieved} results`);
-                  }
-                }
+                console.error(formatVerboseProviderDetails(result.results));
               }
             }
             process.exitCode = EXIT_CODES.NETWORK_ERROR;
@@ -590,14 +584,7 @@ Examples:
             if (!globalOpts.quiet) {
               console.error(`Error: ${execResult.error}`);
               if (globalOpts.verbose && execResult.results) {
-                console.error('\nPer-provider details:');
-                for (const [provider, stats] of Object.entries(execResult.results)) {
-                  if (stats.error) {
-                    console.error(`  ${provider}: FAILED - ${stats.error}`);
-                  } else {
-                    console.error(`  ${provider}: ${stats.retrieved} results`);
-                  }
-                }
+                console.error(formatVerboseProviderDetails(execResult.results));
               }
             }
             process.exitCode = EXIT_CODES.NETWORK_ERROR;
