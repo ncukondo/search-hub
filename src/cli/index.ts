@@ -2,6 +2,10 @@
 /**
  * CLI entry point for search-hub.
  */
+import { config as loadDotenv } from 'dotenv';
+
+// Load .env file as early as possible, before any config loading
+loadDotenv();
 import { Command } from 'commander';
 import { VERSION } from '../version.js';
 import { init } from './commands/init.js';
