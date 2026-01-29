@@ -4,7 +4,7 @@
  * These tests execute actual search and resume commands with real API calls.
  * Run separately with: npm run test:e2e
  *
- * Requires: .env file with PUBMED_API_KEY, PUBMED_EMAIL
+ * Requires: .env file with SEARCH_HUB_PUBMED_API_KEY, SEARCH_HUB_PUBMED_EMAIL
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtemp, rm, writeFile, mkdir, readdir, readFile } from 'node:fs/promises';
@@ -35,8 +35,8 @@ describe('CLI Execution E2E', () => {
     await mkdir(sessionsDir, { recursive: true });
 
     // Create config file with real API keys from environment
-    const pubmedApiKey = process.env['PUBMED_API_KEY'] ?? '';
-    const pubmedEmail = process.env['PUBMED_EMAIL'] ?? 'test@example.com';
+    const pubmedApiKey = process.env['SEARCH_HUB_PUBMED_API_KEY'] ?? '';
+    const pubmedEmail = process.env['SEARCH_HUB_PUBMED_EMAIL'] ?? 'test@example.com';
 
     const configContent = `
 [session]

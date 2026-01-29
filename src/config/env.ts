@@ -10,6 +10,8 @@ export const ENV_VAR_MAP: Record<string, string> = {
   SEARCH_HUB_SCOPUS_API_KEY: 'providers.scopus.api_key',
   SEARCH_HUB_WOS_API_KEY: 'providers.wos.api_key',
   SEARCH_HUB_SESSION_DIR: 'session.directory',
+  SEARCH_HUB_PUBMED_EMAIL: 'providers.pubmed.email',
+  SEARCH_HUB_SCOPUS_INST_TOKEN: 'providers.scopus.inst_token',
   SEARCH_HUB_LOG_LEVEL: 'log.level',
 };
 

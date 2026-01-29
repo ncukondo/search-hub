@@ -1,7 +1,18 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createProgram } from './index.js';
 import type { GlobalOptions } from './index.js';
 import { Command } from 'commander';
+
+describe('dotenv loading', () => {
+  it('calls dotenv.config() when the module is loaded', async () => {
+    vi.resetModules();
+    const configFn = vi.fn();
+    vi.doMock('dotenv', () => ({ config: configFn }));
+    await import('./index.js');
+    expect(configFn).toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+});
 
 describe('CLI Entry Point', () => {
   describe('createProgram', () => {

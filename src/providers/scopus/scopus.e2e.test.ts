@@ -6,15 +6,15 @@
  *
  * Requirements:
  * - Network access to Scopus API (api.elsevier.com)
- * - Valid Scopus API key (SCOPUS_API_KEY environment variable)
+ * - Valid Scopus API key (SEARCH_HUB_SCOPUS_API_KEY environment variable)
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import { ScopusProvider } from './provider';
 import type { ScopusConfig } from './types';
 import type { QueryAST } from '../../query/types';
 
-const SCOPUS_API_KEY = process.env['SCOPUS_API_KEY'];
-const SCOPUS_INST_TOKEN = process.env['SCOPUS_INST_TOKEN'];
+const SCOPUS_API_KEY = process.env['SEARCH_HUB_SCOPUS_API_KEY'];
+const SCOPUS_INST_TOKEN = process.env['SEARCH_HUB_SCOPUS_INST_TOKEN'];
 
 const skip = !SCOPUS_API_KEY;
 
