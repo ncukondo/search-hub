@@ -15,6 +15,7 @@ import type {
   ProviderName,
   TranslatedQuery,
 } from '../../providers/base/types.js';
+import { isProviderError } from '../../providers/base/types.js';
 import type { QueryAST } from '../../query/types.js';
 import { parseQueryString } from '../../query/index.js';
 import {
@@ -336,8 +337,8 @@ export async function executeSearch(
     } catch (error) {
       const errorMessage = error instanceof Error
           ? error.message
-          : (error && typeof error === 'object' && 'message' in error)
-            ? String((error as { message: unknown }).message)
+          : isProviderError(error)
+            ? error.message
             : String(error);
 
       progress?.fail(providerName, errorMessage);

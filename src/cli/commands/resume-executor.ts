@@ -13,6 +13,7 @@ import type {
   TranslatedQuery,
   SearchState,
 } from '../../providers/base/types.js';
+import { isProviderError } from '../../providers/base/types.js';
 import {
   loadSession,
   updateDatabaseStatus,
@@ -210,8 +211,8 @@ export async function executeResume(
     } catch (error) {
       const errorMessage = error instanceof Error
           ? error.message
-          : (error && typeof error === 'object' && 'message' in error)
-            ? String((error as { message: unknown }).message)
+          : isProviderError(error)
+            ? error.message
             : String(error);
 
       progress?.fail(providerName, errorMessage);
