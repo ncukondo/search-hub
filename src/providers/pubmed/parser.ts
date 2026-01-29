@@ -33,6 +33,8 @@ const parser = new XMLParser({
       'AbstractText',
       'ArticleId',
       'AffiliationInfo',
+      'OutputMessage',
+      'QuotedPhraseNotFound',
     ];
     return arrayElements.includes(name);
   },
@@ -62,6 +64,22 @@ export function parseESearchResponse(xml: string): ESearchResponse {
   }
   if (result.QueryKey) {
     response.querykey = String(result.QueryKey);
+  }
+
+  const warningList = result.WarningList;
+  if (warningList) {
+    const warnings: string[] = [];
+    const outputMessages = warningList.OutputMessage ?? [];
+    for (const msg of outputMessages) {
+      warnings.push(`PubMed warning: ${String(msg)}`);
+    }
+    const notFoundPhrases = warningList.QuotedPhraseNotFound ?? [];
+    for (const phrase of notFoundPhrases) {
+      warnings.push(`Quoted phrase not found: ${String(phrase)}`);
+    }
+    if (warnings.length > 0) {
+      response.warnings = warnings;
+    }
   }
 
   return response;

@@ -44,6 +44,7 @@ import {
   getResumableProvidersForCommand,
 } from './commands/resume.js';
 import { executeResume } from './commands/resume-executor.js';
+import { formatVerboseProviderDetails } from './commands/search-utils.js';
 import {
   parseExportOptions,
   validateExportInput,
@@ -457,6 +458,9 @@ Examples:
           } else {
             if (!globalOpts.quiet) {
               console.error(`Error: ${result.error}`);
+              if (globalOpts.verbose && result.results) {
+                console.error(formatVerboseProviderDetails(result.results));
+              }
             }
             process.exitCode = EXIT_CODES.NETWORK_ERROR;
           }
@@ -579,6 +583,9 @@ Examples:
           } else {
             if (!globalOpts.quiet) {
               console.error(`Error: ${execResult.error}`);
+              if (globalOpts.verbose && execResult.results) {
+                console.error(formatVerboseProviderDetails(execResult.results));
+              }
             }
             process.exitCode = EXIT_CODES.NETWORK_ERROR;
           }

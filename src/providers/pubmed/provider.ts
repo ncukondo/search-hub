@@ -32,6 +32,9 @@ export class PubMedProvider extends BaseProvider {
   /** Current search state for session persistence */
   private currentState: SearchState | null = null;
 
+  /** Warnings from the most recent search */
+  private searchWarnings: string[] = [];
+
   constructor(config: PubMedConfig) {
     super(config);
     this.pubmedConfig = config;
@@ -61,6 +64,9 @@ export class PubMedProvider extends BaseProvider {
     const totalCount = initialResult.count;
     const webenv = initialResult.webenv;
     const querykey = initialResult.querykey;
+
+    // Store any warnings from the search response
+    this.searchWarnings = initialResult.warnings ?? [];
 
     // Initialize state with provider-specific history server info
     const providerState: PubMedProviderState = {
@@ -186,6 +192,13 @@ export class PubMedProvider extends BaseProvider {
    */
   getSearchState(): SearchState | null {
     return this.currentState;
+  }
+
+  /**
+   * Get warnings from the most recent search.
+   */
+  getWarnings(): string[] {
+    return this.searchWarnings;
   }
 
   /**

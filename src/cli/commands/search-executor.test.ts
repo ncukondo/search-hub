@@ -365,12 +365,57 @@ filters:
       const result = await executeSearch(options, sessionsDir, config);
       if (originalImpl) { mockedPubMed.mockImplementation(originalImpl); }
       expect(result.success).toBe(false);
-      expect(result.error).toBe('All providers failed');
+      expect(result.error).toContain('All providers failed');
+      expect(result.error).toContain('pubmed');
+      expect(result.error).toContain('API rate limit exceeded');
       const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
       const sessionContent = await readFile(sessionPath, 'utf-8');
       const session = JSON.parse(sessionContent);
       expect(session.summary.status).toBe('failed');
       expect(result.results?.['pubmed']?.error).toBe('API rate limit exceeded');
+    });
+
+    it('should include per-provider error details when multiple providers fail', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+      const mockedPubMed = vi.mocked(PubMedProvider);
+      const mockedEric = vi.mocked(ERICProvider);
+      const originalPubMedImpl = mockedPubMed.getMockImplementation();
+      const originalEricImpl = mockedEric.getMockImplementation();
+
+      mockedPubMed.mockImplementation(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('Network request failed');
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+
+      mockedEric.mockImplementation(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('Timeout');
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const result = await executeSearch(options, sessionsDir, config);
+
+      if (originalPubMedImpl) { mockedPubMed.mockImplementation(originalPubMedImpl); }
+      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('All providers failed');
+      expect(result.error).toContain('pubmed');
+      expect(result.error).toContain('Network request failed');
+      expect(result.error).toContain('eric');
+      expect(result.error).toContain('Timeout');
     });
 
     it('should mark session as completed when one provider succeeds and another returns 0 results (no error)', async () => {

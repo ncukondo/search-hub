@@ -63,6 +63,69 @@ describe('PubMed Parser', () => {
       expect(result.count).toBe(0);
       expect(result.idlist).toEqual([]);
     });
+
+    it('should parse WarningList with OutputMessage entries', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<eSearchResult>
+  <Count>0</Count>
+  <RetMax>20</RetMax>
+  <RetStart>0</RetStart>
+  <IdList></IdList>
+  <WarningList>
+    <OutputMessage>NOT is not a recognized operator</OutputMessage>
+    <OutputMessage>Query syntax error detected</OutputMessage>
+  </WarningList>
+</eSearchResult>`;
+
+      const result = parseESearchResponse(xml);
+
+      expect(result.count).toBe(0);
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings).toHaveLength(2);
+      expect(result.warnings![0]).toContain('NOT is not a recognized operator');
+      expect(result.warnings![1]).toContain('Query syntax error detected');
+    });
+
+    it('should parse WarningList with QuotedPhraseNotFound entries', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<eSearchResult>
+  <Count>5</Count>
+  <RetMax>5</RetMax>
+  <RetStart>0</RetStart>
+  <IdList>
+    <Id>12345</Id>
+  </IdList>
+  <WarningList>
+    <QuotedPhraseNotFound>"nonexistent phrase"</QuotedPhraseNotFound>
+    <QuotedPhraseNotFound>"another missing term"</QuotedPhraseNotFound>
+  </WarningList>
+</eSearchResult>`;
+
+      const result = parseESearchResponse(xml);
+
+      expect(result.count).toBe(5);
+      expect(result.warnings).toBeDefined();
+      expect(result.warnings).toHaveLength(2);
+      expect(result.warnings![0]).toContain('"nonexistent phrase"');
+      expect(result.warnings![1]).toContain('"another missing term"');
+    });
+
+    it('should handle esearch response with no WarningList', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<eSearchResult>
+  <Count>100</Count>
+  <RetMax>20</RetMax>
+  <RetStart>0</RetStart>
+  <IdList>
+    <Id>11111111</Id>
+  </IdList>
+</eSearchResult>`;
+
+      const result = parseESearchResponse(xml);
+
+      expect(result.count).toBe(100);
+      expect(result.warnings).toBeUndefined();
+    });
   });
 
   describe('parseEFetchResponse', () => {

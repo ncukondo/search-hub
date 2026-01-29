@@ -22,6 +22,7 @@ import {
 } from '../../session/manager.js';
 import { MultiProviderProgress } from '../utils/progress.js';
 import { createProviderInstance } from './search-executor.js';
+import { buildFailureErrorMessage } from './search-utils.js';
 
 /**
  * Result of a resume execution.
@@ -267,7 +268,7 @@ export async function executeResume(
       success: false,
       resumed: successCount,
       results,
-      error: 'All providers failed',
+      error: buildFailureErrorMessage(results),
     };
   }
 

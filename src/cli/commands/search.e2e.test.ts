@@ -658,6 +658,72 @@ describe('search-hub search (Live with Mock API) E2E', () => {
     });
   });
 
+  describe('error message includes per-provider details', () => {
+    it('should include provider name and error in error message when all providers fail', async () => {
+      // Create failing mocks for both providers
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+
+      // @ts-expect-error - Mocking only the properties we need for testing
+      vi.mocked(PubMedProvider).mockImplementationOnce(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({
+          native: 'test query',
+          provider: 'pubmed',
+        }),
+        search: vi.fn().mockReturnValue({
+          async next() {
+            throw new Error('PubMed API unavailable');
+          },
+          [Symbol.asyncIterator]() {
+            return this;
+          },
+        }),
+        testConnection: vi.fn().mockResolvedValue(false),
+      }));
+
+      // @ts-expect-error - Mocking only the properties we need for testing
+      vi.mocked(ERICProvider).mockImplementationOnce(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({
+          native: 'test query',
+          provider: 'eric',
+        }),
+        search: vi.fn().mockReturnValue({
+          async next() {
+            throw new Error('ERIC connection timeout');
+          },
+          [Symbol.asyncIterator]() {
+            return this;
+          },
+        }),
+        testConnection: vi.fn().mockResolvedValue(false),
+      }));
+
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const result = await executeSearch(
+        { queryFile: queryPath },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('All providers failed');
+      // Error message should include per-provider details
+      expect(result.error).toContain('pubmed');
+      expect(result.error).toContain('PubMed API unavailable');
+      expect(result.error).toContain('eric');
+      expect(result.error).toContain('ERIC connection timeout');
+    });
+  });
+
   describe('continues with other DBs when one fails', () => {
     it('should complete successfully if at least one provider succeeds', async () => {
       // Create a failing mock for ERIC but keep PubMed working
@@ -1188,6 +1254,57 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       expect(session.databases.pubmed.retrievedCount).toBe(0);
       // ERIC failed
       expect(session.databases.eric.status).toBe('failed');
+    });
+  });
+
+
+  describe('--verbose flag shows provider details on failure', () => {
+    it('should show per-provider details when verbose is enabled and search fails', async () => {
+      // Import provider mocks
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      // @ts-expect-error - Mocking only the properties we need for testing
+      vi.mocked(PubMedProvider).mockImplementationOnce(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({
+          native: 'test query',
+          provider: 'pubmed',
+        }),
+        search: vi.fn().mockReturnValue({
+          async next() {
+            throw new Error('PubMed API unavailable');
+          },
+          [Symbol.asyncIterator]() {
+            return this;
+          },
+        }),
+        testConnection: vi.fn().mockResolvedValue(false),
+      }));
+
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const result = await executeSearch(
+        { queryFile: queryPath },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.results).toBeDefined();
+      expect(result.results!['pubmed']?.error).toBe('PubMed API unavailable');
+
+      // Verify formatVerboseProviderDetails works with these results
+      const { formatVerboseProviderDetails } = await import('./search-utils.js');
+      const verboseOutput = formatVerboseProviderDetails(result.results!);
+      expect(verboseOutput).toContain('Per-provider details');
+      expect(verboseOutput).toContain('pubmed');
+      expect(verboseOutput).toContain('FAILED');
+      expect(verboseOutput).toContain('PubMed API unavailable');
     });
   });
 });

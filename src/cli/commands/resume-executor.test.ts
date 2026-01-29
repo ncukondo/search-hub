@@ -625,5 +625,90 @@ describe('resume-executor', () => {
       const lines = resultsContent.trim().split('\n');
       expect(lines.length).toBeGreaterThan(1);
     });
+
+    it('should include per-provider error details in error message when all providers fail', async () => {
+      // Enable both pubmed and eric
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+      const mockedPubMed = vi.mocked(PubMedProvider);
+      const mockedEric = vi.mocked(ERICProvider);
+      const originalPubMedImpl = mockedPubMed.getMockImplementation();
+      const originalEricImpl = mockedEric.getMockImplementation();
+
+      mockedPubMed.mockImplementation(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('Network request failed');
+        }),
+        resumeSearch: vi.fn().mockImplementation(async function* () {
+          throw new Error('Network request failed');
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+
+      mockedEric.mockImplementation(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('ERIC service unavailable');
+        }),
+        resumeSearch: vi.fn().mockImplementation(async function* () {
+          throw new Error('ERIC service unavailable');
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+
+      // Set up session with both providers failed
+      const sessionDir = join(sessionsDir, sessionId);
+      const session: SessionFile = {
+        version: 1,
+        id: sessionId,
+        name: 'test-session',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        query: { file: 'test-query.yaml', hash: 'abc123', targets: ['pubmed', 'eric'] },
+        databases: {
+          pubmed: {
+            status: 'failed',
+            startedAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+            totalHits: 0,
+            retrievedCount: 0,
+            files: { query: 'pubmed_query.txt', results: 'pubmed_results.jsonl' },
+            error: { code: 'NETWORK_ERROR', message: 'Previous failure', retryable: true },
+          },
+          eric: {
+            status: 'failed',
+            startedAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+            totalHits: 0,
+            retrievedCount: 0,
+            files: { query: 'eric_query.txt', results: 'eric_results.jsonl' },
+            error: { code: 'NETWORK_ERROR', message: 'Previous failure', retryable: true },
+          },
+        },
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'failed' },
+      };
+      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'eric_query.txt'), 'diabetes', 'utf-8');
+      await writeFile(join(sessionDir, 'eric_results.jsonl'), '', 'utf-8');
+
+      const options: ResumeCommandOptions = { sessionId, retryFailed: true };
+      const result = await executeResume(options, sessionsDir, config, false);
+
+      if (originalPubMedImpl) { mockedPubMed.mockImplementation(originalPubMedImpl); }
+      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('All providers failed');
+      expect(result.error).toContain('pubmed');
+      expect(result.error).toContain('Network request failed');
+      expect(result.error).toContain('eric');
+      expect(result.error).toContain('ERIC service unavailable');
+    });
   });
 });
