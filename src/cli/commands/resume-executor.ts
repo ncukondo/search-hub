@@ -208,7 +208,11 @@ export async function executeResume(
       results[providerName] = { hits: totalHits || retrievedCount, retrieved: retrievedCount };
       successCount++;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error
+          ? error.message
+          : (error && typeof error === 'object' && 'message' in error)
+            ? String((error as { message: unknown }).message)
+            : String(error);
 
       progress?.fail(providerName, errorMessage);
 

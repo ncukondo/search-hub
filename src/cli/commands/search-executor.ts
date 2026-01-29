@@ -334,7 +334,11 @@ export async function executeSearch(
 
       results[providerName] = { hits: totalHits, retrieved: retrievedCount };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error
+          ? error.message
+          : (error && typeof error === 'object' && 'message' in error)
+            ? String((error as { message: unknown }).message)
+            : String(error);
 
       progress?.fail(providerName, errorMessage);
 
