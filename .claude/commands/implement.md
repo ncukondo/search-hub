@@ -6,6 +6,7 @@ spec/tasks/ROADMAP.md を確認し、並列実装可能なタスクを分析し�
 - spec/tasks/ROADMAP.md を確認し、"Pending" のタスクを全て洗い出す
 - 依存関係が満たされているタスクを特定（並列実行候補）
 - 実装するタスクを選択
+   - 並列実装が可能なタスクが複数ある場合、git worktreeの準備後、サブエージェントに分担しても良い
 
 ### 2. ブランチ & worktree セットアップ
 git worktree(無ければ作成, ブランチ名も無ければ適切なものを作成, ブランチの作成を直接行うのでは無くgit worktree addで行う)内で行います。git worktree作成時にはnpm install等の初期セットアップも行って下さい。
