@@ -27,6 +27,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 18 | Add `query init` Command for YAML Template Generation | 10 | 🔲 Pending | [20260129-05](active/20260129-05-query-init-template.md) |
 | 19 | Show Actionable Error Messages with Suggested Next Steps | 16 | 🔲 Pending | [20260129-06](active/20260129-06-actionable-error-messages.md) |
 | 20 | Enhance `--dry-run` with Provider Readiness and Query Diagnostics | 10 | 🔲 Pending | [20260129-07](active/20260129-07-dry-run-diagnostics.md) |
+| 21 | Fix ProviderError Serialization to `[object Object]` | 5 | 🔲 Pending | [20260129-08](active/20260129-08-fix-provider-error-serialization.md) |
+| 22 | Add Preflight Check for Scopus API Key Requirement | 9 | 🔲 Pending | [20260129-09](active/20260129-09-scopus-api-key-preflight-check.md) |
 
 ## Development Flow
 
