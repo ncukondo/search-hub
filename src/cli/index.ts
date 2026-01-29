@@ -25,6 +25,10 @@ import {
   translateQueryCommand,
   formatTranslateResult,
 } from './commands/query/translate.js';
+import {
+  generateQueryTemplate,
+  writeQueryTemplate,
+} from './commands/query/init.js';
 import type { ProviderName } from '../providers/base/types.js';
 import {
   listSessionsForDisplay,
@@ -219,7 +223,17 @@ Examples:
   // Register query command group
   const queryCommand = program
     .command('query')
-    .description('Query file utilities');
+    .description('Query file utilities')
+    .addHelpText('after', `
+Query YAML format (minimal):
+  name: my_search
+  query:
+    - field: title_abstract
+      terms:
+        keywords: ["term1", "term2"]
+      operator: OR
+
+Use "search-hub query init" to generate a template.`);
 
   queryCommand
     .command('validate')
@@ -279,6 +293,37 @@ Examples:
           );
         }
         process.exitCode = EXIT_CODES.QUERY_ERROR;
+      }
+    });
+
+  queryCommand
+    .command('init')
+    .description('Generate a template query YAML file')
+    .option('-o, --output <path>', 'write to file (default: stdout)')
+    .option('--force', 'overwrite existing file', false)
+    .action(async (options: { output?: string; force?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        if (options.output) {
+          const result = await writeQueryTemplate(options);
+          if (!globalOpts.quiet) {
+            if (result.success) {
+              console.log(result.message);
+            } else {
+              console.error(result.message);
+            }
+          }
+          process.exitCode = result.success ? EXIT_CODES.SUCCESS : EXIT_CODES.GENERAL_ERROR;
+        } else {
+          const template = generateQueryTemplate();
+          console.log(template);
+          process.exitCode = EXIT_CODES.SUCCESS;
+        }
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.GENERAL_ERROR;
       }
     });
 

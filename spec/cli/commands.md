@@ -13,7 +13,7 @@ Commands:
   register    Register results with reference-manager
   config      View/edit configuration
   init        Initialize configuration
-  query       Query utilities (validate, translate)
+  query       Query utilities (init, validate, translate)
 ```
 
 ## Global Options
@@ -274,6 +274,27 @@ search-hub init [options]
 
 Query file utilities.
 
+### query init
+
+Generate a template query YAML file.
+
+```bash
+search-hub query init [-o <path>] [--force]
+```
+
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `-o, --output <path>` | Write to file instead of stdout |
+| `--force` | Overwrite existing file |
+
+#### Behavior
+
+1. Generates a well-commented YAML template with placeholder structure
+2. If `-o` is specified, writes to that file path (fails if file exists unless `--force`)
+3. If no `-o` option, prints the template to stdout
+
 ### query validate
 
 Validate query YAML file.
@@ -293,6 +314,15 @@ search-hub query translate <query.yaml> [--db <provider>]
 ### Examples
 
 ```bash
+# Generate a query template to stdout
+search-hub query init
+
+# Write template to file
+search-hub query init -o ./my-query.yaml
+
+# Overwrite existing file
+search-hub query init -o ./my-query.yaml --force
+
 # Validate query file
 search-hub query validate ./diabetes-ai.yaml
 
