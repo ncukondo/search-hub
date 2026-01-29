@@ -29,7 +29,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 20 | Enhance `--dry-run` with Provider Readiness and Query Diagnostics | 10 | 🔲 Pending | [20260129-07](active/20260129-07-dry-run-diagnostics.md) |
 | 21 | Fix ProviderError Serialization to `[object Object]` | 5 | ✅ Completed | [20260129-08](completed/20260129-08-fix-provider-error-serialization.md) |
 | 22 | Add Preflight Check for Scopus API Key Requirement | 9 | 🔲 Pending | [20260129-09](active/20260129-09-scopus-api-key-preflight-check.md) |
-| 23 | Load .env with dotenv and Unify Env Var Naming | 2 | 🔲 Pending | [20260129-10](active/20260129-10-dotenv-loading-and-env-var-naming.md) |
+| 23 | Load .env with dotenv and Unify Env Var Naming | 2 | ✅ Completed | [20260129-10](completed/20260129-10-dotenv-loading-and-env-var-naming.md) |
 
 ## Development Flow
 
