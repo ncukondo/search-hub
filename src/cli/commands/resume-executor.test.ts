@@ -491,6 +491,121 @@ describe('resume-executor', () => {
       expect(updatedSession.databases.pubmed.error.message).toBe('Connection refused to PubMed API');
     });
 
+    it('should mark session as failed when resumed provider throws an error', async () => {
+      // The existing ProviderError test (above) already verifies that when a provider
+      // throws an error during resume, the session database status is set to 'failed'.
+      // Here we verify that the overall session status is also 'failed' and the result
+      // reflects the error properly via the error field in results.
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const mockedPubMed = vi.mocked(PubMedProvider);
+      const originalImpl = mockedPubMed.getMockImplementation();
+      mockedPubMed.mockImplementation(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('API rate limit exceeded');
+        }),
+        resumeSearch: vi.fn().mockImplementation(async function* () {
+          throw new Error('API rate limit exceeded');
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+
+      // Update session to have failed provider for retry
+      const sessionDir = join(sessionsDir, sessionId);
+      const session: SessionFile = {
+        version: 1,
+        id: sessionId,
+        name: 'test-session',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        query: { file: 'test-query.yaml', hash: 'abc123', targets: ['pubmed'] },
+        databases: {
+          pubmed: {
+            status: 'failed',
+            startedAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+            totalHits: 0,
+            retrievedCount: 0,
+            files: { query: 'pubmed_query.txt', results: 'pubmed_results.jsonl' },
+            error: { code: 'NETWORK_ERROR', message: 'Previous failure', retryable: true },
+          },
+        },
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'failed' },
+      };
+      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+
+      const options: ResumeCommandOptions = { sessionId, retryFailed: true };
+      const result = await executeResume(options, sessionsDir, config, false);
+
+      // Restore original mock
+      if (originalImpl) {
+        mockedPubMed.mockImplementation(originalImpl);
+      }
+
+      // Verify session file shows failed status
+      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const updatedSession = JSON.parse(sessionContent);
+      expect(updatedSession.databases.pubmed.status).toBe('failed');
+      expect(updatedSession.summary.status).toBe('failed');
+      expect(updatedSession.databases.pubmed.error.message).toBe('API rate limit exceeded');
+    });
+
+    it('should mark session as completed when resumed provider returns 0 results without error', async () => {
+      // Override PubMed mock to return 0 results (no error)
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const mockedPubMed = vi.mocked(PubMedProvider);
+      mockedPubMed.mockImplementationOnce(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        search: vi.fn().mockImplementation(async function* () {
+          // Yield nothing - legitimate zero results
+        }),
+        resumeSearch: vi.fn().mockImplementation(async function* () {
+          // Yield nothing - legitimate zero results
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+
+      // Update session to have failed provider for retry
+      const sessionDir = join(sessionsDir, sessionId);
+      const session: SessionFile = {
+        version: 1,
+        id: sessionId,
+        name: 'test-session',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        query: { file: 'test-query.yaml', hash: 'abc123', targets: ['pubmed'] },
+        databases: {
+          pubmed: {
+            status: 'failed',
+            startedAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+            totalHits: 0,
+            retrievedCount: 0,
+            files: { query: 'pubmed_query.txt', results: 'pubmed_results.jsonl' },
+            error: { code: 'NETWORK_ERROR', message: 'Previous failure', retryable: true },
+          },
+        },
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'failed' },
+      };
+      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+
+      const options: ResumeCommandOptions = { sessionId, retryFailed: true };
+      const result = await executeResume(options, sessionsDir, config, false);
+
+      expect(result.success).toBe(true);
+      expect(result.results?.['pubmed']).toBeDefined();
+      expect(result.results?.['pubmed']?.retrieved).toBe(0);
+      expect(result.results?.['pubmed']?.error).toBeUndefined();
+
+      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const updatedSession = JSON.parse(sessionContent);
+      expect(updatedSession.summary.status).toBe('completed');
+    });
+
     it('should append results to existing results file', async () => {
       // Add existing results
       const resultsPath = join(sessionsDir, sessionId, 'pubmed_results.jsonl');

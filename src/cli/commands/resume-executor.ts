@@ -29,7 +29,7 @@ import { createProviderInstance } from './search-executor.js';
 export interface ResumeExecutionResult {
   success: boolean;
   resumed: number;
-  results?: Record<string, { hits: number; retrieved: number }>;
+  results?: Record<string, { hits: number; retrieved: number; error?: string }>;
   error?: string;
 }
 
@@ -91,7 +91,7 @@ export async function executeResume(
     };
   }
 
-  const results: Record<string, { hits: number; retrieved: number }> = {};
+  const results: Record<string, { hits: number; retrieved: number; error?: string }> = {};
 
   // Create progress display if enabled
   let progress: MultiProviderProgress | undefined;
@@ -120,7 +120,7 @@ export async function executeResume(
       } catch {
         // If query file doesn't exist, skip this provider
         progress?.fail(providerName, 'Query file not found');
-        results[providerName] = { hits: 0, retrieved: 0 };
+        results[providerName] = { hits: 0, retrieved: 0, error: 'Query file not found' };
         continue;
       }
 
@@ -233,7 +233,7 @@ export async function executeResume(
         sessionsDir
       );
 
-      results[providerName] = { hits: 0, retrieved: 0 };
+      results[providerName] = { hits: 0, retrieved: 0, error: errorMessage };
     }
   }
 
@@ -243,7 +243,7 @@ export async function executeResume(
   // Determine overall session status
   const anyFailed = resumableProviders.some((p) => {
     const r = results[p.provider];
-    return r && r.retrieved === 0 && r.hits === 0;
+    return r && r.error !== undefined;
   });
   const anySucceeded = resumableProviders.some((p) => {
     const r = results[p.provider];
