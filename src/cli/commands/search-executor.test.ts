@@ -322,6 +322,82 @@ filters:
       expect(session.databases.pubmed.error.message).not.toBe('[object Object]');
       expect(session.databases.pubmed.error.message).toBe('Connection refused to PubMed API');
     });
+
+    it('should mark session as completed when provider returns 0 results without error', async () => {
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const mockedPubMed = vi.mocked(PubMedProvider);
+      const originalImpl = mockedPubMed.getMockImplementation();
+      mockedPubMed.mockImplementation(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        search: vi.fn().mockImplementation(async function* () {
+          // Yield nothing - legitimate zero results
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const result = await executeSearch(options, sessionsDir, config);
+      if (originalImpl) { mockedPubMed.mockImplementation(originalImpl); }
+      expect(result.success).toBe(true);
+      expect(result.sessionId).toBeDefined();
+      expect(result.results?.['pubmed']).toBeDefined();
+      expect(result.results?.['pubmed']?.hits).toBe(0);
+      expect(result.results?.['pubmed']?.retrieved).toBe(0);
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const session = JSON.parse(sessionContent);
+      expect(session.summary.status).toBe('completed');
+    });
+
+    it('should mark session as failed when provider throws an error', async () => {
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const mockedPubMed = vi.mocked(PubMedProvider);
+      const originalImpl = mockedPubMed.getMockImplementation();
+      mockedPubMed.mockImplementation(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('API rate limit exceeded');
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const result = await executeSearch(options, sessionsDir, config);
+      if (originalImpl) { mockedPubMed.mockImplementation(originalImpl); }
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('All providers failed');
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const session = JSON.parse(sessionContent);
+      expect(session.summary.status).toBe('failed');
+      expect(result.results?.['pubmed']?.error).toBe('API rate limit exceeded');
+    });
+
+    it('should mark session as completed when one provider succeeds and another returns 0 results (no error)', async () => {
+      config.providers.eric.enabled = true;
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+      const mockedEric = vi.mocked(ERICProvider);
+      const originalEricImpl = mockedEric.getMockImplementation();
+      mockedEric.mockImplementation(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        search: vi.fn().mockImplementation(async function* () {
+          // Yield nothing - legitimate zero results
+        }),
+        testConnection: vi.fn().mockResolvedValue(true),
+      }) as any);
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const result = await executeSearch(options, sessionsDir, config);
+      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+      expect(result.success).toBe(true);
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['eric']?.retrieved).toBe(0);
+      expect(result.results?.['eric']?.error).toBeUndefined();
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const session = JSON.parse(sessionContent);
+      expect(session.summary.status).toBe('completed');
+    });
   });
 
   describe('createProviderInstance', () => {

@@ -45,7 +45,7 @@ import { checkRefAvailable } from '../../integration/ref-cli.js';
 export interface SearchExecutionResult {
   success: boolean;
   sessionId?: string;
-  results?: Record<string, { hits: number; retrieved: number }>;
+  results?: Record<string, { hits: number; retrieved: number; error?: string }>;
   error?: string;
   autoRegisterResult?: RegistrationRecord;
 }
@@ -242,7 +242,7 @@ export async function executeSearch(
   }
 
   const sessionId = session.id;
-  const results: Record<string, { hits: number; retrieved: number }> = {};
+  const results: Record<string, { hits: number; retrieved: number; error?: string }> = {};
 
   // Create progress display if enabled
   let progress: MultiProviderProgress | undefined;
@@ -359,7 +359,7 @@ export async function executeSearch(
         sessionsDir
       );
 
-      results[providerName] = { hits: 0, retrieved: 0 };
+      results[providerName] = { hits: 0, retrieved: 0, error: errorMessage };
     }
   }
 
@@ -369,7 +369,7 @@ export async function executeSearch(
   // Determine overall session status
   const anyFailed = providers.some((p) => {
     const r = results[p];
-    return r && r.retrieved === 0 && r.hits === 0;
+    return r && r.error !== undefined;
   });
   const anySucceeded = providers.some((p) => {
     const r = results[p];
