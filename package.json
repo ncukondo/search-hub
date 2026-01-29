@@ -43,7 +43,8 @@
     "format": "oxfmt --write src",
     "format:check": "oxfmt src",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "husky"
   },
   "keywords": [
     "systematic-review",
@@ -72,6 +73,7 @@
   "devDependencies": {
     "@types/cli-progress": "^3.11.6",
     "@types/node": "^22.10.5",
+    "husky": "^9.1.7",
     "oxfmt": "^0.21.0",
     "oxlint": "^1.36.0",
     "typescript": "^5.7.2",
