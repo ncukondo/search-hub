@@ -267,7 +267,7 @@ export async function executeResume(
       success: false,
       resumed: successCount,
       results,
-      error: 'All providers failed',
+      error: buildFailureErrorMessage(results),
     };
   }
 
@@ -276,4 +276,21 @@ export async function executeResume(
     resumed: successCount,
     results,
   };
+}
+
+/**
+ * Build a detailed error message listing per-provider failures.
+ */
+function buildFailureErrorMessage(
+  results: Record<string, { hits: number; retrieved: number; error?: string }>
+): string {
+  const errorLines = Object.entries(results)
+    .filter(([, r]) => r.error)
+    .map(([provider, r]) => `  ${provider}: ${r.error}`);
+
+  if (errorLines.length === 0) {
+    return 'All providers failed';
+  }
+
+  return 'All providers failed:\n' + errorLines.join('\n');
 }
