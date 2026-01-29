@@ -3,6 +3,7 @@
  * CLI entry point for search-hub.
  */
 import { Command } from 'commander';
+import { VERSION } from '../version.js';
 import { init } from './commands/init.js';
 import { EXIT_CODES } from './exit-codes.js';
 import { loadConfig, saveConfig, getDefaultConfig } from '../config/index.js';
@@ -84,7 +85,7 @@ export function createProgram(): Command {
 
   program
     .name('search-hub')
-    .version('0.1.0')
+    .version(VERSION)
     .description(
       'CLI tool for systematic literature searching across multiple academic databases'
     )
