@@ -306,7 +306,11 @@ Examples:
         if (options.output) {
           const result = await writeQueryTemplate(options);
           if (!globalOpts.quiet) {
-            console.log(result.message);
+            if (result.success) {
+              console.log(result.message);
+            } else {
+              console.error(result.message);
+            }
           }
           process.exitCode = result.success ? EXIT_CODES.SUCCESS : EXIT_CODES.GENERAL_ERROR;
         } else {
