@@ -6,8 +6,8 @@
  *
  * Requirements:
  * - Network access to PubMed E-utilities
- * - Optional: NCBI_API_KEY environment variable for higher rate limits (10 req/s vs 3 req/s)
- * - Optional: NCBI_EMAIL environment variable (defaults to test@example.com)
+ * - Optional: SEARCH_HUB_PUBMED_API_KEY environment variable for higher rate limits (10 req/s vs 3 req/s)
+ * - Optional: SEARCH_HUB_PUBMED_EMAIL environment variable (defaults to test@example.com)
  *
  * Note: These tests make real API calls and are subject to NCBI rate limits.
  */
@@ -17,8 +17,8 @@ import { translateQuery } from './translator';
 import type { PubMedConfig } from './types';
 import type { QueryAST, Article } from '../base/types';
 
-const TEST_EMAIL = process.env['NCBI_EMAIL'] ?? 'test@example.com';
-const API_KEY = process.env['NCBI_API_KEY'];
+const TEST_EMAIL = process.env['SEARCH_HUB_PUBMED_EMAIL'] ?? 'test@example.com';
+const API_KEY = process.env['SEARCH_HUB_PUBMED_API_KEY'];
 
 /**
  * Create provider config from environment.
