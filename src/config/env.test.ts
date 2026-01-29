@@ -10,6 +10,14 @@ describe('ENV_VAR_MAP', () => {
     expect(ENV_VAR_MAP['SEARCH_HUB_SESSION_DIR']).toBe('session.directory');
     expect(ENV_VAR_MAP['SEARCH_HUB_LOG_LEVEL']).toBe('log.level');
   });
+
+  it('contains SEARCH_HUB_PUBMED_EMAIL mapping', () => {
+    expect(ENV_VAR_MAP['SEARCH_HUB_PUBMED_EMAIL']).toBe('providers.pubmed.email');
+  });
+
+  it('contains SEARCH_HUB_SCOPUS_INST_TOKEN mapping', () => {
+    expect(ENV_VAR_MAP['SEARCH_HUB_SCOPUS_INST_TOKEN']).toBe('providers.scopus.inst_token');
+  });
 });
 
 describe('applyEnvVars', () => {
@@ -72,6 +80,24 @@ describe('applyEnvVars', () => {
     applyEnvVars(config);
 
     expect(config.log.level).toBe(originalLevel);
+  });
+
+  it('sets providers.pubmed.email from SEARCH_HUB_PUBMED_EMAIL', () => {
+    process.env['SEARCH_HUB_PUBMED_EMAIL'] = 'test@example.com';
+    const config = getDefaultConfig();
+
+    const result = applyEnvVars(config);
+
+    expect(result.providers.pubmed.email).toBe('test@example.com');
+  });
+
+  it('sets providers.scopus.inst_token from SEARCH_HUB_SCOPUS_INST_TOKEN', () => {
+    process.env['SEARCH_HUB_SCOPUS_INST_TOKEN'] = 'my-inst-token';
+    const config = getDefaultConfig();
+
+    const result = applyEnvVars(config);
+
+    expect(result.providers.scopus.inst_token).toBe('my-inst-token');
   });
 
   it('applies multiple env vars at once', () => {
