@@ -20,6 +20,13 @@ This file tracks high-level progress. For implementation details, see individual
 | 11 | Reference Manager Integration | 10 | ✅ Completed | [20260109-01](completed/20260109-01-reference-manager-integration.md) |
 | 12 | XDG-Compliant Platform Paths | 2 | ✅ Completed | [20260110-01](completed/20260110-01-xdg-paths.md) |
 | 13 | E2E Tests & Polish | All | ✅ Completed | [20260109-02](completed/20260109-02-e2e-tests-polish.md) |
+| 14 | Fix PubMed NOT Operator Syntax | 6 | 🔲 Pending | [20260129-01](active/20260129-01-fix-pubmed-not-operator.md) |
+| 15 | Distinguish Zero Results from Provider Failure | 10 | 🔲 Pending | [20260129-02](active/20260129-02-search-executor-zero-results-handling.md) |
+| 16 | Show Detailed Error Information on Search Failure | 15 | 🔲 Pending | [20260129-03](active/20260129-03-search-error-detail-reporting.md) |
+| 17 | Support Optional Config Keys in CLI | 2 | 🔲 Pending | [20260129-04](active/20260129-04-config-optional-keys.md) |
+| 18 | Add `query init` Command for YAML Template Generation | 10 | 🔲 Pending | [20260129-05](active/20260129-05-query-init-template.md) |
+| 19 | Show Actionable Error Messages with Suggested Next Steps | 16 | 🔲 Pending | [20260129-06](active/20260129-06-actionable-error-messages.md) |
+| 20 | Enhance `--dry-run` with Provider Readiness and Query Diagnostics | 10 | 🔲 Pending | [20260129-07](active/20260129-07-dry-run-diagnostics.md) |
 
 ## Development Flow
 
