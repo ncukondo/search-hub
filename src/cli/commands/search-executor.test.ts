@@ -449,31 +449,114 @@ filters:
     it('should create PubMed provider', () => {
       const provider = createProviderInstance('pubmed', config);
       expect(provider).toBeDefined();
-      expect(provider.name).toBe('pubmed');
+      expect(provider!.name).toBe('pubmed');
     });
 
     it('should create ERIC provider', () => {
       const provider = createProviderInstance('eric', config);
       expect(provider).toBeDefined();
-      expect(provider.name).toBe('eric');
+      expect(provider!.name).toBe('eric');
     });
 
     it('should create arXiv provider', () => {
       const provider = createProviderInstance('arxiv', config);
       expect(provider).toBeDefined();
-      expect(provider.name).toBe('arxiv');
+      expect(provider!.name).toBe('arxiv');
     });
 
-    it('should create Scopus provider', () => {
+    it('should create Scopus provider with API key', () => {
+      config.providers.scopus.api_key = 'test-api-key';
       const provider = createProviderInstance('scopus', config);
       expect(provider).toBeDefined();
-      expect(provider.name).toBe('scopus');
+      expect(provider!.name).toBe('scopus');
     });
 
     it('should throw for unsupported provider', () => {
       expect(() =>
         createProviderInstance('wos' as any, config)
       ).toThrow('not implemented');
+    });
+  });
+
+  describe('Scopus API key preflight check', () => {
+    it('should skip Scopus and succeed with other providers when API key is empty', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.results?.['pubmed']).toBeDefined();
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['scopus']?.error).toContain('Scopus requires an API key');
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
+
+      warnSpy.mockRestore();
+    });
+
+    it('should fail when Scopus is the only provider and API key is missing', async () => {
+      config.providers.pubmed.enabled = false;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
+
+      warnSpy.mockRestore();
+    });
+
+    it('should record an error about API key when Scopus is skipped', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.results?.['scopus']).toBeDefined();
+      expect(result.results?.['scopus']?.hits).toBe(0);
+      expect(result.results?.['scopus']?.retrieved).toBe(0);
+      expect(result.results?.['scopus']?.error).toBe(
+        'Scopus requires an API key. Set providers.scopus.api_key in config.'
+      );
+
+      warnSpy.mockRestore();
+    });
+
+    it('should return null from createProviderInstance when Scopus API key is empty', () => {
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = createProviderInstance('scopus', config);
+
+      expect(result).toBeNull();
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
+
+      warnSpy.mockRestore();
     });
   });
 

@@ -62,7 +62,7 @@ const IMPLEMENTED_PROVIDERS: ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopu
 export function createProviderInstance(
   name: ProviderName,
   config: Config
-): Provider {
+): Provider | null {
   const providerConfig = config.providers[name];
 
   switch (name) {
@@ -96,8 +96,16 @@ export function createProviderInstance(
         retries: providerConfig.retries,
       });
     case 'scopus': {
+      if (!providerConfig.api_key) {
+        console.warn(
+          'Warning: Scopus requires an API key. Set providers.scopus.api_key in config.\n' +
+          '  → Get an API key at https://dev.elsevier.com/\n' +
+          '  → Run: search-hub config providers.scopus.api_key "your-key"'
+        );
+        return null;
+      }
       const scopusOpts: ScopusConfig = {
-        apiKey: providerConfig.api_key ?? '',
+        apiKey: providerConfig.api_key,
         rateLimit: providerConfig.rate_limit,
         timeout: providerConfig.timeout,
         retries: providerConfig.retries,
@@ -256,6 +264,27 @@ export async function executeSearch(
     try {
       // Create provider instance
       const provider = createProviderInstance(providerName, config);
+
+      // Skip provider if it could not be created (e.g. missing configuration)
+      if (provider === null) {
+        const configError = providerName.charAt(0).toUpperCase() + providerName.slice(1) + ' requires an API key. Set providers.' + providerName + '.api_key in config.';
+        results[providerName] = { hits: 0, retrieved: 0, error: configError };
+        await updateDatabaseStatus(
+          sessionId,
+          providerName,
+          {
+            status: 'failed',
+            completedAt: new Date().toISOString(),
+            error: {
+              code: 'CONFIG_ERROR',
+              message: configError,
+              retryable: false,
+            },
+          },
+          sessionsDir
+        );
+        continue;
+      }
 
       // Translate query
       let translatedQuery: TranslatedQuery;

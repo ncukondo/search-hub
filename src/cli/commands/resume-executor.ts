@@ -113,6 +113,13 @@ export async function executeResume(
       // Create provider instance
       const provider = createProviderInstance(providerName, config);
 
+      // Skip provider if it could not be created (e.g. missing configuration)
+      if (provider === null) {
+        progress?.fail(providerName, 'Provider configuration missing');
+        results[providerName] = { hits: 0, retrieved: 0, error: 'Provider requires configuration. Check provider settings.' };
+        continue;
+      }
+
       // Build the translated query from stored query file
       const queryPath = join(sessionsDir, options.sessionId, dbStatus.files.query);
       let nativeQuery: string;
