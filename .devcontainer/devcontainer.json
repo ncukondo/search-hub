@@ -34,6 +34,6 @@
       }
     }
   },
-  "postCreateCommand": "sudo chown vscode:vscode /workspaces && gh auth setup-git",
+  "postCreateCommand": "sudo chown vscode:vscode /workspaces",
   "remoteUser": "vscode"
 }
