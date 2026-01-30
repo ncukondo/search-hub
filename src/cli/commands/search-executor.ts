@@ -37,6 +37,7 @@ import { translateQuery as translateScopus } from '../../providers/scopus/transl
 import { stringify as stringifyYaml } from 'yaml';
 import { registerArticles, saveRegistrationRecord } from '../../integration/register.js';
 import { buildFailureErrorMessage } from './search-utils.js';
+import { getConfigDir } from '../../config/paths.js';
 import type { RegistrationRecord } from '../../integration/types.js';
 import { checkRefAvailable } from '../../integration/ref-cli.js';
 
@@ -68,8 +69,11 @@ export function createProviderInstance(
   switch (name) {
     case 'pubmed': {
       if (!providerConfig.email) {
+        const configPath = getConfigDir();
         console.warn(
-          'Warning: No email configured for PubMed. Set providers.pubmed.email in config.'
+          'Warning: No email configured for PubMed.\n' +
+          '  → Edit ' + configPath + '/config.toml and set providers.pubmed.email\n' +
+          '  → Or run: search-hub config providers.pubmed.email "your@email.com"'
         );
       }
       const pubmedOpts: PubMedConfig = {

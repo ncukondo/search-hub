@@ -98,6 +98,11 @@ vi.mock('../../providers/scopus/provider.js', () => ({
   })),
 }));
 
+// Mock config paths
+vi.mock('../../config/paths.js', () => ({
+  getConfigDir: vi.fn().mockReturnValue('/home/user/.config/search-hub'),
+}));
+
 // Mock ref-cli functions for auto-register tests
 vi.mock('../../integration/ref-cli.js', () => ({
   checkRefAvailable: vi.fn().mockResolvedValue(true),
@@ -475,6 +480,22 @@ filters:
       expect(() =>
         createProviderInstance('wos' as any, config)
       ).toThrow('not implemented');
+    });
+  });
+
+  describe('PubMed email warning with config path', () => {
+    it('should include config file path and command in PubMed email warning', () => {
+      config.providers.pubmed.email = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      createProviderInstance('pubmed', config);
+
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('No email configured for PubMed'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('config.toml'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('search-hub config providers.pubmed.email'));
+
+      warnSpy.mockRestore();
     });
   });
 
