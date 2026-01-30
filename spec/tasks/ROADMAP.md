@@ -25,11 +25,14 @@ This file tracks high-level progress. For implementation details, see individual
 | 16 | Show Detailed Error Information on Search Failure | 15 | ✅ Completed | [20260129-03](completed/20260129-03-search-error-detail-reporting.md) |
 | 17 | Support Optional Config Keys in CLI | 2 | ✅ Completed | [20260129-04](completed/20260129-04-config-optional-keys.md) |
 | 18 | Add `query init` Command for YAML Template Generation | 10 | ✅ Completed | [20260129-05](completed/20260129-05-query-init-template.md) |
-| 19 | Show Actionable Error Messages with Suggested Next Steps | 16 | 🔲 Pending | [20260129-06](active/20260129-06-actionable-error-messages.md) |
-| 20 | Enhance `--dry-run` with Provider Readiness and Query Diagnostics | 10 | 🔲 Pending | [20260129-07](active/20260129-07-dry-run-diagnostics.md) |
+| 19 | Show Actionable Error Messages with Suggested Next Steps | 16 | 🔄 In Review (PR #25) | [20260129-06](active/20260129-06-actionable-error-messages.md) |
+| 20 | Enhance `--dry-run` with Provider Readiness and Query Diagnostics | 10 | 🔄 In Review (PR #26) | [20260129-07](active/20260129-07-dry-run-diagnostics.md) |
 | 21 | Fix ProviderError Serialization to `[object Object]` | 5 | ✅ Completed | [20260129-08](completed/20260129-08-fix-provider-error-serialization.md) |
-| 22 | Add Preflight Check for Scopus API Key Requirement | 9 | 🔲 Pending | [20260129-09](active/20260129-09-scopus-api-key-preflight-check.md) |
+| 22 | Add Preflight Check for Scopus API Key Requirement | 9 | 🔄 In Review (PR #25) | [20260129-09](active/20260129-09-scopus-api-key-preflight-check.md) |
 | 23 | Load .env with dotenv and Unify Env Var Naming | 2 | ✅ Completed | [20260129-10](completed/20260129-10-dotenv-loading-and-env-var-naming.md) |
+| 24 | Fix PR Review Issues (PR #25 and PR #26) | 19, 20, 22 | 🔲 Pending | [20260130-01](active/20260130-01-pr-review-fixups.md) |
+| 25 | Separate Real-API Tests into Dedicated Vitest Project | 13 | 🔲 Pending | [20260130-02](active/20260130-02-separate-api-tests.md) |
+| 26 | Add Retry Logic to PubMedProvider and Consolidate Rate Limiters | 5, 6 | 🔲 Pending | [20260130-03](active/20260130-03-pubmed-retry-ratelimiter.md) |
 
 ## Development Flow
 
