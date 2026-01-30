@@ -1,4 +1,5 @@
 import type { ProviderName } from '../../session/types.js';
+import type { Config } from '../../config/index.js';
 import { parseProviderNames } from '../utils/validation.js';
 
 export interface SearchCommandOptions {
@@ -30,6 +31,13 @@ export interface ValidationResult {
   error?: string;
 }
 
+/**
+ * Options for enhanced dry-run output.
+ */
+export interface DryRunOutputOptions {
+  config?: Config;
+  providers?: ProviderName[];
+}
 export function parseSearchOptions(
   queryFile: string | undefined,
   options: CommandLineOptions
@@ -68,7 +76,6 @@ export function parseSearchOptions(
 }
 
 export function validateSearchInput(options: SearchCommandOptions): ValidationResult {
-  // Case 1: Neither query file nor direct query
   if (!options.queryFile && !options.directQuery) {
     return {
       valid: false,
@@ -76,7 +83,6 @@ export function validateSearchInput(options: SearchCommandOptions): ValidationRe
     };
   }
 
-  // Case 2: Direct query without provider
   if (options.directQuery && (!options.providers || options.providers.length === 0)) {
     return {
       valid: false,
@@ -84,7 +90,6 @@ export function validateSearchInput(options: SearchCommandOptions): ValidationRe
     };
   }
 
-  // Case 3: Direct query with multiple providers
   if (options.directQuery && options.providers && options.providers.length > 1) {
     return {
       valid: false,
@@ -94,21 +99,94 @@ export function validateSearchInput(options: SearchCommandOptions): ValidationRe
 
   return { valid: true };
 }
+/**
+ * Format provider readiness summary for dry-run output.
+ */
+export function formatProviderReadiness(providers: ProviderName[], config: Config): string {
+  const lines: string[] = [];
+  lines.push('Provider readiness:');
+  for (const provider of providers) {
+    const providerConfig = config.providers[provider];
+    const status = getProviderStatus(provider, providerConfig);
+    const mark = status.ready ? '✓' : '✗';
+    lines.push(`  ${mark} ${provider.padEnd(10)}${status.message}`);
+  }
+  return lines.join('\n');
+}
 
-export function formatDryRunOutput(translations: TranslationResult[]): string {
+function getProviderStatus(
+  provider: ProviderName,
+  providerConfig: { email?: string; api_key?: string }
+): { ready: boolean; message: string } {
+  switch (provider) {
+    case 'pubmed': {
+      if (!providerConfig.email) {
+        return { ready: true, message: 'ready (email: not configured (recommended))' };
+      }
+      return { ready: true, message: 'ready (email: configured)' };
+    }
+    case 'scopus': {
+      if (!providerConfig.api_key) {
+        return { ready: false, message: 'missing api_key (required)' };
+      }
+      return { ready: true, message: 'ready' };
+    }
+    case 'eric':
+    case 'arxiv':
+      return { ready: true, message: 'ready' };
+    default:
+      return { ready: true, message: 'ready' };
+  }
+}
+/**
+ * Format query diagnostics warnings for dry-run output.
+ */
+export function formatQueryDiagnostics(translations: TranslationResult[]): string {
+  const warnings: string[] = [];
+  for (const t of translations) {
+    if (t.provider === 'pubmed') {
+      if (/\bNOT\b/.test(t.query)) {
+        warnings.push('  ⚠ pubmed: query uses NOT operator (ensure correct syntax for exclusions)');
+      }
+      if (/\*\[(?:mh|mesh)\]/i.test(t.query)) {
+        warnings.push('  ⚠ pubmed: wildcard in MeSH term — PubMed does not support wildcards in MeSH fields');
+      }
+    }
+  }
+  if (warnings.length === 0) {
+    return '';
+  }
+  const lines: string[] = [];
+  lines.push('Diagnostics:');
+  lines.push(...warnings);
+  return lines.join('\n');
+}
+
+export function formatDryRunOutput(
+  translations: TranslationResult[],
+  options?: DryRunOutputOptions
+): string {
   if (translations.length === 0) {
     return 'No translations available.';
   }
-
-  const lines: string[] = [];
-  lines.push('Translated queries:');
-  lines.push('');
-
-  for (const t of translations) {
-    lines.push(`[${t.provider}]`);
-    lines.push(t.query);
-    lines.push('');
+  const sections: string[] = [];
+  if (options?.config && options?.providers) {
+    sections.push(formatProviderReadiness(options.providers, options.config));
+    sections.push('');
   }
-
-  return lines.join('\n');
+  const queryLines: string[] = [];
+  queryLines.push('Translated queries:');
+  queryLines.push('');
+  for (const t of translations) {
+    queryLines.push(`[${t.provider}]`);
+    queryLines.push(t.query);
+    queryLines.push('');
+  }
+  sections.push(queryLines.join('\n'));
+  const diagnostics = formatQueryDiagnostics(translations);
+  if (diagnostics) {
+    sections.push(diagnostics);
+    sections.push('');
+  }
+  return sections.join('\n');
 }
