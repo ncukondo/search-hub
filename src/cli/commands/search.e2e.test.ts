@@ -19,9 +19,11 @@ import {
   parseSearchOptions,
   validateSearchInput,
   formatDryRunOutput,
+  formatQueryDiagnostics,
   type SearchCommandOptions,
   type TranslationResult,
 } from './search.js';
+import type { ProviderName } from '../../session/types.js';
 import { translateQueryCommand } from './query/translate.js';
 
 describe('search-hub search --dry-run E2E', () => {
@@ -361,6 +363,75 @@ filters:
       const result = await translateQueryCommand(queryPath);
 
       expect(result.success).toBe(false);
+    });
+  });
+
+  describe('--dry-run includes provider readiness section', () => {
+    it('should include provider readiness when config is provided', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['pubmed', 'eric'],
+      });
+
+      expect(result.success).toBe(true);
+
+      const translations: TranslationResult[] = Object.entries(
+        result.translations!
+      ).map(([provider, t]) => ({
+        provider,
+        query: t.native,
+      }));
+
+      const { getDefaultConfig: getDefConfig } = await import('../../config/index.js');
+      const config = getDefConfig();
+      config.providers.pubmed.email = 'researcher@example.com';
+      const providers: ProviderName[] = ['pubmed', 'eric'];
+
+      const output = formatDryRunOutput(translations, { config, providers });
+
+      expect(output).toContain('Provider readiness:');
+      expect(output).toContain('pubmed');
+      expect(output).toContain('eric');
+      expect(output).toContain('ready');
+      expect(output).toContain('Translated queries:');
+    });
+  });
+
+  describe('--dry-run includes diagnostics section when applicable', () => {
+    it('should not show diagnostics section for clean ERIC queries', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['eric'],
+      });
+
+      expect(result.success).toBe(true);
+
+      const translations: TranslationResult[] = Object.entries(
+        result.translations!
+      ).map(([provider, t]) => ({
+        provider,
+        query: t.native,
+      }));
+
+      const diagnostics = formatQueryDiagnostics(translations);
+      expect(diagnostics).toBe('');
+    });
+
+    it('should show diagnostics when PubMed query has NOT operator', async () => {
+      // Create a translation result manually with NOT operator
+      const translations: TranslationResult[] = [
+        { provider: 'pubmed', query: 'diabetes[tiab] NOT review[pt]' },
+      ];
+
+      const { getDefaultConfig: getDefConfig2 } = await import('../../config/index.js');
+      const config = getDefConfig2();
+      const providers: ProviderName[] = ['pubmed'];
+
+      const output = formatDryRunOutput(translations, { config, providers });
+
+      expect(output).toContain('Diagnostics:');
+      expect(output).toContain('NOT');
     });
   });
 });
