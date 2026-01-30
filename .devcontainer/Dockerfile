@@ -12,10 +12,6 @@ RUN apt-get update && apt-get install -y \
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y nodejs=24.4.1-1nodesource1
 
-
-# Install Claude CLI
-RUN npm install -g @anthropic-ai/claude-code
-
 # Set up non-root user
 ARG USERNAME=vscode
 ARG USER_UID=1000
@@ -38,6 +34,9 @@ COPY --from=ghcr.io/astral-sh/uv:0.8.3 /uv /uvx /bin/
 
 # Switch to non-root user and set up uv for them
 USER $USERNAME
+
+# Install Claude CLI (native binary) as non-root user
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Configure npm global directory for vscode user
 ENV NPM_CONFIG_PREFIX=/home/$USERNAME/.npm-global
