@@ -9,7 +9,7 @@ spec/tasks/ROADMAP.md を確認し、並列実装可能なタスクを分析し�
    - 並列実装が可能なタスクが複数ある場合、git worktreeの準備後、サブエージェントに分担しても良い
 
 ### 2. ブランチ & worktree セットアップ
-git worktree(無ければ作成, ブランチ名も無ければ適切なものを作成, ブランチの作成を直接行うのでは無くgit worktree addで行う)内で行います。git worktree作成時にはnpm install等の初期セットアップも行って下さい。
+worktreeは必ずリポジトリの親ディレクトリ直下の `search-hub--worktrees/` 内に作成して下さい（例: `git worktree add ../search-hub--worktrees/<branch-name> -b <branch-name>`）。ブランチ名も無ければ適切なものを作成し、ブランチの作成を直接行うのでは無くgit worktree addで行います。git worktree作成時にはnpm install等の初期セットアップも行って下さい。
 
 ### 3. TDD実装サイクル
 各ステップについて:

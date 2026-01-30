@@ -13,7 +13,7 @@ gh pr merge $ARGUMENTS --merge
 
 ### 3. cleanup
 - mainを最新にする (`git checkout main && git pull`)
-- `git worktree list` で該当のworktreeを確認し削除
+- `git worktree list` で該当のworktree（`../search-hub--worktrees/` 内）を確認し削除
 - 不要になったブランチを削除
 
 ### 4. タスク完了処理（mainブランチで）
