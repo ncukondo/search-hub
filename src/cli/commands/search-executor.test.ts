@@ -483,6 +483,57 @@ filters:
     });
   });
 
+  describe('preflight provider readiness checks', () => {
+    it('should emit warnings and skip misconfigured providers during search', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      // Search should succeed with the providers that are properly configured
+      expect(result.success).toBe(true);
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+
+      // Misconfigured provider should be skipped with config error
+      expect(result.results?.['scopus']?.error).toBeDefined();
+      expect(result.results?.['scopus']?.hits).toBe(0);
+
+      // Warning should have been emitted for the misconfigured provider
+      expect(warnSpy).toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+
+    it('should skip all misconfigured providers and fail if none remain working', async () => {
+      config.providers.pubmed.enabled = false;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      // Should fail because all enabled providers were misconfigured
+      expect(result.success).toBe(false);
+      expect(result.results?.['scopus']?.error).toContain('requires an API key');
+
+      warnSpy.mockRestore();
+    });
+  });
+
   describe('PubMed email warning with config path', () => {
     it('should include config file path and command in PubMed email warning', () => {
       config.providers.pubmed.email = '';
