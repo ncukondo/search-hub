@@ -16,11 +16,13 @@ import type { SessionFile, DatabaseStatus } from '../session/types.js';
 // Load environment variables
 loadDotenv();
 
+const skip = !process.env['SEARCH_HUB_PUBMED_API_KEY'];
+
 // Import CLI
 const { createProgram } = await import('./index.js');
 const { EXIT_CODES } = await import('./exit-codes.js');
 
-describe('CLI Execution E2E', () => {
+describe.skipIf(skip)('CLI Execution E2E', () => {
   let tempDir: string;
   let sessionsDir: string;
   let configPath: string;
