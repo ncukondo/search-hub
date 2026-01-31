@@ -46,15 +46,9 @@ export class PubMedClient {
   private readonly config: PubMedConfig;
   private readonly rateLimiter: RateLimiter;
 
-  constructor(config: PubMedConfig) {
+  constructor(config: PubMedConfig, rateLimiter: RateLimiter) {
     this.config = config;
-
-    // Rate limit: 3 req/s without key, 10 req/s with key
-    const tokensPerSecond = config.apiKey ? 10 : 3;
-    this.rateLimiter = new RateLimiter({
-      tokensPerSecond,
-      burstSize: tokensPerSecond,
-    });
+    this.rateLimiter = rateLimiter;
   }
 
   /**

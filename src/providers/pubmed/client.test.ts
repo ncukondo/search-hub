@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PubMedClient } from './client';
+import { RateLimiter } from '../base/rate-limiter.js';
 import type { PubMedConfig } from './types';
 
 // Mock fetch globally
@@ -15,7 +16,10 @@ describe('PubMedClient', () => {
     email: 'test@example.com',
   };
 
+  let testRateLimiter: RateLimiter;
+
   beforeEach(() => {
+    testRateLimiter = new RateLimiter({ tokensPerSecond: 10, burstSize: 10 });
     vi.useFakeTimers();
     mockFetch.mockReset();
   });
@@ -26,15 +30,12 @@ describe('PubMedClient', () => {
 
   describe('constructor', () => {
     it('creates client with required config', () => {
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       expect(client).toBeInstanceOf(PubMedClient);
     });
 
     it('creates client with API key', () => {
-      const client = new PubMedClient({
-        ...baseConfig,
-        apiKey: 'test-api-key',
-      });
+      const client = new PubMedClient({ ...baseConfig, apiKey: 'test-api-key' }, testRateLimiter);
       expect(client).toBeInstanceOf(PubMedClient);
     });
   });
@@ -53,7 +54,7 @@ describe('PubMedClient', () => {
 </eSearchResult>`),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await client.search('diabetes');
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -77,10 +78,7 @@ describe('PubMedClient', () => {
 </eSearchResult>`),
       });
 
-      const client = new PubMedClient({
-        ...baseConfig,
-        apiKey: 'my-api-key',
-      });
+      const client = new PubMedClient({ ...baseConfig, apiKey: 'my-api-key' }, testRateLimiter);
       await client.search('test');
 
       const [url] = mockFetch.mock.calls[0] as [string];
@@ -100,7 +98,7 @@ describe('PubMedClient', () => {
 </eSearchResult>`),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await client.search('test', { retstart: 20, retmax: 50 });
 
       const [url] = mockFetch.mock.calls[0] as [string];
@@ -123,7 +121,7 @@ describe('PubMedClient', () => {
 </eSearchResult>`),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await client.search('large result', { useHistory: true });
 
       const [url] = mockFetch.mock.calls[0] as [string];
@@ -147,7 +145,7 @@ describe('PubMedClient', () => {
 </eSearchResult>`),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       const result = await client.search('diabetes');
 
       expect(result.count).toBe(3);
@@ -172,7 +170,7 @@ describe('PubMedClient', () => {
 </PubmedArticleSet>`),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await client.fetch(['12345678']);
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -193,7 +191,7 @@ describe('PubMedClient', () => {
 <PubmedArticleSet></PubmedArticleSet>`),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await client.fetch(['11111111', '22222222', '33333333']);
 
       const [url] = mockFetch.mock.calls[0] as [string];
@@ -208,10 +206,7 @@ describe('PubMedClient', () => {
 <PubmedArticleSet></PubmedArticleSet>`),
       });
 
-      const client = new PubMedClient({
-        ...baseConfig,
-        apiKey: 'fetch-api-key',
-      });
+      const client = new PubMedClient({ ...baseConfig, apiKey: 'fetch-api-key' }, testRateLimiter);
       await client.fetch(['12345678']);
 
       const [url] = mockFetch.mock.calls[0] as [string];
@@ -226,7 +221,7 @@ describe('PubMedClient', () => {
 <PubmedArticleSet></PubmedArticleSet>`),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await client.fetchFromHistory({
         webenv: 'MCID_abc123',
         querykey: '1',
@@ -261,7 +256,7 @@ describe('PubMedClient', () => {
 </PubmedArticleSet>`),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       const articles = await client.fetch(['12345678']);
 
       expect(articles).toHaveLength(1);
@@ -280,7 +275,7 @@ describe('PubMedClient', () => {
         text: () => Promise.resolve('Invalid query'),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await expect(client.search('invalid[[')).rejects.toMatchObject({
         code: 'PARSE_ERROR',
         provider: 'pubmed',
@@ -298,7 +293,7 @@ describe('PubMedClient', () => {
         text: () => Promise.resolve('Rate limited'),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await expect(client.search('test')).rejects.toMatchObject({
         code: 'RATE_LIMIT_EXCEEDED',
         provider: 'pubmed',
@@ -314,7 +309,7 @@ describe('PubMedClient', () => {
         text: () => Promise.resolve('Server error'),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await expect(client.search('test')).rejects.toMatchObject({
         code: 'SERVER_ERROR',
         provider: 'pubmed',
@@ -325,7 +320,7 @@ describe('PubMedClient', () => {
     it('throws network error on fetch failure', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network failure'));
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await expect(client.search('test')).rejects.toMatchObject({
         code: 'NETWORK_ERROR',
         provider: 'pubmed',
@@ -349,7 +344,7 @@ describe('PubMedClient', () => {
 </eSearchResult>`),
       });
 
-      const client = new PubMedClient(baseConfig);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
 
       // Make first request
       await client.search('query1');

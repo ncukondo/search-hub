@@ -36,9 +36,12 @@ export class PubMedProvider extends BaseProvider {
   private searchWarnings: string[] = [];
 
   constructor(config: PubMedConfig) {
-    super(config);
+    super({
+      ...config,
+      rateLimit: config.apiKey ? 10 : (config.rateLimit ?? 3),
+    });
     this.pubmedConfig = config;
-    this.client = new PubMedClient(config);
+    this.client = new PubMedClient(config, this.rateLimiter);
   }
 
   /**
