@@ -298,7 +298,11 @@ describe('PubMedProvider', () => {
         provider: 'pubmed',
         retryable: true,
       };
-      mockClientInstance.search.mockRejectedValue(networkError);
+      mockClientInstance.search
+        .mockRejectedValueOnce(networkError)
+        .mockRejectedValueOnce(networkError)
+        .mockRejectedValueOnce(networkError)
+        .mockRejectedValueOnce(networkError);
 
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
@@ -324,7 +328,11 @@ describe('PubMedProvider', () => {
         retryable: true,
         retryAfter: 5000,
       };
-      mockClientInstance.search.mockRejectedValue(rateLimitError);
+      mockClientInstance.search
+        .mockRejectedValueOnce(rateLimitError)
+        .mockRejectedValueOnce(rateLimitError)
+        .mockRejectedValueOnce(rateLimitError)
+        .mockRejectedValueOnce(rateLimitError);
 
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
@@ -424,7 +432,10 @@ describe('PubMedProvider', () => {
         provider: 'pubmed',
         retryable: true,
       };
-      mockClientInstance.search.mockRejectedValue(serverError);
+      mockClientInstance.search
+        .mockRejectedValueOnce(serverError)
+        .mockRejectedValueOnce(serverError)
+        .mockRejectedValueOnce(serverError);
       const provider = new PubMedProvider({ ...baseConfig, retries: 2 });
 
       const p = (async () => {
