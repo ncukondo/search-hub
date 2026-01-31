@@ -1,8 +1,8 @@
 /**
- * Scopus Provider E2E Tests
+ * Scopus Provider API Tests
  *
  * These tests call the actual Scopus API and should be run separately:
- *   npm run test:e2e
+ *   npm run test:api
  *
  * Requirements:
  * - Network access to Scopus API (api.elsevier.com)

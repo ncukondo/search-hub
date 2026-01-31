@@ -1,8 +1,8 @@
 /**
- * arXiv Provider E2E Tests
+ * arXiv Provider API Tests
  *
  * These tests call the actual arXiv API and should be run separately:
- *   npm run test:e2e
+ *   npm run test:api
  *
  * Requirements:
  * - Network access to arXiv API (export.arxiv.org)

@@ -1,8 +1,8 @@
 /**
- * PubMed Provider E2E Tests
+ * PubMed Provider API Tests
  *
  * These tests call the actual PubMed API and should be run separately:
- *   npm run test:e2e
+ *   npm run test:api
  *
  * Requirements:
  * - Network access to PubMed E-utilities
@@ -19,6 +19,8 @@ import type { QueryAST, Article } from '../base/types';
 
 const TEST_EMAIL = process.env['SEARCH_HUB_PUBMED_EMAIL'] ?? 'test@example.com';
 const API_KEY = process.env['SEARCH_HUB_PUBMED_API_KEY'];
+
+const skip = !API_KEY;
 
 /**
  * Create provider config from environment.
@@ -51,7 +53,7 @@ function createTestQuery(keyword: string): QueryAST {
   };
 }
 
-describe('PubMed Provider E2E', () => {
+describe.skipIf(skip)('PubMed Provider E2E', () => {
   let provider: PubMedProvider;
 
   beforeAll(() => {
