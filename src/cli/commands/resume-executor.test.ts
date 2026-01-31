@@ -606,6 +606,54 @@ describe('resume-executor', () => {
       expect(updatedSession.summary.status).toBe('completed');
     });
 
+    it('should update database status with CONFIG_ERROR when provider returns null', async () => {
+      // Set up scopus with empty api_key and a failed session for scopus
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+      config.providers.pubmed.enabled = false;
+
+      const sessionDir = join(sessionsDir, sessionId);
+      const session: SessionFile = {
+        version: 1,
+        id: sessionId,
+        name: 'test-session',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        query: { file: 'test-query.yaml', hash: 'abc123', targets: ['scopus'] },
+        databases: {
+          scopus: {
+            status: 'failed',
+            startedAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+            totalHits: 0,
+            retrievedCount: 0,
+            files: { query: 'scopus_query.txt', results: 'scopus_results.jsonl' },
+            error: { code: 'NETWORK_ERROR', message: 'Previous failure', retryable: true },
+          },
+        },
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'failed' },
+      };
+      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'scopus_query.txt'), 'diabetes', 'utf-8');
+      await writeFile(join(sessionDir, 'scopus_results.jsonl'), '', 'utf-8');
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: ResumeCommandOptions = { sessionId, retryFailed: true };
+      const result = await executeResume(options, sessionsDir, config, false);
+
+      warnSpy.mockRestore();
+
+      // Verify database status was updated with CONFIG_ERROR
+      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const updatedSession = JSON.parse(sessionContent);
+
+      expect(updatedSession.databases.scopus.status).toBe('failed');
+      expect(updatedSession.databases.scopus.error.code).toBe('CONFIG_ERROR');
+      expect(updatedSession.databases.scopus.error.retryable).toBe(false);
+    });
+
     it('should append results to existing results file', async () => {
       // Add existing results
       const resultsPath = join(sessionsDir, sessionId, 'pubmed_results.jsonl');

@@ -116,7 +116,22 @@ export async function executeResume(
       // Skip provider if it could not be created (e.g. missing configuration)
       if (provider === null) {
         progress?.fail(providerName, 'Provider configuration missing');
-        results[providerName] = { hits: 0, retrieved: 0, error: 'Provider requires configuration. Check provider settings.' };
+        const configError = `${providerName}: provider configuration incomplete. See warning above for details.`;
+        results[providerName] = { hits: 0, retrieved: 0, error: configError };
+        await updateDatabaseStatus(
+          options.sessionId,
+          providerName,
+          {
+            status: 'failed',
+            completedAt: new Date().toISOString(),
+            error: {
+              code: 'CONFIG_ERROR',
+              message: configError,
+              retryable: false,
+            },
+          },
+          sessionsDir
+        );
         continue;
       }
 
