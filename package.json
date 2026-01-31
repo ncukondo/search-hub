@@ -44,7 +44,9 @@
     "format:check": "oxfmt src",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:api": "vitest --project api",
+    "test:ci": "vitest --project unit --project e2e"
   },
   "keywords": [
     "systematic-review",
