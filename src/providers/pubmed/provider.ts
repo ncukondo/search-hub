@@ -58,11 +58,11 @@ export class PubMedProvider extends BaseProvider {
     let totalRetrieved = 0;
 
     // Initial search with history server enabled
-    const initialResult = await this.client.search(query.native, {
+    const initialResult = await this.withRetry(() => this.client.search(query.native, {
       retstart: 0,
       retmax: pageSize,
       useHistory: true,
-    });
+    }));
 
     const totalCount = initialResult.count;
     const webenv = initialResult.webenv;
@@ -90,7 +90,7 @@ export class PubMedProvider extends BaseProvider {
     }
 
     // Fetch first page of articles using PMIDs from initial search
-    const firstPageArticles = await this.client.fetch(initialResult.idlist);
+    const firstPageArticles = await this.withRetry(() => this.client.fetch(initialResult.idlist));
 
     for (const article of firstPageArticles) {
       totalRetrieved++;
@@ -119,19 +119,19 @@ export class PubMedProvider extends BaseProvider {
 
       if (webenv && querykey) {
         // Use history server for efficient pagination
-        articles = await this.client.fetchFromHistory({
+        articles = await this.withRetry(() => this.client.fetchFromHistory({
           webenv,
           querykey,
           retstart,
           retmax: remainingToFetch,
-        });
+        }));
       } else {
         // Fallback to offset-based pagination
-        const result = await this.client.search(query.native, {
+        const result = await this.withRetry(() => this.client.search(query.native, {
           retstart,
           retmax: remainingToFetch,
-        });
-        articles = await this.client.fetch(result.idlist);
+        }));
+        articles = await this.withRetry(() => this.client.fetch(result.idlist));
       }
 
       if (articles.length === 0) {
@@ -216,10 +216,10 @@ export class PubMedProvider extends BaseProvider {
       const retstart = state.retrievedCount;
 
       // Continue from where we left off
-      const result = await this.client.search(query.native, {
+      const result = await this.withRetry(() => this.client.search(query.native, {
         retstart,
         retmax: DEFAULT_PAGE_SIZE,
-      });
+      }));
 
       // Update current state
       this.currentState = {
@@ -231,7 +231,7 @@ export class PubMedProvider extends BaseProvider {
       let totalRetrieved = state.retrievedCount;
 
       while (currentPmids.length > 0) {
-        const articles = await this.client.fetch(currentPmids);
+        const articles = await this.withRetry(() => this.client.fetch(currentPmids));
 
         for (const article of articles) {
           yield article;
@@ -249,10 +249,10 @@ export class PubMedProvider extends BaseProvider {
         }
 
         // Fetch next page
-        const nextResult = await this.client.search(query.native, {
+        const nextResult = await this.withRetry(() => this.client.search(query.native, {
           retstart: totalRetrieved,
           retmax: DEFAULT_PAGE_SIZE,
-        });
+        }));
 
         currentPmids = nextResult.idlist;
       }
@@ -271,12 +271,12 @@ export class PubMedProvider extends BaseProvider {
       let totalRetrieved = state.retrievedCount;
 
       while (totalRetrieved < state.totalResults) {
-        const articles = await this.client.fetchFromHistory({
+        const articles = await this.withRetry(() => this.client.fetchFromHistory({
           webenv: providerState.webenv,
           querykey: providerState.querykey,
           retstart,
           retmax: DEFAULT_PAGE_SIZE,
-        });
+        }));
 
         if (articles.length === 0) {
           break;
