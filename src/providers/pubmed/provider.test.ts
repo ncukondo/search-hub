@@ -339,6 +339,100 @@ describe('PubMedProvider', () => {
     });
   });
 
+  describe('retry behavior', () => {
+    const retryQuery: TranslatedQuery = {
+      native: 'test[tiab]',
+      originalAst: createMockQueryAST(),
+      provider: 'pubmed',
+    };
+
+    it('retries on RATE_LIMIT_EXCEEDED and succeeds', async () => {
+      const rateLimitError = {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many requests',
+        provider: 'pubmed',
+        retryable: true,
+        retryAfter: 1000,
+      };
+
+      mockClientInstance.search
+        .mockRejectedValueOnce(rateLimitError)
+        .mockResolvedValueOnce({
+          count: 1, retmax: 20, retstart: 0, idlist: ['12345678'],
+        });
+      mockClientInstance.fetch.mockResolvedValueOnce([createMockArticle('12345678')]);
+
+      const provider = new PubMedProvider(baseConfig);
+      const articles: Article[] = [];
+      const p = (async () => { for await (const a of provider.search(retryQuery)) articles.push(a); })();
+      await vi.advanceTimersByTimeAsync(5000);
+      await p;
+
+      expect(articles).toHaveLength(1);
+      expect(mockClientInstance.search).toHaveBeenCalledTimes(2);
+    });
+
+    it('retries on SERVER_ERROR and succeeds', async () => {
+      const serverError = {
+        code: 'SERVER_ERROR',
+        message: 'Server error: 500',
+        provider: 'pubmed',
+        retryable: true,
+      };
+
+      mockClientInstance.search
+        .mockRejectedValueOnce(serverError)
+        .mockResolvedValueOnce({
+          count: 1, retmax: 20, retstart: 0, idlist: ['12345678'],
+        });
+      mockClientInstance.fetch.mockResolvedValueOnce([createMockArticle('12345678')]);
+
+      const provider = new PubMedProvider(baseConfig);
+      const articles: Article[] = [];
+      const p = (async () => { for await (const a of provider.search(retryQuery)) articles.push(a); })();
+      await vi.advanceTimersByTimeAsync(5000);
+      await p;
+
+      expect(articles).toHaveLength(1);
+      expect(mockClientInstance.search).toHaveBeenCalledTimes(2);
+    });
+
+    it('does NOT retry on non-retryable PARSE_ERROR', async () => {
+      const parseError = {
+        code: 'PARSE_ERROR',
+        message: 'Invalid query syntax',
+        provider: 'pubmed',
+        retryable: false,
+      };
+      mockClientInstance.search.mockRejectedValueOnce(parseError);
+      const provider = new PubMedProvider(baseConfig);
+
+      await expect(async () => {
+        for await (const _ of provider.search(retryQuery)) { /* noop */ }
+      }).rejects.toMatchObject({ code: 'PARSE_ERROR' });
+      expect(mockClientInstance.search).toHaveBeenCalledTimes(1);
+    });
+
+    it('fails after exhausting configured retry count', async () => {
+      const serverError = {
+        code: 'SERVER_ERROR',
+        message: 'Server error: 503',
+        provider: 'pubmed',
+        retryable: true,
+      };
+      mockClientInstance.search.mockRejectedValue(serverError);
+      const provider = new PubMedProvider({ ...baseConfig, retries: 2 });
+
+      const p = (async () => {
+        for await (const _ of provider.search(retryQuery)) { /* noop */ }
+      })();
+      await vi.advanceTimersByTimeAsync(120_000);
+      await expect(p).rejects.toMatchObject({ code: 'SERVER_ERROR' });
+      // Initial attempt + 2 retries = 3 total calls
+      expect(mockClientInstance.search).toHaveBeenCalledTimes(3);
+    });
+  });
+
   describe('session resume (Step 5a)', () => {
     it('getSearchState returns null before any search', () => {
       const provider = new PubMedProvider(baseConfig);
