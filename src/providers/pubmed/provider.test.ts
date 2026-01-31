@@ -298,11 +298,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed',
         retryable: true,
       };
-      mockClientInstance.search
-        .mockRejectedValueOnce(networkError)
-        .mockRejectedValueOnce(networkError)
-        .mockRejectedValueOnce(networkError)
-        .mockRejectedValueOnce(networkError);
+      mockClientInstance.search.mockImplementation(async () => { throw networkError; });
 
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
@@ -311,13 +307,15 @@ describe('PubMedProvider', () => {
         provider: 'pubmed',
       };
 
+      let caughtError: unknown;
       const p = (async () => {
         for await (const _ of provider.search(query)) {
           // Should throw
         }
-      })();
+      })().catch((e: unknown) => { caughtError = e; });
       await vi.advanceTimersByTimeAsync(120_000);
-      await expect(p).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
+      await p;
+      expect(caughtError).toMatchObject({ code: 'NETWORK_ERROR' });
     });
 
     it('propagates rate limit errors', async () => {
@@ -328,11 +326,7 @@ describe('PubMedProvider', () => {
         retryable: true,
         retryAfter: 5000,
       };
-      mockClientInstance.search
-        .mockRejectedValueOnce(rateLimitError)
-        .mockRejectedValueOnce(rateLimitError)
-        .mockRejectedValueOnce(rateLimitError)
-        .mockRejectedValueOnce(rateLimitError);
+      mockClientInstance.search.mockImplementation(async () => { throw rateLimitError; });
 
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
@@ -341,13 +335,15 @@ describe('PubMedProvider', () => {
         provider: 'pubmed',
       };
 
+      let caughtError: unknown;
       const p = (async () => {
         for await (const _ of provider.search(query)) {
           // Should throw
         }
-      })();
+      })().catch((e: unknown) => { caughtError = e; });
       await vi.advanceTimersByTimeAsync(120_000);
-      await expect(p).rejects.toMatchObject({ code: 'RATE_LIMIT_EXCEEDED' });
+      await p;
+      expect(caughtError).toMatchObject({ code: 'RATE_LIMIT_EXCEEDED' });
     });
   });
 
@@ -432,17 +428,16 @@ describe('PubMedProvider', () => {
         provider: 'pubmed',
         retryable: true,
       };
-      mockClientInstance.search
-        .mockRejectedValueOnce(serverError)
-        .mockRejectedValueOnce(serverError)
-        .mockRejectedValueOnce(serverError);
+      mockClientInstance.search.mockImplementation(async () => { throw serverError; });
       const provider = new PubMedProvider({ ...baseConfig, retries: 2 });
 
+      let caughtError: unknown;
       const p = (async () => {
         for await (const _ of provider.search(retryQuery)) { /* noop */ }
-      })();
+      })().catch((e: unknown) => { caughtError = e; });
       await vi.advanceTimersByTimeAsync(120_000);
-      await expect(p).rejects.toMatchObject({ code: 'SERVER_ERROR' });
+      await p;
+      expect(caughtError).toMatchObject({ code: 'SERVER_ERROR' });
       // Initial attempt + 2 retries = 3 total calls
       expect(mockClientInstance.search).toHaveBeenCalledTimes(3);
     });
