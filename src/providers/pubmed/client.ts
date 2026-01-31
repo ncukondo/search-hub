@@ -171,9 +171,6 @@ export class PubMedClient {
     if (response.status === 429) {
       const retryAfter = response.headers.get('Retry-After');
       const retryAfterMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : undefined;
-      if (retryAfterMs !== undefined) {
-        this.rateLimiter.handleRateLimit(retryAfterMs);
-      }
       const error = this.createError(
         'RATE_LIMIT_EXCEEDED',
         'Too many requests',

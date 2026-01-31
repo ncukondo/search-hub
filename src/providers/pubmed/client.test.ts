@@ -300,10 +300,7 @@ describe('PubMedClient', () => {
         retryable: true,
       });
     });
-    it('calls rateLimiter.handleRateLimit on HTTP 429 with Retry-After', async () => {
-      const rateLimiter = new RateLimiter({ tokensPerSecond: 3, burstSize: 3 });
-      const handleRateLimitSpy = vi.spyOn(rateLimiter, 'handleRateLimit');
-
+    it('includes retryAfter on 429 with Retry-After header', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 429,
@@ -314,12 +311,11 @@ describe('PubMedClient', () => {
         text: () => Promise.resolve('Rate limited'),
       });
 
-      const client = new PubMedClient(baseConfig, rateLimiter);
+      const client = new PubMedClient(baseConfig, testRateLimiter);
       await expect(client.search('test')).rejects.toMatchObject({
         code: 'RATE_LIMIT_EXCEEDED',
+        retryAfter: 5000,
       });
-
-      expect(handleRateLimitSpy).toHaveBeenCalledWith(5000);
     });
 
 
