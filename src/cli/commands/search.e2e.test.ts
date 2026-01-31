@@ -397,6 +397,50 @@ filters:
     });
   });
 
+  describe('--dry-run CLI integration includes provider readiness', () => {
+    it('should include provider readiness in CLI dry-run output with query file', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const { createProgram } = await import('../index.js');
+      const logged: string[] = [];
+      const logSpy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+        logged.push(args.join(' '));
+      });
+      const program = createProgram();
+      program.exitOverride();
+      try {
+        await program.parseAsync(['node', 'test', 'search', queryPath, '--db', 'pubmed,eric', '--dry-run', '--config', ctx.configPath]);
+      } catch {
+        // exitOverride may throw
+      }
+      logSpy.mockRestore();
+      const output = logged.join('\n');
+      expect(output).toContain('Provider readiness:');
+      expect(output).toContain('pubmed');
+      expect(output).toContain('eric');
+      expect(output).toContain('Translated queries:');
+    });
+
+    it('should include provider readiness in CLI dry-run output with direct query', async () => {
+      const { createProgram } = await import('../index.js');
+      const logged: string[] = [];
+      const logSpy = vi.spyOn(console, 'log').mockImplementation((...args: unknown[]) => {
+        logged.push(args.join(' '));
+      });
+      const program = createProgram();
+      program.exitOverride();
+      try {
+        await program.parseAsync(['node', 'test', 'search', '--db', 'pubmed', '--query', 'diabetes[tiab]', '--dry-run', '--config', ctx.configPath]);
+      } catch {
+        // exitOverride may throw
+      }
+      logSpy.mockRestore();
+      const output = logged.join('\n');
+      expect(output).toContain('Provider readiness:');
+      expect(output).toContain('pubmed');
+      expect(output).toContain('Translated queries:');
+    });
+  });
+
   describe('--dry-run includes diagnostics section when applicable', () => {
     it('should not show diagnostics section for clean ERIC queries', async () => {
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
