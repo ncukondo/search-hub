@@ -71,9 +71,9 @@ export function createProviderInstance(
       if (!providerConfig.email) {
         const configPath = getConfigDir();
         console.warn(
-          'Warning: No email configured for PubMed.\n' +
-          '  → Edit ' + configPath + '/config.toml and set providers.pubmed.email\n' +
-          '  → Or run: search-hub config providers.pubmed.email "your@email.com"'
+          `Warning: No email configured for PubMed.\n` +
+          `  → Edit ${configPath}/config.toml and set providers.pubmed.email\n` +
+          `  → Or run: search-hub config providers.pubmed.email "your@email.com"`
         );
       }
       const pubmedOpts: PubMedConfig = {
@@ -102,9 +102,9 @@ export function createProviderInstance(
     case 'scopus': {
       if (!providerConfig.api_key) {
         console.warn(
-          'Warning: Scopus requires an API key. Set providers.scopus.api_key in config.\n' +
-          '  → Get an API key at https://dev.elsevier.com/\n' +
-          '  → Run: search-hub config providers.scopus.api_key "your-key"'
+          `Warning: Scopus requires an API key. Set providers.scopus.api_key in config.\n` +
+          `  → Get an API key at https://dev.elsevier.com/\n` +
+          `  → Run: search-hub config providers.scopus.api_key "your-key"`
         );
         return null;
       }
