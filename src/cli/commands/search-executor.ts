@@ -271,7 +271,7 @@ export async function executeSearch(
 
       // Skip provider if it could not be created (e.g. missing configuration)
       if (provider === null) {
-        const configError = providerName.charAt(0).toUpperCase() + providerName.slice(1) + ' requires an API key. Set providers.' + providerName + '.api_key in config.';
+        const configError = `${providerName}: provider configuration incomplete. See warning above for details.`;
         results[providerName] = { hits: 0, retrieved: 0, error: configError };
         await updateDatabaseStatus(
           sessionId,

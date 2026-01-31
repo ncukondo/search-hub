@@ -528,7 +528,7 @@ filters:
 
       // Should fail because all enabled providers were misconfigured
       expect(result.success).toBe(false);
-      expect(result.results?.['scopus']?.error).toContain('requires an API key');
+      expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
 
       warnSpy.mockRestore();
     });
@@ -567,7 +567,7 @@ filters:
       expect(result.success).toBe(true);
       expect(result.results?.['pubmed']).toBeDefined();
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
-      expect(result.results?.['scopus']?.error).toContain('Scopus requires an API key');
+      expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
 
       warnSpy.mockRestore();
@@ -612,7 +612,7 @@ filters:
       expect(result.results?.['scopus']?.hits).toBe(0);
       expect(result.results?.['scopus']?.retrieved).toBe(0);
       expect(result.results?.['scopus']?.error).toBe(
-        'Scopus requires an API key. Set providers.scopus.api_key in config.'
+        'scopus: provider configuration incomplete. See warning above for details.'
       );
 
       warnSpy.mockRestore();
