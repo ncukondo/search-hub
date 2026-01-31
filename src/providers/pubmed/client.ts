@@ -46,15 +46,9 @@ export class PubMedClient {
   private readonly config: PubMedConfig;
   private readonly rateLimiter: RateLimiter;
 
-  constructor(config: PubMedConfig) {
+  constructor(config: PubMedConfig, rateLimiter: RateLimiter) {
     this.config = config;
-
-    // Rate limit: 3 req/s without key, 10 req/s with key
-    const tokensPerSecond = config.apiKey ? 10 : 3;
-    this.rateLimiter = new RateLimiter({
-      tokensPerSecond,
-      burstSize: tokensPerSecond,
-    });
+    this.rateLimiter = rateLimiter;
   }
 
   /**
@@ -176,13 +170,14 @@ export class PubMedClient {
 
     if (response.status === 429) {
       const retryAfter = response.headers.get('Retry-After');
+      const retryAfterMs = retryAfter ? parseInt(retryAfter, 10) * 1000 : undefined;
       const error = this.createError(
         'RATE_LIMIT_EXCEEDED',
         'Too many requests',
         true
       ) as ProviderError & { retryAfter?: number };
-      if (retryAfter) {
-        error.retryAfter = parseInt(retryAfter, 10) * 1000;
+      if (retryAfterMs !== undefined) {
+        error.retryAfter = retryAfterMs;
       }
       throw error;
     }
