@@ -1420,7 +1420,7 @@ describe('search-hub search: UX improvements (Tasks #19 and #22)', () => {
 
       expect(result.success).toBe(true);
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
-      expect(result.results?.['scopus']?.error).toContain('Scopus requires an API key');
+      expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
 
       warnSpy.mockRestore();

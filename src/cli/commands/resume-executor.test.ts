@@ -640,7 +640,7 @@ describe('resume-executor', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const options: ResumeCommandOptions = { sessionId, retryFailed: true };
-      const result = await executeResume(options, sessionsDir, config, false);
+      await executeResume(options, sessionsDir, config, false);
 
       warnSpy.mockRestore();
 
