@@ -38,7 +38,7 @@ export class PubMedProvider extends BaseProvider {
   constructor(config: PubMedConfig) {
     super({
       ...config,
-      rateLimit: config.apiKey ? 10 : (config.rateLimit ?? 3),
+      rateLimit: config.rateLimit ?? (config.apiKey ? 10 : 3),
     });
     this.pubmedConfig = config;
     this.client = new PubMedClient(config, this.rateLimiter);
