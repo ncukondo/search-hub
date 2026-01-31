@@ -262,6 +262,8 @@ export class PubMedProvider extends BaseProvider {
 
     // Use history server for resume
     if (providerState.webenv && providerState.querykey) {
+      const webenv = providerState.webenv;
+      const querykey = providerState.querykey;
       this.currentState = {
         ...state,
         lastUpdated: new Date(),
@@ -272,8 +274,8 @@ export class PubMedProvider extends BaseProvider {
 
       while (totalRetrieved < state.totalResults) {
         const articles = await this.withRetry(() => this.client.fetchFromHistory({
-          webenv: providerState.webenv,
-          querykey: providerState.querykey,
+          webenv,
+          querykey,
           retstart,
           retmax: DEFAULT_PAGE_SIZE,
         }));
