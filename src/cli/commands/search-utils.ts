@@ -12,11 +12,16 @@ export function buildFailureErrorMessage(
     .filter(([, r]) => r.error)
     .map(([provider, r]) => `  ${provider}: ${r.error}`);
 
+  const suggestedActions = '\n\nSuggested actions:\n' +
+    '  → Run with --dry-run to inspect translated queries\n' +
+    '  → Check provider configuration: search-hub config\n' +
+    '  → Use --db <provider> to test a single provider';
+
   if (errorLines.length === 0) {
-    return 'All providers failed';
+    return 'All providers failed' + suggestedActions;
   }
 
-  return 'All providers failed:\n' + errorLines.join('\n');
+  return 'All providers failed:\n' + errorLines.join('\n') + suggestedActions;
 }
 
 /**

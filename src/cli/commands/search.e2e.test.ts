@@ -1308,3 +1308,122 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
     });
   });
 });
+
+
+describe('search-hub search: UX improvements (Tasks #19 and #22)', () => {
+  let ctx: E2EContext;
+
+  beforeEach(async () => {
+    ctx = await setupE2EContext();
+    vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  describe('PubMed email warning includes config path', () => {
+    it('should show config file path in PubMed email warning', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.pubmed.email = '';
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await executeSearch(
+        { queryFile: queryPath },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      expect(result.success).toBe(true);
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('No email configured for PubMed'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('config.toml'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('search-hub config providers.pubmed.email'));
+
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe('failed search shows suggested diagnostic commands', () => {
+    it('should include suggested actions when all providers fail', async () => {
+      // Create a failing mock for PubMed
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      // @ts-expect-error - Mocking only the properties we need for testing
+      vi.mocked(PubMedProvider).mockImplementationOnce(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({
+          native: 'test query',
+          provider: 'pubmed',
+        }),
+        search: vi.fn().mockReturnValue({
+          async next() {
+            throw new Error('Connection refused');
+          },
+          [Symbol.asyncIterator]() {
+            return this;
+          },
+        }),
+        testConnection: vi.fn().mockResolvedValue(false),
+      }));
+
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await executeSearch(
+        { queryFile: queryPath },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      warnSpy.mockRestore();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('All providers failed');
+      expect(result.error).toContain('Suggested actions:');
+      expect(result.error).toContain('--dry-run');
+      expect(result.error).toContain('search-hub config');
+      expect(result.error).toContain('--db');
+    });
+  });
+
+  describe('Scopus API key preflight check E2E', () => {
+    it('should skip Scopus and succeed with other providers when API key is missing', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await executeSearch(
+        { queryFile: queryPath },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
+
+      warnSpy.mockRestore();
+    });
+  });
+});

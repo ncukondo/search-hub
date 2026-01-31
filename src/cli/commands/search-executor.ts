@@ -37,6 +37,7 @@ import { translateQuery as translateScopus } from '../../providers/scopus/transl
 import { stringify as stringifyYaml } from 'yaml';
 import { registerArticles, saveRegistrationRecord } from '../../integration/register.js';
 import { buildFailureErrorMessage } from './search-utils.js';
+import { getConfigDir } from '../../config/paths.js';
 import type { RegistrationRecord } from '../../integration/types.js';
 import { checkRefAvailable } from '../../integration/ref-cli.js';
 
@@ -62,14 +63,17 @@ const IMPLEMENTED_PROVIDERS: ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopu
 export function createProviderInstance(
   name: ProviderName,
   config: Config
-): Provider {
+): Provider | null {
   const providerConfig = config.providers[name];
 
   switch (name) {
     case 'pubmed': {
       if (!providerConfig.email) {
+        const configPath = getConfigDir();
         console.warn(
-          'Warning: No email configured for PubMed. Set providers.pubmed.email in config.'
+          `Warning: No email configured for PubMed.\n` +
+          `  → Edit ${configPath}/config.toml and set providers.pubmed.email\n` +
+          `  → Or run: search-hub config providers.pubmed.email "your@email.com"`
         );
       }
       const pubmedOpts: PubMedConfig = {
@@ -96,8 +100,16 @@ export function createProviderInstance(
         retries: providerConfig.retries,
       });
     case 'scopus': {
+      if (!providerConfig.api_key) {
+        console.warn(
+          `Warning: Scopus requires an API key. Set providers.scopus.api_key in config.\n` +
+          `  → Get an API key at https://dev.elsevier.com/\n` +
+          `  → Run: search-hub config providers.scopus.api_key "your-key"`
+        );
+        return null;
+      }
       const scopusOpts: ScopusConfig = {
-        apiKey: providerConfig.api_key ?? '',
+        apiKey: providerConfig.api_key,
         rateLimit: providerConfig.rate_limit,
         timeout: providerConfig.timeout,
         retries: providerConfig.retries,
@@ -256,6 +268,27 @@ export async function executeSearch(
     try {
       // Create provider instance
       const provider = createProviderInstance(providerName, config);
+
+      // Skip provider if it could not be created (e.g. missing configuration)
+      if (provider === null) {
+        const configError = `${providerName}: provider configuration incomplete. See warning above for details.`;
+        results[providerName] = { hits: 0, retrieved: 0, error: configError };
+        await updateDatabaseStatus(
+          sessionId,
+          providerName,
+          {
+            status: 'failed',
+            completedAt: new Date().toISOString(),
+            error: {
+              code: 'CONFIG_ERROR',
+              message: configError,
+              retryable: false,
+            },
+          },
+          sessionsDir
+        );
+        continue;
+      }
 
       // Translate query
       let translatedQuery: TranslatedQuery;
