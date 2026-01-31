@@ -33,6 +33,10 @@ This file tracks high-level progress. For implementation details, see individual
 | 24 | Fix PR Review Issues (PR #25 and PR #26) | 19, 20, 22 | ✅ Completed | [20260130-01](completed/20260130-01-pr-review-fixups.md) |
 | 25 | Separate Real-API Tests into Dedicated Vitest Project | 13 | ✅ Completed | [20260130-02](completed/20260130-02-separate-api-tests.md) |
 | 26 | Add Retry Logic to PubMedProvider and Consolidate Rate Limiters | 5, 6 | ✅ Completed | [20260130-03](completed/20260130-03-pubmed-retry-ratelimiter.md) |
+| 27 | Flatten Inline XML Elements in PubMed Article Titles | 6 | 🔲 Not Started | [20260131-01](active/20260131-01-flatten-pubmed-inline-xml.md) |
+| 28 | Deduplicate Search Results by Identifier | 10 | 🔲 Not Started | [20260131-02](active/20260131-02-deduplicate-search-results.md) |
+| 29 | Improve Scopus Authentication Error Diagnostics | 9, 20 | 🔲 Not Started | [20260131-03](active/20260131-03-scopus-auth-diagnostics.md) |
+| 30 | Improve IDs Export Format and Add Year Field | 10 | 🔲 Not Started | [20260131-04](active/20260131-04-export-ids-format-improvement.md) |
 
 ## Development Flow
 
