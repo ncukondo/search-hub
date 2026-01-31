@@ -455,7 +455,10 @@ Examples:
                 );
                 const providers = translations.map(t => t.provider) as ProviderName[];
                 if (!globalOpts.quiet) {
-                  console.log(formatDryRunOutput(translations, dryRunConfig ? { config: dryRunConfig, providers } : {}));
+                  const dryRunOpts = dryRunConfig
+                    ? { config: dryRunConfig, providers }
+                    : {};
+                  console.log(formatDryRunOutput(translations, dryRunOpts));
                 }
               } else {
                 if (!globalOpts.quiet) {
@@ -473,7 +476,10 @@ Examples:
                 },
               ];
               if (!globalOpts.quiet) {
-                  console.log(formatDryRunOutput(translations, dryRunConfig ? { config: dryRunConfig, providers: searchOpts.providers as ProviderName[] } : {}));
+                const dryRunOpts = dryRunConfig
+                  ? { config: dryRunConfig, providers: searchOpts.providers as ProviderName[] }
+                  : {};
+                console.log(formatDryRunOutput(translations, dryRunOpts));
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;

@@ -38,6 +38,7 @@ export interface DryRunOutputOptions {
   config?: Config;
   providers?: ProviderName[];
 }
+
 export function parseSearchOptions(
   queryFile: string | undefined,
   options: CommandLineOptions
@@ -99,6 +100,7 @@ export function validateSearchInput(options: SearchCommandOptions): ValidationRe
 
   return { valid: true };
 }
+
 /**
  * Format provider readiness summary for dry-run output.
  */
@@ -138,6 +140,7 @@ function getProviderStatus(
       return { ready: true, message: 'ready' };
   }
 }
+
 /**
  * Format query diagnostics warnings for dry-run output.
  */
