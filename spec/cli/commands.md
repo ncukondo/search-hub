@@ -52,7 +52,7 @@ search-hub search --db <provider> --query <query-string> [options]
 | `--query <string>` | Direct query string (requires --db) |
 | `--name <string>` | Session name (default: from query file) |
 | `--max-results <n>` | Limit results per database |
-| `--dry-run` | Show translated queries without executing |
+| `--dry-run` | Show translated queries, provider readiness, and diagnostics without executing |
 | `--no-resume` | Start fresh even if session exists |
 
 ### Examples

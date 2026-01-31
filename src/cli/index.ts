@@ -10,7 +10,7 @@ import { Command } from 'commander';
 import { VERSION } from '../version.js';
 import { init } from './commands/init.js';
 import { EXIT_CODES } from './exit-codes.js';
-import { loadConfig, saveConfig, getDefaultConfig } from '../config/index.js';
+import { loadConfig, saveConfig, getDefaultConfig, type Config } from '../config/index.js';
 import { getDefaultConfigPath } from '../config/paths.js';
 import {
   viewConfig,
@@ -432,6 +432,14 @@ Examples:
 
           // Handle dry-run mode
           if (searchOpts.dryRun) {
+            // Try to load config for provider readiness display
+            let dryRunConfig: Config | undefined;
+            try {
+              dryRunConfig = await loadConfig(globalOpts.config ? { globalConfigPath: globalOpts.config } : {});
+            } catch {
+              // Config unavailable, readiness section will be omitted
+            }
+
             if (searchOpts.queryFile) {
               // Translate from file
               const translateOpts = searchOpts.providers
@@ -445,8 +453,12 @@ Examples:
                 const translations = Object.entries(result.translations).map(
                   ([provider, t]) => ({ provider, query: t.native })
                 );
+                const providers = translations.map(t => t.provider) as ProviderName[];
                 if (!globalOpts.quiet) {
-                  console.log(formatDryRunOutput(translations));
+                  const dryRunOpts = dryRunConfig
+                    ? { config: dryRunConfig, providers }
+                    : {};
+                  console.log(formatDryRunOutput(translations, dryRunOpts));
                 }
               } else {
                 if (!globalOpts.quiet) {
@@ -464,7 +476,10 @@ Examples:
                 },
               ];
               if (!globalOpts.quiet) {
-                console.log(formatDryRunOutput(translations));
+                const dryRunOpts = dryRunConfig
+                  ? { config: dryRunConfig, providers: searchOpts.providers as ProviderName[] }
+                  : {};
+                console.log(formatDryRunOutput(translations, dryRunOpts));
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;
