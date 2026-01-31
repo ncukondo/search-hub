@@ -1,8 +1,8 @@
 /**
- * PubMed Provider E2E Tests
+ * PubMed Provider API Tests
  *
  * These tests call the actual PubMed API and should be run separately:
- *   npm run test:e2e
+ *   npm run test:api
  *
  * Requirements:
  * - Network access to PubMed E-utilities

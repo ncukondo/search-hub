@@ -1,8 +1,8 @@
 /**
- * ERIC Provider E2E Tests
+ * ERIC Provider API Tests
  *
  * These tests call the actual ERIC API and should be run separately:
- *   npm run test:e2e
+ *   npm run test:api
  *
  * Requirements:
  * - Network access to ERIC API (api.ies.ed.gov)

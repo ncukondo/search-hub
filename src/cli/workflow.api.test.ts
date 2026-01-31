@@ -1,8 +1,11 @@
 /**
- * Full Workflow E2E Test
+ * Full Workflow API Test
  *
  * Tests a complete user workflow from init to export using subprocess execution.
  * This avoids module mocking issues by running actual CLI commands.
+ * Run separately with: npm run test:api
+ *
+ * Requires: SEARCH_HUB_PUBMED_API_KEY (workflow tests use PubMed)
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { mkdir, writeFile, readFile, rm } from 'node:fs/promises';
@@ -13,6 +16,8 @@ import { tmpdir } from 'node:os';
 import { createQueryFile, createSimpleQuery } from './e2e-helpers.js';
 
 const execAsync = promisify(exec);
+
+const skip = !process.env["SEARCH_HUB_PUBMED_API_KEY"];
 
 /**
  * Get the CLI command path for testing.
@@ -45,7 +50,7 @@ async function runCli(
   }
 }
 
-describe('Full Workflow E2E', () => {
+describe.skipIf(skip)('Full Workflow API', () => {
   let tempDir: string;
   let sessionsDir: string;
   let configPath: string;
