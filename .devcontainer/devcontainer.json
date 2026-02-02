@@ -35,5 +35,6 @@
     }
   },
   "postCreateCommand": "sudo chown vscode:vscode /workspaces",
+  "postStartCommand": "tmux has-session -t main 2>/dev/null || tmux new-session -d -s main -c /workspaces/search-hub",
   "remoteUser": "vscode"
 }

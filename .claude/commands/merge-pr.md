@@ -12,6 +12,14 @@ gh pr merge $ARGUMENTS --merge
 ```
 
 ### 3. cleanup
+
+#### workmuxが利用可能な場合（推奨）
+```bash
+# worktree + tmuxウィンドウ + ブランチを一括cleanup
+workmux remove <name>
+```
+
+#### workmuxが無い場合
 - mainを最新にする (`git checkout main && git pull`)
 - `git worktree list` で該当のworktree（`../search-hub--worktrees/` 内）を確認し削除
 - 不要になったブランチを削除

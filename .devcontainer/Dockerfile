@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     git \
     build-essential \
     ca-certificates \
+    tmux \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js v24.4.1
@@ -37,6 +38,9 @@ USER $USERNAME
 
 # Install Claude CLI (native binary) as non-root user
 RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# Install workmux (tmux-based parallel agent orchestration)
+RUN curl -fsSL https://raw.githubusercontent.com/raine/workmux/main/scripts/install.sh | bash
 
 # Configure npm global directory for vscode user
 ENV NPM_CONFIG_PREFIX=/home/$USERNAME/.npm-global
