@@ -6,6 +6,7 @@ import {
   formatJson,
   formatJsonl,
   deduplicateArticles,
+  type JsonExportMetadata,
 } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 
@@ -318,6 +319,102 @@ describe('export command', () => {
       expect(parsed[1].year).toBe(2025);
       expect(parsed[2].year).toBe(2025);
       expect(parsed[3].year).toBeNull();
+    });
+
+    it('should produce bare array when metadata is not provided (backward compatible)', () => {
+      const result = formatJson(mockArticles);
+      const parsed = JSON.parse(result);
+
+      expect(Array.isArray(parsed)).toBe(true);
+      expect(parsed).toHaveLength(3);
+    });
+
+    it('should produce envelope with session, summary, results when metadata is provided', () => {
+      const metadata: JsonExportMetadata = {
+        sessionId: '20240115_diabetes-ai_a3f2c1',
+        sessionName: 'diabetes_ai_scoping',
+        createdAt: '2024-01-15T10:00:00Z',
+        databases: { pubmed: 2, eric: 1 },
+      };
+
+      const result = formatJson(mockArticles, metadata);
+      const parsed = JSON.parse(result);
+
+      expect(parsed).toHaveProperty('session');
+      expect(parsed).toHaveProperty('summary');
+      expect(parsed).toHaveProperty('results');
+
+      expect(parsed.session.id).toBe('20240115_diabetes-ai_a3f2c1');
+      expect(parsed.session.name).toBe('diabetes_ai_scoping');
+      expect(parsed.session.createdAt).toBe('2024-01-15T10:00:00Z');
+    });
+
+    it('should have summary.totalResults matching article count', () => {
+      const metadata: JsonExportMetadata = {
+        sessionId: 'test-session',
+        sessionName: 'test',
+        createdAt: '2024-01-15T10:00:00Z',
+        databases: { pubmed: 2, eric: 1 },
+      };
+
+      const result = formatJson(mockArticles, metadata);
+      const parsed = JSON.parse(result);
+
+      expect(parsed.summary.totalResults).toBe(mockArticles.length);
+    });
+
+    it('should have summary.databases matching per-database counts', () => {
+      const metadata: JsonExportMetadata = {
+        sessionId: 'test-session',
+        sessionName: 'test',
+        createdAt: '2024-01-15T10:00:00Z',
+        databases: { pubmed: 800, eric: 200 },
+      };
+
+      const result = formatJson(mockArticles, metadata);
+      const parsed = JSON.parse(result);
+
+      expect(parsed.summary.databases).toEqual({ pubmed: 800, eric: 200 });
+    });
+
+    it('should include year field in results within envelope', () => {
+      const articles: Article[] = [
+        {
+          title: 'Article with date',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+          publicationDate: '2025-03-15',
+        },
+      ];
+
+      const metadata: JsonExportMetadata = {
+        sessionId: 'test-session',
+        sessionName: 'test',
+        createdAt: '2024-01-15T10:00:00Z',
+        databases: { pubmed: 1 },
+      };
+
+      const result = formatJson(articles, metadata);
+      const parsed = JSON.parse(result);
+
+      expect(parsed.results[0].year).toBe(2025);
+    });
+
+    it('should handle empty articles with metadata', () => {
+      const metadata: JsonExportMetadata = {
+        sessionId: 'empty-session',
+        sessionName: 'empty',
+        createdAt: '2024-01-15T10:00:00Z',
+        databases: {},
+      };
+
+      const result = formatJson([], metadata);
+      const parsed = JSON.parse(result);
+
+      expect(parsed.session.id).toBe('empty-session');
+      expect(parsed.summary.totalResults).toBe(0);
+      expect(parsed.results).toEqual([]);
     });
   });
 
