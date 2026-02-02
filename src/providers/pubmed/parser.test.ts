@@ -583,6 +583,106 @@ describe('PubMed Parser', () => {
       expect(result.articles[0]!.title).toBe('Valid Article');
     });
 
+    it('should flatten inline XML elements in article titles', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">40000001</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Effect of <i>Pseudomonas aeruginosa</i> on mortality</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">40000001</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.title).toBe('string');
+      expect(article.title).toBe('Effect of Pseudomonas aeruginosa on mortality');
+    });
+
+    it('should flatten <sub> elements in article titles', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">40000002</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle><sub>β</sub>-lactam resistance</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">40000002</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.title).toBe('string');
+      expect(article.title).toBe('β-lactam resistance');
+    });
+
+    it('should handle deeply nested inline XML in titles', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">40000003</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Study of <i><sub>x</sub> and <sup>y</sup></i> values</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">40000003</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.title).toBe('string');
+      expect(article.title).toBe('Study of x and y values');
+    });
+
+    it('should leave titles without inline XML unchanged', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">40000004</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Simple title without any markup</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">40000004</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.title).toBe('string');
+      expect(article.title).toBe('Simple title without any markup');
+    });
+
     it('should skip malformed articles missing Article element', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <PubmedArticleSet>

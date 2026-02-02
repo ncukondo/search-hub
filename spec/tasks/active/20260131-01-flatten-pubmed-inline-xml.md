@@ -41,25 +41,26 @@ HTML entities (e.g., `&#x200a;`, `&#x2264;`, `&#x202f;`).
 
 ### Step 1: Add failing tests for inline XML in titles
 
-- [ ] Write test: `src/providers/pubmed/parser.test.ts`
+- [x] Write test: `src/providers/pubmed/parser.test.ts`
   - Test: `<ArticleTitle>Effect of <i>Pseudomonas aeruginosa</i> on mortality</ArticleTitle>`
     should parse to `"Effect of Pseudomonas aeruginosa on mortality"`
   - Test: `<ArticleTitle><sub>β</sub>-lactam resistance</ArticleTitle>`
     should parse to `"β-lactam resistance"`
   - Test: titles without inline XML should remain unchanged
-- [ ] Verify test fails (Red)
-- [ ] Acceptance: Tests demonstrate the nested object bug
+- [x] Verify test fails (Red)
+- [x] Acceptance: Tests demonstrate the nested object bug
 
 ### Step 2: Implement title flattening
 
-- [ ] Modify `src/providers/pubmed/parser.ts`
-  - Add a utility function to recursively flatten parsed XML nodes into a plain string
-  - Apply flattening when extracting `ArticleTitle` (line 292)
-  - Handle common inline elements: `<i>`, `<b>`, `<sub>`, `<sup>`, `<u>`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: All title values are plain strings
+- [x] Modify `src/providers/pubmed/parser.ts`
+  - Added `stopNodes: ['*.ArticleTitle', '*.AbstractText']` to parser config to preserve raw XML
+  - Added `stripXmlTags()` utility to strip inline markup from preserved raw strings
+  - Applied `stripXmlTags()` when extracting `ArticleTitle`
+  - Handles all inline elements generically via regex tag stripping
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: All title values are plain strings
 
 ### Step 3: Add failing tests for HTML entities in abstracts
 

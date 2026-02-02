@@ -16,12 +16,27 @@ export interface EFetchResult {
 }
 
 /**
+ * Strip XML/HTML tags from a string, returning only the text content.
+ *
+ * Used to clean inline markup (e.g. `<i>`, `<sub>`, `<sup>`) preserved by
+ * the parser's `stopNodes` configuration.
+ */
+export function stripXmlTags(value: string): string {
+  return value.replace(/<[^>]+>/g, '');
+}
+
+/**
  * XML Parser configured for PubMed responses.
+ *
+ * `stopNodes` prevents the parser from interpreting inline markup within
+ * `ArticleTitle` and `AbstractText`, preserving them as raw strings
+ * that can be cleaned via `stripXmlTags`.
  */
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   textNodeName: '#text',
+  stopNodes: ['*.ArticleTitle', '*.AbstractText'],
   isArray: (name) => {
     // These elements should always be arrays
     const arrayElements = [
@@ -289,7 +304,7 @@ function parsePubMedArticle(articleData: {
   const article: PubMedArticle = {
     pmid,
     source: 'pubmed',
-    title: articleContent.ArticleTitle ?? '',
+    title: stripXmlTags(String(articleContent.ArticleTitle ?? '')),
     authors,
     retrievedAt: new Date().toISOString(),
   };
