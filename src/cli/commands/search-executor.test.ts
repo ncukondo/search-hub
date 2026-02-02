@@ -117,7 +117,7 @@ vi.mock('../../integration/ref-cli.js', () => ({
 }));
 
 // Import after mocking
-const { executeSearch, createProviderInstance } = await import('./search-executor.js');
+const { executeSearch, createProviderInstance, isProviderConfigured } = await import('./search-executor.js');
 
 describe('search-executor', () => {
   let tempDir: string;
@@ -480,6 +480,35 @@ filters:
       expect(() =>
         createProviderInstance('wos' as any, config)
       ).toThrow('not implemented');
+    });
+  });
+
+  describe('isProviderConfigured', () => {
+    it('should return false for scopus without API key', () => {
+      config.providers.scopus.api_key = '';
+      expect(isProviderConfigured('scopus', config)).toBe(false);
+    });
+
+    it('should return false for scopus with undefined API key', () => {
+      config.providers.scopus.api_key = undefined as any;
+      expect(isProviderConfigured('scopus', config)).toBe(false);
+    });
+
+    it('should return true for scopus with API key', () => {
+      config.providers.scopus.api_key = 'test-api-key';
+      expect(isProviderConfigured('scopus', config)).toBe(true);
+    });
+
+    it('should return true for pubmed regardless of config', () => {
+      expect(isProviderConfigured('pubmed', config)).toBe(true);
+    });
+
+    it('should return true for eric regardless of config', () => {
+      expect(isProviderConfigured('eric', config)).toBe(true);
+    });
+
+    it('should return true for arxiv regardless of config', () => {
+      expect(isProviderConfigured('arxiv', config)).toBe(true);
     });
   });
 

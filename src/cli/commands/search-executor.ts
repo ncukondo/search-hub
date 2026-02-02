@@ -58,6 +58,19 @@ export interface SearchExecutionResult {
 const IMPLEMENTED_PROVIDERS: ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopus'];
 
 /**
+ * Check if a provider has the required configuration (e.g., API keys).
+ * Providers that require no special configuration always return true.
+ */
+export function isProviderConfigured(name: ProviderName, config: Config): boolean {
+  switch (name) {
+    case 'scopus':
+      return !!config.providers.scopus.api_key;
+    default:
+      return true; // pubmed, eric, arxiv require no API key
+  }
+}
+
+/**
  * Create a provider instance for the given provider name.
  */
 export function createProviderInstance(

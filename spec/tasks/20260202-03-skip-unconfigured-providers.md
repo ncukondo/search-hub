@@ -41,15 +41,15 @@ function isProviderConfigured(name: ProviderName, config: Config): boolean {
 
 ### Step 1: Add provider configuration check
 
-- [ ] Write test: `src/cli/commands/search-executor.test.ts`
+- [x] Write test: `src/cli/commands/search-executor.test.ts`
   - Test: `isProviderConfigured('scopus', configWithoutKey)` returns `false`
   - Test: `isProviderConfigured('scopus', configWithKey)` returns `true`
   - Test: `isProviderConfigured('pubmed', anyConfig)` returns `true`
-- [ ] Verify test fails (Red)
-- [ ] Implement `isProviderConfigured()` in `src/cli/commands/search-executor.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Configuration check works for all providers
+- [x] Verify test fails (Red)
+- [x] Implement `isProviderConfigured()` in `src/cli/commands/search-executor.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Configuration check works for all providers
 
 ### Step 2: Skip unconfigured providers in default mode
 
