@@ -73,6 +73,9 @@ async function createTestSession(
     };
     if (a.pmid) article.pmid = a.pmid;
     if (a.doi) article.doi = a.doi;
+    if (a.arxivId) article.arxivId = a.arxivId;
+    if (a.ericId) article.ericId = a.ericId;
+    if (a.scopusId) article.scopusId = a.scopusId;
     if (a.abstract) article.abstract = a.abstract;
     return article;
   });
@@ -127,7 +130,30 @@ describe('register command e2e', () => {
     expect(result.stdout).toContain('pmid:87654321');
     expect(result.stdout).toContain('10.1234/test');
     expect(result.stdout).toContain('1 article');
-    expect(result.stdout).toContain('no identifier');
+    expect(result.stdout).toContain('no DOI or PMID');
+  });
+
+  it('should show details for no-ID articles in dry-run', async () => {
+    await createTestSession(tempDir, sessionId, [
+      { pmid: '12345678', title: 'Article with PMID' },
+      { title: 'Article from arXiv', source: 'arxiv', arxivId: '2401.12345' },
+      { title: 'Plain article without any IDs' },
+    ]);
+
+    const cliCmd = getCliCommand();
+    const result = await execAsync(
+      `${cliCmd} register ${sessionId} --session-dir ${tempDir} --dry-run`,
+      { cwd: path.join(__dirname, '../..') }
+    );
+
+    // Should show registrable count
+    expect(result.stdout).toContain('Would register 1 reference');
+    // Should show details for no-ID articles
+    expect(result.stdout).toContain('2 articles will be skipped (no DOI or PMID)');
+    expect(result.stdout).toContain('"Article from arXiv"');
+    expect(result.stdout).toContain('has: arxiv:2401.12345');
+    expect(result.stdout).toContain('"Plain article without any IDs"');
+    expect(result.stdout).toContain('source: pubmed');
   });
 
   it('should handle --dry-run without creating registration.json', async () => {

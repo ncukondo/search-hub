@@ -137,13 +137,42 @@ export function formatDryRunOutput(articles: Article[]): string {
     lines.push(`  - ${id}: ${title}`);
   }
 
-  // Note about articles without IDs
+  // Details about articles without DOI/PMID
   if (withoutId.length > 0) {
     lines.push('');
     lines.push(
-      `${withoutId.length} article${withoutId.length !== 1 ? 's' : ''} will be skipped (no identifier)`
+      `${withoutId.length} article${withoutId.length !== 1 ? 's' : ''} will be skipped (no DOI or PMID):`
     );
+
+    const maxDisplay = 10;
+    const displayed = withoutId.slice(0, maxDisplay);
+
+    for (const article of displayed) {
+      const truncatedTitle = article.title.length > 50
+        ? article.title.substring(0, 50) + '...'
+        : article.title;
+
+      const altIds = getAlternativeIds(article);
+      const hasAltIds = altIds.length > 0 ? `, has: ${altIds.join(', ')}` : '';
+
+      lines.push(`  - "${truncatedTitle}" (source: ${article.source}${hasAltIds})`);
+    }
+
+    if (withoutId.length > maxDisplay) {
+      lines.push(`  ... and ${withoutId.length - maxDisplay} more`);
+    }
   }
 
   return lines.join('\n');
+}
+
+/**
+ * Get alternative (non-DOI/PMID) identifiers for an article.
+ */
+function getAlternativeIds(article: Article): string[] {
+  const ids: string[] = [];
+  if (article.arxivId) ids.push(`arxiv:${article.arxivId}`);
+  if (article.ericId) ids.push(`eric:${article.ericId}`);
+  if (article.scopusId) ids.push(`scopus:${article.scopusId}`);
+  return ids;
 }

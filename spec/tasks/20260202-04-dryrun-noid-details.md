@@ -43,25 +43,25 @@ Improved:
 
 ### Step 1: Enhance dry-run output for no-ID articles
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: articles without DOI/PMID show title, source, and alternative IDs
   - Test: titles are truncated at 50 characters with "..."
   - Test: maximum 10 articles are shown, remainder as "... and N more"
   - Test: articles with no alternative IDs show only title and source
-- [ ] Verify test fails (Red)
-- [ ] Modify `formatDryRunOutput()` in `src/cli/commands/register.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Dry-run output shows helpful details for skipped articles
+- [x] Verify test fails (Red)
+- [x] Modify `formatDryRunOutput()` in `src/cli/commands/register.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Dry-run output shows helpful details for skipped articles
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/register.e2e.test.ts` (or update existing)
+- [x] Write E2E test: `src/integration/register.e2e.test.ts` (updated existing)
   - Test: dry-run with session containing no-ID articles shows detailed output
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Run `register --dry-run` on a real session
-- [ ] Acceptance: All tests pass, dry-run output is informative
+- [x] Acceptance: All tests pass, dry-run output is informative
 
 ## Notes
 
