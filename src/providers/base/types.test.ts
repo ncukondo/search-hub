@@ -297,6 +297,16 @@ describe('Provider Types', () => {
         expect(isAuthError(error)).toBe(true);
       });
 
+      it('returns true for ACCESS_DENIED', () => {
+        const error: AuthError = {
+          code: 'ACCESS_DENIED',
+          message: 'Access denied',
+          provider: 'scopus',
+          retryable: false,
+        };
+        expect(isAuthError(error)).toBe(true);
+      });
+
       it('returns false for other provider errors', () => {
         const error = createProviderError(
           'NETWORK_ERROR',

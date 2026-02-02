@@ -195,7 +195,7 @@ export class ScopusClient {
 
       case 403:
         return createProviderError(
-          'API_KEY_INVALID',
+          'ACCESS_DENIED',
           `Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.`,
           'scopus',
           { retryable: false }

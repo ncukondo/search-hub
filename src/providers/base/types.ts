@@ -135,6 +135,7 @@ export type ProviderErrorCode =
   | 'PROVIDER_NOT_AVAILABLE'
   | 'API_KEY_MISSING'
   | 'API_KEY_INVALID'
+  | 'ACCESS_DENIED'
   | 'RATE_LIMIT_EXCEEDED'
   | 'NETWORK_ERROR'
   | 'PARSE_ERROR'
@@ -165,7 +166,7 @@ export interface RateLimitError extends ProviderError {
  * Authentication/authorization error.
  */
 export interface AuthError extends ProviderError {
-  code: 'API_KEY_MISSING' | 'API_KEY_INVALID';
+  code: 'API_KEY_MISSING' | 'API_KEY_INVALID' | 'ACCESS_DENIED';
 }
 
 /**
@@ -215,7 +216,7 @@ export function isRateLimitError(error: unknown): error is RateLimitError {
 export function isAuthError(error: unknown): error is AuthError {
   return (
     isProviderError(error) &&
-    (error.code === 'API_KEY_MISSING' || error.code === 'API_KEY_INVALID')
+    (error.code === 'API_KEY_MISSING' || error.code === 'API_KEY_INVALID' || error.code === 'ACCESS_DENIED')
   );
 }
 

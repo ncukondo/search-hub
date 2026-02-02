@@ -330,7 +330,7 @@ describe('Scopus authentication diagnostics E2E', () => {
               new Error(
                 'Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.'
               ),
-              { code: 'API_KEY_INVALID', retryable: false }
+              { code: 'ACCESS_DENIED', retryable: false }
             );
             throw error;
           },

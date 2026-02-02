@@ -283,7 +283,7 @@ describe('ScopusClient', () => {
 
       const client = new ScopusClient(config);
       await expect(client.search('TITLE(test)')).rejects.toMatchObject({
-        code: 'API_KEY_INVALID',
+        code: 'ACCESS_DENIED',
         retryable: false,
       });
       // Re-mock for message check

@@ -34,3 +34,6 @@ coverage/
 
 # Local config with secrets
 search-hub.config.toml
+
+# Worker status (auto-generated)
+.worker-status.json

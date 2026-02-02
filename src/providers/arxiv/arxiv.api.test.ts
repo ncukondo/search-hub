@@ -25,7 +25,7 @@ describe('arXiv Provider E2E', () => {
   describe('testConnection', () => {
     it('should connect to arXiv API successfully', async () => {
       const result = await provider.testConnection();
-      expect(result).toBe(true);
+      expect(result).toEqual({ ok: true });
     }, 30000); // 30 second timeout
   });
 
