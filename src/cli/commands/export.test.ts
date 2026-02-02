@@ -5,6 +5,7 @@ import {
   formatIds,
   formatJson,
   formatJsonl,
+  formatCslJson,
   deduplicateArticles,
   type JsonExportMetadata,
 } from './export.js';
@@ -457,6 +458,119 @@ describe('export command', () => {
 
       expect(JSON.parse(lines[0]!).year).toBe(2025);
       expect(JSON.parse(lines[1]!).year).toBeNull();
+    });
+  });
+
+  describe('formatCslJson', () => {
+    it('should produce a valid CSL-JSON array', () => {
+      const result = formatCslJson(mockArticles);
+      const parsed = JSON.parse(result);
+
+      expect(Array.isArray(parsed)).toBe(true);
+      expect(parsed).toHaveLength(3);
+    });
+
+    it('should produce pretty-printed JSON (2-space indent)', () => {
+      const result = formatCslJson(mockArticles);
+
+      expect(result).toContain('\n');
+      expect(result).toContain('  '); // 2-space indentation
+      // Verify it matches expected pretty-print format
+      const parsed = JSON.parse(result);
+      expect(result).toBe(JSON.stringify(parsed, null, 2));
+    });
+
+    it('should map article fields correctly via articlesToCslJson()', () => {
+      const articles: Article[] = [
+        {
+          title: 'Test CSL Article',
+          authors: [{ family: 'Doe', given: 'John' }, { family: 'Smith', given: 'Jane' }],
+          doi: '10.1234/test',
+          pmid: '11111111',
+          abstract: 'Test abstract',
+          publicationDate: '2024-03-15',
+          journal: 'Journal of Testing',
+          volume: '42',
+          issue: '3',
+          pages: '100-110',
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+      ];
+
+      const result = formatCslJson(articles);
+      const parsed = JSON.parse(result);
+
+      expect(parsed).toHaveLength(1);
+      const item = parsed[0];
+      expect(item.type).toBe('article-journal');
+      expect(item.title).toBe('Test CSL Article');
+      expect(item.author).toEqual([
+        { family: 'Doe', given: 'John' },
+        { family: 'Smith', given: 'Jane' },
+      ]);
+      expect(item.DOI).toBe('10.1234/test');
+      expect(item.PMID).toBe('11111111');
+      expect(item.abstract).toBe('Test abstract');
+      expect(item.issued).toEqual({ 'date-parts': [[2024, 3, 15]] });
+      expect(item['container-title']).toBe('Journal of Testing');
+      expect(item.volume).toBe('42');
+      expect(item.issue).toBe('3');
+      expect(item.page).toBe('100-110');
+    });
+
+    it('should handle empty array', () => {
+      const result = formatCslJson([]);
+      const parsed = JSON.parse(result);
+
+      expect(parsed).toEqual([]);
+    });
+
+    it('should generate unique IDs for articles with same author/year', () => {
+      const articles: Article[] = [
+        {
+          title: 'First Article',
+          authors: [{ family: 'Smith', given: 'John' }],
+          publicationDate: '2024-01-01',
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+        {
+          title: 'Second Article',
+          authors: [{ family: 'Smith', given: 'John' }],
+          publicationDate: '2024-06-01',
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+      ];
+
+      const result = formatCslJson(articles);
+      const parsed = JSON.parse(result);
+
+      expect(parsed[0].id).toBe('smith-2024');
+      expect(parsed[1].id).toBe('smith-2024a');
+    });
+  });
+
+  describe('validateExportInput with csl-json format', () => {
+    it('should accept csl-json as a valid format', () => {
+      const result = validateExportInput({
+        sessionId: 'session-123',
+        format: 'csl-json',
+      });
+
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject id-type with csl-json format', () => {
+      const result = validateExportInput({
+        sessionId: 'session-123',
+        format: 'csl-json',
+        idType: 'doi',
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('ids');
     });
   });
 

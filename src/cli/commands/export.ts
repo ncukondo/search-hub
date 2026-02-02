@@ -1,8 +1,9 @@
 import type { ProviderName } from '../../providers/base/types.js';
 import type { Article } from '../../providers/base/types.js';
 import { parseProviderNames } from '../utils/validation.js';
+import { articlesToCslJson } from '../../integration/csl-json.js';
 
-export type ExportFormat = 'ids' | 'json' | 'jsonl';
+export type ExportFormat = 'ids' | 'json' | 'jsonl' | 'csl-json';
 export type IdType = 'doi' | 'pmid' | 'all';
 
 export interface ExportCommandOptions {
@@ -25,7 +26,7 @@ export interface ValidationResult {
   error?: string;
 }
 
-const VALID_FORMATS: ExportFormat[] = ['ids', 'json', 'jsonl'];
+const VALID_FORMATS: ExportFormat[] = ['ids', 'json', 'jsonl', 'csl-json'];
 const VALID_ID_TYPES: IdType[] = ['doi', 'pmid', 'all'];
 
 export function parseExportOptions(
@@ -171,6 +172,10 @@ export function formatJsonl(articles: Article[]): string {
   return addYearField(articles).map((article) => JSON.stringify(article)).join('\n');
 }
 
+export function formatCslJson(articles: Article[]): string {
+  const cslItems = articlesToCslJson(articles);
+  return JSON.stringify(cslItems, null, 2);
+}
 
 function getArticleKeys(article: Article): string[] {
   const keys: string[] = [];
