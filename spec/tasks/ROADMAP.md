@@ -38,11 +38,11 @@ This file tracks high-level progress. For implementation details, see individual
 | 29 | Improve Scopus Authentication Error Diagnostics | 9, 20 | ✅ Completed | [20260131-03](completed/20260131-03-scopus-auth-diagnostics.md) |
 | 30 | Improve IDs Export Format and Add Year Field | 10 | ✅ Completed | [20260131-04](completed/20260131-04-export-ids-format-improvement.md) |
 | 31 | Article→CSL-JSON Conversion & Register Bulk Import | 11 | ✅ Completed | [20260202-01](completed/20260202-01-register-bulk-import.md) |
-| 32 | CSL-JSON Export Format | 31 | 🔲 Pending | [20260202-02](20260202-02-csl-json-export.md) |
+| 32 | CSL-JSON Export Format | 31 | ✅ Completed | [20260202-02](completed/20260202-02-csl-json-export.md) |
 | 33 | Skip Unconfigured Providers | 10 | ✅ Completed | [20260202-03](completed/20260202-03-skip-unconfigured-providers.md) |
 | 34 | Dry-Run No-ID Article Details | 11 | ✅ Completed | [20260202-04](completed/20260202-04-dryrun-noid-details.md) |
 | 35 | JSON Export Metadata Envelope | 10 | ✅ Completed | [20260202-05](completed/20260202-05-json-metadata-envelope.md) |
-| 36 | Export Filter Options | 10 | 🔲 Pending | [20260202-06](20260202-06-export-filter.md) |
+| 36 | Export Filter Options | 10 | ✅ Completed | [20260202-06](completed/20260202-06-export-filter.md) |
 | 37 | Summary Command | 10 | ✅ Completed | [20260202-07](completed/20260202-07-summary-command.md) |
 
 ## Development Flow
