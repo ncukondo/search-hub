@@ -54,7 +54,7 @@ Exported 45 articles (filtered from 860)
 
 ### Step 1: Implement `filterArticles()` function
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: year range filter (`yearFrom: 2023, yearTo: 2025`)
   - Test: title keyword filter (case-insensitive, OR within field)
   - Test: abstract keyword filter (case-insensitive, OR within field)
@@ -62,11 +62,11 @@ Exported 45 articles (filtered from 860)
   - Test: no matching articles returns empty array
   - Test: articles without `publicationDate` are excluded by year filter
   - Test: articles without `abstract` are excluded by abstract keyword filter
-- [ ] Verify test fails (Red)
-- [ ] Implement `filterArticles()` in `src/cli/commands/export.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All filter combinations work correctly
+- [x] Verify test fails (Red)
+- [x] Implement `filterArticles()` in `src/cli/commands/export.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All filter combinations work correctly
 
 ### Step 2: Add CLI options and wire up filters
 

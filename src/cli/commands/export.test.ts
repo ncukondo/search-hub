@@ -6,7 +6,9 @@ import {
   formatJson,
   formatJsonl,
   deduplicateArticles,
+  filterArticles,
   type JsonExportMetadata,
+  type ExportFilter,
 } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 
@@ -715,6 +717,220 @@ describe('export command', () => {
 
         expect(result.articles).toHaveLength(1);
         expect(result.duplicatesRemoved).toBe(1);
+      });
+    });
+  });
+
+  describe('filterArticles', () => {
+    const articlesForFilter: Article[] = [
+      {
+        title: 'Machine Learning in Healthcare',
+        authors: [{ family: 'Smith', given: 'John' }],
+        source: 'pubmed',
+        retrievedAt: '2024-01-15T10:00:00Z',
+        publicationDate: '2023-06-15',
+        abstract: 'This study explores deep learning applications in clinical settings.',
+      },
+      {
+        title: 'Natural Language Processing for Medical Records',
+        authors: [{ family: 'Doe', given: 'Jane' }],
+        source: 'pubmed',
+        retrievedAt: '2024-01-15T10:01:00Z',
+        publicationDate: '2024-03-20',
+        abstract: 'We apply NLP techniques to extract information from electronic health records.',
+      },
+      {
+        title: 'Diabetes Prevention Strategies',
+        authors: [{ family: 'Wilson', given: 'Bob' }],
+        source: 'eric',
+        retrievedAt: '2024-01-15T10:02:00Z',
+        publicationDate: '2025-01-10',
+        abstract: 'A review of prevention programs for type 2 diabetes.',
+      },
+      {
+        title: 'AI in Education',
+        authors: [{ family: 'Brown', given: 'Alice' }],
+        source: 'eric',
+        retrievedAt: '2024-01-15T10:03:00Z',
+        publicationDate: '2022-11-05',
+      },
+      {
+        title: 'Deep Learning Architectures',
+        authors: [{ family: 'Lee', given: 'Chris' }],
+        source: 'arxiv',
+        retrievedAt: '2024-01-15T10:04:00Z',
+        abstract: 'A comprehensive survey of deep learning architectures for healthcare.',
+      },
+    ];
+
+    describe('year range filter', () => {
+      it('should filter articles by yearFrom and yearTo (inclusive)', () => {
+        const filter: ExportFilter = { yearFrom: 2023, yearTo: 2024 };
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(2);
+        expect(result.map((a) => a.title)).toEqual([
+          'Machine Learning in Healthcare',
+          'Natural Language Processing for Medical Records',
+        ]);
+      });
+
+      it('should filter with only yearFrom', () => {
+        const filter: ExportFilter = { yearFrom: 2024 };
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(2);
+        expect(result.map((a) => a.title)).toEqual([
+          'Natural Language Processing for Medical Records',
+          'Diabetes Prevention Strategies',
+        ]);
+      });
+
+      it('should filter with only yearTo', () => {
+        const filter: ExportFilter = { yearTo: 2023 };
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(2);
+        expect(result.map((a) => a.title)).toEqual([
+          'Machine Learning in Healthcare',
+          'AI in Education',
+        ]);
+      });
+
+      it('should exclude articles without publicationDate when year filter is applied', () => {
+        const filter: ExportFilter = { yearFrom: 2020, yearTo: 2030 };
+        const result = filterArticles(articlesForFilter, filter);
+
+        // 'Deep Learning Architectures' has no publicationDate
+        expect(result).toHaveLength(4);
+        expect(result.every((a) => a.publicationDate !== undefined)).toBe(true);
+      });
+    });
+
+    describe('title keyword filter', () => {
+      it('should filter by title keyword (case-insensitive)', () => {
+        const filter: ExportFilter = { titleKeywords: ['machine learning'] };
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(1);
+        expect(result[0]!.title).toBe('Machine Learning in Healthcare');
+      });
+
+      it('should use OR logic within title keywords', () => {
+        const filter: ExportFilter = { titleKeywords: ['diabetes', 'education'] };
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(2);
+        expect(result.map((a) => a.title)).toEqual([
+          'Diabetes Prevention Strategies',
+          'AI in Education',
+        ]);
+      });
+
+      it('should be case-insensitive', () => {
+        const filter: ExportFilter = { titleKeywords: ['DEEP LEARNING'] };
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(1);
+        expect(result[0]!.title).toBe('Deep Learning Architectures');
+      });
+    });
+
+    describe('abstract keyword filter', () => {
+      it('should filter by abstract keyword (case-insensitive)', () => {
+        const filter: ExportFilter = { abstractKeywords: ['deep learning'] };
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(2);
+        expect(result.map((a) => a.title)).toEqual([
+          'Machine Learning in Healthcare',
+          'Deep Learning Architectures',
+        ]);
+      });
+
+      it('should use OR logic within abstract keywords', () => {
+        const filter: ExportFilter = { abstractKeywords: ['NLP', 'diabetes'] };
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(2);
+        expect(result.map((a) => a.title)).toEqual([
+          'Natural Language Processing for Medical Records',
+          'Diabetes Prevention Strategies',
+        ]);
+      });
+
+      it('should exclude articles without abstract when abstract keyword filter is applied', () => {
+        const filter: ExportFilter = { abstractKeywords: ['education'] };
+        const result = filterArticles(articlesForFilter, filter);
+
+        // 'AI in Education' has no abstract, so it should be excluded
+        expect(result).toHaveLength(0);
+      });
+    });
+
+    describe('combined filters', () => {
+      it('should AND-combine year and title filters', () => {
+        const filter: ExportFilter = {
+          yearFrom: 2024,
+          yearTo: 2025,
+          titleKeywords: ['diabetes', 'NLP'],
+        };
+        const result = filterArticles(articlesForFilter, filter);
+
+        // 'Diabetes Prevention Strategies' (2025, matches 'diabetes')
+        // 'Natural Language Processing...' matches 'NLP' in title? No - only in abstract
+        expect(result).toHaveLength(1);
+        expect(result[0]!.title).toBe('Diabetes Prevention Strategies');
+      });
+
+      it('should AND-combine year and abstract filters', () => {
+        const filter: ExportFilter = {
+          yearFrom: 2023,
+          yearTo: 2024,
+          abstractKeywords: ['deep learning'],
+        };
+        const result = filterArticles(articlesForFilter, filter);
+
+        // Only 'Machine Learning in Healthcare' (2023, abstract has 'deep learning')
+        expect(result).toHaveLength(1);
+        expect(result[0]!.title).toBe('Machine Learning in Healthcare');
+      });
+
+      it('should AND-combine all filter types', () => {
+        const filter: ExportFilter = {
+          yearFrom: 2023,
+          yearTo: 2025,
+          titleKeywords: ['learning', 'processing'],
+          abstractKeywords: ['clinical', 'health records'],
+        };
+        const result = filterArticles(articlesForFilter, filter);
+
+        // 'Machine Learning in Healthcare': year 2023 ✓, title has 'learning' ✓, abstract has 'clinical' ✓
+        // 'NLP for Medical Records': year 2024 ✓, title has 'processing' ✓, abstract has 'health records' ✓
+        expect(result).toHaveLength(2);
+      });
+    });
+
+    describe('edge cases', () => {
+      it('should return empty array when no articles match', () => {
+        const filter: ExportFilter = { titleKeywords: ['nonexistent'] };
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(0);
+      });
+
+      it('should return all articles when filter is empty', () => {
+        const filter: ExportFilter = {};
+        const result = filterArticles(articlesForFilter, filter);
+
+        expect(result).toHaveLength(5);
+      });
+
+      it('should return empty array when input is empty', () => {
+        const filter: ExportFilter = { titleKeywords: ['test'] };
+        const result = filterArticles([], filter);
+
+        expect(result).toHaveLength(0);
       });
     });
   });
