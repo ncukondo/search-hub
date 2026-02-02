@@ -16,12 +16,45 @@ export interface EFetchResult {
 }
 
 /**
+ * Named XML entity map for the five predefined XML entities.
+ */
+const XML_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+};
+
+/**
+ * Decode XML/HTML entities and strip inline markup tags from a string.
+ *
+ * Handles:
+ * - Hex numeric entities: `&#x2264;` → `≤`
+ * - Decimal numeric entities: `&#8804;` → `≤`
+ * - Named XML entities: `&amp;` → `&`, `&lt;` → `<`, etc.
+ * - Inline markup tags: `<i>`, `<sub>`, `<sup>`, `<b>`, `<u>` → stripped
+ */
+export function cleanXmlText(value: string): string {
+  return value
+    .replace(/<[^>]+>/g, '')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec: string) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&([a-zA-Z]+);/g, (match, name: string) => XML_ENTITIES[name] ?? match);
+}
+
+/**
  * XML Parser configured for PubMed responses.
+ *
+ * `stopNodes` prevents the parser from interpreting inline markup within
+ * `ArticleTitle` and `AbstractText`, preserving them as raw strings
+ * that can be cleaned via `stripXmlTags`.
  */
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   textNodeName: '#text',
+  stopNodes: ['*.ArticleTitle', '*.AbstractText'],
   isArray: (name) => {
     // These elements should always be arrays
     const arrayElements = [
@@ -175,16 +208,16 @@ function parseAbstract(
 
   const texts = abstractData.AbstractText;
   if (!Array.isArray(texts)) {
-    return String(texts);
+    return cleanXmlText(String(texts));
   }
 
   // Check if structured abstract (has labels)
   if (texts.length > 0 && typeof texts[0] === 'object' && texts[0]['@_Label']) {
     return texts
       .map((section) => {
-        if (typeof section === 'string') return section;
+        if (typeof section === 'string') return cleanXmlText(section);
         const label = section['@_Label'];
-        const text = section['#text'] ?? '';
+        const text = cleanXmlText(section['#text'] ?? '');
         return `${label}: ${text}`;
       })
       .join('\n\n');
@@ -192,7 +225,7 @@ function parseAbstract(
 
   // Simple abstract
   return texts
-    .map((t) => (typeof t === 'string' ? t : t['#text'] ?? ''))
+    .map((t) => cleanXmlText(typeof t === 'string' ? t : t['#text'] ?? ''))
     .join(' ');
 }
 
@@ -289,7 +322,7 @@ function parsePubMedArticle(articleData: {
   const article: PubMedArticle = {
     pmid,
     source: 'pubmed',
-    title: articleContent.ArticleTitle ?? '',
+    title: cleanXmlText(String(articleContent.ArticleTitle ?? '')),
     authors,
     retrievedAt: new Date().toISOString(),
   };

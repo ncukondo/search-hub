@@ -583,6 +583,399 @@ describe('PubMed Parser', () => {
       expect(result.articles[0]!.title).toBe('Valid Article');
     });
 
+    it('should flatten inline XML elements in article titles', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">40000001</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Effect of <i>Pseudomonas aeruginosa</i> on mortality</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">40000001</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.title).toBe('string');
+      expect(article.title).toBe('Effect of Pseudomonas aeruginosa on mortality');
+    });
+
+    it('should flatten <sub> elements in article titles', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">40000002</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle><sub>β</sub>-lactam resistance</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">40000002</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.title).toBe('string');
+      expect(article.title).toBe('β-lactam resistance');
+    });
+
+    it('should handle deeply nested inline XML in titles', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">40000003</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Study of <i><sub>x</sub> and <sup>y</sup></i> values</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">40000003</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.title).toBe('string');
+      expect(article.title).toBe('Study of x and y values');
+    });
+
+    it('should leave titles without inline XML unchanged', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">40000004</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Simple title without any markup</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">40000004</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.title).toBe('string');
+      expect(article.title).toBe('Simple title without any markup');
+    });
+
+    it('should decode numeric HTML entities in abstracts', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000001</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Entity Test</ArticleTitle>
+        <Abstract>
+          <AbstractText>Value &#x2264; 5 mg/dL</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000001</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(article.abstract).toBe('Value ≤ 5 mg/dL');
+    });
+
+    it('should decode hair space entity to regular space', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000002</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Space Test</ArticleTitle>
+        <Abstract>
+          <AbstractText>10&#x200a;mg treatment</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000002</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      // Hair space (U+200A) should be decoded to the Unicode character
+      expect(article.abstract).toBe('10\u200amg treatment');
+    });
+
+    it('should decode &amp; entity in abstracts', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000003</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Ampersand Test</ArticleTitle>
+        <Abstract>
+          <AbstractText>Salt &amp; pepper treatment</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000003</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(article.abstract).toBe('Salt & pepper treatment');
+    });
+
+    it('should flatten inline XML in abstract text', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000005</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Abstract Inline XML Test</ArticleTitle>
+        <Abstract>
+          <AbstractText>The bacterium <i>Escherichia coli</i> was studied with <sub>x</sub> controls.</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000005</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.abstract).toBe('string');
+      expect(article.abstract).toBe('The bacterium Escherichia coli was studied with x controls.');
+    });
+
+    it('should flatten inline XML in structured abstract text', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000006</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Structured Abstract Inline Test</ArticleTitle>
+        <Abstract>
+          <AbstractText Label="METHODS">We used <b>bold</b> technique with <i>in vitro</i> models.</AbstractText>
+          <AbstractText Label="RESULTS">Concentration was &#x2264; 5 <sup>mg</sup>/dL.</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000006</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(article.abstract).toContain('METHODS: We used bold technique with in vitro models.');
+      expect(article.abstract).toContain('RESULTS: Concentration was ≤ 5 mg/dL.');
+    });
+
+    it('should decode HTML entities in article titles', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000004</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>CO&#x2082; emissions &amp; climate</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000004</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(article.title).toBe('CO₂ emissions & climate');
+    });
+
+    it('should handle realistic PubMed XML with mixed inline elements and entities', () => {
+      // Simulates a real PubMed response with multiple articles containing
+      // inline XML elements and HTML entities
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE PubmedArticleSet PUBLIC "-//NLM//DTD PubMedArticle, 1st January 2024//EN" "https://dtd.nlm.nih.gov/ncbi/pubmed/out/pubmed_240101.dtd">
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">39000001</PMID>
+      <Article PubModel="Print">
+        <Journal>
+          <ISSN IssnType="Electronic">1234-5678</ISSN>
+          <Title>Journal of Infectious Diseases</Title>
+          <JournalIssue CitedMedium="Internet">
+            <Volume>45</Volume>
+            <Issue>3</Issue>
+            <PubDate><Year>2024</Year><Month>Jun</Month></PubDate>
+          </JournalIssue>
+        </Journal>
+        <ArticleTitle>Predictors of Mortality in <i>Pseudomonas aeruginosa</i> Bloodstream Infections Caused by <b>NDM-1</b>-Producing Strains</ArticleTitle>
+        <Pagination><MedlinePgn>234-245</MedlinePgn></Pagination>
+        <Abstract>
+          <AbstractText Label="BACKGROUND"><i>Pseudomonas aeruginosa</i> is a leading cause of nosocomial infections. Mortality rates are &#x2265; 30% in ICU patients.</AbstractText>
+          <AbstractText Label="METHODS">We analyzed 150 blood cultures from patients with <i>P. aeruginosa</i> bacteremia. MIC values were &#x2264; 2 &#x03BC;g/mL for susceptible strains.</AbstractText>
+          <AbstractText Label="RESULTS">CO<sub>2</sub> levels correlated with severity (p &lt; 0.001). The HR was 2.3 (95% CI: 1.5&#x2013;3.4).</AbstractText>
+          <AbstractText Label="CONCLUSIONS">Early identification of <i>P. aeruginosa</i> NDM-1 producers is critical for patient outcomes.</AbstractText>
+        </Abstract>
+        <AuthorList CompleteYN="Y">
+          <Author ValidYN="Y">
+            <LastName>Tanaka</LastName>
+            <ForeName>Yuki</ForeName>
+          </Author>
+        </AuthorList>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading>
+          <DescriptorName UI="D011550" MajorTopicYN="Y">Pseudomonas aeruginosa</DescriptorName>
+        </MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">39000001</ArticleId>
+        <ArticleId IdType="doi">10.1234/jid.2024.001</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">39000002</PMID>
+      <Article PubModel="Print">
+        <Journal>
+          <Title>Chemistry Letters</Title>
+          <JournalIssue CitedMedium="Internet">
+            <Volume>12</Volume>
+            <PubDate><Year>2024</Year><Month>01</Month><Day>15</Day></PubDate>
+          </JournalIssue>
+        </Journal>
+        <ArticleTitle>Synthesis of <sub>&#x03B2;</sub>-lactam derivatives via <sup>13</sup>C-labeled intermediates</ArticleTitle>
+        <Abstract>
+          <AbstractText>We describe a novel route to <sub>&#x03B2;</sub>-lactam compounds using <sup>13</sup>C NMR&#x200a;spectroscopy. Yields ranged from 45% to 92% with ee &#x2265; 95%.</AbstractText>
+        </Abstract>
+        <AuthorList CompleteYN="Y">
+          <Author ValidYN="Y">
+            <LastName>Kim</LastName>
+            <ForeName>Soo-Jin</ForeName>
+          </Author>
+        </AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">39000002</ArticleId>
+        <ArticleId IdType="doi">10.5678/chem.2024.015</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">39000003</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Simple Journal</Title></Journal>
+        <ArticleTitle>A plain title with no markup at all</ArticleTitle>
+        <Abstract>
+          <AbstractText>A plain abstract with no special characters.</AbstractText>
+        </Abstract>
+        <AuthorList CompleteYN="Y">
+          <Author ValidYN="Y"><LastName>Plain</LastName></Author>
+        </AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList>
+        <ArticleId IdType="pubmed">39000003</ArticleId>
+      </ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+
+      expect(result.articles).toHaveLength(3);
+
+      // Article 1: Italic species names and bold in title, structured abstract with entities
+      const art1 = result.articles[0]!;
+      expect(typeof art1.title).toBe('string');
+      expect(art1.title).toBe('Predictors of Mortality in Pseudomonas aeruginosa Bloodstream Infections Caused by NDM-1-Producing Strains');
+      expect(art1.abstract).toContain('BACKGROUND: Pseudomonas aeruginosa is a leading cause');
+      expect(art1.abstract).toContain('≥ 30%');
+      expect(art1.abstract).toContain('≤ 2 μg/mL');
+      expect(art1.abstract).toContain('RESULTS: CO2 levels');
+      expect(art1.abstract).toContain('< 0.001');
+      expect(art1.abstract).toContain('1.5\u20133.4');
+      expect(art1.doi).toBe('10.1234/jid.2024.001');
+      expect(art1.meshTerms).toEqual(['Pseudomonas aeruginosa']);
+
+      // Article 2: Sub/sup in title, entities in abstract
+      const art2 = result.articles[1]!;
+      expect(typeof art2.title).toBe('string');
+      expect(art2.title).toBe('Synthesis of β-lactam derivatives via 13C-labeled intermediates');
+      expect(art2.abstract).toContain('β-lactam compounds');
+      expect(art2.abstract).toContain('13C NMR');
+      expect(art2.abstract).toContain('≥ 95%');
+
+      // Article 3: Plain text should remain unchanged
+      const art3 = result.articles[2]!;
+      expect(art3.title).toBe('A plain title with no markup at all');
+      expect(art3.abstract).toBe('A plain abstract with no special characters.');
+    });
+
     it('should skip malformed articles missing Article element', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <PubmedArticleSet>
