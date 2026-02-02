@@ -80,14 +80,14 @@ When `metadata` is not provided to `formatJson()`, the function produces the bar
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/export.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/export.e2e.test.ts`
   - Test: JSON export with real session data includes metadata envelope
   - Test: `session.id` matches the session directory name
   - Test: `summary.databases` counts match actual results
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Export a real session as JSON and verify envelope
-- [ ] Acceptance: All tests pass, JSON export conforms to spec
+- [x] Acceptance: All tests pass, JSON export conforms to spec
 
 ## Notes
 

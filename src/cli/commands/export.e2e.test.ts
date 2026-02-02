@@ -25,6 +25,7 @@ import {
   formatJson,
   formatJsonl,
   deduplicateArticles,
+  type JsonExportMetadata,
 } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 
@@ -770,6 +771,146 @@ describe('search-hub export E2E', () => {
       expect(idsOutput).toContain('pmid:11111111');
       expect(idsOutput).toContain('pmid:22222222');
       expect(idsOutput).toContain('scopus:SC-333');
+    });
+  });
+
+  describe('JSON metadata envelope E2E', () => {
+    it('should produce metadata envelope when session metadata is provided', async () => {
+      const sessionId = 'envelope-basic-test';
+      await createTestSessionWithResults(sessionId, sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+
+      // Read all articles (simulating what the CLI handler does)
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv', 'eric', 'scopus']) {
+        const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
+        try {
+          const content = await readFile(resultsPath, 'utf-8');
+          const lines = content.trim().split('\n').filter(l => l);
+          for (const line of lines) {
+            allArticles.push(JSON.parse(line));
+          }
+        } catch {
+          // Provider may not have results
+        }
+      }
+
+      // Build metadata like the CLI handler does
+      const databases: Record<string, number> = {};
+      for (const article of allArticles) {
+        databases[article.source] = (databases[article.source] ?? 0) + 1;
+      }
+      const metadata: JsonExportMetadata = {
+        sessionId,
+        sessionName: 'Export Test Session',
+        createdAt: '2024-01-15T10:00:00Z',
+        databases,
+      };
+
+      const output = formatJson(allArticles, metadata);
+      const parsed = JSON.parse(output);
+
+      // Verify envelope structure
+      expect(parsed).toHaveProperty('session');
+      expect(parsed).toHaveProperty('summary');
+      expect(parsed).toHaveProperty('results');
+      expect(Array.isArray(parsed.results)).toBe(true);
+    });
+
+    it('should have session.id matching the session directory name', async () => {
+      const sessionId = '20240115_diabetes-ai_a3f2c1';
+      await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
+
+      const resultsPath = join(ctx.sessionsDir, sessionId, 'pubmed_results.jsonl');
+      const content = await readFile(resultsPath, 'utf-8');
+      const articles = content.trim().split('\n').map(line => JSON.parse(line));
+
+      const metadata: JsonExportMetadata = {
+        sessionId,
+        sessionName: 'diabetes_ai_scoping',
+        createdAt: '2024-01-15T10:00:00Z',
+        databases: { pubmed: articles.length },
+      };
+
+      const output = formatJson(articles, metadata);
+      const parsed = JSON.parse(output);
+
+      expect(parsed.session.id).toBe(sessionId);
+      expect(parsed.session.name).toBe('diabetes_ai_scoping');
+      expect(parsed.session.createdAt).toBe('2024-01-15T10:00:00Z');
+    });
+
+    it('should have summary.databases counts matching actual results', async () => {
+      const sessionId = 'envelope-db-counts';
+      await createTestSessionWithResults(sessionId, sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+
+      // Read all articles
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv', 'eric', 'scopus']) {
+        const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
+        try {
+          const content = await readFile(resultsPath, 'utf-8');
+          const lines = content.trim().split('\n').filter(l => l);
+          for (const line of lines) {
+            allArticles.push(JSON.parse(line));
+          }
+        } catch {
+          // Provider may not have results
+        }
+      }
+
+      // Compute expected database counts
+      const expectedCounts: Record<string, number> = {};
+      for (const article of allArticles) {
+        expectedCounts[article.source] = (expectedCounts[article.source] ?? 0) + 1;
+      }
+
+      const metadata: JsonExportMetadata = {
+        sessionId,
+        sessionName: 'test',
+        createdAt: '2024-01-15T10:00:00Z',
+        databases: expectedCounts,
+      };
+
+      const output = formatJson(allArticles, metadata);
+      const parsed = JSON.parse(output);
+
+      // Verify per-database counts
+      expect(parsed.summary.databases).toEqual(expectedCounts);
+      expect(parsed.summary.databases.pubmed).toBe(2); // 2 pubmed articles in sampleArticles
+      expect(parsed.summary.databases.arxiv).toBe(1);
+      expect(parsed.summary.databases.eric).toBe(1);
+      expect(parsed.summary.databases.scopus).toBe(1);
+
+      // Verify total
+      expect(parsed.summary.totalResults).toBe(allArticles.length);
+    });
+
+    it('should include year field in results within envelope', async () => {
+      const sessionId = 'envelope-year-field';
+      await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
+
+      const resultsPath = join(ctx.sessionsDir, sessionId, 'pubmed_results.jsonl');
+      const content = await readFile(resultsPath, 'utf-8');
+      const articles = content.trim().split('\n').map(line => JSON.parse(line));
+
+      const metadata: JsonExportMetadata = {
+        sessionId,
+        sessionName: 'test',
+        createdAt: '2024-01-15T10:00:00Z',
+        databases: { pubmed: articles.length },
+      };
+
+      const output = formatJson(articles, metadata);
+      const parsed = JSON.parse(output);
+
+      // Results in envelope should still have the year field
+      for (const article of parsed.results) {
+        expect(article).toHaveProperty('year');
+        if (article.publicationDate) {
+          const expectedYear = parseInt(article.publicationDate.substring(0, 4), 10);
+          expect(article.year).toBe(expectedYear);
+        }
+      }
     });
   });
 });
