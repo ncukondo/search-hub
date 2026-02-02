@@ -24,6 +24,7 @@ import {
   formatIds,
   formatJson,
   formatJsonl,
+  formatCslJson,
   deduplicateArticles,
   type JsonExportMetadata,
 } from './export.js';
@@ -771,6 +772,134 @@ describe('search-hub export E2E', () => {
       expect(idsOutput).toContain('pmid:11111111');
       expect(idsOutput).toContain('pmid:22222222');
       expect(idsOutput).toContain('scopus:SC-333');
+    });
+  });
+
+  describe('CSL-JSON export E2E', () => {
+    it('should produce valid CSL-JSON array from session data', async () => {
+      const sessionId = 'csl-json-basic';
+      await createTestSessionWithResults(sessionId, sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+
+      // Read all articles from session (simulating CLI handler)
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv', 'eric', 'scopus']) {
+        const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
+        try {
+          const content = await readFile(resultsPath, 'utf-8');
+          const lines = content.trim().split('\n').filter(l => l);
+          for (const line of lines) {
+            allArticles.push(JSON.parse(line));
+          }
+        } catch {
+          // Provider may not have results
+        }
+      }
+
+      const output = formatCslJson(allArticles);
+      const parsed = JSON.parse(output);
+
+      // Should be a JSON array
+      expect(Array.isArray(parsed)).toBe(true);
+      expect(parsed).toHaveLength(allArticles.length);
+
+      // Each item should be a valid CSL-JSON object
+      for (const item of parsed) {
+        expect(item).toHaveProperty('id');
+        expect(item).toHaveProperty('type', 'article-journal');
+        expect(item).toHaveProperty('title');
+        expect(item).toHaveProperty('author');
+        expect(Array.isArray(item.author)).toBe(true);
+      }
+    });
+
+    it('should map DOI and PMID fields correctly in CSL-JSON output', async () => {
+      const sessionId = 'csl-json-fields';
+      await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
+
+      const resultsPath = join(ctx.sessionsDir, sessionId, 'pubmed_results.jsonl');
+      const content = await readFile(resultsPath, 'utf-8');
+      const articles = content.trim().split('\n').map(line => JSON.parse(line));
+
+      const output = formatCslJson(articles);
+      const parsed = JSON.parse(output);
+
+      // First article has both DOI and PMID
+      expect(parsed[0].DOI).toBe('10.1000/diabetes.2024.001');
+      expect(parsed[0].PMID).toBe('12345678');
+      expect(parsed[0].issued).toBeDefined();
+      expect(parsed[0].issued['date-parts'][0][0]).toBe(2024);
+    });
+
+    it('should produce output parseable as JSON array of CSL-JSON items', async () => {
+      const sessionId = 'csl-json-parseable';
+      await createTestSessionWithResults(sessionId, sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+
+      // Read all articles
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv', 'eric', 'scopus']) {
+        const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
+        try {
+          const content = await readFile(resultsPath, 'utf-8');
+          const lines = content.trim().split('\n').filter(l => l);
+          for (const line of lines) {
+            allArticles.push(JSON.parse(line));
+          }
+        } catch {
+          // Provider may not have results
+        }
+      }
+
+      const output = formatCslJson(allArticles);
+
+      // Must be parseable as JSON
+      expect(() => JSON.parse(output)).not.toThrow();
+
+      const parsed = JSON.parse(output);
+
+      // Verify each item has required CSL-JSON fields
+      for (const item of parsed) {
+        expect(typeof item.id).toBe('string');
+        expect(typeof item.type).toBe('string');
+        expect(typeof item.title).toBe('string');
+        expect(Array.isArray(item.author)).toBe(true);
+      }
+
+      // Verify titles from original articles are preserved
+      const titles = parsed.map((item: { title: string }) => item.title);
+      expect(titles).toContain('Diabetes and Machine Learning');
+      expect(titles).toContain('arXiv Paper on AI');
+      expect(titles).toContain('ERIC Education Study');
+      expect(titles).toContain('Scopus Article');
+    });
+
+    it('should generate author-year IDs for CSL-JSON items', async () => {
+      const sessionId = 'csl-json-ids';
+      await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
+
+      const resultsPath = join(ctx.sessionsDir, sessionId, 'pubmed_results.jsonl');
+      const content = await readFile(resultsPath, 'utf-8');
+      const articles = content.trim().split('\n').map(line => JSON.parse(line));
+
+      const output = formatCslJson(articles);
+      const parsed = JSON.parse(output);
+
+      // IDs should follow author-year pattern
+      expect(parsed[0].id).toBe('smith-2024');
+      expect(parsed[1].id).toBe('johnson-2024');
+    });
+
+    it('should handle CSL-JSON export with deduplication', async () => {
+      const articlesWithDup: Article[] = [
+        ...sampleArticles.slice(0, 2),
+        { ...sampleArticles[0]! }, // duplicate
+      ];
+
+      const dedupResult = deduplicateArticles(articlesWithDup);
+      const output = formatCslJson(dedupResult.articles);
+      const parsed = JSON.parse(output);
+
+      expect(parsed).toHaveLength(2);
+      expect(dedupResult.duplicatesRemoved).toBe(1);
     });
   });
 

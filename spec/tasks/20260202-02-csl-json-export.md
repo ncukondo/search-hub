@@ -42,13 +42,13 @@ Reuses the `articlesToCslJson()` conversion module from Task A (#31).
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/export.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/export.e2e.test.ts`
   - Test: CSL-JSON export with real session data produces valid output
   - Test: output can be parsed as JSON array of CSL-JSON items
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Export a real session as CSL-JSON and verify format
-- [ ] Acceptance: All tests pass, CSL-JSON export works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Export a real session as CSL-JSON and verify format
+- [x] Acceptance: All tests pass, CSL-JSON export works in real usage
 
 ## Notes
 
