@@ -467,6 +467,92 @@ describe('search-hub export E2E', () => {
       expect(parsed.length).toBe(2);
     });
 
+    it('should produce correctly grouped IDs output from session data', async () => {
+      await createTestSessionWithResults(
+        'export-grouped-ids',
+        sampleArticles.slice(0, 2),
+        ['pubmed']
+      );
+
+      const resultsPath = join(ctx.sessionsDir, 'export-grouped-ids', 'pubmed_results.jsonl');
+      const content = await readFile(resultsPath, 'utf-8');
+      const articles = content.trim().split('\n').map((line) => JSON.parse(line));
+
+      const output = formatIds(articles, 'all');
+      const groups = output.split('\n\n');
+
+      // 2 articles from pubmed, each with pmid and doi
+      expect(groups).toHaveLength(2);
+
+      // First article group should have pmid before doi
+      const firstGroup = groups[0]!.split('\n');
+      expect(firstGroup[0]).toContain('pmid:');
+      expect(firstGroup[1]).toContain('doi:');
+
+      // Second article group should also have pmid before doi
+      const secondGroup = groups[1]!.split('\n');
+      expect(secondGroup[0]).toContain('pmid:');
+      expect(secondGroup[1]).toContain('doi:');
+    });
+
+    it('should include year field in JSON export matching publicationDate', async () => {
+      await createTestSessionWithResults(
+        'export-json-year',
+        sampleArticles,
+        ['pubmed', 'arxiv', 'eric', 'scopus']
+      );
+
+      // Read all results and combine
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv', 'eric', 'scopus']) {
+        const resultsPath = join(ctx.sessionsDir, 'export-json-year', `${provider}_results.jsonl`);
+        try {
+          const content = await readFile(resultsPath, 'utf-8');
+          const lines = content.trim().split('\n').filter(l => l);
+          for (const line of lines) {
+            allArticles.push(JSON.parse(line));
+          }
+        } catch {
+          // Provider may not have results
+        }
+      }
+
+      const jsonOutput = formatJson(allArticles);
+      const parsed = JSON.parse(jsonOutput);
+
+      // All sample articles have publicationDate, so all should have year
+      for (const article of parsed) {
+        expect(article).toHaveProperty('year');
+        if (article.publicationDate) {
+          const expectedYear = parseInt(article.publicationDate.substring(0, 4), 10);
+          expect(article.year).toBe(expectedYear);
+        } else {
+          expect(article.year).toBeNull();
+        }
+      }
+    });
+
+    it('should include year field in JSONL export matching publicationDate', async () => {
+      await createTestSessionWithResults(
+        'export-jsonl-year',
+        sampleArticles.slice(0, 2),
+        ['pubmed']
+      );
+
+      const resultsPath = join(ctx.sessionsDir, 'export-jsonl-year', 'pubmed_results.jsonl');
+      const content = await readFile(resultsPath, 'utf-8');
+      const articles = content.trim().split('\n').map((line) => JSON.parse(line));
+
+      const output = formatJsonl(articles);
+      const lines = output.trim().split('\n');
+
+      for (const line of lines) {
+        const article = JSON.parse(line);
+        expect(article).toHaveProperty('year');
+        expect(typeof article.year).toBe('number');
+      }
+    });
+
     it('should export filtered by pmid type', async () => {
       // Include article without PMID
       const mixedArticles: Article[] = [
