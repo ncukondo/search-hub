@@ -106,16 +106,16 @@ Since CSL-JSON always includes the `abstract` field, abstracts are automatically
 
 ### Step 4: Rewrite `registerArticles()` for bulk import
 
-- [ ] Write test: `src/integration/register.test.ts`
+- [x] Write test: `src/integration/register.test.ts`
   - Test: articles are converted to CSL-JSON, written to temp file, and bulk imported
   - Test: `RefAddOutput` is correctly mapped to `RegistrationRecord`
   - Test: temporary file is cleaned up in finally block
   - Test: `--with-abstracts` displays deprecation notice
-- [ ] Verify test fails (Red)
-- [ ] Rewrite `registerArticles()` in `src/integration/register.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Registration uses single bulk import call instead of per-article calls
+- [x] Verify test fails (Red)
+- [x] Rewrite `registerArticles()` in `src/integration/register.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Registration uses single bulk import call instead of per-article calls
 
 ### Final Step: E2E Integration Tests
 
