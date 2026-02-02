@@ -125,14 +125,14 @@ Article data loading uses the same pattern as the `export` command: load session
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/summary.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/summary.e2e.test.ts`
   - Test: summary command with real session data produces output
   - Test: `--json` flag produces parseable JSON
   - Test: statistics match actual session data
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Run summary on a real session
-- [ ] Acceptance: All tests pass, summary command works in real usage
+- [x] Acceptance: All tests pass, summary command works in real usage
 
 ## Notes
 
