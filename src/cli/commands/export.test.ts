@@ -168,6 +168,85 @@ describe('export command', () => {
       expect(result).toContain('arxiv:2401.12345');
     });
 
+    it('should group identifiers per article separated by blank lines when idType is all', () => {
+      const result = formatIds(mockArticles, 'all');
+      const groups = result.split('\n\n');
+
+      // 3 articles = 3 groups
+      expect(groups).toHaveLength(3);
+
+      // First article has pmid and doi
+      expect(groups[0]).toContain('pmid:12345678');
+      expect(groups[0]).toContain('doi:10.1234/article1');
+
+      // Second article has doi and ericId
+      expect(groups[1]).toContain('doi:10.1234/article2');
+      expect(groups[1]).toContain('eric:ED123456');
+
+      // Third article has only arxivId
+      expect(groups[2]).toBe('arxiv:2401.12345');
+    });
+
+    it('should output pmid before doi within each group', () => {
+      const result = formatIds(mockArticles, 'all');
+      const groups = result.split('\n\n');
+
+      // First article has both pmid and doi
+      const lines = groups[0]!.split('\n');
+      expect(lines[0]).toBe('pmid:12345678');
+      expect(lines[1]).toBe('doi:10.1234/article1');
+    });
+
+    it('should show single line per group for articles with only one ID type', () => {
+      const articlesWithSingleId: Article[] = [
+        {
+          title: 'Only PMID',
+          authors: [],
+          pmid: '11111111',
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+        {
+          title: 'Only DOI',
+          authors: [],
+          doi: '10.9999/only-doi',
+          source: 'scopus',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+      ];
+
+      const result = formatIds(articlesWithSingleId, 'all');
+      const groups = result.split('\n\n');
+
+      expect(groups).toHaveLength(2);
+      expect(groups[0]).toBe('pmid:11111111');
+      expect(groups[1]).toBe('doi:10.9999/only-doi');
+    });
+
+    it('should skip articles without any IDs when idType is all', () => {
+      const articlesWithNoIds: Article[] = [
+        {
+          title: 'Has PMID',
+          authors: [],
+          pmid: '11111111',
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+        {
+          title: 'No IDs at all',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+      ];
+
+      const result = formatIds(articlesWithNoIds, 'all');
+      const groups = result.split('\n\n');
+
+      expect(groups).toHaveLength(1);
+      expect(groups[0]).toBe('pmid:11111111');
+    });
+
     it('should skip articles without requested ID', () => {
       const result = formatIds(mockArticles, 'pmid');
       const lines = result.trim().split('\n');
@@ -200,6 +279,46 @@ describe('export command', () => {
 
       expect(parsed).toEqual([]);
     });
+
+    it('should include year field extracted from publicationDate', () => {
+      const articles: Article[] = [
+        {
+          title: 'Article with full date',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+          publicationDate: '2025-03-15',
+        },
+        {
+          title: 'Article with year only',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+          publicationDate: '2025',
+        },
+        {
+          title: 'Article with year-month',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+          publicationDate: '2025-03',
+        },
+        {
+          title: 'Article without date',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+      ];
+
+      const result = formatJson(articles);
+      const parsed = JSON.parse(result);
+
+      expect(parsed[0].year).toBe(2025);
+      expect(parsed[1].year).toBe(2025);
+      expect(parsed[2].year).toBe(2025);
+      expect(parsed[3].year).toBeNull();
+    });
   });
 
   describe('formatJsonl', () => {
@@ -217,6 +336,30 @@ describe('export command', () => {
       const result = formatJsonl([]);
 
       expect(result).toBe('');
+    });
+
+    it('should include year field extracted from publicationDate', () => {
+      const articles: Article[] = [
+        {
+          title: 'Full date article',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+          publicationDate: '2025-03-15',
+        },
+        {
+          title: 'No date article',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+      ];
+
+      const result = formatJsonl(articles);
+      const lines = result.trim().split('\n');
+
+      expect(JSON.parse(lines[0]!).year).toBe(2025);
+      expect(JSON.parse(lines[1]!).year).toBeNull();
     });
   });
 

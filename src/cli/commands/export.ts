@@ -87,8 +87,23 @@ export function validateExportInput(options: ExportCommandOptions): ValidationRe
 }
 
 export function formatIds(articles: Article[], idType: IdType): string {
-  const ids: string[] = [];
+  if (idType === 'all') {
+    const groups: string[] = [];
+    for (const article of articles) {
+      const ids: string[] = [];
+      if (article.pmid) ids.push(`pmid:${article.pmid}`);
+      if (article.doi) ids.push(`doi:${article.doi}`);
+      if (article.arxivId) ids.push(`arxiv:${article.arxivId}`);
+      if (article.scopusId) ids.push(`scopus:${article.scopusId}`);
+      if (article.ericId) ids.push(`eric:${article.ericId}`);
+      if (ids.length > 0) {
+        groups.push(ids.join('\n'));
+      }
+    }
+    return groups.join('\n\n');
+  }
 
+  const ids: string[] = [];
   for (const article of articles) {
     if (idType === 'doi') {
       if (article.doi) {
@@ -98,27 +113,34 @@ export function formatIds(articles: Article[], idType: IdType): string {
       if (article.pmid) {
         ids.push(article.pmid);
       }
-    } else if (idType === 'all') {
-      if (article.doi) ids.push(`doi:${article.doi}`);
-      if (article.pmid) ids.push(`pmid:${article.pmid}`);
-      if (article.arxivId) ids.push(`arxiv:${article.arxivId}`);
-      if (article.scopusId) ids.push(`scopus:${article.scopusId}`);
-      if (article.ericId) ids.push(`eric:${article.ericId}`);
     }
   }
 
   return ids.join('\n');
 }
 
+function extractYear(publicationDate: string | undefined): number | null {
+  if (!publicationDate) return null;
+  const year = parseInt(publicationDate.substring(0, 4), 10);
+  return Number.isNaN(year) ? null : year;
+}
+
+function addYearField(articles: Article[]): (Article & { year: number | null })[] {
+  return articles.map((article) => ({
+    ...article,
+    year: extractYear(article.publicationDate),
+  }));
+}
+
 export function formatJson(articles: Article[]): string {
-  return JSON.stringify(articles, null, 2);
+  return JSON.stringify(addYearField(articles), null, 2);
 }
 
 export function formatJsonl(articles: Article[]): string {
   if (articles.length === 0) {
     return '';
   }
-  return articles.map((article) => JSON.stringify(article)).join('\n');
+  return addYearField(articles).map((article) => JSON.stringify(article)).join('\n');
 }
 
 
