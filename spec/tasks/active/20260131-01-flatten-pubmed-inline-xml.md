@@ -54,8 +54,8 @@ HTML entities (e.g., `&#x200a;`, `&#x2264;`, `&#x202f;`).
 
 - [x] Modify `src/providers/pubmed/parser.ts`
   - Added `stopNodes: ['*.ArticleTitle', '*.AbstractText']` to parser config to preserve raw XML
-  - Added `stripXmlTags()` utility to strip inline markup from preserved raw strings
-  - Applied `stripXmlTags()` when extracting `ArticleTitle`
+  - Added `cleanXmlText()` utility to strip inline markup from preserved raw strings
+  - Applied `cleanXmlText()` when extracting `ArticleTitle`
   - Handles all inline elements generically via regex tag stripping
 - [x] Verify test passes (Green)
 - [x] Run `npm run lint && npm run typecheck`
