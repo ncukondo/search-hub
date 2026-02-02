@@ -683,6 +683,112 @@ describe('PubMed Parser', () => {
       expect(article.title).toBe('Simple title without any markup');
     });
 
+    it('should decode numeric HTML entities in abstracts', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000001</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Entity Test</ArticleTitle>
+        <Abstract>
+          <AbstractText>Value &#x2264; 5 mg/dL</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000001</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(article.abstract).toBe('Value ≤ 5 mg/dL');
+    });
+
+    it('should decode hair space entity to regular space', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000002</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Space Test</ArticleTitle>
+        <Abstract>
+          <AbstractText>10&#x200a;mg treatment</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000002</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      // Hair space (U+200A) should be decoded to the Unicode character
+      expect(article.abstract).toBe('10\u200amg treatment');
+    });
+
+    it('should decode &amp; entity in abstracts', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000003</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Ampersand Test</ArticleTitle>
+        <Abstract>
+          <AbstractText>Salt &amp; pepper treatment</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000003</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(article.abstract).toBe('Salt & pepper treatment');
+    });
+
+    it('should decode HTML entities in article titles', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000004</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>CO&#x2082; emissions &amp; climate</ArticleTitle>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000004</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(article.title).toBe('CO₂ emissions & climate');
+    });
+
     it('should skip malformed articles missing Article element', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <PubmedArticleSet>

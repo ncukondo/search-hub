@@ -64,22 +64,23 @@ HTML entities (e.g., `&#x200a;`, `&#x2264;`, `&#x202f;`).
 
 ### Step 3: Add failing tests for HTML entities in abstracts
 
-- [ ] Write test: `src/providers/pubmed/parser.test.ts`
+- [x] Write test: `src/providers/pubmed/parser.test.ts`
   - Test: abstract containing `&#x2264;` should decode to `≤`
-  - Test: abstract containing `&#x200a;` should decode to the hair space character (or a regular space)
+  - Test: abstract containing `&#x200a;` should decode to the hair space character
   - Test: abstract containing `&amp;` should decode to `&`
-- [ ] Verify test fails (Red)
-- [ ] Acceptance: Tests demonstrate unescaped entities
+  - Test: title containing `&#x2082;` and `&amp;` should decode correctly
+- [x] Verify test fails (Red)
+- [x] Acceptance: Tests demonstrate unescaped entities
 
 ### Step 4: Implement HTML entity decoding in abstracts
 
-- [ ] Modify `src/providers/pubmed/parser.ts`
-  - Investigate XMLParser options (`processEntities`, `htmlEntities`) for native entity handling
-  - If parser options are insufficient, add a post-processing step to decode HTML entities
-  - Apply to both `ArticleTitle` and `AbstractText`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All HTML entities are decoded to Unicode characters
+- [x] Modify `src/providers/pubmed/parser.ts`
+  - XMLParser `processEntities`/`htmlEntities` options don't work with `stopNodes` — confirmed
+  - Added `cleanXmlText()` function that combines tag stripping and entity decoding (hex, decimal, named XML entities)
+  - Applied to both `ArticleTitle` and `AbstractText` (in `parseAbstract()`)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All HTML entities are decoded to Unicode characters
 
 ### Step 5: Apply flattening to abstract text as well
 
