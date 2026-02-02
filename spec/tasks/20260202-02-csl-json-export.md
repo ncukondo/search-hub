@@ -35,10 +35,10 @@ Reuses the `articlesToCslJson()` conversion module from Task A (#31).
 
 ### Step 2: Wire up CLI option
 
-- [ ] Update format option description in `src/cli/index.ts` to include `csl-json`
-- [ ] Add `csl-json` case to format switch in export command handler
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub export <session> --format csl-json` works
+- [x] Update format option description in `src/cli/index.ts` to include `csl-json`
+- [x] Add `csl-json` case to format switch in export command handler
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub export <session> --format csl-json` works
 
 ### Final Step: E2E Integration Tests
 

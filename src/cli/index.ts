@@ -56,6 +56,7 @@ import {
   formatIds,
   formatJson,
   formatJsonl,
+  formatCslJson,
   deduplicateArticles,
   type JsonExportMetadata,
 } from './commands/export.js';
@@ -685,7 +686,7 @@ Examples:
     .command('export')
     .description('Export session results to various formats')
     .argument('<session-id>', 'session ID to export')
-    .option('--format <fmt>', 'output format: ids, json, jsonl', 'jsonl')
+    .option('--format <fmt>', 'output format: ids, json, jsonl, csl-json', 'jsonl')
     .option('-o, --output <path>', 'output file path')
     .option('--db <providers>', 'export only specific database(s)')
     .option('--id-type <type>', 'for ids format: doi, pmid, all')
@@ -694,6 +695,7 @@ Examples:
 Examples:
   $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs
   $ search-hub export SESSION_ID --format json -o results.json
+  $ search-hub export SESSION_ID --format csl-json -o refs.json  # CSL-JSON for reference managers
   $ search-hub export SESSION_ID --db pubmed --format jsonl
   $ search-hub export SESSION_ID --no-dedup  # Export without deduplication`)
     .action(
@@ -802,6 +804,8 @@ Examples:
               databases,
             };
             output = formatJson(exportArticles, metadata);
+          } else if (exportOpts.format === 'csl-json') {
+            output = formatCslJson(exportArticles);
           } else {
             output = formatJsonl(exportArticles);
           }
