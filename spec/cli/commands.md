@@ -11,6 +11,7 @@ Commands:
   status      Show session status
   export      Export session results
   register    Register results with reference-manager
+  summary     Show session result statistics
   config      View/edit configuration
   init        Initialize configuration
   query       Query utilities (init, validate, translate)
@@ -158,10 +159,13 @@ search-hub export <session-id> [options]
 
 | Option | Description |
 |--------|-------------|
-| `--format <fmt>` | Output format: `ids`, `json`, `jsonl` |
+| `--format <fmt>` | Output format: `ids`, `json`, `jsonl`, `csl-json` |
 | `--output <path>` | Output file (default: stdout) |
 | `--db <provider>` | Export only specific database(s) |
 | `--id-type <type>` | For ids format: `doi`, `pmid`, `all` |
+| `--filter-year <range>` | Year range filter (e.g., `"2023-2025"`) |
+| `--filter-title <keywords>` | Title keyword filter (comma-separated, OR within) |
+| `--filter-abstract <keywords>` | Abstract keyword filter (comma-separated, OR within) |
 
 ### Examples
 
@@ -177,6 +181,14 @@ search-hub export 20240115_diabetes-ai_a3f2c1 --format json -o results.json
 
 # Export specific database
 search-hub export 20240115_diabetes-ai_a3f2c1 --db pubmed --format jsonl
+
+# Export as CSL-JSON
+search-hub export 20240115_diabetes-ai_a3f2c1 --format csl-json -o results.json
+
+# Export with filters
+search-hub export 20240115_diabetes-ai_a3f2c1 --format json --filter-year "2023-2025"
+search-hub export 20240115_diabetes-ai_a3f2c1 --format ids --filter-title "machine learning,deep learning"
+search-hub export 20240115_diabetes-ai_a3f2c1 --format json --filter-year "2024-2025" --filter-abstract "randomized"
 ```
 
 ---
@@ -210,6 +222,44 @@ search-hub register 20240115_diabetes-ai_a3f2c1 --with-abstracts
 
 # Dry run
 search-hub register 20240115_diabetes-ai_a3f2c1 --dry-run
+```
+
+---
+
+## summary
+
+Show session result statistics and analysis.
+
+### Syntax
+
+```bash
+search-hub summary <session-id> [options]
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output as JSON |
+
+### Output
+
+Displays:
+- Session header (name, ID)
+- Total and unique article counts
+- Year distribution (with bar chart)
+- Database breakdown (with percentages)
+- Top journals by article count
+- Identifier coverage (DOI, PMID, no-ID)
+
+### Examples
+
+```bash
+# Show session summary
+search-hub summary 20240115_diabetes-ai_a3f2c1
+
+# JSON output for scripting
+search-hub summary 20240115_diabetes-ai_a3f2c1 --json
 ```
 
 ---

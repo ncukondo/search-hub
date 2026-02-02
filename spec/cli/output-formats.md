@@ -77,6 +77,55 @@ Full JSON array with all metadata.
 }
 ```
 
+### csl-json
+
+Standard CSL-JSON array format, compatible with reference managers and citation tools.
+
+```bash
+--format csl-json
+```
+
+Output:
+```json
+[
+  {
+    "id": "smith-2024",
+    "type": "article-journal",
+    "title": "Example Title",
+    "author": [
+      {"family": "Smith", "given": "John"}
+    ],
+    "DOI": "10.1234/example",
+    "PMID": "12345678",
+    "abstract": "...",
+    "issued": {"date-parts": [[2024, 1, 15]]},
+    "container-title": "Example Journal",
+    "volume": "10",
+    "issue": "2",
+    "page": "100-110"
+  }
+]
+```
+
+Field mapping from Article:
+
+| Article | CSL-JSON | Notes |
+|---|---|---|
+| `title` | `title` | Direct |
+| `authors[].family/given` | `author[].family/given` | Direct |
+| `doi` | `DOI` | Uppercase key |
+| `pmid` | `PMID` | CSL standard variable |
+| `abstract` | `abstract` | Always included |
+| `publicationDate` | `issued.date-parts` | Parsed to `[[year, month, day]]` |
+| `journal` | `container-title` | CSL name |
+| `volume` | `volume` | Direct |
+| `issue` | `issue` | Direct |
+| `pages` | `page` | CSL name |
+| (always) | `type` | `"article-journal"` |
+| (generated) | `id` | `author-year` format (e.g., `smith-2024`) |
+
+ID generation: first author's family name (lowercased) + `-` + year. Duplicates get suffix: `smith-2024a`, `smith-2024b`, etc.
+
 ### jsonl
 
 JSON Lines format (one record per line). Memory-efficient for large exports.

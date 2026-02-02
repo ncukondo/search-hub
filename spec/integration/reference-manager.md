@@ -15,6 +15,8 @@ search-hub exports identifiers (DOI/PMID) that reference-manager can import. The
 |---------|---------|
 | `ref add <id>` | Add reference by DOI, `pmid:<pmid>`, or `ISBN:<isbn>` |
 | `ref add <id> -o json` | Add reference with JSON output (machine-readable) |
+| `ref add -i json <file>` | Bulk import references from CSL-JSON file |
+| `ref add -i json <file> -o json` | Bulk import with JSON output (used by register) |
 | `ref export <id>` | Export reference metadata as JSON (default), YAML, or BibTeX |
 | `ref update <id> --set "field=value"` | Update reference field (e.g., abstract) |
 | `ref list --format json` | List all references |
@@ -76,30 +78,44 @@ search-hub export 20240115_diabetes-ai_a3f2c1 --format ids --id-type doi | xargs
 search-hub export 20240115_diabetes-ai_a3f2c1 --format ids --id-type pmid | xargs -I{} ref add "pmid:{}"
 ```
 
-### Flow 2: Direct Registration
+### Flow 2: Direct Registration (Bulk Import)
 
 ```bash
-# Register all results
+# Register all results (uses bulk CSL-JSON import)
 search-hub register 20240115_diabetes-ai_a3f2c1
 
-# Internally executes (PMID preferred):
+# Internally:
+# 1. Convert all articles to CSL-JSON array (articlesToCslJson())
+# 2. Write to temporary file: sessionDir/_bulk_import.json
+# 3. Execute: ref add -i json "_bulk_import.json" -o json
+# 4. Parse RefAddOutput, map to RegistrationRecord
+# 5. Clean up temporary file
+```
+
+This approach registers all articles in a single `ref add` call, dramatically improving performance
+(860 articles: minutes → seconds). Abstracts are always included in the CSL-JSON, so
+`--with-abstracts` is no longer needed (kept for backward compatibility as a no-op).
+
+### Flow 2a: Legacy Sequential Registration (Deprecated)
+
+The previous per-article registration flow:
+
+```bash
+# Internally executed (PMID preferred):
 # ref add "pmid:12345678"
 # ref add "pmid:87654321"
 # ref add "10.1234/example1"  # DOI fallback when no PMID
 # ...
 ```
 
-### Flow 3: With Abstracts
+This flow has been replaced by bulk import (Flow 2) for performance.
+
+### Flow 3: With Abstracts (Deprecated)
 
 ```bash
 search-hub register 20240115_diabetes-ai_a3f2c1 --with-abstracts
-
-# Internally executes (PMID preferred):
-# ref add "pmid:12345678"
-# ref update "smith2024" --set "abstract=..."
-# ref add "pmid:87654321"
-# ref update "jones2024" --set "abstract=..."
-# ...
+# Note: abstracts are now always included in bulk import.
+# --with-abstracts flag is no longer needed.
 ```
 
 ## Implementation Details
@@ -364,6 +380,7 @@ Features relevant to search-hub integration:
 | Feature | Status | Notes |
 |---------|--------|-------|
 | `ref add -o json` | ✅ Implemented | Returns `{ summary, added[], skipped[], failed[] }` |
+| `ref add -i json <file>` | ✅ Implemented | Bulk import from CSL-JSON file, same output format |
 | `ref export <id>` | ✅ Implemented | Get entry metadata as JSON/YAML/BibTeX |
 | `ref update --set` | ✅ Implemented | Update arbitrary fields |
 | `ref fulltext attach` | ✅ Implemented | Attach PDF/Markdown to references |
