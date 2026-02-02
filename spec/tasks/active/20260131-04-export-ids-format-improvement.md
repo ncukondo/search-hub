@@ -68,18 +68,18 @@ requiring them to parse the date string.
 
 ### Step 3: Add `year` field to JSON/JSONL export
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: JSON export includes `year` field extracted from `publicationDate`
   - Test: `publicationDate: "2025"` → `year: 2025`
   - Test: `publicationDate: "2025-03-15"` → `year: 2025`
   - Test: `publicationDate: undefined` → `year: null`
-- [ ] Verify test fails (Red)
-- [ ] Implement year extraction in export logic
+- [x] Verify test fails (Red)
+- [x] Implement year extraction in export logic
   - Parse the first 4 characters of `publicationDate` as the year
   - Add `year` as a computed field in JSON/JSONL output (not stored in session data)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: JSON export includes correct `year` for all articles
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: JSON export includes correct `year` for all articles
 
 ### Final Step: E2E Integration Tests
 

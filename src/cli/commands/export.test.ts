@@ -278,6 +278,46 @@ describe('export command', () => {
 
       expect(parsed).toEqual([]);
     });
+
+    it('should include year field extracted from publicationDate', () => {
+      const articles: Article[] = [
+        {
+          title: 'Article with full date',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+          publicationDate: '2025-03-15',
+        },
+        {
+          title: 'Article with year only',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+          publicationDate: '2025',
+        },
+        {
+          title: 'Article with year-month',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+          publicationDate: '2025-03',
+        },
+        {
+          title: 'Article without date',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+      ];
+
+      const result = formatJson(articles);
+      const parsed = JSON.parse(result);
+
+      expect(parsed[0].year).toBe(2025);
+      expect(parsed[1].year).toBe(2025);
+      expect(parsed[2].year).toBe(2025);
+      expect(parsed[3].year).toBeNull();
+    });
   });
 
   describe('formatJsonl', () => {
@@ -295,6 +335,30 @@ describe('export command', () => {
       const result = formatJsonl([]);
 
       expect(result).toBe('');
+    });
+
+    it('should include year field extracted from publicationDate', () => {
+      const articles: Article[] = [
+        {
+          title: 'Full date article',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+          publicationDate: '2025-03-15',
+        },
+        {
+          title: 'No date article',
+          authors: [],
+          source: 'pubmed',
+          retrievedAt: '2024-01-15T10:00:00Z',
+        },
+      ];
+
+      const result = formatJsonl(articles);
+      const lines = result.trim().split('\n');
+
+      expect(JSON.parse(lines[0]!).year).toBe(2025);
+      expect(JSON.parse(lines[1]!).year).toBeNull();
     });
   });
 });

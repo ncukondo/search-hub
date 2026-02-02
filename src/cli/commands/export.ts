@@ -119,13 +119,27 @@ export function formatIds(articles: Article[], idType: IdType): string {
   return ids.join('\n');
 }
 
+
+function extractYear(publicationDate: string | undefined): number | null {
+  if (!publicationDate) return null;
+  const year = parseInt(publicationDate.substring(0, 4), 10);
+  return Number.isNaN(year) ? null : year;
+}
+
+function addYearField(articles: Article[]): (Article & { year: number | null })[] {
+  return articles.map((article) => ({
+    ...article,
+    year: extractYear(article.publicationDate),
+  }));
+}
+
 export function formatJson(articles: Article[]): string {
-  return JSON.stringify(articles, null, 2);
+  return JSON.stringify(addYearField(articles), null, 2);
 }
 
 export function formatJsonl(articles: Article[]): string {
   if (articles.length === 0) {
     return '';
   }
-  return articles.map((article) => JSON.stringify(article)).join('\n');
+  return addYearField(articles).map((article) => JSON.stringify(article)).join('\n');
 }
