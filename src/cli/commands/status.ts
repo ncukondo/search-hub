@@ -1,4 +1,7 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { listSessions, loadSession } from '../../session/manager.js';
+import { deduplicateArticles } from './export.js';
 
 export interface SessionListItem {
   id: string;
@@ -113,9 +116,6 @@ export async function computeDeduplicationStats(
   sessionsDir: string,
   session: { databases: Record<string, { files?: { results?: string } } | undefined> }
 ): Promise<{ uniqueArticles: number; duplicatesRemoved: number }> {
-  const { readFile } = await import('node:fs/promises');
-  const { join } = await import('node:path');
-  const { deduplicateArticles } = await import('./export.js');
   const articles: import('../../providers/base/types.js').Article[] = [];
 
   for (const [, dbStatus] of Object.entries(session.databases)) {

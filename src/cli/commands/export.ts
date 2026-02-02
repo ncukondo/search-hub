@@ -159,13 +159,7 @@ export function deduplicateArticles(articles: Article[]): DeduplicationResult {
   let duplicatesRemoved = 0;
 
   for (const article of articles) {
-    // Build identifier keys
-    const keys: string[] = [];
-    if (article.pmid) keys.push(`pmid:${article.pmid}`);
-    if (article.doi) keys.push(`doi:${article.doi.toLowerCase()}`);
-    if (article.arxivId) keys.push(`arxiv:${article.arxivId}`);
-    if (article.scopusId) keys.push(`scopus:${article.scopusId}`);
-    if (article.ericId) keys.push(`eric:${article.ericId}`);
+    const keys = getArticleKeys(article);
 
     if (keys.length === 0) {
       // No identifiers - cannot deduplicate, keep the article
