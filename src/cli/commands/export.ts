@@ -87,8 +87,23 @@ export function validateExportInput(options: ExportCommandOptions): ValidationRe
 }
 
 export function formatIds(articles: Article[], idType: IdType): string {
-  const ids: string[] = [];
+  if (idType === 'all') {
+    const groups: string[] = [];
+    for (const article of articles) {
+      const ids: string[] = [];
+      if (article.pmid) ids.push(`pmid:${article.pmid}`);
+      if (article.doi) ids.push(`doi:${article.doi}`);
+      if (article.arxivId) ids.push(`arxiv:${article.arxivId}`);
+      if (article.scopusId) ids.push(`scopus:${article.scopusId}`);
+      if (article.ericId) ids.push(`eric:${article.ericId}`);
+      if (ids.length > 0) {
+        groups.push(ids.join('\n'));
+      }
+    }
+    return groups.join('\n\n');
+  }
 
+  const ids: string[] = [];
   for (const article of articles) {
     if (idType === 'doi') {
       if (article.doi) {
@@ -98,12 +113,6 @@ export function formatIds(articles: Article[], idType: IdType): string {
       if (article.pmid) {
         ids.push(article.pmid);
       }
-    } else if (idType === 'all') {
-      if (article.doi) ids.push(`doi:${article.doi}`);
-      if (article.pmid) ids.push(`pmid:${article.pmid}`);
-      if (article.arxivId) ids.push(`arxiv:${article.arxivId}`);
-      if (article.scopusId) ids.push(`scopus:${article.scopusId}`);
-      if (article.ericId) ids.push(`eric:${article.ericId}`);
     }
   }
 

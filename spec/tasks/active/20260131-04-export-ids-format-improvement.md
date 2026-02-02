@@ -58,13 +58,13 @@ requiring them to parse the date string.
 
 ### Step 2: Implement grouped IDs format
 
-- [ ] Modify `src/cli/commands/export.ts`
+- [x] Modify `src/cli/commands/export.ts`
   - Group all identifiers for each article together
   - Separate article groups with a blank line
   - Within each group, output identifiers in a consistent order (pmid, doi)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: IDs output clearly associates identifiers per article
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: IDs output clearly associates identifiers per article
 
 ### Step 3: Add `year` field to JSON/JSONL export
 
