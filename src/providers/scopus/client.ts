@@ -186,10 +186,17 @@ export class ScopusClient {
 
     switch (status) {
       case 401:
+        return createProviderError(
+          'API_KEY_INVALID',
+          `Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/`,
+          'scopus',
+          { retryable: false }
+        );
+
       case 403:
         return createProviderError(
           'API_KEY_INVALID',
-          `Scopus API authentication failed: ${response.statusText}`,
+          `Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.`,
           'scopus',
           { retryable: false }
         );

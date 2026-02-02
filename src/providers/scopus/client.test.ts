@@ -242,7 +242,7 @@ describe('ScopusClient', () => {
   });
 
   describe('error handling', () => {
-    it('should throw on 401 invalid API key', async () => {
+    it('should throw on 401 with message containing "invalid" and HTTP status', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -255,9 +255,25 @@ describe('ScopusClient', () => {
         code: 'API_KEY_INVALID',
         retryable: false,
       });
+      await expect(client.search('TITLE(test)')).rejects.toThrow();
+      // Re-mock for message check
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: new Headers(),
+      });
+      try {
+        await new ScopusClient(config).search('TITLE(test)');
+      } catch (e: unknown) {
+        const error = e as { message: string };
+        expect(error.message).toContain('401');
+        expect(error.message).toMatch(/invalid|expired/i);
+        expect(error.message).toContain('dev.elsevier.com');
+      }
     });
 
-    it('should throw on 403 forbidden', async () => {
+    it('should throw on 403 with message containing "access denied" and HTTP status', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 403,
@@ -270,6 +286,20 @@ describe('ScopusClient', () => {
         code: 'API_KEY_INVALID',
         retryable: false,
       });
+      // Re-mock for message check
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        headers: new Headers(),
+      });
+      try {
+        await new ScopusClient(config).search('TITLE(test)');
+      } catch (e: unknown) {
+        const error = e as { message: string };
+        expect(error.message).toContain('403');
+        expect(error.message).toMatch(/access denied|permissions/i);
+      }
     });
 
     it('should throw on 429 rate limited with retryAfter', async () => {
@@ -340,7 +370,8 @@ describe('ScopusClient', () => {
       const result = await client.testConnection();
       expect(result).toMatchObject({ ok: false });
       expect(result.error).toBeDefined();
-      expect(result.error).toContain('authentication failed');
+      expect(result.error).toContain('401');
+      expect(result.error).toMatch(/invalid|expired/i);
     });
 
     it('should return { ok: false, error: ... } on 403 forbidden', async () => {
@@ -355,7 +386,8 @@ describe('ScopusClient', () => {
       const result = await client.testConnection();
       expect(result).toMatchObject({ ok: false });
       expect(result.error).toBeDefined();
-      expect(result.error).toContain('authentication failed');
+      expect(result.error).toContain('403');
+      expect(result.error).toMatch(/access denied|permissions/i);
     });
 
     it('should return { ok: false, error: ... } on network error', async () => {

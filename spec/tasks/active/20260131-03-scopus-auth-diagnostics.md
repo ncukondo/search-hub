@@ -73,17 +73,16 @@ During a real search session:
 
 ### Step 4: Distinguish 401 from 403 in error messages
 
-- [ ] Write test: `src/providers/scopus/client.test.ts`
+- [x] Write test: `src/providers/scopus/client.test.ts`
   - Test: 401 produces message containing "invalid API key"
   - Test: 403 produces message containing "insufficient permissions" or "access denied"
-- [ ] Modify `handleErrorResponse()` in `src/providers/scopus/client.ts`
+- [x] Modify `handleErrorResponse()` in `src/providers/scopus/client.ts`
   - Split the 401/403 case into separate messages:
     - 401: `Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/`
     - 403: `Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.`
-  - Attempt to read the JSON response body for additional details from Scopus
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Error messages distinguish between authentication and authorization failures
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Error messages distinguish between authentication and authorization failures
 
 ### Final Step: E2E Integration Tests
 
