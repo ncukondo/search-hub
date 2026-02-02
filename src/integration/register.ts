@@ -1,15 +1,17 @@
 /**
  * Registration logic for reference-manager integration.
- * Handles registering articles with the ref CLI.
+ * Uses bulk CSL-JSON import for performance.
  */
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type { Article } from '../providers/base/types.js';
 import { RegistrationRecordSchema, type RegistrationRecord } from './types.js';
-import { refAdd, refExport, refUpdate } from './ref-cli.js';
+import { refAddBulk } from './ref-cli.js';
+import { articlesToCslJson } from './csl-json.js';
 
 const REGISTRATION_FILE = 'registration.json';
+const BULK_IMPORT_FILE = '_bulk_import.json';
 
 /**
  * Save registration record to session directory.
@@ -57,44 +59,24 @@ export interface RegisterOptions {
 }
 
 /**
- * Get the identifier to use for registration.
- * PMID is preferred over DOI for better metadata quality from PubMed.
- * Returns null if neither PMID nor DOI is available.
+ * Check if an article has an identifier suitable for registration.
+ * Articles without DOI or PMID are included in CSL-JSON via metadata,
+ * but we track them separately for the noId count.
  */
-function getRegistrationId(article: Article): string | null {
-  if (article.pmid) {
-    return `pmid:${article.pmid}`;
-  }
-  if (article.doi) {
-    return article.doi;
-  }
-  return null;
+function hasIdentifier(article: Article): boolean {
+  return !!(article.pmid || article.doi);
 }
 
 /**
- * Register articles with reference-manager.
- * Processes each article and aggregates results.
- */
-/**
- * Check if the ref entry already has an abstract.
- * Returns false if we can't determine (e.g., export fails).
- */
-async function hasExistingAbstract(
-  refId: string,
-  libraryPath: string
-): Promise<boolean> {
-  try {
-    const data = await refExport(refId, { libraryPath }) as { abstract?: string };
-    return !!data.abstract;
-  } catch {
-    // If export fails, assume no abstract so we try to update
-    return false;
-  }
-}
-
-/**
- * Register articles with reference-manager.
- * Processes each article and aggregates results.
+ * Register articles with reference-manager using bulk CSL-JSON import.
+ *
+ * Flow:
+ * 1. Filter out articles without identifiers (noId)
+ * 2. Convert remaining articles to CSL-JSON array
+ * 3. Write to temporary file in sessionDir
+ * 4. Call refAddBulk() once
+ * 5. Map output to RegistrationRecord
+ * 6. Clean up temporary file
  */
 export async function registerArticles(
   articles: Article[],
@@ -102,6 +84,12 @@ export async function registerArticles(
 ): Promise<RegistrationRecord> {
   const { sessionId, sessionDir, withAbstracts, onProgress } = options;
   const libraryPath = path.join(sessionDir, 'references.json');
+
+  if (withAbstracts) {
+    console.warn(
+      'Note: abstracts are now always included in bulk import. --with-abstracts flag is no longer needed.'
+    );
+  }
 
   const record: RegistrationRecord = {
     sessionId,
@@ -118,76 +106,79 @@ export async function registerArticles(
     failed: [],
   };
 
-  for (let i = 0; i < articles.length; i++) {
-    const article = articles[i]!;
-    const id = getRegistrationId(article);
-
-    // Report progress
-    if (onProgress) {
-      onProgress(i + 1, articles.length);
-    }
-
-    // Skip articles without identifiers
-    if (!id) {
+  // Separate articles with and without identifiers
+  const articlesWithId: Article[] = [];
+  for (const article of articles) {
+    if (hasIdentifier(article)) {
+      articlesWithId.push(article);
+    } else {
       record.summary.noId++;
-      continue;
     }
+  }
 
-    try {
-      const output = await refAdd(id, { libraryPath });
+  // Report progress: counting phase
+  if (onProgress) {
+    onProgress(articlesWithId.length, articles.length);
+  }
 
-      // Aggregate results
-      record.summary.added += output.summary.added;
-      record.summary.skipped += output.summary.skipped;
-      record.summary.failed += output.summary.failed;
+  // If no articles have identifiers, return early
+  if (articlesWithId.length === 0) {
+    return record;
+  }
 
-      // Record added items and update abstracts if requested
-      for (const item of output.added) {
-        record.added.push({
-          source: id, // Use the identifier we sent to ref CLI
-          id: item.id,
-          title: item.title,
-        });
+  // Convert to CSL-JSON
+  const cslJsonItems = articlesToCslJson(articlesWithId);
+  const tempFilePath = path.join(sessionDir, BULK_IMPORT_FILE);
 
-        // Update abstract if withAbstracts is enabled and article has abstract
-        if (withAbstracts && article.abstract) {
-          const alreadyHasAbstract = await hasExistingAbstract(item.id, libraryPath);
-          if (!alreadyHasAbstract) {
-            try {
-              await refUpdate(item.id, 'abstract', article.abstract, { libraryPath });
-            } catch {
-              // Log warning but continue - abstract update failure is non-fatal
-            }
-          }
-        }
-      }
+  try {
+    // Write CSL-JSON to temporary file
+    await fs.writeFile(tempFilePath, JSON.stringify(cslJsonItems));
 
-      // Record duplicates
-      for (const item of output.skipped) {
-        record.duplicates.push({
-          source: id, // Use the identifier we sent to ref CLI
-          existingId: item.existingId,
-          duplicateType: item.duplicateType,
-        });
-      }
+    // Bulk import
+    const output = await refAddBulk(tempFilePath, { libraryPath });
 
-      // Record failures from ref output
-      for (const item of output.failed) {
-        record.failed.push({
-          source: id, // Use the identifier we sent to ref CLI
-          reason: item.reason,
-          error: item.error,
-        });
-      }
-    } catch (error) {
-      // Handle execution errors (network, parse errors, etc.)
-      record.summary.failed++;
-      record.failed.push({
-        source: id,
-        reason: 'execution_error',
-        error: error instanceof Error ? error.message : 'Unknown error',
+    // Aggregate summary
+    record.summary.added = output.summary.added;
+    record.summary.skipped = output.summary.skipped;
+    record.summary.failed = output.summary.failed;
+
+    // Record added items
+    for (const item of output.added) {
+      record.added.push({
+        source: item.source,
+        id: item.id,
+        title: item.title,
       });
     }
+
+    // Record duplicates
+    for (const item of output.skipped) {
+      record.duplicates.push({
+        source: item.source,
+        existingId: item.existingId,
+        duplicateType: item.duplicateType,
+      });
+    }
+
+    // Record failures
+    for (const item of output.failed) {
+      record.failed.push({
+        source: item.source,
+        reason: item.reason,
+        error: item.error,
+      });
+    }
+  } catch (error) {
+    // Handle bulk import execution errors
+    record.summary.failed = articlesWithId.length;
+    record.failed.push({
+      source: 'bulk_import',
+      reason: 'execution_error',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  } finally {
+    // Clean up temporary file
+    await fs.unlink(tempFilePath).catch(() => {});
   }
 
   return record;

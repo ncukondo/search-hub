@@ -152,6 +152,63 @@ export async function refAdd(
 }
 
 /**
+ * Execute ref add -i json for bulk import and return parsed output.
+ *
+ * Imports all entries from a CSL-JSON file in a single call.
+ * The output format is identical to single-item ref add -o json.
+ */
+export async function refAddBulk(
+  filePath: string,
+  options?: RefCliOptions
+): Promise<RefAddOutput> {
+  const escapedPath = escapeShellArg(filePath);
+  const libraryOpt = buildLibraryOption(options?.libraryPath);
+  const cmd = `ref ${libraryOpt}add -i json "${escapedPath}" -o json`;
+
+  return new Promise((resolve, reject) => {
+    exec(cmd, (error, stdout, stderr) => {
+      if (stdout) {
+        try {
+          const parsed = JSON.parse(stdout);
+          const validated = RefAddOutputSchema.parse(parsed);
+          resolve(validated);
+          return;
+        } catch (parseError) {
+          if (error) {
+            reject(new RefCliError(
+              `ref add bulk failed: ${stderr || error.message}`,
+              'REF_ADD_FAILED',
+              error
+            ));
+            return;
+          }
+          reject(new RefCliError(
+            `Failed to parse ref add bulk output: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+            'PARSE_ERROR',
+            parseError instanceof Error ? parseError : undefined
+          ));
+          return;
+        }
+      }
+
+      if (error) {
+        reject(new RefCliError(
+          `ref add bulk failed: ${stderr || error.message}`,
+          'REF_ADD_FAILED',
+          error
+        ));
+        return;
+      }
+
+      reject(new RefCliError(
+        'ref add bulk produced no output',
+        'NO_OUTPUT'
+      ));
+    });
+  });
+}
+
+/**
  * Execute ref update command to update a field.
  */
 export async function refUpdate(

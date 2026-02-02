@@ -70,63 +70,63 @@ Since CSL-JSON always includes the `abstract` field, abstracts are automatically
 
 ### Step 1: CSL-JSON conversion — date parsing and ID generation
 
-- [ ] Write test: `src/integration/csl-json.test.ts`
+- [x] Write test: `src/integration/csl-json.test.ts`
   - Test `generateCslId`: `smith-2024`, `anon-2024`, `smith-nd`
   - Test date parsing: `"2024-01-15"` → `[[2024,1,15]]`, `"2024-01"` → `[[2024,1]]`, `"2024"` → `[[2024]]`, `undefined` → omitted
-- [ ] Create stub: `src/integration/csl-json.ts` (empty exports)
-- [ ] Verify test fails (Red)
-- [ ] Implement `generateCslId()` and date parsing helper
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: ID generation and date parsing work for all edge cases
+- [x] Create stub: `src/integration/csl-json.ts` (empty exports)
+- [x] Verify test fails (Red)
+- [x] Implement `generateCslId()` and date parsing helper
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: ID generation and date parsing work for all edge cases
 
 ### Step 2: CSL-JSON conversion — full article mapping
 
-- [ ] Write test: `src/integration/csl-json.test.ts`
+- [x] Write test: `src/integration/csl-json.test.ts`
   - Test `articleToCslJson`: fully populated article maps all fields correctly
   - Test `articleToCslJson`: minimal article (only title) produces valid CSL-JSON
   - Test `articlesToCslJson`: batch conversion with duplicate ID resolution (`smith-2024`, `smith-2024a`, `smith-2024b`)
-- [ ] Verify test fails (Red)
-- [ ] Implement `articleToCslJson()` and `articlesToCslJson()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All article fields correctly mapped to CSL-JSON
+- [x] Verify test fails (Red)
+- [x] Implement `articleToCslJson()` and `articlesToCslJson()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All article fields correctly mapped to CSL-JSON
 
 ### Step 3: `refAddBulk()` function
 
-- [ ] Write test: `src/integration/ref-cli.test.ts`
+- [x] Write test: `src/integration/ref-cli.test.ts`
   - Test `refAddBulk()` calls `ref add -i json "<path>" -o json` with correct arguments
   - Test library path option is passed correctly
   - Test output is parsed via `RefAddOutputSchema`
-- [ ] Verify test fails (Red)
-- [ ] Implement `refAddBulk()` in `src/integration/ref-cli.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `refAddBulk()` correctly invokes ref CLI with JSON input
+- [x] Verify test fails (Red)
+- [x] Implement `refAddBulk()` in `src/integration/ref-cli.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `refAddBulk()` correctly invokes ref CLI with JSON input
 
 ### Step 4: Rewrite `registerArticles()` for bulk import
 
-- [ ] Write test: `src/integration/register.test.ts`
+- [x] Write test: `src/integration/register.test.ts`
   - Test: articles are converted to CSL-JSON, written to temp file, and bulk imported
   - Test: `RefAddOutput` is correctly mapped to `RegistrationRecord`
   - Test: temporary file is cleaned up in finally block
   - Test: `--with-abstracts` displays deprecation notice
-- [ ] Verify test fails (Red)
-- [ ] Rewrite `registerArticles()` in `src/integration/register.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Registration uses single bulk import call instead of per-article calls
+- [x] Verify test fails (Red)
+- [x] Rewrite `registerArticles()` in `src/integration/register.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Registration uses single bulk import call instead of per-article calls
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write/update E2E test: `src/integration/register.e2e.test.ts`
+- [x] Write/update E2E test: `src/integration/register.e2e.test.ts`
   - Test: bulk registration with real ref CLI produces correct results
   - Test: duplicate detection works in bulk mode
   - Test: articles without DOI/PMID are included in CSL-JSON (registered via metadata)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Register a real session and verify results
-- [ ] Acceptance: All tests pass, bulk registration works in real usage
+- [x] Acceptance: All tests pass, bulk registration works in real usage
 
 ## Notes
 

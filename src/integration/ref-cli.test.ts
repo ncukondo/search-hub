@@ -5,6 +5,7 @@ import {
   checkNpmAvailable,
   installRefManager,
   refAdd,
+  refAddBulk,
   refUpdate,
   refExport,
   RefCliError,
@@ -375,6 +376,91 @@ describe('ref-cli', () => {
       });
 
       await expect(refExport('nonexistent')).rejects.toThrow(RefCliError);
+    });
+  });
+
+  describe('refAddBulk', () => {
+    it('executes ref add -i json with file path and -o json', async () => {
+      const mockOutput = {
+        summary: { total: 2, added: 2, skipped: 0, failed: 0 },
+        added: [
+          { source: 'smith-2024', id: 'smith-2024', title: 'Article 1' },
+          { source: 'jones-2023', id: 'jones-2023', title: 'Article 2' },
+        ],
+        skipped: [],
+        failed: [],
+      };
+
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(null, JSON.stringify(mockOutput), '');
+      });
+
+      const result = await refAddBulk('/path/to/import.json');
+      expect(result).toEqual(mockOutput);
+      expect(mockExecFn).toHaveBeenCalledWith(
+        'ref add -i json "/path/to/import.json" -o json',
+        expect.any(Function)
+      );
+    });
+
+    it('passes library path option correctly', async () => {
+      const mockOutput = {
+        summary: { total: 1, added: 1, skipped: 0, failed: 0 },
+        added: [{ source: 'test-2024', id: 'test-2024', title: 'Test' }],
+        skipped: [],
+        failed: [],
+      };
+
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(null, JSON.stringify(mockOutput), '');
+      });
+
+      const libraryPath = '/path/to/library.json';
+      await refAddBulk('/path/to/import.json', { libraryPath });
+
+      expect(mockExecFn).toHaveBeenCalledWith(
+        'ref --library "/path/to/library.json" add -i json "/path/to/import.json" -o json',
+        expect.any(Function)
+      );
+    });
+
+    it('parses output via RefAddOutputSchema', async () => {
+      const mockOutput = {
+        summary: { total: 3, added: 1, skipped: 1, failed: 1 },
+        added: [{ source: 'new-2024', id: 'new-2024', title: 'New Article' }],
+        skipped: [{ source: 'dup-2024', existingId: 'existing-2024', duplicateType: 'doi' }],
+        failed: [{ source: 'bad-2024', reason: 'fetch_error', error: 'Not found' }],
+      };
+
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(null, JSON.stringify(mockOutput), '');
+      });
+
+      const result = await refAddBulk('/path/to/import.json');
+      expect(result.summary.total).toBe(3);
+      expect(result.added).toHaveLength(1);
+      expect(result.skipped).toHaveLength(1);
+      expect(result.failed).toHaveLength(1);
+    });
+
+    it('throws RefCliError when ref add fails', async () => {
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(new Error('Command failed') as ExecException, '', 'Error');
+      });
+
+      await expect(refAddBulk('/path/to/import.json')).rejects.toThrow(RefCliError);
     });
   });
 
