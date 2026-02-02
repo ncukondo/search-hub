@@ -59,6 +59,7 @@ PANE_ID=$(tmux split-window -h -d -c "$WORKTREE_DIR" -P -F '#{pane_id}')
 echo "[$SCRIPT_NAME] Agent pane: $PANE_ID"
 
 # --- 3. Launch Claude interactively ---
+# NOTE: text and Enter must be separate send-keys calls (sleep 1 between).
 echo "[$SCRIPT_NAME] Launching Claude in pane $PANE_ID..."
 tmux send-keys -t "$PANE_ID" 'claude'
 sleep 1
@@ -66,7 +67,8 @@ tmux send-keys -t "$PANE_ID" Enter
 
 echo "[$SCRIPT_NAME] Waiting for Claude to start..."
 TRUST_HANDLED=false
-for i in $(seq 1 30); do
+# Timeout: 45 iterations × 2s = 90s (extra headroom for parallel launches)
+for i in $(seq 1 45); do
   sleep 2
   PANE_CONTENT=$(tmux capture-pane -t "$PANE_ID" -p 2>/dev/null || true)
 
@@ -82,20 +84,26 @@ for i in $(seq 1 30); do
     echo "[$SCRIPT_NAME] Claude is ready (after ~$((i * 2))s)"
     break
   fi
-  if [ "$i" -eq 30 ]; then
-    echo "[$SCRIPT_NAME] WARNING: Claude startup not detected after 60s."
+  if [ "$i" -eq 45 ]; then
+    echo "[$SCRIPT_NAME] WARNING: Claude startup not detected after 90s."
     echo "[$SCRIPT_NAME] Send prompt manually:"
     echo "  tmux send-keys -t $PANE_ID '$PROMPT'"
+    echo "  sleep 1"
     echo "  tmux send-keys -t $PANE_ID Enter"
     exit 0
   fi
 done
 
 # --- 4. Send prompt ---
+# NOTE: Always send text and Enter as separate send-keys calls with sleep 1
+# in between. Combining them (e.g. 'text' Enter) can cause input races.
 echo "[$SCRIPT_NAME] Sending prompt..."
 tmux send-keys -t "$PANE_ID" "$PROMPT"
 sleep 1
 tmux send-keys -t "$PANE_ID" Enter
 
+# NOTE: This script does NOT call tmux select-layout. The caller is
+# responsible for applying the desired layout after all workers are launched
+# (e.g. via scripts/apply-layout.sh).
 echo "[$SCRIPT_NAME] Done. Agent running in pane $PANE_ID."
 echo "[$SCRIPT_NAME] Monitor: tmux capture-pane -t $PANE_ID -p | tail -20"
