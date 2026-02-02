@@ -1,13 +1,20 @@
 {
-  "task": "20260202-01-register-bulk-import",
-  "branch": "feat/register-bulk-import",
-  "status": "completed",
+  "task": "20260202-05-json-metadata-envelope",
+  "branch": "feat/json-metadata-envelope",
+  "status": "complete",
   "steps": {
-    "step1_csl_id_generation": "completed",
-    "step2_article_mapping": "completed",
-    "step3_refAddBulk": "completed",
-    "step4_rewrite_registerArticles": "completed",
-    "step5_e2e_tests": "completed"
+    "step1": {
+      "description": "Extend formatJson() with metadata parameter",
+      "status": "complete"
+    },
+    "step2": {
+      "description": "Pass session metadata from CLI handler",
+      "status": "complete"
+    },
+    "finalStep": {
+      "description": "E2E Integration Tests",
+      "status": "complete"
+    }
   },
-  "summary": "Implemented bulk CSL-JSON import for register command. Created csl-json.ts module with Article-to-CSL-JSON conversion, added refAddBulk() to ref-cli.ts, and rewrote registerArticles() to use single bulk import call instead of per-article calls."
+  "updatedAt": "2026-02-02T09:48:00Z"
 }

@@ -57,7 +57,13 @@ import {
   formatJson,
   formatJsonl,
   deduplicateArticles,
+  type JsonExportMetadata,
 } from './commands/export.js';
+import {
+  computeSummary,
+  formatSummary,
+  formatSummaryJson,
+} from './commands/summary.js';
 import {
   parseRegisterOptions,
   validateRegisterInput,
@@ -784,7 +790,18 @@ Examples:
           if (exportOpts.format === 'ids') {
             output = formatIds(exportArticles, exportOpts.idType ?? 'all');
           } else if (exportOpts.format === 'json') {
-            output = formatJson(exportArticles);
+            // Build per-database article counts
+            const databases: Record<string, number> = {};
+            for (const article of exportArticles) {
+              databases[article.source] = (databases[article.source] ?? 0) + 1;
+            }
+            const metadata: JsonExportMetadata = {
+              sessionId: session.id,
+              sessionName: session.name,
+              createdAt: session.createdAt,
+              databases,
+            };
+            output = formatJson(exportArticles, metadata);
           } else {
             output = formatJsonl(exportArticles);
           }
@@ -803,6 +820,95 @@ Examples:
             console.log(output);
             if (!globalOpts.quiet && duplicatesRemoved > 0) {
               console.error(`(${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed)`);
+            }
+          }
+
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error(
+              'Error:',
+              error instanceof Error ? error.message : error
+            );
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+        }
+      }
+    );
+
+  // Register summary command
+  program
+    .command('summary')
+    .description('Show statistical summary of session results')
+    .argument('<session-id>', 'session ID to summarize')
+    .option('--json', 'output as JSON')
+    .addHelpText('after', `\nExamples:
+  $ search-hub summary 20240115_diabetes-ai_a3f2       # Human-readable summary
+  $ search-hub summary 20240115_diabetes-ai_a3f2 --json # JSON output`)
+    .action(
+      async (
+        sessionId: string,
+        options?: { json?: boolean }
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          const sessionsDir = await getSessionsDir(globalOpts);
+
+          // Load session
+          let session;
+          try {
+            session = await loadSession(sessionId, sessionsDir);
+          } catch (error) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`
+              );
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          // Collect articles from result files
+          const { readFile } = await import('node:fs/promises');
+          const { join } = await import('node:path');
+          const allArticles: import('../providers/base/types.js').Article[] = [];
+
+          const providers = Object.keys(session.databases) as ProviderName[];
+          for (const provider of providers) {
+            const dbStatus = session.databases[provider];
+            if (!dbStatus || !dbStatus.files?.results) continue;
+
+            const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
+            try {
+              const content = await readFile(resultsPath, 'utf-8');
+              const lines = content.trim().split('\n').filter((line) => line);
+              for (const line of lines) {
+                try {
+                  allArticles.push(JSON.parse(line));
+                } catch {
+                  // Skip invalid JSON lines
+                }
+              }
+            } catch {
+              // Results file may not exist yet
+            }
+          }
+
+          // Deduplicate
+          const dedupResult = deduplicateArticles(allArticles);
+
+          // Compute summary
+          const summary = computeSummary(allArticles, dedupResult.articles, {
+            sessionId,
+            sessionName: session.name,
+          });
+
+          // Format output
+          if (options?.json) {
+            console.log(formatSummaryJson(summary));
+          } else {
+            if (!globalOpts.quiet) {
+              console.log(formatSummary(summary));
             }
           }
 

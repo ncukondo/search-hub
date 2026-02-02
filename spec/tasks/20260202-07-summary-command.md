@@ -85,54 +85,54 @@ Article data loading uses the same pattern as the `export` command: load session
 
 ### Step 1: Implement `computeSummary()` function
 
-- [ ] Write test: `src/cli/commands/summary.test.ts`
+- [x] Write test: `src/cli/commands/summary.test.ts`
   - Test: year distribution counts articles per year
   - Test: unknown/missing dates grouped under "unknown"
   - Test: database breakdown counts articles per source
   - Test: top journals sorted by count (descending), limited to top N
   - Test: identifier coverage counts DOI, PMID, and no-ID articles
   - Test: total vs unique article counts
-- [ ] Create stub: `src/cli/commands/summary.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `computeSummary()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Summary computation is correct for all statistics
+- [x] Create stub: `src/cli/commands/summary.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `computeSummary()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Summary computation is correct for all statistics
 
 ### Step 2: Implement `formatSummary()` for human-readable output
 
-- [ ] Write test: `src/cli/commands/summary.test.ts`
+- [x] Write test: `src/cli/commands/summary.test.ts`
   - Test: output includes session header, year distribution with bar chart, database breakdown with percentages, top journals, identifier coverage
   - Test: bar chart scales proportionally (longest bar = max width)
   - Test: year distribution is sorted chronologically
   - Test: numbers are right-aligned for readability
-- [ ] Verify test fails (Red)
-- [ ] Implement `formatSummary()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Human-readable output is well-formatted
+- [x] Verify test fails (Red)
+- [x] Implement `formatSummary()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Human-readable output is well-formatted
 
 ### Step 3: Implement `formatSummaryJson()` and register CLI command
 
-- [ ] Write test: `src/cli/commands/summary.test.ts`
+- [x] Write test: `src/cli/commands/summary.test.ts`
   - Test: JSON output matches `SessionSummary` structure
-- [ ] Verify test fails (Red)
-- [ ] Implement `formatSummaryJson()`
-- [ ] Register `summary` command in `src/cli/index.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub summary <session> --json` produces valid JSON
+- [x] Verify test fails (Red)
+- [x] Implement `formatSummaryJson()`
+- [x] Register `summary` command in `src/cli/index.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub summary <session> --json` produces valid JSON
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/summary.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/summary.e2e.test.ts`
   - Test: summary command with real session data produces output
   - Test: `--json` flag produces parseable JSON
   - Test: statistics match actual session data
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Run summary on a real session
-- [ ] Acceptance: All tests pass, summary command works in real usage
+- [x] Acceptance: All tests pass, summary command works in real usage
 
 ## Notes
 

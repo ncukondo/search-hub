@@ -132,8 +132,36 @@ function addYearField(articles: Article[]): (Article & { year: number | null })[
   }));
 }
 
-export function formatJson(articles: Article[]): string {
-  return JSON.stringify(addYearField(articles), null, 2);
+export interface JsonExportMetadata {
+  sessionId: string;
+  sessionName: string;
+  createdAt: string;
+  databases: Record<string, number>;
+}
+
+export function formatJson(articles: Article[], metadata?: JsonExportMetadata): string {
+  const articlesWithYear = addYearField(articles);
+
+  if (!metadata) {
+    return JSON.stringify(articlesWithYear, null, 2);
+  }
+
+  return JSON.stringify(
+    {
+      session: {
+        id: metadata.sessionId,
+        name: metadata.sessionName,
+        createdAt: metadata.createdAt,
+      },
+      summary: {
+        totalResults: articles.length,
+        databases: metadata.databases,
+      },
+      results: articlesWithYear,
+    },
+    null,
+    2
+  );
 }
 
 export function formatJsonl(articles: Article[]): string {

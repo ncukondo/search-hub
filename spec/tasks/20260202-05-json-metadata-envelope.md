@@ -58,36 +58,36 @@ When `metadata` is not provided to `formatJson()`, the function produces the bar
 
 ### Step 1: Extend `formatJson()` with metadata parameter
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: `formatJson(articles)` without metadata produces bare array (backward compatible)
   - Test: `formatJson(articles, metadata)` produces envelope with `session`, `summary`, `results`
   - Test: `summary.totalResults` matches article count
   - Test: `summary.databases` matches per-database counts
-- [ ] Verify test fails (Red)
-- [ ] Modify `formatJson()` signature in `src/cli/commands/export.ts`
-- [ ] Implement metadata envelope generation
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: JSON export produces correct metadata envelope
+- [x] Verify test fails (Red)
+- [x] Modify `formatJson()` signature in `src/cli/commands/export.ts`
+- [x] Implement metadata envelope generation
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: JSON export produces correct metadata envelope
 
 ### Step 2: Pass session metadata from CLI handler
 
-- [ ] Modify export command handler in `src/cli/index.ts` to pass session metadata to `formatJson()`
+- [x] Modify export command handler in `src/cli/index.ts` to pass session metadata to `formatJson()`
   - Session data is already loaded at lines 726-737
   - Extract `sessionId`, `sessionName`, `createdAt`, and database counts
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: CLI export produces envelope by default
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: CLI export produces envelope by default
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/export.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/export.e2e.test.ts`
   - Test: JSON export with real session data includes metadata envelope
   - Test: `session.id` matches the session directory name
   - Test: `summary.databases` counts match actual results
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Export a real session as JSON and verify envelope
-- [ ] Acceptance: All tests pass, JSON export conforms to spec
+- [x] Acceptance: All tests pass, JSON export conforms to spec
 
 ## Notes
 
