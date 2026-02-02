@@ -94,15 +94,15 @@ Since CSL-JSON always includes the `abstract` field, abstracts are automatically
 
 ### Step 3: `refAddBulk()` function
 
-- [ ] Write test: `src/integration/ref-cli.test.ts`
+- [x] Write test: `src/integration/ref-cli.test.ts`
   - Test `refAddBulk()` calls `ref add -i json "<path>" -o json` with correct arguments
   - Test library path option is passed correctly
   - Test output is parsed via `RefAddOutputSchema`
-- [ ] Verify test fails (Red)
-- [ ] Implement `refAddBulk()` in `src/integration/ref-cli.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `refAddBulk()` correctly invokes ref CLI with JSON input
+- [x] Verify test fails (Red)
+- [x] Implement `refAddBulk()` in `src/integration/ref-cli.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `refAddBulk()` correctly invokes ref CLI with JSON input
 
 ### Step 4: Rewrite `registerArticles()` for bulk import
 
