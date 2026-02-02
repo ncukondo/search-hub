@@ -22,5 +22,26 @@ npm run lint
 npm run typecheck
 ```
 
-### 4. レビュー結果の報告
+### 4. レビュー結果をGitHubに投稿
+
+レビュー結果は必ずGitHub PR上に残す。
+
+#### 承認する場合
+```bash
+gh pr review $ARGUMENTS --approve --body "レビューコメント"
+```
+
+#### 修正を要求する場合
+```bash
+gh pr review $ARGUMENTS --request-changes --body "修正内容の説明"
+```
+
+#### 自分のPRの場合（approve/request-changesが使えない）
+```bash
+gh pr review $ARGUMENTS --comment --body "レビューコメント"
+```
+
+**注意**: GitHub では自分が作成したPRに対して `--approve` や `--request-changes` を使うとエラーになる。その場合は `--comment` にフォールバックする。
+
+### 5. レビュー結果の報告
 承認 / 修正要求 / コメント のいずれかを報告して下さい。
