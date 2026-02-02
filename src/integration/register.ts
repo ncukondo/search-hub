@@ -82,8 +82,14 @@ export async function registerArticles(
   articles: Article[],
   options: RegisterOptions
 ): Promise<RegistrationRecord> {
-  const { sessionId, sessionDir, onProgress } = options;
+  const { sessionId, sessionDir, withAbstracts, onProgress } = options;
   const libraryPath = path.join(sessionDir, 'references.json');
+
+  if (withAbstracts) {
+    console.warn(
+      'Note: abstracts are now always included in bulk import. --with-abstracts flag is no longer needed.'
+    );
+  }
 
   const record: RegistrationRecord = {
     sessionId,

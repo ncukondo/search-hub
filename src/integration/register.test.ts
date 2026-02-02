@@ -274,6 +274,56 @@ describe('registerArticles (bulk import)', () => {
   });
 
   describe('withAbstracts deprecation', () => {
+    it('should log deprecation warning when withAbstracts is true', async () => {
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+      ];
+
+      mockRefAddBulk.mockResolvedValueOnce(
+        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }])
+      );
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        await registerArticles(articles, { ...createOptions(), withAbstracts: true });
+
+        expect(warnSpy).toHaveBeenCalledWith(
+          'Note: abstracts are now always included in bulk import. --with-abstracts flag is no longer needed.'
+        );
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    it('should not log deprecation warning when withAbstracts is not set', async () => {
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+      ];
+
+      mockRefAddBulk.mockResolvedValueOnce(
+        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }])
+      );
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        await registerArticles(articles, createOptions());
+
+        expect(warnSpy).not.toHaveBeenCalled();
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
     it('should always include abstracts in CSL-JSON regardless of withAbstracts flag', async () => {
       const articles = [
         createArticle({
