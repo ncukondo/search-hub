@@ -117,7 +117,7 @@ vi.mock('../../integration/ref-cli.js', () => ({
 }));
 
 // Import after mocking
-const { executeSearch, createProviderInstance } = await import('./search-executor.js');
+const { executeSearch, createProviderInstance, isProviderConfigured } = await import('./search-executor.js');
 
 describe('search-executor', () => {
   let tempDir: string;
@@ -483,8 +483,37 @@ filters:
     });
   });
 
+  describe('isProviderConfigured', () => {
+    it('should return false for scopus without API key', () => {
+      config.providers.scopus.api_key = '';
+      expect(isProviderConfigured('scopus', config)).toBe(false);
+    });
+
+    it('should return false for scopus with undefined API key', () => {
+      config.providers.scopus.api_key = undefined as any;
+      expect(isProviderConfigured('scopus', config)).toBe(false);
+    });
+
+    it('should return true for scopus with API key', () => {
+      config.providers.scopus.api_key = 'test-api-key';
+      expect(isProviderConfigured('scopus', config)).toBe(true);
+    });
+
+    it('should return true for pubmed regardless of config', () => {
+      expect(isProviderConfigured('pubmed', config)).toBe(true);
+    });
+
+    it('should return true for eric regardless of config', () => {
+      expect(isProviderConfigured('eric', config)).toBe(true);
+    });
+
+    it('should return true for arxiv regardless of config', () => {
+      expect(isProviderConfigured('arxiv', config)).toBe(true);
+    });
+  });
+
   describe('preflight provider readiness checks', () => {
-    it('should emit warnings and skip misconfigured providers during search', async () => {
+    it('should skip unconfigured providers with warning in default mode', async () => {
       config.providers.pubmed.enabled = true;
       config.providers.scopus.enabled = true;
       config.providers.scopus.api_key = '';
@@ -501,17 +530,17 @@ filters:
       expect(result.success).toBe(true);
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
 
-      // Misconfigured provider should be skipped with config error
-      expect(result.results?.['scopus']?.error).toBeDefined();
-      expect(result.results?.['scopus']?.hits).toBe(0);
+      // Unconfigured provider should be skipped entirely (not in results)
+      expect(result.results?.['scopus']).toBeUndefined();
 
-      // Warning should have been emitted for the misconfigured provider
-      expect(warnSpy).toHaveBeenCalled();
+      // Skip warning should have been emitted
+      const warnCalls = warnSpy.mock.calls.map((c) => c.join(' '));
+      expect(warnCalls.some((msg) => msg.includes('Skipping scopus'))).toBe(true);
 
       warnSpy.mockRestore();
     });
 
-    it('should skip all misconfigured providers and fail if none remain working', async () => {
+    it('should fail with no-providers error when all enabled are unconfigured in default mode', async () => {
       config.providers.pubmed.enabled = false;
       config.providers.eric.enabled = false;
       config.providers.arxiv.enabled = false;
@@ -526,7 +555,27 @@ filters:
 
       const result = await executeSearch(options, sessionsDir, config);
 
-      // Should fail because all enabled providers were misconfigured
+      // Should fail because all providers were filtered out
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No providers');
+
+      warnSpy.mockRestore();
+    });
+
+    it('should still fail with config error when --db explicitly requests unconfigured provider', async () => {
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+        providers: ['scopus'], // Explicit --db
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      // Should fail with config error (preserved behavior for explicit --db)
       expect(result.success).toBe(false);
       expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
 
@@ -551,7 +600,7 @@ filters:
   });
 
   describe('Scopus API key preflight check', () => {
-    it('should skip Scopus and succeed with other providers when API key is empty', async () => {
+    it('should skip Scopus in default mode and succeed with other providers', async () => {
       config.providers.pubmed.enabled = true;
       config.providers.scopus.enabled = true;
       config.providers.scopus.api_key = '';
@@ -560,6 +609,7 @@ filters:
 
       const options: SearchCommandOptions = {
         queryFile: queryFilePath,
+        // No providers = default mode
       };
 
       const result = await executeSearch(options, sessionsDir, config);
@@ -567,13 +617,17 @@ filters:
       expect(result.success).toBe(true);
       expect(result.results?.['pubmed']).toBeDefined();
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
-      expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
+      // Scopus should be skipped entirely in default mode
+      expect(result.results?.['scopus']).toBeUndefined();
+
+      // Skip warning should be emitted
+      const warnCalls = warnSpy.mock.calls.map((c) => c.join(' '));
+      expect(warnCalls.some((msg) => msg.includes('Skipping scopus'))).toBe(true);
 
       warnSpy.mockRestore();
     });
 
-    it('should fail when Scopus is the only provider and API key is missing', async () => {
+    it('should fail with config error when --db scopus explicitly requested without key', async () => {
       config.providers.pubmed.enabled = false;
       config.providers.eric.enabled = false;
       config.providers.arxiv.enabled = false;
@@ -584,36 +638,15 @@ filters:
 
       const options: SearchCommandOptions = {
         queryFile: queryFilePath,
+        providers: ['scopus'], // Explicit --db scopus
       };
 
       const result = await executeSearch(options, sessionsDir, config);
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
+      expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
-
-      warnSpy.mockRestore();
-    });
-
-    it('should record an error about API key when Scopus is skipped', async () => {
-      config.providers.pubmed.enabled = true;
-      config.providers.scopus.enabled = true;
-      config.providers.scopus.api_key = '';
-
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      const options: SearchCommandOptions = {
-        queryFile: queryFilePath,
-      };
-
-      const result = await executeSearch(options, sessionsDir, config);
-
-      expect(result.results?.['scopus']).toBeDefined();
-      expect(result.results?.['scopus']?.hits).toBe(0);
-      expect(result.results?.['scopus']?.retrieved).toBe(0);
-      expect(result.results?.['scopus']?.error).toBe(
-        'scopus: provider configuration incomplete. See warning above for details.'
-      );
 
       warnSpy.mockRestore();
     });
@@ -627,6 +660,104 @@ filters:
 
       expect(result).toBeNull();
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
+
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe('skip unconfigured providers in default mode', () => {
+    it('should skip unconfigured Scopus and emit warning when no --db is specified', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+        // No providers specified = default mode (no --db)
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+
+      // Scopus should NOT appear in results at all (skipped before execution)
+      expect(result.results?.['scopus']).toBeUndefined();
+
+      // Warning should mention skipping and suggest --db
+      const warnCalls = warnSpy.mock.calls.map((c) => c.join(' '));
+      const skipWarning = warnCalls.find((msg) => msg.includes('Skipping scopus'));
+      expect(skipWarning).toBeDefined();
+      expect(skipWarning).toContain('not configured');
+      expect(skipWarning).toContain('--db scopus');
+
+      warnSpy.mockRestore();
+    });
+
+    it('should preserve error behavior when --db scopus is explicitly specified', async () => {
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+        providers: ['scopus'], // Explicit --db scopus
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      // Should fail with config error (current behavior preserved)
+      expect(result.success).toBe(false);
+      expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
+
+      // Should NOT have the "Skipping" warning
+      const warnCalls = warnSpy.mock.calls.map((c) => c.join(' '));
+      const skipWarning = warnCalls.find((msg) => msg.includes('Skipping scopus'));
+      expect(skipWarning).toBeUndefined();
+
+      warnSpy.mockRestore();
+    });
+
+    it('should execute all configured providers normally in default mode', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = true;
+      config.providers.scopus.enabled = false;
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+        // No providers specified = default mode
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['eric']?.retrieved).toBe(1);
+      expect(result.results?.['arxiv']?.retrieved).toBe(1);
+    });
+
+    it('should return no-providers error when all enabled providers are unconfigured and no --db', async () => {
+      config.providers.pubmed.enabled = false;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+        // No providers specified = default mode
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No providers');
 
       warnSpy.mockRestore();
     });

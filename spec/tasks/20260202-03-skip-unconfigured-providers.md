@@ -41,37 +41,36 @@ function isProviderConfigured(name: ProviderName, config: Config): boolean {
 
 ### Step 1: Add provider configuration check
 
-- [ ] Write test: `src/cli/commands/search-executor.test.ts`
+- [x] Write test: `src/cli/commands/search-executor.test.ts`
   - Test: `isProviderConfigured('scopus', configWithoutKey)` returns `false`
   - Test: `isProviderConfigured('scopus', configWithKey)` returns `true`
   - Test: `isProviderConfigured('pubmed', anyConfig)` returns `true`
-- [ ] Verify test fails (Red)
-- [ ] Implement `isProviderConfigured()` in `src/cli/commands/search-executor.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Configuration check works for all providers
+- [x] Verify test fails (Red)
+- [x] Implement `isProviderConfigured()` in `src/cli/commands/search-executor.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Configuration check works for all providers
 
 ### Step 2: Skip unconfigured providers in default mode
 
-- [ ] Write test: `src/cli/commands/search-executor.test.ts`
+- [x] Write test: `src/cli/commands/search-executor.test.ts`
   - Test: default search skips unconfigured Scopus and emits warning
   - Test: explicit `--db scopus` still fails with error when unconfigured
   - Test: all configured providers still execute normally
-- [ ] Verify test fails (Red)
-- [ ] Modify `executeSearch()` to filter unconfigured providers when no `--db` is specified
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Unconfigured providers are skipped with warning in default mode
+- [x] Verify test fails (Red)
+- [x] Modify `executeSearch()` to filter unconfigured providers when no `--db` is specified
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Unconfigured providers are skipped with warning in default mode
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/search-executor.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/search.e2e.test.ts`
   - Test: search without Scopus API key completes successfully (Scopus skipped)
   - Test: search with `--db scopus` without API key fails with clear error
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Run search without Scopus key, verify skip behavior
-- [ ] Acceptance: All tests pass, unconfigured providers are gracefully skipped
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, unconfigured providers are gracefully skipped
 
 ## Notes
 

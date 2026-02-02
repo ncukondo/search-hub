@@ -1515,7 +1515,7 @@ describe('search-hub search: UX improvements (Tasks #19 and #22)', () => {
   });
 
   describe('Scopus API key preflight check E2E', () => {
-    it('should skip Scopus and succeed with other providers when API key is missing', async () => {
+    it('should skip Scopus in default mode and succeed with other providers', async () => {
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
       const config = getDefaultConfig();
       config.providers.pubmed.enabled = true;
@@ -1535,7 +1535,90 @@ describe('search-hub search: UX improvements (Tasks #19 and #22)', () => {
 
       expect(result.success).toBe(true);
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      // Scopus should be skipped entirely (not in results)
+      expect(result.results?.['scopus']).toBeUndefined();
+
+      // Skip warning should be emitted
+      const warnCalls = warnSpy.mock.calls.map((c) => c.join(' '));
+      expect(warnCalls.some((msg) => msg.includes('Skipping scopus'))).toBe(true);
+
+      warnSpy.mockRestore();
+    });
+  });
+});
+
+describe('search-hub search: skip unconfigured providers E2E', () => {
+  let ctx: E2EContext;
+
+  beforeEach(async () => {
+    ctx = await setupE2EContext();
+    vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  describe('search without Scopus API key completes successfully', () => {
+    it('should skip Scopus and complete search with configured providers', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await executeSearch(
+        { queryFile: queryPath },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['eric']?.retrieved).toBe(1);
+      // Scopus should not appear in results
+      expect(result.results?.['scopus']).toBeUndefined();
+
+      // Session should be completed (not partial)
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const session = JSON.parse(sessionContent);
+      expect(session.summary.status).toBe('completed');
+
+      // Verify skip warning
+      const warnCalls = warnSpy.mock.calls.map((c) => c.join(' '));
+      expect(warnCalls.some((msg) => msg.includes('Skipping scopus'))).toBe(true);
+      expect(warnCalls.some((msg) => msg.includes('--db scopus'))).toBe(true);
+
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe('search with --db scopus without API key fails with clear error', () => {
+    it('should fail with config error when --db scopus is explicitly requested', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await executeSearch(
+        { queryFile: queryPath, providers: ['scopus'] },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      expect(result.success).toBe(false);
       expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
+
+      // Should have the Scopus API key warning (from createProviderInstance)
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
 
       warnSpy.mockRestore();
