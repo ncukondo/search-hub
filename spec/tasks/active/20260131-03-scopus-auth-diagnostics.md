@@ -60,16 +60,16 @@ During a real search session:
 
 ### Step 3: Integrate connection test into dry-run readiness check
 
-- [ ] Write test: `src/cli/commands/search-executor.test.ts`
+- [x] Write test: `src/cli/commands/search.test.ts`
   - Test: `--dry-run` with an invalid Scopus key shows `✗ scopus not ready (API key invalid)`
-  - Test: `--dry-run` with a valid Scopus key shows `✓ scopus ready`
-- [ ] Modify the dry-run readiness check in `src/cli/commands/search-executor.ts`
+  - Test: `--dry-run` with a valid Scopus key shows `✓ scopus ready (verified)`
+- [x] Modify the dry-run readiness check in `src/cli/commands/search.ts`
   - Call `testConnection()` for providers that support it
   - Display the error detail if connection test fails
   - Add `--skip-connection-test` flag to allow offline dry-run (just check config presence)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Dry-run accurately reflects provider availability
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Dry-run accurately reflects provider availability
 
 ### Step 4: Distinguish 401 from 403 in error messages
 

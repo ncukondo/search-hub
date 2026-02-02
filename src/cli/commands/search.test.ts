@@ -127,13 +127,13 @@ describe('search command', () => {
   });
 
   describe('formatDryRunOutput', () => {
-    it('should format translated queries for display', () => {
+    it('should format translated queries for display', async () => {
       const translations = [
         { provider: 'pubmed', query: '(diabetes[tiab]) AND (AI[tiab])' },
         { provider: 'eric', query: 'diabetes AND AI' },
       ];
 
-      const result = formatDryRunOutput(translations);
+      const result = await formatDryRunOutput(translations);
 
       expect(result).toContain('pubmed');
       expect(result).toContain('(diabetes[tiab]) AND (AI[tiab])');
@@ -141,13 +141,13 @@ describe('search command', () => {
       expect(result).toContain('diabetes AND AI');
     });
 
-    it('should handle empty translations', () => {
-      const result = formatDryRunOutput([]);
+    it('should handle empty translations', async () => {
+      const result = await formatDryRunOutput([]);
 
       expect(result).toContain('No translations');
     });
 
-    it('should include provider readiness section when config is provided', () => {
+    it('should include provider readiness section when config is provided', async () => {
       const translations: TranslationResult[] = [
         { provider: 'pubmed', query: 'diabetes[tiab]' },
       ];
@@ -155,42 +155,42 @@ describe('search command', () => {
       config.providers.pubmed.email = 'test@example.com';
       const providers: ProviderName[] = ['pubmed'];
 
-      const result = formatDryRunOutput(translations, { config, providers });
+      const result = await formatDryRunOutput(translations, { config, providers, skipConnectionTest: true });
 
       expect(result).toContain('Provider readiness:');
       expect(result).toContain('Translated queries:');
     });
 
-    it('should produce same output without config (backward compat)', () => {
+    it('should produce same output without config (backward compat)', async () => {
       const translations: TranslationResult[] = [
         { provider: 'pubmed', query: 'diabetes[tiab]' },
       ];
 
-      const withoutConfig = formatDryRunOutput(translations);
+      const withoutConfig = await formatDryRunOutput(translations);
       expect(withoutConfig).not.toContain('Provider readiness:');
       expect(withoutConfig).toContain('Translated queries:');
     });
 
-    it('should include diagnostics section when queries have issues', () => {
+    it('should include diagnostics section when queries have issues', async () => {
       const translations: TranslationResult[] = [
         { provider: 'pubmed', query: 'diabetes[tiab] NOT review[pt]' },
       ];
       const config = getDefaultConfig();
       const providers: ProviderName[] = ['pubmed'];
 
-      const result = formatDryRunOutput(translations, { config, providers });
+      const result = await formatDryRunOutput(translations, { config, providers, skipConnectionTest: true });
 
       expect(result).toContain('Diagnostics:');
     });
 
-    it('should not include diagnostics section when queries are clean', () => {
+    it('should not include diagnostics section when queries are clean', async () => {
       const translations: TranslationResult[] = [
         { provider: 'eric', query: 'diabetes AND education' },
       ];
       const config = getDefaultConfig();
       const providers: ProviderName[] = ['eric'];
 
-      const result = formatDryRunOutput(translations, { config, providers });
+      const result = await formatDryRunOutput(translations, { config, providers, skipConnectionTest: true });
 
       expect(result).not.toContain('Diagnostics:');
     });
@@ -289,6 +289,50 @@ describe('search command', () => {
       expect(result).toContain('eric');
       expect(result).toContain('arxiv');
       expect(result).toContain('scopus');
+    });
+
+    it('should show connection test failure for scopus with invalid key', () => {
+      const config = getDefaultConfig();
+      config.providers.scopus.api_key = 'invalid-key';
+      const providers: ProviderName[] = ['scopus'];
+      const connectionResults = {
+        scopus: { ok: false as const, error: 'Scopus API authentication failed: Unauthorized' },
+      };
+
+      const result = formatProviderReadiness(providers, config, connectionResults);
+
+      expect(result).toContain('✗');
+      expect(result).toContain('scopus');
+      expect(result).toContain('not ready');
+      expect(result).toContain('authentication failed');
+    });
+
+    it('should show verified status when connection test passes', () => {
+      const config = getDefaultConfig();
+      config.providers.scopus.api_key = 'valid-key';
+      const providers: ProviderName[] = ['scopus'];
+      const connectionResults = {
+        scopus: { ok: true as const },
+      };
+
+      const result = formatProviderReadiness(providers, config, connectionResults);
+
+      expect(result).toContain('✓');
+      expect(result).toContain('scopus');
+      expect(result).toContain('ready (verified)');
+    });
+
+    it('should show config-only readiness when no connection results provided', () => {
+      const config = getDefaultConfig();
+      config.providers.scopus.api_key = 'some-key';
+      const providers: ProviderName[] = ['scopus'];
+
+      const result = formatProviderReadiness(providers, config);
+
+      expect(result).toContain('✓');
+      expect(result).toContain('scopus');
+      expect(result).toContain('ready');
+      expect(result).not.toContain('verified');
     });
   });
 

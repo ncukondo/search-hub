@@ -389,6 +389,7 @@ Examples:
     .option('--name <string>', 'session name')
     .option('--max-results <n>', 'limit results per database')
     .option('--dry-run', 'show translated queries without executing')
+    .option('--skip-connection-test', 'skip API connection test during dry-run')
     .option('--no-resume', 'start fresh even if session exists')
     .addHelpText('after', `
 Examples:
@@ -406,6 +407,7 @@ Examples:
           name?: string;
           maxResults?: string;
           dryRun?: boolean;
+          skipConnectionTest?: boolean;
           resume?: boolean;
         }
       ) => {
@@ -456,9 +458,9 @@ Examples:
                 const providers = translations.map(t => t.provider) as ProviderName[];
                 if (!globalOpts.quiet) {
                   const dryRunOpts = dryRunConfig
-                    ? { config: dryRunConfig, providers }
+                    ? { config: dryRunConfig, providers, skipConnectionTest: options?.skipConnectionTest }
                     : {};
-                  console.log(formatDryRunOutput(translations, dryRunOpts));
+                  console.log(await formatDryRunOutput(translations, dryRunOpts));
                 }
               } else {
                 if (!globalOpts.quiet) {
@@ -477,9 +479,9 @@ Examples:
               ];
               if (!globalOpts.quiet) {
                 const dryRunOpts = dryRunConfig
-                  ? { config: dryRunConfig, providers: searchOpts.providers as ProviderName[] }
+                  ? { config: dryRunConfig, providers: searchOpts.providers as ProviderName[], skipConnectionTest: options?.skipConnectionTest }
                   : {};
-                console.log(formatDryRunOutput(translations, dryRunOpts));
+                console.log(await formatDryRunOutput(translations, dryRunOpts));
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;
