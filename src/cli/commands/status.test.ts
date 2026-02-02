@@ -294,5 +294,48 @@ describe('status command', () => {
       expect(parsed.id).toBe('20240115_diabetes-ai_a3f2c1');
       expect(parsed.name).toBe('diabetes-ai');
     });
+
+    it('should show deduplication stats when uniqueArticles is provided', () => {
+      const details: SessionDetails = {
+        id: '20240115_diabetes-ai_a3f2c1',
+        name: 'diabetes-ai',
+        status: 'completed',
+        createdAt: '2024-01-15T10:30:00Z',
+        updatedAt: '2024-01-15T10:45:00Z',
+        queryFile: 'diabetes-ai.yaml',
+        totalHits: 500,
+        totalRetrieved: 150,
+        databases: [],
+        uniqueArticles: 142,
+        duplicatesRemoved: 8,
+      };
+
+      const result = formatSessionDetails(details, { json: false });
+
+      expect(result).toContain('150 raw');
+      expect(result).toContain('142 unique');
+      expect(result).toContain('8 duplicates');
+    });
+
+    it('should not show dedup info when uniqueArticles equals totalRetrieved', () => {
+      const details: SessionDetails = {
+        id: '20240115_diabetes-ai_a3f2c1',
+        name: 'diabetes-ai',
+        status: 'completed',
+        createdAt: '2024-01-15T10:30:00Z',
+        updatedAt: '2024-01-15T10:45:00Z',
+        queryFile: 'diabetes-ai.yaml',
+        totalHits: 500,
+        totalRetrieved: 150,
+        databases: [],
+        uniqueArticles: 150,
+        duplicatesRemoved: 0,
+      };
+
+      const result = formatSessionDetails(details, { json: false });
+
+      expect(result).toContain('150/500 results');
+      expect(result).not.toContain('duplicates');
+    });
   });
 });

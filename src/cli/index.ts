@@ -33,6 +33,7 @@ import type { ProviderName } from '../providers/base/types.js';
 import {
   listSessionsForDisplay,
   getSessionDetails,
+  computeDeduplicationStats,
   formatSessionList,
   formatSessionDetails,
 } from './commands/status.js';
@@ -350,6 +351,15 @@ Examples:
           // Show specific session details
           const result = await getSessionDetails(sessionId, sessionsDir);
           if (result.success && result.session) {
+            // Compute deduplication stats
+            try {
+              const rawSession = await loadSession(sessionId, sessionsDir);
+              const dedupStats = await computeDeduplicationStats(sessionId, sessionsDir, rawSession);
+              result.session.uniqueArticles = dedupStats.uniqueArticles;
+              result.session.duplicatesRemoved = dedupStats.duplicatesRemoved;
+            } catch {
+              // Dedup stats are optional - don't fail the command
+            }
             if (!globalOpts.quiet) {
               console.log(formatSessionDetails(result.session, formatOpts));
             }

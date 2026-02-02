@@ -71,11 +71,11 @@ no cross-database deduplication.
 
 ### Step 5: Report deduplication statistics in session status
 
-- [ ] Modify `src/cli/commands/status.ts`
+- [x] Modify `src/cli/commands/status.ts`
   - Show total unique articles vs raw count
   - Example: `Total: 150 raw / 142 unique (8 duplicates)`
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Status command shows dedup info
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Status command shows dedup info
 
 ### Final Step: E2E Integration Tests
 
