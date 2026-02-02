@@ -24,6 +24,7 @@ import {
   formatIds,
   formatJson,
   formatJsonl,
+  deduplicateArticles,
 } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 
@@ -485,6 +486,204 @@ describe('search-hub export E2E', () => {
 
       // Only articles with PMIDs should be included
       expect(ids.every((id) => /^\d+$/.test(id))).toBe(true);
+    });
+  });
+
+  describe('deduplication E2E', () => {
+    it('should deduplicate articles with same PMID from session results', async () => {
+      // Simulate PubMed pagination overlap: same PMID appears twice
+      const articlesWithDup: Article[] = [
+        {
+          title: 'Diabetes and Machine Learning',
+          authors: [{ family: 'Smith', given: 'John' }],
+          pmid: '41541042',
+          doi: '10.1000/diabetes.2024.001',
+          source: 'pubmed',
+          retrievedAt: new Date().toISOString(),
+        },
+        {
+          title: 'Deep Learning in Healthcare',
+          authors: [{ family: 'Johnson', given: 'Alice' }],
+          pmid: '12345679',
+          doi: '10.1000/healthcare.2024.002',
+          source: 'pubmed',
+          retrievedAt: new Date().toISOString(),
+        },
+        {
+          title: 'Diabetes and Machine Learning (dup)',
+          authors: [{ family: 'Smith', given: 'John' }],
+          pmid: '41541042',
+          doi: '10.1000/diabetes.2024.001',
+          source: 'pubmed',
+          retrievedAt: new Date().toISOString(),
+        },
+      ];
+
+      await createTestSessionWithResults('dedup-pmid-test', articlesWithDup, ['pubmed']);
+
+      // Read session results
+      const resultsPath = join(ctx.sessionsDir, 'dedup-pmid-test', 'pubmed_results.jsonl');
+      const content = await readFile(resultsPath, 'utf-8');
+      const articles = content.trim().split('\n').map((line) => JSON.parse(line));
+
+      // Apply deduplication
+      const result = deduplicateArticles(articles);
+
+      expect(result.articles).toHaveLength(2);
+      expect(result.duplicatesRemoved).toBe(1);
+
+      // Verify exported JSONL has correct count
+      const output = formatJsonl(result.articles);
+      const outputLines = output.split('\n');
+      expect(outputLines).toHaveLength(2);
+    });
+
+    it('should deduplicate articles with same DOI across providers', async () => {
+      // Same article found by both PubMed and Scopus
+      const pubmedArticles: Article[] = [
+        {
+          title: 'Cross-Provider Article (PubMed)',
+          authors: [{ family: 'Chen', given: 'Wei' }],
+          pmid: '99999999',
+          doi: '10.1000/cross-provider.2024',
+          source: 'pubmed',
+          abstract: 'This is the full abstract from PubMed.',
+          journal: 'Journal of Testing',
+          volume: '10',
+          issue: '2',
+          pages: '100-110',
+          retrievedAt: new Date().toISOString(),
+        },
+      ];
+
+      const scopusArticles: Article[] = [
+        {
+          title: 'Cross-Provider Article (Scopus)',
+          authors: [{ family: 'Chen', given: 'W.' }],
+          scopusId: 'SCOPUS-88888',
+          doi: '10.1000/cross-provider.2024',
+          source: 'scopus',
+          retrievedAt: new Date().toISOString(),
+        },
+        {
+          title: 'Unique Scopus Article',
+          authors: [{ family: 'Lee', given: 'James' }],
+          scopusId: 'SCOPUS-77777',
+          doi: '10.1000/unique-scopus.2024',
+          source: 'scopus',
+          retrievedAt: new Date().toISOString(),
+        },
+      ];
+
+      // Create session with results from both providers
+      const sessionId = 'dedup-cross-provider';
+      const sessionDir = join(ctx.sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      // Write PubMed results
+      await writeFile(
+        join(sessionDir, 'pubmed_results.jsonl'),
+        pubmedArticles.map((a) => JSON.stringify(a)).join('\n'),
+        'utf-8'
+      );
+      await writeFile(join(sessionDir, 'pubmed_query.txt'), 'pubmed query', 'utf-8');
+
+      // Write Scopus results
+      await writeFile(
+        join(sessionDir, 'scopus_results.jsonl'),
+        scopusArticles.map((a) => JSON.stringify(a)).join('\n'),
+        'utf-8'
+      );
+      await writeFile(join(sessionDir, 'scopus_query.txt'), 'scopus query', 'utf-8');
+
+      // Read all articles
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'scopus']) {
+        const path = join(sessionDir, `${provider}_results.jsonl`);
+        const fileContent = await readFile(path, 'utf-8');
+        for (const line of fileContent.trim().split('\n')) {
+          allArticles.push(JSON.parse(line));
+        }
+      }
+
+      expect(allArticles).toHaveLength(3); // 1 pubmed + 2 scopus before dedup
+
+      // Apply deduplication
+      const result = deduplicateArticles(allArticles);
+
+      expect(result.articles).toHaveLength(2); // 1 cross-provider + 1 unique scopus
+      expect(result.duplicatesRemoved).toBe(1);
+
+      // The PubMed record should be kept (more metadata)
+      const keptArticle = result.articles.find((a) => a.doi === '10.1000/cross-provider.2024');
+      expect(keptArticle).toBeDefined();
+      expect(keptArticle!.source).toBe('pubmed');
+      expect(keptArticle!.abstract).toBe('This is the full abstract from PubMed.');
+      expect(keptArticle!.pmid).toBe('99999999');
+    });
+
+    it('should produce accurate dedup count for mixed duplicates', async () => {
+      const articles: Article[] = [
+        // PubMed articles with one dup
+        {
+          title: 'Article A',
+          authors: [],
+          pmid: '11111111',
+          doi: '10.1000/a',
+          source: 'pubmed',
+          retrievedAt: new Date().toISOString(),
+        },
+        {
+          title: 'Article B',
+          authors: [],
+          pmid: '22222222',
+          source: 'pubmed',
+          retrievedAt: new Date().toISOString(),
+        },
+        {
+          title: 'Article A dup',
+          authors: [],
+          pmid: '11111111',
+          doi: '10.1000/a',
+          source: 'pubmed',
+          retrievedAt: new Date().toISOString(),
+        },
+        // Scopus article matching Article A's DOI
+        {
+          title: 'Article A from Scopus',
+          authors: [],
+          scopusId: 'SC-111',
+          doi: '10.1000/a',
+          source: 'scopus',
+          retrievedAt: new Date().toISOString(),
+        },
+        // Unique Scopus article
+        {
+          title: 'Article C',
+          authors: [],
+          scopusId: 'SC-333',
+          doi: '10.1000/c',
+          source: 'scopus',
+          retrievedAt: new Date().toISOString(),
+        },
+      ];
+
+      const result = deduplicateArticles(articles);
+
+      // Article A (PMID dup removed), Article A Scopus (DOI dup removed) = 2 dups
+      // Remaining: Article A, Article B, Article C = 3 unique
+      expect(result.articles).toHaveLength(3);
+      expect(result.duplicatesRemoved).toBe(2);
+
+      // Exported results should match
+      const jsonOutput = formatJson(result.articles);
+      const parsed = JSON.parse(jsonOutput);
+      expect(parsed).toHaveLength(3);
+
+      const idsOutput = formatIds(result.articles, 'all');
+      expect(idsOutput).toContain('pmid:11111111');
+      expect(idsOutput).toContain('pmid:22222222');
+      expect(idsOutput).toContain('scopus:SC-333');
     });
   });
 });
