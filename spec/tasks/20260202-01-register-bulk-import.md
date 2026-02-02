@@ -70,15 +70,15 @@ Since CSL-JSON always includes the `abstract` field, abstracts are automatically
 
 ### Step 1: CSL-JSON conversion — date parsing and ID generation
 
-- [ ] Write test: `src/integration/csl-json.test.ts`
+- [x] Write test: `src/integration/csl-json.test.ts`
   - Test `generateCslId`: `smith-2024`, `anon-2024`, `smith-nd`
   - Test date parsing: `"2024-01-15"` → `[[2024,1,15]]`, `"2024-01"` → `[[2024,1]]`, `"2024"` → `[[2024]]`, `undefined` → omitted
-- [ ] Create stub: `src/integration/csl-json.ts` (empty exports)
-- [ ] Verify test fails (Red)
-- [ ] Implement `generateCslId()` and date parsing helper
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: ID generation and date parsing work for all edge cases
+- [x] Create stub: `src/integration/csl-json.ts` (empty exports)
+- [x] Verify test fails (Red)
+- [x] Implement `generateCslId()` and date parsing helper
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: ID generation and date parsing work for all edge cases
 
 ### Step 2: CSL-JSON conversion — full article mapping
 
