@@ -119,7 +119,6 @@ export function formatIds(articles: Article[], idType: IdType): string {
   return ids.join('\n');
 }
 
-
 function extractYear(publicationDate: string | undefined): number | null {
   if (!publicationDate) return null;
   const year = parseInt(publicationDate.substring(0, 4), 10);
