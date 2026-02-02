@@ -53,15 +53,15 @@ function isProviderConfigured(name: ProviderName, config: Config): boolean {
 
 ### Step 2: Skip unconfigured providers in default mode
 
-- [ ] Write test: `src/cli/commands/search-executor.test.ts`
+- [x] Write test: `src/cli/commands/search-executor.test.ts`
   - Test: default search skips unconfigured Scopus and emits warning
   - Test: explicit `--db scopus` still fails with error when unconfigured
   - Test: all configured providers still execute normally
-- [ ] Verify test fails (Red)
-- [ ] Modify `executeSearch()` to filter unconfigured providers when no `--db` is specified
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Unconfigured providers are skipped with warning in default mode
+- [x] Verify test fails (Red)
+- [x] Modify `executeSearch()` to filter unconfigured providers when no `--db` is specified
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Unconfigured providers are skipped with warning in default mode
 
 ### Final Step: E2E Integration Tests
 

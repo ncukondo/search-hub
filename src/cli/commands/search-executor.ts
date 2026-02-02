@@ -233,7 +233,25 @@ export async function executeSearch(
   }
 
   // Determine which providers to use
-  const providers = getEnabledProviders(config, options.providers);
+  let providers = getEnabledProviders(config, options.providers);
+
+  // In default mode (no --db), skip unconfigured providers with a warning
+  const isExplicitSelection = options.providers && options.providers.length > 0;
+  if (!isExplicitSelection) {
+    const skipped: ProviderName[] = [];
+    providers = providers.filter((name) => {
+      if (!isProviderConfigured(name, config)) {
+        skipped.push(name);
+        return false;
+      }
+      return true;
+    });
+    for (const name of skipped) {
+      console.warn(
+        `Skipping ${name}: API key not configured (use --db ${name} to force)`
+      );
+    }
+  }
 
   if (providers.length === 0) {
     return {
