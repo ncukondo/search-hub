@@ -43,6 +43,34 @@ npm run typecheck
 - 全テスト通過を確認
 - gh pr create でPR作成
 
+### 5a. ワーカー完了検知 & レビューサイクル
+
+#### ワーカー完了の検知
+全ワーカーがPR作成まで完了したかを、`tmux capture-pane` でポーリングして確認する:
+```bash
+# 各ワーカーペインの最新出力を確認
+tmux capture-pane -t <pane_id> -p | tail -20
+```
+ワーカーがアイドル状態（プロンプト待ち or `?` 表示）になっていればPR作成済みと判断する。
+
+#### レビュー → 修正 → 再レビュー
+1. mainエージェントが各PRをレビュー (`/review-pr <PR番号>`)
+2. 修正が必要な場合、該当ワーカーに修正指示を送信:
+   ```bash
+   # tmux send-keys の注意: テキストと Enter は必ず別送信 + sleep 1
+   tmux send-keys -t <pane_id> '修正指示テキスト'
+   sleep 1
+   tmux send-keys -t <pane_id> Enter
+   ```
+3. ワーカーが修正してpush → 再レビュー
+4. 全PR承認まで繰り返す
+
+### 5b. レイアウト適用
+全ワーカー起動後、ペインレイアウトを整える:
+```bash
+./scripts/apply-layout.sh
+```
+
 ### 6. マージ後（mainブランチで）
 - ROADMAP.md のステータスを "Done" に更新
 - タスクファイルを `spec/tasks/completed/` に移動
@@ -53,6 +81,17 @@ npm run typecheck
 - `workmux dashboard` でTUIダッシュボード表示
 - 依存関係のconflictに注意
 - マージ時の調整を意識する
+
+## tmux send-keys の注意
+- テキストと Enter は**必ず別々の `send-keys` 呼び出し**で送信する
+- 間に `sleep 1` を挟む（入力レースを防ぐため）
+- 悪い例: `tmux send-keys -t $PANE 'command' Enter`
+- 良い例:
+  ```bash
+  tmux send-keys -t $PANE 'command'
+  sleep 1
+  tmux send-keys -t $PANE Enter
+  ```
 
 ## context管理
 次の作業の完了までにcompactが必要になりそうなら、その時点で作業を中断し、進捗を報告して下さい。
