@@ -56,9 +56,9 @@ Improved:
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/register.e2e.test.ts` (or update existing)
+- [x] Write E2E test: `src/integration/register.e2e.test.ts` (updated existing)
   - Test: dry-run with session containing no-ID articles shows detailed output
-- [ ] Verify all E2E tests pass
+- [x] Verify all E2E tests pass
 - [ ] Run full test suite: `npm test`
 - [ ] **Manual verification**: Run `register --dry-run` on a real session
 - [ ] Acceptance: All tests pass, dry-run output is informative
