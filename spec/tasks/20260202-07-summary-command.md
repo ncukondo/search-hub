@@ -85,19 +85,19 @@ Article data loading uses the same pattern as the `export` command: load session
 
 ### Step 1: Implement `computeSummary()` function
 
-- [ ] Write test: `src/cli/commands/summary.test.ts`
+- [x] Write test: `src/cli/commands/summary.test.ts`
   - Test: year distribution counts articles per year
   - Test: unknown/missing dates grouped under "unknown"
   - Test: database breakdown counts articles per source
   - Test: top journals sorted by count (descending), limited to top N
   - Test: identifier coverage counts DOI, PMID, and no-ID articles
   - Test: total vs unique article counts
-- [ ] Create stub: `src/cli/commands/summary.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `computeSummary()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Summary computation is correct for all statistics
+- [x] Create stub: `src/cli/commands/summary.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `computeSummary()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Summary computation is correct for all statistics
 
 ### Step 2: Implement `formatSummary()` for human-readable output
 
