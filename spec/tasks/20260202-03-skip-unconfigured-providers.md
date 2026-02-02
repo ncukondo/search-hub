@@ -65,13 +65,12 @@ function isProviderConfigured(name: ProviderName, config: Config): boolean {
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/search-executor.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/search.e2e.test.ts`
   - Test: search without Scopus API key completes successfully (Scopus skipped)
   - Test: search with `--db scopus` without API key fails with clear error
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Run search without Scopus key, verify skip behavior
-- [ ] Acceptance: All tests pass, unconfigured providers are gracefully skipped
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, unconfigured providers are gracefully skipped
 
 ## Notes
 
