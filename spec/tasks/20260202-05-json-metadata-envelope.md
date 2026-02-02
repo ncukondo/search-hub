@@ -72,11 +72,11 @@ When `metadata` is not provided to `formatJson()`, the function produces the bar
 
 ### Step 2: Pass session metadata from CLI handler
 
-- [ ] Modify export command handler in `src/cli/index.ts` to pass session metadata to `formatJson()`
+- [x] Modify export command handler in `src/cli/index.ts` to pass session metadata to `formatJson()`
   - Session data is already loaded at lines 726-737
   - Extract `sessionId`, `sessionName`, `createdAt`, and database counts
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: CLI export produces envelope by default
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: CLI export produces envelope by default
 
 ### Final Step: E2E Integration Tests
 

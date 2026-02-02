@@ -57,6 +57,7 @@ import {
   formatJson,
   formatJsonl,
   deduplicateArticles,
+  type JsonExportMetadata,
 } from './commands/export.js';
 import {
   parseRegisterOptions,
@@ -784,7 +785,18 @@ Examples:
           if (exportOpts.format === 'ids') {
             output = formatIds(exportArticles, exportOpts.idType ?? 'all');
           } else if (exportOpts.format === 'json') {
-            output = formatJson(exportArticles);
+            // Build per-database article counts
+            const databases: Record<string, number> = {};
+            for (const article of exportArticles) {
+              databases[article.source] = (databases[article.source] ?? 0) + 1;
+            }
+            const metadata: JsonExportMetadata = {
+              sessionId: session.id,
+              sessionName: session.name,
+              createdAt: session.createdAt,
+              databases,
+            };
+            output = formatJson(exportArticles, metadata);
           } else {
             output = formatJsonl(exportArticles);
           }
