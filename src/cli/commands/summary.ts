@@ -88,3 +88,93 @@ export function computeSummary(
     identifierCoverage: { withDoi, withPmid, noDoiOrPmid },
   };
 }
+
+const MAX_BAR_WIDTH = 32;
+
+function formatPercent(count: number, total: number): string {
+  if (total === 0) return '0.0%';
+  return `${((count / total) * 100).toFixed(1)}%`;
+}
+
+export function formatSummary(summary: SessionSummary): string {
+  const lines: string[] = [];
+
+  // Header
+  lines.push(`Session: ${summary.sessionName} (${summary.sessionId})`);
+  lines.push(`Total: ${summary.totalArticles} articles (${summary.uniqueArticles} unique after deduplication)`);
+  lines.push('');
+
+  // Year distribution
+  lines.push('Year distribution:');
+  const yearEntries = Object.entries(summary.yearDistribution);
+  // Sort: numeric years ascending, "unknown" last
+  yearEntries.sort((a, b) => {
+    if (a[0] === 'unknown') return 1;
+    if (b[0] === 'unknown') return -1;
+    return a[0].localeCompare(b[0]);
+  });
+
+  if (yearEntries.length > 0) {
+    const maxCount = Math.max(...yearEntries.map(([, c]) => c));
+    const maxCountWidth = Math.max(...yearEntries.map(([, c]) => String(c).length));
+    const maxLabelWidth = Math.max(...yearEntries.map(([y]) => y.length));
+
+    for (const [year, count] of yearEntries) {
+      const barLength = maxCount > 0 ? Math.round((count / maxCount) * MAX_BAR_WIDTH) : 0;
+      const bar = '█'.repeat(barLength);
+      const paddedYear = year.padStart(maxLabelWidth);
+      const paddedCount = String(count).padStart(maxCountWidth);
+      lines.push(`  ${paddedYear}: ${paddedCount} ${bar}`);
+    }
+  }
+  lines.push('');
+
+  // Database breakdown
+  lines.push('Database breakdown:');
+  const dbEntries = Object.entries(summary.databaseBreakdown)
+    .sort((a, b) => b[1] - a[1]);
+
+  if (dbEntries.length > 0) {
+    const maxDbLabelWidth = Math.max(...dbEntries.map(([name]) => name.length));
+    const maxDbCountWidth = Math.max(...dbEntries.map(([, c]) => String(c).length));
+
+    for (const [name, count] of dbEntries) {
+      const paddedName = name.padEnd(maxDbLabelWidth);
+      const paddedCount = String(count).padStart(maxDbCountWidth);
+      lines.push(`  ${paddedName}: ${paddedCount} (${formatPercent(count, summary.uniqueArticles)})`);
+    }
+  }
+  lines.push('');
+
+  // Top journals
+  lines.push('Top journals (by article count):');
+  if (summary.topJournals.length > 0) {
+    const maxJournalWidth = Math.max(...summary.topJournals.map((j) => j.name.length));
+    const maxJournalCountWidth = Math.max(...summary.topJournals.map((j) => String(j.count).length));
+
+    for (const journal of summary.topJournals) {
+      const paddedName = journal.name.padEnd(maxJournalWidth);
+      const paddedCount = String(journal.count).padStart(maxJournalCountWidth);
+      lines.push(`  ${paddedName}: ${paddedCount}`);
+    }
+  }
+  lines.push('');
+
+  // Identifier coverage
+  lines.push('Identifier coverage:');
+  const idEntries: Array<[string, number]> = [
+    ['With DOI', summary.identifierCoverage.withDoi],
+    ['With PMID', summary.identifierCoverage.withPmid],
+    ['No DOI/PMID', summary.identifierCoverage.noDoiOrPmid],
+  ];
+  const maxIdLabelWidth = Math.max(...idEntries.map(([label]) => label.length));
+  const maxIdCountWidth = Math.max(...idEntries.map(([, c]) => String(c).length));
+
+  for (const [label, count] of idEntries) {
+    const paddedLabel = label.padEnd(maxIdLabelWidth);
+    const paddedCount = String(count).padStart(maxIdCountWidth);
+    lines.push(`  ${paddedLabel}: ${paddedCount} (${formatPercent(count, summary.uniqueArticles)})`);
+  }
+
+  return lines.join('\n');
+}

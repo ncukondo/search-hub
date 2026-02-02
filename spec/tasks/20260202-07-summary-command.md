@@ -101,16 +101,16 @@ Article data loading uses the same pattern as the `export` command: load session
 
 ### Step 2: Implement `formatSummary()` for human-readable output
 
-- [ ] Write test: `src/cli/commands/summary.test.ts`
+- [x] Write test: `src/cli/commands/summary.test.ts`
   - Test: output includes session header, year distribution with bar chart, database breakdown with percentages, top journals, identifier coverage
   - Test: bar chart scales proportionally (longest bar = max width)
   - Test: year distribution is sorted chronologically
   - Test: numbers are right-aligned for readability
-- [ ] Verify test fails (Red)
-- [ ] Implement `formatSummary()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Human-readable output is well-formatted
+- [x] Verify test fails (Red)
+- [x] Implement `formatSummary()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Human-readable output is well-formatted
 
 ### Step 3: Implement `formatSummaryJson()` and register CLI command
 

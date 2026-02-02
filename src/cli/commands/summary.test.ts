@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeSummary } from './summary.js';
+import { computeSummary, formatSummary } from './summary.js';
+import type { SessionSummary } from './summary.js';
 import type { Article } from '../../providers/base/types.js';
 
 const makeArticle = (overrides: Partial<Article> & Pick<Article, 'title' | 'source'>): Article => ({
@@ -197,5 +198,142 @@ describe('computeSummary', () => {
     });
 
     expect(summary.topJournals).toEqual([{ name: 'Nature', count: 1 }]);
+  });
+});
+
+const makeSummary = (overrides?: Partial<SessionSummary>): SessionSummary => ({
+  sessionId: '20260202_test_a1b2c3',
+  sessionName: 'test',
+  totalArticles: 100,
+  uniqueArticles: 90,
+  yearDistribution: {
+    '2023': 10,
+    '2024': 50,
+    '2025': 25,
+    unknown: 5,
+  },
+  databaseBreakdown: {
+    pubmed: 70,
+    eric: 15,
+    arxiv: 5,
+  },
+  topJournals: [
+    { name: 'BMC medical education', count: 20 },
+    { name: 'JMIR medical education', count: 15 },
+    { name: 'Academic medicine', count: 10 },
+  ],
+  identifierCoverage: {
+    withDoi: 80,
+    withPmid: 70,
+    noDoiOrPmid: 5,
+  },
+  ...overrides,
+});
+
+describe('formatSummary', () => {
+  it('should include session header with id and article counts', () => {
+    const output = formatSummary(makeSummary());
+
+    expect(output).toContain('Session: test (20260202_test_a1b2c3)');
+    expect(output).toContain('Total: 100 articles (90 unique after deduplication)');
+  });
+
+  it('should include year distribution with bar chart', () => {
+    const output = formatSummary(makeSummary());
+
+    expect(output).toContain('Year distribution:');
+    // Should contain year entries
+    expect(output).toContain('2023');
+    expect(output).toContain('2024');
+    expect(output).toContain('2025');
+    // Bars should be present (unicode block chars)
+    expect(output).toMatch(/█/);
+  });
+
+  it('should sort year distribution chronologically with unknown last', () => {
+    const output = formatSummary(makeSummary());
+    const lines = output.split('\n');
+
+    const yearLines = lines.filter((l) => /^\s+(20\d{2}|unknown):/.test(l));
+    const years = yearLines.map((l) => l.trim().split(':')[0]!.trim());
+
+    expect(years).toEqual(['2023', '2024', '2025', 'unknown']);
+  });
+
+  it('should scale bar chart proportionally (longest bar = max width)', () => {
+    const summary = makeSummary({
+      yearDistribution: { '2024': 100, '2025': 50 },
+    });
+    const output = formatSummary(summary);
+    const lines = output.split('\n');
+
+    const barLines = lines.filter((l) => /^\s+20\d{2}:/.test(l));
+    // Count bars for each year
+    const barCounts = barLines.map((l) => (l.match(/█/g) ?? []).length);
+
+    // 2024 should have more bars than 2025 and the ratio should be ~2:1
+    expect(barCounts[0]).toBeGreaterThan(barCounts[1]!);
+    // The larger bar should be at or near max width (32)
+    expect(barCounts[0]).toBe(32);
+    expect(barCounts[1]).toBe(16);
+  });
+
+  it('should right-align numbers for readability', () => {
+    const summary = makeSummary({
+      yearDistribution: { '2023': 5, '2024': 100 },
+    });
+    const output = formatSummary(summary);
+    const lines = output.split('\n');
+
+    const yearLines = lines.filter((l) => /^\s+20\d{2}:/.test(l));
+    // Both lines should have same format width
+    // "  5" and "100" should be right-aligned to same column
+    // Find where the bar starts (█ or end of number+space)
+    const barPositions = yearLines.map((l) => l.indexOf('█'));
+    // The bar (or space before bar) should start at the same column
+    expect(barPositions[0]).toBe(barPositions[1]);
+  });
+
+  it('should include database breakdown with percentages', () => {
+    const output = formatSummary(makeSummary());
+
+    expect(output).toContain('Database breakdown:');
+    expect(output).toMatch(/pubmed\s*:\s+70\s+\(77\.8%\)/);
+    expect(output).toMatch(/eric\s*:\s+15\s+\(16\.7%\)/);
+    expect(output).toMatch(/arxiv\s*:\s+5\s+\(5\.6%\)/);
+  });
+
+  it('should include top journals section', () => {
+    const output = formatSummary(makeSummary());
+
+    expect(output).toContain('Top journals (by article count):');
+    expect(output).toContain('BMC medical education');
+    expect(output).toContain('JMIR medical education');
+    expect(output).toContain('Academic medicine');
+  });
+
+  it('should include identifier coverage with percentages', () => {
+    const output = formatSummary(makeSummary());
+
+    expect(output).toContain('Identifier coverage:');
+    expect(output).toMatch(/With DOI\s*:\s+80\s+\(88\.9%\)/);
+    expect(output).toMatch(/With PMID\s*:\s+70\s+\(77\.8%\)/);
+    expect(output).toMatch(/No DOI\/PMID\s*:\s+5\s+\(5\.6%\)/);
+  });
+
+  it('should handle zero unique articles gracefully', () => {
+    const summary = makeSummary({
+      totalArticles: 0,
+      uniqueArticles: 0,
+      yearDistribution: {},
+      databaseBreakdown: {},
+      topJournals: [],
+      identifierCoverage: { withDoi: 0, withPmid: 0, noDoiOrPmid: 0 },
+    });
+    const output = formatSummary(summary);
+
+    expect(output).toContain('Total: 0 articles (0 unique after deduplication)');
+    // Should not crash
+    expect(output).toContain('Year distribution:');
   });
 });
