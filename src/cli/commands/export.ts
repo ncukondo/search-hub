@@ -120,3 +120,85 @@ export function formatJsonl(articles: Article[]): string {
   }
   return articles.map((article) => JSON.stringify(article)).join('\n');
 }
+
+
+function getArticleKeys(article: Article): string[] {
+  const keys: string[] = [];
+  if (article.pmid) keys.push(`pmid:${article.pmid}`);
+  if (article.doi) keys.push(`doi:${article.doi.toLowerCase()}`);
+  if (article.arxivId) keys.push(`arxiv:${article.arxivId}`);
+  if (article.scopusId) keys.push(`scopus:${article.scopusId}`);
+  if (article.ericId) keys.push(`eric:${article.ericId}`);
+  return keys;
+}
+
+const METADATA_FIELDS: (keyof Article)[] = [
+  'doi', 'pmid', 'arxivId', 'scopusId', 'ericId',
+  'abstract', 'publicationDate', 'journal', 'volume', 'issue', 'pages',
+];
+
+function countMetadataFields(article: Article): number {
+  let count = 0;
+  for (const field of METADATA_FIELDS) {
+    if (article[field] !== undefined && article[field] !== '') {
+      count++;
+    }
+  }
+  return count;
+}
+
+export interface DeduplicationResult {
+  articles: Article[];
+  duplicatesRemoved: number;
+}
+
+export function deduplicateArticles(articles: Article[]): DeduplicationResult {
+  // Map from identifier key to index in the unique array
+  const keyToIndex = new Map<string, number>();
+  const unique: Article[] = [];
+  let duplicatesRemoved = 0;
+
+  for (const article of articles) {
+    const keys = getArticleKeys(article);
+
+    if (keys.length === 0) {
+      // No identifiers - cannot deduplicate, keep the article
+      unique.push(article);
+      continue;
+    }
+
+    // Check if any identifier has been seen before
+    let existingIndex: number | undefined;
+    for (const key of keys) {
+      const idx = keyToIndex.get(key);
+      if (idx !== undefined) {
+        existingIndex = idx;
+        break;
+      }
+    }
+
+    if (existingIndex !== undefined) {
+      // Duplicate found - compare metadata richness
+      const existing = unique[existingIndex]!;
+      if (countMetadataFields(article) > countMetadataFields(existing)) {
+        // Replace with the richer record
+        unique[existingIndex] = article;
+        // Update all keys to point to the same index
+        const newKeys = getArticleKeys(article);
+        for (const key of newKeys) {
+          keyToIndex.set(key, existingIndex);
+        }
+      }
+      duplicatesRemoved++;
+    } else {
+      const index = unique.length;
+      unique.push(article);
+      // Map all identifiers to this index
+      for (const key of keys) {
+        keyToIndex.set(key, index);
+      }
+    }
+  }
+
+  return { articles: unique, duplicatesRemoved };
+}

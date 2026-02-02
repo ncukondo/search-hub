@@ -1,4 +1,7 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { listSessions, loadSession } from '../../session/manager.js';
+import { deduplicateArticles } from './export.js';
 
 export interface SessionListItem {
   id: string;
@@ -27,6 +30,8 @@ export interface SessionDetails {
   totalHits: number;
   totalRetrieved: number;
   databases: DatabaseDetails[];
+  uniqueArticles?: number;
+  duplicatesRemoved?: number;
 }
 
 export interface ListOptions {
@@ -106,6 +111,43 @@ export async function getSessionDetails(
   }
 }
 
+export async function computeDeduplicationStats(
+  sessionId: string,
+  sessionsDir: string,
+  session: { databases: Record<string, { files?: { results?: string } } | undefined> }
+): Promise<{ uniqueArticles: number; duplicatesRemoved: number }> {
+  const articles: import('../../providers/base/types.js').Article[] = [];
+
+  for (const [, dbStatus] of Object.entries(session.databases)) {
+    if (!dbStatus || !dbStatus.files?.results) continue;
+
+    const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
+    try {
+      const content = await readFile(resultsPath, 'utf-8');
+      const lines = content.trim().split('\n').filter((line) => line);
+      for (const line of lines) {
+        try {
+          articles.push(JSON.parse(line));
+        } catch {
+          // Skip invalid JSON lines
+        }
+      }
+    } catch {
+      // Results file may not exist yet
+    }
+  }
+
+  if (articles.length === 0) {
+    return { uniqueArticles: 0, duplicatesRemoved: 0 };
+  }
+
+  const result = deduplicateArticles(articles);
+  return {
+    uniqueArticles: result.articles.length,
+    duplicatesRemoved: result.duplicatesRemoved,
+  };
+}
+
 export function formatSessionList(
   sessions: SessionListItem[],
   options: FormatOptions
@@ -149,7 +191,11 @@ export function formatSessionDetails(
   lines.push(`Created: ${new Date(details.createdAt).toLocaleString()}`);
   lines.push(`Updated: ${new Date(details.updatedAt).toLocaleString()}`);
   lines.push('');
-  lines.push(`Total: ${details.totalRetrieved}/${details.totalHits} results`);
+  if (details.duplicatesRemoved !== undefined && details.duplicatesRemoved > 0) {
+    lines.push(`Total: ${details.totalRetrieved} raw / ${details.uniqueArticles} unique (${details.duplicatesRemoved} duplicates)`);
+  } else {
+    lines.push(`Total: ${details.totalRetrieved}/${details.totalHits} results`);
+  }
   lines.push('');
   lines.push('Databases:');
 

@@ -34,59 +34,59 @@ no cross-database deduplication.
 
 ### Step 1: Add failing tests for within-provider deduplication
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: exporting results that contain duplicate PMIDs produces only unique articles
   - Test: the first occurrence is kept (preserving retrieval order)
   - Test: dedup count is reported (e.g., "Exported 99 articles (1 duplicate removed)")
-- [ ] Verify test fails (Red)
-- [ ] Acceptance: Tests demonstrate duplicate output
+- [x] Verify test fails (Red)
+- [x] Acceptance: Tests demonstrate duplicate output
 
 ### Step 2: Implement deduplication in export
 
-- [ ] Modify `src/cli/commands/export.ts`
+- [x] Modify `src/cli/commands/export.ts`
   - Add deduplication by primary identifier (PMID for PubMed, DOI as fallback)
   - Deduplicate before writing output
   - Report the number of duplicates removed in non-quiet mode
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Exports contain only unique articles
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Exports contain only unique articles
 
 ### Step 3: Add failing tests for cross-provider deduplication
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: articles with the same DOI from different providers are deduplicated
   - Test: when merging, prefer the record with more metadata (e.g., PubMed record with PMID+DOI over Scopus record with DOI only)
-- [ ] Verify test fails (Red)
-- [ ] Acceptance: Tests demonstrate cross-provider duplicates
+- [x] Verify test fails (Red)
+- [x] Acceptance: Tests demonstrate cross-provider duplicates
 
 ### Step 4: Implement cross-provider deduplication
 
-- [ ] Modify `src/cli/commands/export.ts`
+- [x] Modify `src/cli/commands/export.ts`
   - Deduplicate by DOI across providers
   - When both records have a DOI match, prefer the one with more complete metadata
   - Preserve source attribution (record which providers found the article)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Cross-provider duplicates are merged correctly
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Cross-provider duplicates are merged correctly
 
 ### Step 5: Report deduplication statistics in session status
 
-- [ ] Modify `src/cli/commands/status.ts`
+- [x] Modify `src/cli/commands/status.ts`
   - Show total unique articles vs raw count
   - Example: `Total: 150 raw / 142 unique (8 duplicates)`
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Status command shows dedup info
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Status command shows dedup info
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/export.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/export.e2e.test.ts`
   - Create a session fixture with known duplicates (same PMID, same DOI across providers)
   - Verify exported results are deduplicated
   - Verify dedup count is accurate
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Run a multi-database search and verify export deduplication
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
