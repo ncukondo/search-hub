@@ -119,14 +119,14 @@ Since CSL-JSON always includes the `abstract` field, abstracts are automatically
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write/update E2E test: `src/integration/register.e2e.test.ts`
+- [x] Write/update E2E test: `src/integration/register.e2e.test.ts`
   - Test: bulk registration with real ref CLI produces correct results
   - Test: duplicate detection works in bulk mode
   - Test: articles without DOI/PMID are included in CSL-JSON (registered via metadata)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Register a real session and verify results
-- [ ] Acceptance: All tests pass, bulk registration works in real usage
+- [x] Acceptance: All tests pass, bulk registration works in real usage
 
 ## Notes
 
