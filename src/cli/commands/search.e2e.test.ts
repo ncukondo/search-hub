@@ -55,7 +55,7 @@ describe('search-hub search --dry-run E2E', () => {
         query: t.native,
       }));
 
-      const output = formatDryRunOutput(translations);
+      const output = await formatDryRunOutput(translations);
 
       expect(output).toContain('Translated queries:');
       expect(output).toContain('[pubmed]');
@@ -80,7 +80,7 @@ describe('search-hub search --dry-run E2E', () => {
         query: t.native,
       }));
 
-      const output = formatDryRunOutput(translations);
+      const output = await formatDryRunOutput(translations);
 
       expect(output).toContain('[pubmed]');
       expect(output).not.toContain('[eric]');
@@ -260,31 +260,31 @@ describe('search-hub search --dry-run E2E', () => {
   });
 
   describe('formatDryRunOutput', () => {
-    it('should format empty translations', () => {
-      const output = formatDryRunOutput([]);
+    it('should format empty translations', async () => {
+      const output = await formatDryRunOutput([]);
 
       expect(output).toBe('No translations available.');
     });
 
-    it('should format single translation', () => {
+    it('should format single translation', async () => {
       const translations: TranslationResult[] = [
         { provider: 'pubmed', query: 'diabetes[tiab]' },
       ];
 
-      const output = formatDryRunOutput(translations);
+      const output = await formatDryRunOutput(translations);
 
       expect(output).toContain('Translated queries:');
       expect(output).toContain('[pubmed]');
       expect(output).toContain('diabetes[tiab]');
     });
 
-    it('should format multiple translations', () => {
+    it('should format multiple translations', async () => {
       const translations: TranslationResult[] = [
         { provider: 'pubmed', query: 'diabetes[tiab]' },
         { provider: 'eric', query: 'diabetes AND mellitus' },
       ];
 
-      const output = formatDryRunOutput(translations);
+      const output = await formatDryRunOutput(translations);
 
       expect(output).toContain('[pubmed]');
       expect(output).toContain('diabetes[tiab]');
@@ -387,7 +387,7 @@ filters:
       config.providers.pubmed.email = 'researcher@example.com';
       const providers: ProviderName[] = ['pubmed', 'eric'];
 
-      const output = formatDryRunOutput(translations, { config, providers });
+      const output = await formatDryRunOutput(translations, { config, providers });
 
       expect(output).toContain('Provider readiness:');
       expect(output).toContain('pubmed');
@@ -472,7 +472,7 @@ filters:
       const config = getDefConfig2();
       const providers: ProviderName[] = ['pubmed'];
 
-      const output = formatDryRunOutput(translations, { config, providers });
+      const output = await formatDryRunOutput(translations, { config, providers });
 
       expect(output).toContain('Diagnostics:');
       expect(output).toContain('NOT');
