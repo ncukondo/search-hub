@@ -5,6 +5,7 @@ import {
   formatIds,
   formatJson,
   formatJsonl,
+  deduplicateArticles,
 } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 
@@ -216,6 +217,148 @@ describe('export command', () => {
       const result = formatJsonl([]);
 
       expect(result).toBe('');
+    });
+  });
+
+  describe('deduplicateArticles', () => {
+    describe('within-provider deduplication (by PMID)', () => {
+      it('should remove duplicate articles with the same PMID', () => {
+        const articlesWithDuplicates: Article[] = [
+          {
+            pmid: '41541042',
+            doi: '10.1234/dup1',
+            title: 'Duplicate Article First',
+            authors: [{ family: 'Doe', given: 'John' }],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:00:00Z',
+          },
+          {
+            pmid: '99999999',
+            title: 'Unique Article',
+            authors: [{ family: 'Smith', given: 'Jane' }],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:01:00Z',
+          },
+          {
+            pmid: '41541042',
+            doi: '10.1234/dup1',
+            title: 'Duplicate Article Second',
+            authors: [{ family: 'Doe', given: 'John' }],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:02:00Z',
+          },
+        ];
+
+        const result = deduplicateArticles(articlesWithDuplicates);
+
+        expect(result.articles).toHaveLength(2);
+        expect(result.duplicatesRemoved).toBe(1);
+      });
+
+      it('should keep the first occurrence (preserving retrieval order)', () => {
+        const articlesWithDuplicates: Article[] = [
+          {
+            pmid: '41541042',
+            title: 'First Occurrence',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:00:00Z',
+          },
+          {
+            pmid: '41541042',
+            title: 'Second Occurrence',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:01:00Z',
+          },
+        ];
+
+        const result = deduplicateArticles(articlesWithDuplicates);
+
+        expect(result.articles).toHaveLength(1);
+        expect(result.articles[0]!.title).toBe('First Occurrence');
+      });
+
+      it('should report the number of duplicates removed', () => {
+        const articlesWithDuplicates: Article[] = [
+          {
+            pmid: '11111111',
+            title: 'Article A',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:00:00Z',
+          },
+          {
+            pmid: '22222222',
+            title: 'Article B',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:01:00Z',
+          },
+          {
+            pmid: '11111111',
+            title: 'Article A dup',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:02:00Z',
+          },
+          {
+            pmid: '22222222',
+            title: 'Article B dup',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:03:00Z',
+          },
+          {
+            pmid: '11111111',
+            title: 'Article A dup2',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:04:00Z',
+          },
+        ];
+
+        const result = deduplicateArticles(articlesWithDuplicates);
+
+        expect(result.articles).toHaveLength(2);
+        expect(result.duplicatesRemoved).toBe(3);
+      });
+
+      it('should not remove articles without identifiers', () => {
+        const articles: Article[] = [
+          {
+            title: 'No ID Article 1',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:00:00Z',
+          },
+          {
+            title: 'No ID Article 2',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:01:00Z',
+          },
+        ];
+
+        const result = deduplicateArticles(articles);
+
+        expect(result.articles).toHaveLength(2);
+        expect(result.duplicatesRemoved).toBe(0);
+      });
+
+      it('should handle empty array', () => {
+        const result = deduplicateArticles([]);
+
+        expect(result.articles).toHaveLength(0);
+        expect(result.duplicatesRemoved).toBe(0);
+      });
+
+      it('should handle array with no duplicates', () => {
+        const result = deduplicateArticles(mockArticles);
+
+        expect(result.articles).toHaveLength(3);
+        expect(result.duplicatesRemoved).toBe(0);
+      });
     });
   });
 });

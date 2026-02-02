@@ -120,3 +120,45 @@ export function formatJsonl(articles: Article[]): string {
   }
   return articles.map((article) => JSON.stringify(article)).join('\n');
 }
+
+export interface DeduplicationResult {
+  articles: Article[];
+  duplicatesRemoved: number;
+}
+
+export function deduplicateArticles(articles: Article[]): DeduplicationResult {
+  const seen = new Set<string>();
+  const unique: Article[] = [];
+  let duplicatesRemoved = 0;
+
+  for (const article of articles) {
+    // Build a composite key from available identifiers
+    const keys: string[] = [];
+    if (article.pmid) keys.push(`pmid:${article.pmid}`);
+    if (article.doi) keys.push(`doi:${article.doi.toLowerCase()}`);
+    if (article.arxivId) keys.push(`arxiv:${article.arxivId}`);
+    if (article.scopusId) keys.push(`scopus:${article.scopusId}`);
+    if (article.ericId) keys.push(`eric:${article.ericId}`);
+
+    if (keys.length === 0) {
+      // No identifiers - cannot deduplicate, keep the article
+      unique.push(article);
+      continue;
+    }
+
+    // Check if any identifier has been seen before
+    const isDuplicate = keys.some((key) => seen.has(key));
+
+    if (isDuplicate) {
+      duplicatesRemoved++;
+    } else {
+      // Mark all identifiers as seen
+      for (const key of keys) {
+        seen.add(key);
+      }
+      unique.push(article);
+    }
+  }
+
+  return { articles: unique, duplicatesRemoved };
+}

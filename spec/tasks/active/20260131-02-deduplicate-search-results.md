@@ -34,22 +34,22 @@ no cross-database deduplication.
 
 ### Step 1: Add failing tests for within-provider deduplication
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: exporting results that contain duplicate PMIDs produces only unique articles
   - Test: the first occurrence is kept (preserving retrieval order)
   - Test: dedup count is reported (e.g., "Exported 99 articles (1 duplicate removed)")
-- [ ] Verify test fails (Red)
-- [ ] Acceptance: Tests demonstrate duplicate output
+- [x] Verify test fails (Red)
+- [x] Acceptance: Tests demonstrate duplicate output
 
 ### Step 2: Implement deduplication in export
 
-- [ ] Modify `src/cli/commands/export.ts`
+- [x] Modify `src/cli/commands/export.ts`
   - Add deduplication by primary identifier (PMID for PubMed, DOI as fallback)
   - Deduplicate before writing output
   - Report the number of duplicates removed in non-quiet mode
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Exports contain only unique articles
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Exports contain only unique articles
 
 ### Step 3: Add failing tests for cross-provider deduplication
 

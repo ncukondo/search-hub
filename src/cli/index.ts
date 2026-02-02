@@ -55,6 +55,7 @@ import {
   formatIds,
   formatJson,
   formatJsonl,
+  deduplicateArticles,
 } from './commands/export.js';
 import {
   parseRegisterOptions,
@@ -670,11 +671,13 @@ Examples:
     .option('-o, --output <path>', 'output file path')
     .option('--db <providers>', 'export only specific database(s)')
     .option('--id-type <type>', 'for ids format: doi, pmid, all')
+    .option('--no-dedup', 'disable deduplication of results')
     .addHelpText('after', `
 Examples:
   $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs
   $ search-hub export SESSION_ID --format json -o results.json
-  $ search-hub export SESSION_ID --db pubmed --format jsonl`)
+  $ search-hub export SESSION_ID --db pubmed --format jsonl
+  $ search-hub export SESSION_ID --no-dedup  # Export without deduplication`)
     .action(
       async (
         sessionId: string,
@@ -683,6 +686,7 @@ Examples:
           output?: string;
           db?: string;
           idType?: string;
+          dedup?: boolean;
         }
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
@@ -750,24 +754,44 @@ Examples:
             }
           }
 
+          // Deduplicate articles unless --no-dedup is set
+          const shouldDedup = options?.dedup !== false;
+          let exportArticles: typeof articles;
+          let duplicatesRemoved = 0;
+
+          if (shouldDedup) {
+            const dedupResult = deduplicateArticles(articles);
+            exportArticles = dedupResult.articles;
+            duplicatesRemoved = dedupResult.duplicatesRemoved;
+          } else {
+            exportArticles = articles;
+          }
+
           // Format output
           let output: string;
           if (exportOpts.format === 'ids') {
-            output = formatIds(articles, exportOpts.idType ?? 'all');
+            output = formatIds(exportArticles, exportOpts.idType ?? 'all');
           } else if (exportOpts.format === 'json') {
-            output = formatJson(articles);
+            output = formatJson(exportArticles);
           } else {
-            output = formatJsonl(articles);
+            output = formatJsonl(exportArticles);
           }
 
           // Write to file or stdout
           if (exportOpts.outputPath) {
             await writeFile(exportOpts.outputPath, output, 'utf-8');
             if (!globalOpts.quiet) {
-              console.log(`Exported ${articles.length} articles to ${exportOpts.outputPath}`);
+              let message = `Exported ${exportArticles.length} articles to ${exportOpts.outputPath}`;
+              if (duplicatesRemoved > 0) {
+                message += ` (${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed)`;
+              }
+              console.log(message);
             }
           } else {
             console.log(output);
+            if (!globalOpts.quiet && duplicatesRemoved > 0) {
+              console.error(`(${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed)`);
+            }
           }
 
           process.exitCode = EXIT_CODES.SUCCESS;
