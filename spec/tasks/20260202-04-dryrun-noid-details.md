@@ -43,16 +43,16 @@ Improved:
 
 ### Step 1: Enhance dry-run output for no-ID articles
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: articles without DOI/PMID show title, source, and alternative IDs
   - Test: titles are truncated at 50 characters with "..."
   - Test: maximum 10 articles are shown, remainder as "... and N more"
   - Test: articles with no alternative IDs show only title and source
-- [ ] Verify test fails (Red)
-- [ ] Modify `formatDryRunOutput()` in `src/cli/commands/register.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Dry-run output shows helpful details for skipped articles
+- [x] Verify test fails (Red)
+- [x] Modify `formatDryRunOutput()` in `src/cli/commands/register.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Dry-run output shows helpful details for skipped articles
 
 ### Final Step: E2E Integration Tests
 

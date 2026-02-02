@@ -166,7 +166,7 @@ describe('register command', () => {
 
       expect(output).toContain('Would register 2 reference');
       expect(output).toContain('1 article');
-      expect(output).toContain('no identifier');
+      expect(output).toContain('no DOI or PMID');
     });
 
     it('should list articles with their identifiers', () => {
@@ -201,6 +201,78 @@ describe('register command', () => {
       const output = formatDryRunOutput(articles);
 
       expect(output).toContain('Would register 0');
+    });
+
+    it('should show title, source, and alternative IDs for no-ID articles', () => {
+      const articles = [
+        { title: 'Article with arXiv', authors: [], source: 'arxiv' as const, retrievedAt: '', arxivId: '2401.12345' },
+        { title: 'Article with ERIC', authors: [], source: 'eric' as const, retrievedAt: '', ericId: 'ED123456' },
+      ];
+
+      const output = formatDryRunOutput(articles);
+
+      expect(output).toContain('no DOI or PMID');
+      expect(output).toContain('"Article with arXiv"');
+      expect(output).toContain('source: arxiv');
+      expect(output).toContain('has: arxiv:2401.12345');
+      expect(output).toContain('"Article with ERIC"');
+      expect(output).toContain('source: eric');
+      expect(output).toContain('has: eric:ED123456');
+    });
+
+    it('should truncate no-ID article titles at 50 characters', () => {
+      const longTitle = 'A Very Long Article Title That Exceeds Fifty Characters Easily Here';
+      const articles = [
+        { title: longTitle, authors: [], source: 'pubmed' as const, retrievedAt: '' },
+      ];
+
+      const output = formatDryRunOutput(articles);
+
+      // Title should be truncated to 50 chars with "..."
+      expect(output).toContain('"A Very Long Article Title That Exceeds Fifty Chara..."');
+      expect(output).not.toContain(longTitle);
+    });
+
+    it('should show maximum 10 no-ID articles with "... and N more"', () => {
+      const articles = Array.from({ length: 15 }, (_, i) => ({
+        title: `No ID Article ${i + 1}`,
+        authors: [],
+        source: 'pubmed' as const,
+        retrievedAt: '',
+      }));
+
+      const output = formatDryRunOutput(articles);
+
+      // Should show first 10
+      expect(output).toContain('No ID Article 1');
+      expect(output).toContain('No ID Article 10');
+      // Should not show 11th
+      expect(output).not.toContain('No ID Article 11');
+      // Should show remainder count
+      expect(output).toContain('... and 5 more');
+    });
+
+    it('should show only title and source for no-ID articles without alternative IDs', () => {
+      const articles = [
+        { title: 'Plain Article', authors: [], source: 'pubmed' as const, retrievedAt: '' },
+      ];
+
+      const output = formatDryRunOutput(articles);
+
+      expect(output).toContain('"Plain Article"');
+      expect(output).toContain('source: pubmed');
+      expect(output).not.toContain('has:');
+    });
+
+    it('should show scopus alternative ID for no-ID articles', () => {
+      const articles = [
+        { title: 'Scopus Article', authors: [], source: 'scopus' as const, retrievedAt: '', scopusId: '2-s2.0-12345' },
+      ];
+
+      const output = formatDryRunOutput(articles);
+
+      expect(output).toContain('"Scopus Article"');
+      expect(output).toContain('has: scopus:2-s2.0-12345');
     });
   });
 });
