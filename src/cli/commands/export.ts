@@ -6,6 +6,13 @@ import { articlesToCslJson } from '../../integration/csl-json.js';
 export type ExportFormat = 'ids' | 'json' | 'jsonl' | 'csl-json';
 export type IdType = 'doi' | 'pmid' | 'all';
 
+export interface ExportFilter {
+  yearFrom?: number;
+  yearTo?: number;
+  titleKeywords?: string[];
+  abstractKeywords?: string[];
+}
+
 export interface ExportCommandOptions {
   sessionId: string;
   format: ExportFormat;
@@ -256,4 +263,41 @@ export function deduplicateArticles(articles: Article[]): DeduplicationResult {
   }
 
   return { articles: unique, duplicatesRemoved };
+}
+
+export function filterArticles(articles: Article[], filter: ExportFilter): Article[] {
+  const hasYearFilter = filter.yearFrom !== undefined || filter.yearTo !== undefined;
+  const hasTitleFilter = filter.titleKeywords !== undefined && filter.titleKeywords.length > 0;
+  const hasAbstractFilter = filter.abstractKeywords !== undefined && filter.abstractKeywords.length > 0;
+
+  if (!hasYearFilter && !hasTitleFilter && !hasAbstractFilter) {
+    return articles;
+  }
+
+  return articles.filter((article) => {
+    // Year filter (AND with other filters)
+    if (hasYearFilter) {
+      const year = extractYear(article.publicationDate);
+      if (year === null) return false;
+      if (filter.yearFrom !== undefined && year < filter.yearFrom) return false;
+      if (filter.yearTo !== undefined && year > filter.yearTo) return false;
+    }
+
+    // Title keyword filter (OR within keywords, AND with other filters)
+    if (hasTitleFilter) {
+      const titleLower = article.title.toLowerCase();
+      const matched = filter.titleKeywords!.some((kw) => titleLower.includes(kw.toLowerCase()));
+      if (!matched) return false;
+    }
+
+    // Abstract keyword filter (OR within keywords, AND with other filters)
+    if (hasAbstractFilter) {
+      if (!article.abstract) return false;
+      const abstractLower = article.abstract.toLowerCase();
+      const matched = filter.abstractKeywords!.some((kw) => abstractLower.includes(kw.toLowerCase()));
+      if (!matched) return false;
+    }
+
+    return true;
+  });
 }

@@ -54,7 +54,7 @@ Exported 45 articles (filtered from 860)
 
 ### Step 1: Implement `filterArticles()` function
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: year range filter (`yearFrom: 2023, yearTo: 2025`)
   - Test: title keyword filter (case-insensitive, OR within field)
   - Test: abstract keyword filter (case-insensitive, OR within field)
@@ -62,32 +62,32 @@ Exported 45 articles (filtered from 860)
   - Test: no matching articles returns empty array
   - Test: articles without `publicationDate` are excluded by year filter
   - Test: articles without `abstract` are excluded by abstract keyword filter
-- [ ] Verify test fails (Red)
-- [ ] Implement `filterArticles()` in `src/cli/commands/export.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All filter combinations work correctly
+- [x] Verify test fails (Red)
+- [x] Implement `filterArticles()` in `src/cli/commands/export.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All filter combinations work correctly
 
 ### Step 2: Add CLI options and wire up filters
 
-- [ ] Add `--filter-year`, `--filter-title`, `--filter-abstract` options to export command in `src/cli/index.ts`
-- [ ] Parse `--filter-year` range string (e.g., `"2023-2025"` → `{ yearFrom: 2023, yearTo: 2025 }`)
-- [ ] Parse `--filter-title` and `--filter-abstract` comma-separated strings into arrays
-- [ ] Apply `filterArticles()` after deduplication, before formatting
-- [ ] Include filter summary in output message
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: CLI filter options work end-to-end
+- [x] Add `--filter-year`, `--filter-title`, `--filter-abstract` options to export command in `src/cli/index.ts`
+- [x] Parse `--filter-year` range string (e.g., `"2023-2025"` → `{ yearFrom: 2023, yearTo: 2025 }`)
+- [x] Parse `--filter-title` and `--filter-abstract` comma-separated strings into arrays
+- [x] Apply `filterArticles()` after deduplication, before formatting
+- [x] Include filter summary in output message
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: CLI filter options work end-to-end
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/export.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/export.e2e.test.ts`
   - Test: export with year filter reduces result count
   - Test: export with title keyword filter works
   - Test: output message shows filtered count
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Export a real session with filters
-- [ ] Acceptance: All tests pass, filters work in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Export a real session with filters
+- [x] Acceptance: All tests pass, filters work in real usage
 
 ## Notes
 
