@@ -12,6 +12,7 @@ import type {
   SearchState,
   TranslatedQuery,
   SearchResumeResult,
+  ConnectionTestResult,
 } from '../base/types.js';
 import { PubMedClient } from './client.js';
 import { translateQuery } from './translator.js';
@@ -181,12 +182,13 @@ export class PubMedProvider extends BaseProvider {
   /**
    * Test connection to PubMed API.
    */
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<ConnectionTestResult> {
     try {
       await this.client.search('test', { retmax: 1 });
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, error: message };
     }
   }
 

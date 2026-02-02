@@ -43,8 +43,8 @@ class MockProvider extends BaseProvider {
     };
   }
 
-  async testConnection(): Promise<boolean> {
-    return true;
+  async testConnection(): Promise<{ ok: boolean; error?: string }> {
+    return { ok: true };
   }
 
   getSearchState(): SearchState | null {

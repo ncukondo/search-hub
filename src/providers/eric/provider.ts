@@ -11,6 +11,7 @@ import type {
   QueryAST,
   SearchState,
   SearchResumeResult,
+  ConnectionTestResult,
 } from '../base/types';
 import { ERICClient, type ERICSearchOptions } from './client';
 import type { ERICSearchResult } from './parser';
@@ -151,12 +152,16 @@ export class ERICProvider extends BaseProvider {
    * Verify API access.
    * Returns false on failure (doesn't throw).
    */
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<ConnectionTestResult> {
     try {
       const response = await fetch(`${ERIC_API_BASE_URL}?search=test&format=json&rows=1`);
-      return response.ok;
-    } catch {
-      return false;
+      if (!response.ok) {
+        return { ok: false, error: `ERIC API returned HTTP ${response.status}` };
+      }
+      return { ok: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, error: message };
     }
   }
 

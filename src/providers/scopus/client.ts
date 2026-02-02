@@ -6,7 +6,7 @@
 
 import type { ScopusConfig, ScopusSearchResponse } from './types';
 import { parseSearchResponse } from './parser';
-import { createProviderError, type ProviderError, type RateLimitError } from '../base/types';
+import { createProviderError, type ConnectionTestResult, type ProviderError, type RateLimitError } from '../base/types';
 
 const SCOPUS_API_BASE = 'https://api.elsevier.com';
 const SCOPUS_SEARCH_ENDPOINT = '/content/search/scopus';
@@ -106,13 +106,18 @@ export class ScopusClient {
   /**
    * Test the API connection by making a minimal search request.
    */
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<ConnectionTestResult> {
     try {
       // Use a simple valid query instead of '*' which Scopus may reject
       await this.search('ALL(test)', { count: 1, view: 'STANDARD' });
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : String(error);
+      return { ok: false, error: message };
     }
   }
 
@@ -181,10 +186,17 @@ export class ScopusClient {
 
     switch (status) {
       case 401:
-      case 403:
         return createProviderError(
           'API_KEY_INVALID',
-          `Scopus API authentication failed: ${response.statusText}`,
+          `Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/`,
+          'scopus',
+          { retryable: false }
+        );
+
+      case 403:
+        return createProviderError(
+          'ACCESS_DENIED',
+          `Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.`,
           'scopus',
           { retryable: false }
         );

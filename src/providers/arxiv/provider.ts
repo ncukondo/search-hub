@@ -14,6 +14,7 @@ import type {
   SearchState,
   SearchResumeResult,
   QueryAST,
+  ConnectionTestResult,
 } from '../base/types.js';
 import { ArxivClient } from './client.js';
 import { translateQuery } from './translator.js';
@@ -126,13 +127,14 @@ export class ArxivProvider extends BaseProvider {
   /**
    * Test connection to arXiv API.
    */
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<ConnectionTestResult> {
     try {
       // Make a minimal search request
       await this.client.search('ti:test', { start: 0, maxResults: 1 });
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, error: message };
     }
   }
 

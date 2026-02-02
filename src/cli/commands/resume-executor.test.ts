@@ -44,7 +44,7 @@ vi.mock('../../providers/pubmed/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -73,7 +73,7 @@ vi.mock('../../providers/eric/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -96,7 +96,7 @@ vi.mock('../../providers/arxiv/provider.js', () => ({
     resumeSearch: vi.fn().mockImplementation(async function* () {
       // No results for resume
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -125,7 +125,7 @@ vi.mock('../../providers/scopus/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -427,7 +427,7 @@ describe('resume-executor', () => {
             retryable: true,
           };
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
 
       // Update session to have failed provider for retry
@@ -508,7 +508,7 @@ describe('resume-executor', () => {
         resumeSearch: vi.fn().mockImplementation(async function* () {
           throw new Error('API rate limit exceeded');
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
 
       // Update session to have failed provider for retry
@@ -565,7 +565,7 @@ describe('resume-executor', () => {
         resumeSearch: vi.fn().mockImplementation(async function* () {
           // Yield nothing - legitimate zero results
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
 
       // Update session to have failed provider for retry
@@ -695,7 +695,7 @@ describe('resume-executor', () => {
         resumeSearch: vi.fn().mockImplementation(async function* () {
           throw new Error('Network request failed');
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
 
       mockedEric.mockImplementation(() => ({
@@ -707,7 +707,7 @@ describe('resume-executor', () => {
         resumeSearch: vi.fn().mockImplementation(async function* () {
           throw new Error('ERIC service unavailable');
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
 
       // Set up session with both providers failed

@@ -49,7 +49,8 @@ Represents a single search result from any database.
 | `QUERY_VALIDATION_ERROR` | Query schema invalid |
 | `PROVIDER_NOT_AVAILABLE` | Provider disabled or not implemented |
 | `API_KEY_MISSING` | Required API key not configured |
-| `API_KEY_INVALID` | API key rejected |
+| `API_KEY_INVALID` | API key rejected (401) |
+| `ACCESS_DENIED` | API key lacks permissions (403) |
 | `RATE_LIMIT_EXCEEDED` | Too many requests |
 | `NETWORK_ERROR` | Connection failed |
 | `SESSION_NOT_FOUND` | Session ID doesn't exist |

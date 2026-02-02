@@ -40,61 +40,60 @@ During a real search session:
 
 ### Step 1: Add failing test for dry-run connection validation
 
-- [ ] Write test: `src/providers/scopus/client.test.ts`
+- [x] Write test: `src/providers/scopus/client.test.ts`
   - Test: `testConnection()` returns `false` when API responds with 401
   - Test: `testConnection()` returns a structured result (not just boolean) with error details
-- [ ] Verify test fails (Red)
-- [ ] Acceptance: Test shows that `testConnection()` currently swallows error details
+- [x] Verify test fails (Red)
+- [x] Acceptance: Test shows that `testConnection()` currently swallows error details
 
 ### Step 2: Enhance `testConnection()` to return error details
 
-- [ ] Modify `src/providers/scopus/client.ts`
+- [x] Modify `src/providers/scopus/client.ts`
   - Change `testConnection()` to return `{ ok: boolean; error?: string }` instead of bare boolean
   - On failure, include the specific error message (e.g., "API key invalid (HTTP 401)")
-- [ ] Update `src/providers/scopus/provider.ts` to propagate the detailed result
-- [ ] Update `src/providers/base/types.ts` if the `Provider` interface needs a richer
+- [x] Update `src/providers/scopus/provider.ts` to propagate the detailed result
+- [x] Update `src/providers/base/types.ts` if the `Provider` interface needs a richer
   `testConnection()` return type (ensure backward compatibility with other providers)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `testConnection()` returns actionable error details
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `testConnection()` returns actionable error details
 
 ### Step 3: Integrate connection test into dry-run readiness check
 
-- [ ] Write test: `src/cli/commands/search-executor.test.ts`
+- [x] Write test: `src/cli/commands/search.test.ts`
   - Test: `--dry-run` with an invalid Scopus key shows `✗ scopus not ready (API key invalid)`
-  - Test: `--dry-run` with a valid Scopus key shows `✓ scopus ready`
-- [ ] Modify the dry-run readiness check in `src/cli/commands/search-executor.ts`
+  - Test: `--dry-run` with a valid Scopus key shows `✓ scopus ready (verified)`
+- [x] Modify the dry-run readiness check in `src/cli/commands/search.ts`
   - Call `testConnection()` for providers that support it
   - Display the error detail if connection test fails
   - Add `--skip-connection-test` flag to allow offline dry-run (just check config presence)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Dry-run accurately reflects provider availability
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Dry-run accurately reflects provider availability
 
 ### Step 4: Distinguish 401 from 403 in error messages
 
-- [ ] Write test: `src/providers/scopus/client.test.ts`
+- [x] Write test: `src/providers/scopus/client.test.ts`
   - Test: 401 produces message containing "invalid API key"
   - Test: 403 produces message containing "insufficient permissions" or "access denied"
-- [ ] Modify `handleErrorResponse()` in `src/providers/scopus/client.ts`
+- [x] Modify `handleErrorResponse()` in `src/providers/scopus/client.ts`
   - Split the 401/403 case into separate messages:
     - 401: `Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/`
     - 403: `Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.`
-  - Attempt to read the JSON response body for additional details from Scopus
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Error messages distinguish between authentication and authorization failures
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Error messages distinguish between authentication and authorization failures
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/providers/scopus/scopus.e2e.test.ts`
+- [x] Write E2E test: `src/providers/scopus/scopus.e2e.test.ts`
   - Test: dry-run with invalid API key shows failure with actionable message
   - Test: search with invalid API key produces detailed error in session
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Run `search-hub search --db scopus --query "test" --dry-run`
   with an invalid key and confirm the output is actionable
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

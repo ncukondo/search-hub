@@ -1,6 +1,8 @@
 import type { ProviderName } from '../../session/types.js';
+import type { ConnectionTestResult } from '../../providers/base/types.js';
 import type { Config } from '../../config/index.js';
 import { parseProviderNames } from '../utils/validation.js';
+import { createProviderInstance } from './search-executor.js';
 
 export interface SearchCommandOptions {
   queryFile?: string;
@@ -37,6 +39,7 @@ export interface ValidationResult {
 export interface DryRunOutputOptions {
   config?: Config;
   providers?: ProviderName[];
+  skipConnectionTest?: boolean | undefined;
 }
 
 export function parseSearchOptions(
@@ -102,14 +105,40 @@ export function validateSearchInput(options: SearchCommandOptions): ValidationRe
 }
 
 /**
+ * Test provider connections and return results.
+ */
+export async function testProviderConnections(
+  providers: ProviderName[],
+  config: Config
+): Promise<Record<string, ConnectionTestResult>> {
+  const results: Record<string, ConnectionTestResult> = {};
+  await Promise.all(
+    providers.map(async (name) => {
+      const provider = createProviderInstance(name, config);
+      if (!provider) {
+        results[name] = { ok: false, error: 'Provider configuration incomplete' };
+        return;
+      }
+      results[name] = await provider.testConnection();
+    })
+  );
+  return results;
+}
+
+/**
  * Format provider readiness summary for dry-run output.
  */
-export function formatProviderReadiness(providers: ProviderName[], config: Config): string {
+export function formatProviderReadiness(
+  providers: ProviderName[],
+  config: Config,
+  connectionResults?: Record<string, ConnectionTestResult>
+): string {
   const lines: string[] = [];
   lines.push('Provider readiness:');
   for (const provider of providers) {
     const providerConfig = config.providers[provider];
-    const status = getProviderStatus(provider, providerConfig);
+    const connResult = connectionResults?.[provider];
+    const status = getProviderStatus(provider, providerConfig, connResult);
     const mark = status.ready ? '✓' : '✗';
     lines.push(`  ${mark} ${provider.padEnd(10)}${status.message}`);
   }
@@ -118,24 +147,35 @@ export function formatProviderReadiness(providers: ProviderName[], config: Confi
 
 function getProviderStatus(
   provider: ProviderName,
-  providerConfig: { email?: string; api_key?: string }
+  providerConfig: { email?: string; api_key?: string },
+  connectionResult?: ConnectionTestResult
 ): { ready: boolean; message: string } {
   switch (provider) {
     case 'pubmed': {
-      if (!providerConfig.email) {
-        return { ready: true, message: 'ready (email: not configured (recommended))' };
+      if (connectionResult && !connectionResult.ok) {
+        return { ready: false, message: `not ready (${connectionResult.error})` };
       }
-      return { ready: true, message: 'ready (email: configured)' };
+      if (!providerConfig.email) {
+        return { ready: true, message: connectionResult ? 'ready (verified, email: not configured (recommended))' : 'ready (email: not configured (recommended))' };
+      }
+      return { ready: true, message: connectionResult ? 'ready (verified, email: configured)' : 'ready (email: configured)' };
     }
     case 'scopus': {
       if (!providerConfig.api_key) {
         return { ready: false, message: 'missing api_key (required)' };
       }
-      return { ready: true, message: 'ready' };
+      if (connectionResult && !connectionResult.ok) {
+        return { ready: false, message: `not ready (${connectionResult.error})` };
+      }
+      return { ready: true, message: connectionResult ? 'ready (verified)' : 'ready' };
     }
     case 'eric':
-    case 'arxiv':
-      return { ready: true, message: 'ready' };
+    case 'arxiv': {
+      if (connectionResult && !connectionResult.ok) {
+        return { ready: false, message: `not ready (${connectionResult.error})` };
+      }
+      return { ready: true, message: connectionResult ? 'ready (verified)' : 'ready' };
+    }
     default:
       return { ready: true, message: 'ready' };
   }
@@ -165,16 +205,20 @@ export function formatQueryDiagnostics(translations: TranslationResult[]): strin
   return lines.join('\n');
 }
 
-export function formatDryRunOutput(
+export async function formatDryRunOutput(
   translations: TranslationResult[],
   options?: DryRunOutputOptions
-): string {
+): Promise<string> {
   if (translations.length === 0) {
     return 'No translations available.';
   }
   const sections: string[] = [];
   if (options?.config && options?.providers) {
-    sections.push(formatProviderReadiness(options.providers, options.config));
+    let connectionResults: Record<string, ConnectionTestResult> | undefined;
+    if (!options.skipConnectionTest) {
+      connectionResults = await testProviderConnections(options.providers, options.config);
+    }
+    sections.push(formatProviderReadiness(options.providers, options.config, connectionResults));
     sections.push('');
   }
   const queryLines: string[] = [];

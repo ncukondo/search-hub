@@ -57,8 +57,8 @@ class TestProvider extends BaseProvider {
     };
   }
 
-  async testConnection(): Promise<boolean> {
-    return true;
+  async testConnection(): Promise<{ ok: boolean; error?: string }> {
+    return { ok: true };
   }
 
   getSearchState(): SearchState | null {
@@ -214,7 +214,7 @@ describe('BaseProvider', () => {
       const provider = new TestProvider();
       const result = await provider.testConnection();
 
-      expect(result).toBe(true);
+      expect(result).toEqual({ ok: true });
     });
   });
 

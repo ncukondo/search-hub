@@ -16,6 +16,7 @@ import type {
   ProviderError,
   SearchState,
   SearchResumeResult,
+  ConnectionTestResult,
 } from './types';
 
 /**
@@ -148,8 +149,8 @@ export class MockProvider extends BaseProvider {
     };
   }
 
-  async testConnection(): Promise<boolean> {
-    return this.connectionStatus;
+  async testConnection(): Promise<ConnectionTestResult> {
+    return this.connectionStatus ? { ok: true } : { ok: false, error: 'Connection test failed' };
   }
 
   /**

@@ -192,7 +192,7 @@ describe('ScopusProvider', () => {
   });
 
   describe('testConnection', () => {
-    it('should return true on successful connection', async () => {
+    it('should return { ok: true } on successful connection', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         headers: new Headers(),
@@ -208,10 +208,10 @@ describe('ScopusProvider', () => {
 
       const provider = new ScopusProvider(config);
       const result = await provider.testConnection();
-      expect(result).toBe(true);
+      expect(result).toEqual({ ok: true });
     });
 
-    it('should return false on 401 error', async () => {
+    it('should return { ok: false } on 401 error', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -221,7 +221,8 @@ describe('ScopusProvider', () => {
 
       const provider = new ScopusProvider(config);
       const result = await provider.testConnection();
-      expect(result).toBe(false);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 

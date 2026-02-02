@@ -19,7 +19,7 @@ describe('ERIC Provider E2E', () => {
 
   it('should test connection successfully', async () => {
     const result = await provider.testConnection();
-    expect(result).toBe(true);
+    expect(result).toEqual({ ok: true });
   });
 
   it('should search ERIC with simple query', async () => {
