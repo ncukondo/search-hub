@@ -765,6 +765,63 @@ describe('PubMed Parser', () => {
       expect(article.abstract).toBe('Salt & pepper treatment');
     });
 
+    it('should flatten inline XML in abstract text', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000005</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Abstract Inline XML Test</ArticleTitle>
+        <Abstract>
+          <AbstractText>The bacterium <i>Escherichia coli</i> was studied with <sub>x</sub> controls.</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000005</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(typeof article.abstract).toBe('string');
+      expect(article.abstract).toBe('The bacterium Escherichia coli was studied with x controls.');
+    });
+
+    it('should flatten inline XML in structured abstract text', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+      <PMID Version="1">50000006</PMID>
+      <Article PubModel="Print">
+        <Journal><Title>Test Journal</Title></Journal>
+        <ArticleTitle>Structured Abstract Inline Test</ArticleTitle>
+        <Abstract>
+          <AbstractText Label="METHODS">We used <b>bold</b> technique with <i>in vitro</i> models.</AbstractText>
+          <AbstractText Label="RESULTS">Concentration was &#x2264; 5 <sup>mg</sup>/dL.</AbstractText>
+        </Abstract>
+        <AuthorList><Author ValidYN="Y"><LastName>Test</LastName></Author></AuthorList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">50000006</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>`;
+
+      const result = parseEFetchResponse(xml);
+      const article = result.articles[0]!;
+
+      expect(article.abstract).toContain('METHODS: We used bold technique with in vitro models.');
+      expect(article.abstract).toContain('RESULTS: Concentration was ≤ 5 mg/dL.');
+    });
+
     it('should decode HTML entities in article titles', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <PubmedArticleSet>

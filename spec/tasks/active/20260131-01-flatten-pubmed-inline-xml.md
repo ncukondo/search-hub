@@ -84,10 +84,11 @@ HTML entities (e.g., `&#x200a;`, `&#x2264;`, `&#x202f;`).
 
 ### Step 5: Apply flattening to abstract text as well
 
-- [ ] Write test: abstract text containing `<i>` tags should be flattened to plain string
-- [ ] Apply the same flattening utility from Step 2 to `parseAbstract()` output
-- [ ] Verify test passes
-- [ ] Acceptance: Abstract text is always a plain string with decoded entities
+- [x] Write test: abstract text containing `<i>` tags should be flattened to plain string
+- [x] Write test: structured abstract with inline XML and entities should be cleaned
+- [x] Apply the same flattening utility from Step 2 to `parseAbstract()` output (done in Step 4)
+- [x] Verify test passes
+- [x] Acceptance: Abstract text is always a plain string with decoded entities
 
 ### Final Step: E2E Integration Tests
 
