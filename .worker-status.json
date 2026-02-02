@@ -1,0 +1,20 @@
+{
+  "task": "20260202-05-json-metadata-envelope",
+  "branch": "feat/json-metadata-envelope",
+  "status": "complete",
+  "steps": {
+    "step1": {
+      "description": "Extend formatJson() with metadata parameter",
+      "status": "complete"
+    },
+    "step2": {
+      "description": "Pass session metadata from CLI handler",
+      "status": "complete"
+    },
+    "finalStep": {
+      "description": "E2E Integration Tests",
+      "status": "complete"
+    }
+  },
+  "updatedAt": "2026-02-02T09:48:00Z"
+}
