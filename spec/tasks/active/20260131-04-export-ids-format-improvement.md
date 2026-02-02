@@ -42,7 +42,7 @@ requiring them to parse the date string.
 
 ### Step 1: Add failing test for grouped IDs output
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: `--format ids --id-type all` groups identifiers per article, separated by blank lines:
     ```
     pmid:41612242
@@ -53,8 +53,8 @@ requiring them to parse the date string.
     ```
   - Test: articles with only PMID (no DOI) show single line per group
   - Test: articles with only DOI show single line per group
-- [ ] Verify test fails (Red)
-- [ ] Acceptance: Test demonstrates current ungrouped output
+- [x] Verify test fails (Red)
+- [x] Acceptance: Test demonstrates current ungrouped output
 
 ### Step 2: Implement grouped IDs format
 
