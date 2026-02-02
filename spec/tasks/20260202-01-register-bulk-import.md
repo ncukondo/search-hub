@@ -82,15 +82,15 @@ Since CSL-JSON always includes the `abstract` field, abstracts are automatically
 
 ### Step 2: CSL-JSON conversion — full article mapping
 
-- [ ] Write test: `src/integration/csl-json.test.ts`
+- [x] Write test: `src/integration/csl-json.test.ts`
   - Test `articleToCslJson`: fully populated article maps all fields correctly
   - Test `articleToCslJson`: minimal article (only title) produces valid CSL-JSON
   - Test `articlesToCslJson`: batch conversion with duplicate ID resolution (`smith-2024`, `smith-2024a`, `smith-2024b`)
-- [ ] Verify test fails (Red)
-- [ ] Implement `articleToCslJson()` and `articlesToCslJson()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All article fields correctly mapped to CSL-JSON
+- [x] Verify test fails (Red)
+- [x] Implement `articleToCslJson()` and `articlesToCslJson()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All article fields correctly mapped to CSL-JSON
 
 ### Step 3: `refAddBulk()` function
 

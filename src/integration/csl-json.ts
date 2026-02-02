@@ -5,6 +5,22 @@
 
 import type { Article } from '../providers/base/types.js';
 
+/** CSL-JSON item type used for bulk import. */
+export interface CslJsonItem {
+  id: string;
+  type: string;
+  title: string;
+  author: Array<{ family: string; given?: string }>;
+  DOI?: string;
+  PMID?: string;
+  abstract?: string;
+  issued?: { 'date-parts': number[][] };
+  'container-title'?: string;
+  volume?: string;
+  issue?: string;
+  page?: string;
+}
+
 /**
  * Generate a human-readable CSL ID from an article (author-year format).
  *
@@ -51,4 +67,64 @@ export function parseDateParts(
   if (parts.length === 0 || Number.isNaN(parts[0])) return undefined;
 
   return [parts];
+}
+
+/**
+ * Convert a single Article to a CSL-JSON item.
+ * The `id` parameter must be pre-generated (with duplicate resolution already applied).
+ */
+export function articleToCslJson(article: Article, id: string): CslJsonItem {
+  const item: CslJsonItem = {
+    id,
+    type: 'article-journal',
+    title: article.title,
+    author: article.authors.map((a) => {
+      const entry: { family: string; given?: string } = { family: a.family };
+      if (a.given) entry.given = a.given;
+      return entry;
+    }),
+  };
+
+  if (article.doi) item.DOI = article.doi;
+  if (article.pmid) item.PMID = article.pmid;
+  if (article.abstract) item.abstract = article.abstract;
+
+  const dateParts = parseDateParts(article.publicationDate);
+  if (dateParts) item.issued = { 'date-parts': dateParts };
+
+  if (article.journal) item['container-title'] = article.journal;
+  if (article.volume) item.volume = article.volume;
+  if (article.issue) item.issue = article.issue;
+  if (article.pages) item.page = article.pages;
+
+  return item;
+}
+
+/**
+ * Convert an array of Articles to CSL-JSON items with duplicate ID resolution.
+ *
+ * Duplicates within the batch are resolved by appending suffixes:
+ * `smith-2024`, `smith-2024a`, `smith-2024b`, ...
+ */
+export function articlesToCslJson(articles: Article[]): CslJsonItem[] {
+  const idCounts = new Map<string, number>();
+  const result: CslJsonItem[] = [];
+
+  for (const article of articles) {
+    const baseId = generateCslId(article);
+    const count = idCounts.get(baseId) ?? 0;
+    idCounts.set(baseId, count + 1);
+
+    let resolvedId: string;
+    if (count === 0) {
+      resolvedId = baseId;
+    } else {
+      // a=97 in ASCII, so suffix is 'a', 'b', 'c', ...
+      resolvedId = `${baseId}${String.fromCharCode(96 + count)}`;
+    }
+
+    result.push(articleToCslJson(article, resolvedId));
+  }
+
+  return result;
 }
