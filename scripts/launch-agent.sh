@@ -67,6 +67,7 @@ tmux send-keys -t "$PANE_ID" Enter
 
 echo "[$SCRIPT_NAME] Waiting for Claude to start..."
 TRUST_HANDLED=false
+DETECTED=false
 # Timeout: 45 iterations × 2s = 90s (extra headroom for parallel launches)
 for i in $(seq 1 45); do
   sleep 2
@@ -82,21 +83,20 @@ for i in $(seq 1 45); do
 
   if echo "$PANE_CONTENT" | grep -q '? for shortcuts'; then
     echo "[$SCRIPT_NAME] Claude is ready (after ~$((i * 2))s)"
+    DETECTED=true
     break
   fi
-  if [ "$i" -eq 45 ]; then
-    echo "[$SCRIPT_NAME] WARNING: Claude startup not detected after 90s."
-    echo "[$SCRIPT_NAME] Send prompt manually:"
-    echo "  tmux send-keys -t $PANE_ID '$PROMPT'"
-    echo "  sleep 1"
-    echo "  tmux send-keys -t $PANE_ID Enter"
-    exit 0
-  fi
 done
+
+if [ "$DETECTED" = false ]; then
+  echo "[$SCRIPT_NAME] WARNING: Claude startup not detected after 90s. Sending prompt anyway as fallback."
+fi
 
 # --- 4. Send prompt ---
 # NOTE: Always send text and Enter as separate send-keys calls with sleep 1
 # in between. Combining them (e.g. 'text' Enter) can cause input races.
+# This runs on both success and timeout — if Claude isn't ready yet,
+# the keys will wait in the input buffer and be processed once it starts.
 echo "[$SCRIPT_NAME] Sending prompt..."
 tmux send-keys -t "$PANE_ID" "$PROMPT"
 sleep 1
