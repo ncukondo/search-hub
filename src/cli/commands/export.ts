@@ -121,18 +121,45 @@ export function formatJsonl(articles: Article[]): string {
   return articles.map((article) => JSON.stringify(article)).join('\n');
 }
 
+
+function getArticleKeys(article: Article): string[] {
+  const keys: string[] = [];
+  if (article.pmid) keys.push(`pmid:${article.pmid}`);
+  if (article.doi) keys.push(`doi:${article.doi.toLowerCase()}`);
+  if (article.arxivId) keys.push(`arxiv:${article.arxivId}`);
+  if (article.scopusId) keys.push(`scopus:${article.scopusId}`);
+  if (article.ericId) keys.push(`eric:${article.ericId}`);
+  return keys;
+}
+
+const METADATA_FIELDS: (keyof Article)[] = [
+  'doi', 'pmid', 'arxivId', 'scopusId', 'ericId',
+  'abstract', 'publicationDate', 'journal', 'volume', 'issue', 'pages',
+];
+
+function countMetadataFields(article: Article): number {
+  let count = 0;
+  for (const field of METADATA_FIELDS) {
+    if (article[field] !== undefined && article[field] !== '') {
+      count++;
+    }
+  }
+  return count;
+}
+
 export interface DeduplicationResult {
   articles: Article[];
   duplicatesRemoved: number;
 }
 
 export function deduplicateArticles(articles: Article[]): DeduplicationResult {
-  const seen = new Set<string>();
+  // Map from identifier key to index in the unique array
+  const keyToIndex = new Map<string, number>();
   const unique: Article[] = [];
   let duplicatesRemoved = 0;
 
   for (const article of articles) {
-    // Build a composite key from available identifiers
+    // Build identifier keys
     const keys: string[] = [];
     if (article.pmid) keys.push(`pmid:${article.pmid}`);
     if (article.doi) keys.push(`doi:${article.doi.toLowerCase()}`);
@@ -147,16 +174,35 @@ export function deduplicateArticles(articles: Article[]): DeduplicationResult {
     }
 
     // Check if any identifier has been seen before
-    const isDuplicate = keys.some((key) => seen.has(key));
+    let existingIndex: number | undefined;
+    for (const key of keys) {
+      const idx = keyToIndex.get(key);
+      if (idx !== undefined) {
+        existingIndex = idx;
+        break;
+      }
+    }
 
-    if (isDuplicate) {
+    if (existingIndex !== undefined) {
+      // Duplicate found - compare metadata richness
+      const existing = unique[existingIndex]!;
+      if (countMetadataFields(article) > countMetadataFields(existing)) {
+        // Replace with the richer record
+        unique[existingIndex] = article;
+        // Update all keys to point to the same index
+        const newKeys = getArticleKeys(article);
+        for (const key of newKeys) {
+          keyToIndex.set(key, existingIndex);
+        }
+      }
       duplicatesRemoved++;
     } else {
-      // Mark all identifiers as seen
-      for (const key of keys) {
-        seen.add(key);
-      }
+      const index = unique.length;
       unique.push(article);
+      // Map all identifiers to this index
+      for (const key of keys) {
+        keyToIndex.set(key, index);
+      }
     }
   }
 

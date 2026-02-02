@@ -53,21 +53,21 @@ no cross-database deduplication.
 
 ### Step 3: Add failing tests for cross-provider deduplication
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: articles with the same DOI from different providers are deduplicated
   - Test: when merging, prefer the record with more metadata (e.g., PubMed record with PMID+DOI over Scopus record with DOI only)
-- [ ] Verify test fails (Red)
-- [ ] Acceptance: Tests demonstrate cross-provider duplicates
+- [x] Verify test fails (Red)
+- [x] Acceptance: Tests demonstrate cross-provider duplicates
 
 ### Step 4: Implement cross-provider deduplication
 
-- [ ] Modify `src/cli/commands/export.ts`
+- [x] Modify `src/cli/commands/export.ts`
   - Deduplicate by DOI across providers
   - When both records have a DOI match, prefer the one with more complete metadata
   - Preserve source attribution (record which providers found the article)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Cross-provider duplicates are merged correctly
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Cross-provider duplicates are merged correctly
 
 ### Step 5: Report deduplication statistics in session status
 

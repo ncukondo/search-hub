@@ -360,5 +360,122 @@ describe('export command', () => {
         expect(result.duplicatesRemoved).toBe(0);
       });
     });
+
+    describe('cross-provider deduplication (by DOI)', () => {
+      it('should deduplicate articles with the same DOI from different providers', () => {
+        const articles: Article[] = [
+          {
+            pmid: '12345678',
+            doi: '10.1234/shared-article',
+            title: 'Shared Article from PubMed',
+            authors: [{ family: 'Doe', given: 'John' }],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:00:00Z',
+            abstract: 'Full abstract from PubMed',
+            journal: 'Journal of Testing',
+          },
+          {
+            scopusId: 'SCOPUS-999',
+            doi: '10.1234/shared-article',
+            title: 'Shared Article from Scopus',
+            authors: [{ family: 'Doe', given: 'J.' }],
+            source: 'scopus',
+            retrievedAt: '2024-01-15T10:01:00Z',
+          },
+        ];
+
+        const result = deduplicateArticles(articles);
+
+        expect(result.articles).toHaveLength(1);
+        expect(result.duplicatesRemoved).toBe(1);
+      });
+
+      it('should prefer the record with more metadata when DOI matches', () => {
+        // Scopus record has less metadata - appears first
+        const articles: Article[] = [
+          {
+            scopusId: 'SCOPUS-999',
+            doi: '10.1234/shared-article',
+            title: 'Shared Article',
+            authors: [{ family: 'Doe', given: 'J.' }],
+            source: 'scopus',
+            retrievedAt: '2024-01-15T10:00:00Z',
+          },
+          {
+            pmid: '12345678',
+            doi: '10.1234/shared-article',
+            title: 'Shared Article with Full Data',
+            authors: [{ family: 'Doe', given: 'John' }],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:01:00Z',
+            abstract: 'Full abstract',
+            journal: 'Journal of Testing',
+            volume: '42',
+            issue: '3',
+            pages: '100-110',
+          },
+        ];
+
+        const result = deduplicateArticles(articles);
+
+        expect(result.articles).toHaveLength(1);
+        expect(result.duplicatesRemoved).toBe(1);
+        // Should keep the PubMed record (more metadata)
+        expect(result.articles[0]!.source).toBe('pubmed');
+        expect(result.articles[0]!.abstract).toBe('Full abstract');
+        expect(result.articles[0]!.pmid).toBe('12345678');
+      });
+
+      it('should keep the first record when metadata count is equal', () => {
+        const articles: Article[] = [
+          {
+            doi: '10.1234/equal-metadata',
+            title: 'Article from ERIC',
+            authors: [],
+            source: 'eric',
+            ericId: 'ED111111',
+            retrievedAt: '2024-01-15T10:00:00Z',
+          },
+          {
+            doi: '10.1234/equal-metadata',
+            title: 'Article from arXiv',
+            authors: [],
+            source: 'arxiv',
+            arxivId: '2401.99999',
+            retrievedAt: '2024-01-15T10:01:00Z',
+          },
+        ];
+
+        const result = deduplicateArticles(articles);
+
+        expect(result.articles).toHaveLength(1);
+        // When metadata count is equal, first occurrence wins
+        expect(result.articles[0]!.source).toBe('eric');
+      });
+
+      it('should handle DOI case-insensitively', () => {
+        const articles: Article[] = [
+          {
+            doi: '10.1234/CASE-TEST',
+            title: 'Article 1',
+            authors: [],
+            source: 'pubmed',
+            retrievedAt: '2024-01-15T10:00:00Z',
+          },
+          {
+            doi: '10.1234/case-test',
+            title: 'Article 2',
+            authors: [],
+            source: 'scopus',
+            retrievedAt: '2024-01-15T10:01:00Z',
+          },
+        ];
+
+        const result = deduplicateArticles(articles);
+
+        expect(result.articles).toHaveLength(1);
+        expect(result.duplicatesRemoved).toBe(1);
+      });
+    });
   });
 });
