@@ -515,7 +515,7 @@ vi.mock('../../providers/pubmed/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       };
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -536,7 +536,7 @@ vi.mock('../../providers/eric/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       };
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -557,7 +557,7 @@ vi.mock('../../providers/arxiv/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       };
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -579,7 +579,7 @@ vi.mock('../../providers/scopus/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       };
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -742,7 +742,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
             return this;
           },
         }),
-        testConnection: vi.fn().mockResolvedValue(false),
+        testConnection: vi.fn().mockResolvedValue({ ok: false, error: 'Connection failed' }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
@@ -794,7 +794,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
             return this;
           },
         }),
-        testConnection: vi.fn().mockResolvedValue(false),
+        testConnection: vi.fn().mockResolvedValue({ ok: false, error: 'Connection failed' }),
       }));
 
       // @ts-expect-error - Mocking only the properties we need for testing
@@ -812,7 +812,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
             return this;
           },
         }),
-        testConnection: vi.fn().mockResolvedValue(false),
+        testConnection: vi.fn().mockResolvedValue({ ok: false, error: 'Connection failed' }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
@@ -858,7 +858,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
             return this;
           },
         }),
-        testConnection: vi.fn().mockResolvedValue(false),
+        testConnection: vi.fn().mockResolvedValue({ ok: false, error: 'Connection failed' }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
@@ -1116,7 +1116,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
         search: vi.fn().mockImplementation(async function* () {
           // Yields nothing - zero results, but no error
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
@@ -1159,7 +1159,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
         search: vi.fn().mockImplementation(async function* () {
           // Zero results
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }));
 
       // @ts-expect-error - Mocking only the properties we need for testing
@@ -1172,7 +1172,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
         search: vi.fn().mockImplementation(async function* () {
           // Zero results
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
@@ -1212,7 +1212,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
         search: vi.fn().mockImplementation(async function* () {
           // Yields nothing - zero results
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
@@ -1258,7 +1258,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
         search: vi.fn().mockImplementation(async function* () {
           // Zero results
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }));
 
       // @ts-expect-error - Mocking only the properties we need for testing
@@ -1271,7 +1271,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
         search: vi.fn().mockImplementation(async function* () {
           // Zero results
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
@@ -1318,7 +1318,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
         search: vi.fn().mockImplementation(async function* () {
           // Zero results, no error
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }));
 
       // ERIC fails with an error
@@ -1337,7 +1337,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
             return this;
           },
         }),
-        testConnection: vi.fn().mockResolvedValue(false),
+        testConnection: vi.fn().mockResolvedValue({ ok: false, error: 'Connection failed' }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
@@ -1392,7 +1392,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
             return this;
           },
         }),
-        testConnection: vi.fn().mockResolvedValue(false),
+        testConnection: vi.fn().mockResolvedValue({ ok: false, error: 'Connection failed' }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
@@ -1484,7 +1484,7 @@ describe('search-hub search: UX improvements (Tasks #19 and #22)', () => {
             return this;
           },
         }),
-        testConnection: vi.fn().mockResolvedValue(false),
+        testConnection: vi.fn().mockResolvedValue({ ok: false, error: 'Connection failed' }),
       }));
 
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);

@@ -36,7 +36,8 @@ describe('MockProvider', () => {
     it('implements testConnection', async () => {
       const provider = new MockProvider();
       const result = await provider.testConnection();
-      expect(typeof result).toBe('boolean');
+      expect(typeof result).toBe('object');
+      expect(result.ok).toBe(true);
     });
   });
 
@@ -136,8 +137,8 @@ describe('MockProvider', () => {
       const providerConnected = new MockProvider({ connectionStatus: true });
       const providerDisconnected = new MockProvider({ connectionStatus: false });
 
-      expect(await providerConnected.testConnection()).toBe(true);
-      expect(await providerDisconnected.testConnection()).toBe(false);
+      expect((await providerConnected.testConnection()).ok).toBe(true);
+      expect((await providerDisconnected.testConnection()).ok).toBe(false);
     });
   });
 

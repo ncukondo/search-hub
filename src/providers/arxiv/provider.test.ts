@@ -201,7 +201,7 @@ describe('ArxivProvider', () => {
   });
 
   describe('testConnection', () => {
-    it('should return true on successful connection', async () => {
+    it('should return { ok: true } on successful connection', async () => {
       mockClient.search.mockResolvedValueOnce({
         totalResults: 1,
         startIndex: 0,
@@ -210,14 +210,15 @@ describe('ArxivProvider', () => {
       });
 
       const result = await provider.testConnection();
-      expect(result).toBe(true);
+      expect(result).toEqual({ ok: true });
     });
 
-    it('should return false on connection failure', async () => {
+    it('should return { ok: false } on connection failure', async () => {
       mockClient.search.mockRejectedValueOnce(new Error('Network error'));
 
       const result = await provider.testConnection();
-      expect(result).toBe(false);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 

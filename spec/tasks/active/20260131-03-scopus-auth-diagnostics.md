@@ -40,23 +40,23 @@ During a real search session:
 
 ### Step 1: Add failing test for dry-run connection validation
 
-- [ ] Write test: `src/providers/scopus/client.test.ts`
+- [x] Write test: `src/providers/scopus/client.test.ts`
   - Test: `testConnection()` returns `false` when API responds with 401
   - Test: `testConnection()` returns a structured result (not just boolean) with error details
-- [ ] Verify test fails (Red)
-- [ ] Acceptance: Test shows that `testConnection()` currently swallows error details
+- [x] Verify test fails (Red)
+- [x] Acceptance: Test shows that `testConnection()` currently swallows error details
 
 ### Step 2: Enhance `testConnection()` to return error details
 
-- [ ] Modify `src/providers/scopus/client.ts`
+- [x] Modify `src/providers/scopus/client.ts`
   - Change `testConnection()` to return `{ ok: boolean; error?: string }` instead of bare boolean
   - On failure, include the specific error message (e.g., "API key invalid (HTTP 401)")
-- [ ] Update `src/providers/scopus/provider.ts` to propagate the detailed result
-- [ ] Update `src/providers/base/types.ts` if the `Provider` interface needs a richer
+- [x] Update `src/providers/scopus/provider.ts` to propagate the detailed result
+- [x] Update `src/providers/base/types.ts` if the `Provider` interface needs a richer
   `testConnection()` return type (ensure backward compatibility with other providers)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `testConnection()` returns actionable error details
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `testConnection()` returns actionable error details
 
 ### Step 3: Integrate connection test into dry-run readiness check
 

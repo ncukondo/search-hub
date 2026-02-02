@@ -91,6 +91,16 @@ export interface SearchOptions {
 }
 
 /**
+ * Result of a connection test.
+ */
+export interface ConnectionTestResult {
+  /** Whether the connection succeeded */
+  ok: boolean;
+  /** Error message if the connection failed */
+  error?: string;
+}
+
+/**
  * Core provider interface that all database providers must implement.
  */
 export interface Provider {
@@ -112,9 +122,10 @@ export interface Provider {
 
   /**
    * Verify API access and credentials.
-   * Returns false on failure (doesn't throw).
+   * Returns { ok: true } on success, { ok: false, error: string } on failure.
+   * Does not throw.
    */
-  testConnection(): Promise<boolean>;
+  testConnection(): Promise<ConnectionTestResult>;
 }
 
 /**

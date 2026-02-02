@@ -34,7 +34,7 @@ vi.mock('../../providers/pubmed/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -54,7 +54,7 @@ vi.mock('../../providers/eric/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -74,7 +74,7 @@ vi.mock('../../providers/arxiv/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -94,7 +94,7 @@ vi.mock('../../providers/scopus/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
-    testConnection: vi.fn().mockResolvedValue(true),
+    testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
 
@@ -303,7 +303,7 @@ filters:
             retryable: true,
           };
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
 
       const options: SearchCommandOptions = {
@@ -338,7 +338,7 @@ filters:
         search: vi.fn().mockImplementation(async function* () {
           // Yield nothing - legitimate zero results
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);
@@ -364,7 +364,7 @@ filters:
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('API rate limit exceeded');
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);
@@ -397,7 +397,7 @@ filters:
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('Network request failed');
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
 
       mockedEric.mockImplementation(() => ({
@@ -406,7 +406,7 @@ filters:
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('Timeout');
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
 
       const options: SearchCommandOptions = { queryFile: queryFilePath };
@@ -434,7 +434,7 @@ filters:
         search: vi.fn().mockImplementation(async function* () {
           // Yield nothing - legitimate zero results
         }),
-        testConnection: vi.fn().mockResolvedValue(true),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
       }) as any);
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);

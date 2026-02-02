@@ -235,31 +235,33 @@ describe('ERIC Provider', () => {
   });
 
   describe('testConnection', () => {
-    it('should return true when API is accessible', async () => {
+    it('should return { ok: true } when API is accessible', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ response: { numFound: 0, start: 0, docs: [] } }),
       });
 
       const result = await provider.testConnection();
-      expect(result).toBe(true);
+      expect(result).toEqual({ ok: true });
     });
 
-    it('should return false when API returns error', async () => {
+    it('should return { ok: false } when API returns error', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
       });
 
       const result = await provider.testConnection();
-      expect(result).toBe(false);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
-    it('should return false on network error', async () => {
+    it('should return { ok: false } on network error', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const result = await provider.testConnection();
-      expect(result).toBe(false);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 

@@ -309,7 +309,7 @@ describe('ScopusClient', () => {
   });
 
   describe('testConnection', () => {
-    it('should return true on successful connection', async () => {
+    it('should return { ok: true } on successful connection', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         headers: new Headers(),
@@ -325,10 +325,10 @@ describe('ScopusClient', () => {
 
       const client = new ScopusClient(config);
       const result = await client.testConnection();
-      expect(result).toBe(true);
+      expect(result).toEqual({ ok: true });
     });
 
-    it('should return false on auth error', async () => {
+    it('should return { ok: false, error: ... } on 401 auth error', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -338,7 +338,33 @@ describe('ScopusClient', () => {
 
       const client = new ScopusClient(config);
       const result = await client.testConnection();
-      expect(result).toBe(false);
+      expect(result).toMatchObject({ ok: false });
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('authentication failed');
+    });
+
+    it('should return { ok: false, error: ... } on 403 forbidden', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: 'Forbidden',
+        headers: new Headers(),
+      });
+
+      const client = new ScopusClient(config);
+      const result = await client.testConnection();
+      expect(result).toMatchObject({ ok: false });
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('authentication failed');
+    });
+
+    it('should return { ok: false, error: ... } on network error', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network failure'));
+
+      const client = new ScopusClient(config);
+      const result = await client.testConnection();
+      expect(result).toMatchObject({ ok: false });
+      expect(result.error).toBeDefined();
     });
   });
 

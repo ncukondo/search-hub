@@ -12,6 +12,7 @@ import type {
   QueryAST,
   SearchState,
   SearchResumeResult,
+  ConnectionTestResult,
 } from '../base/types';
 import { ScopusClient } from './client';
 import { parseDocument } from './parser';
@@ -146,7 +147,7 @@ export class ScopusProvider extends BaseProvider {
   /**
    * Verify API access and credentials.
    */
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<ConnectionTestResult> {
     return this.client.testConnection();
   }
 

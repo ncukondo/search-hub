@@ -6,7 +6,7 @@
 
 import type { ScopusConfig, ScopusSearchResponse } from './types';
 import { parseSearchResponse } from './parser';
-import { createProviderError, type ProviderError, type RateLimitError } from '../base/types';
+import { createProviderError, type ConnectionTestResult, type ProviderError, type RateLimitError } from '../base/types';
 
 const SCOPUS_API_BASE = 'https://api.elsevier.com';
 const SCOPUS_SEARCH_ENDPOINT = '/content/search/scopus';
@@ -106,13 +106,18 @@ export class ScopusClient {
   /**
    * Test the API connection by making a minimal search request.
    */
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<ConnectionTestResult> {
     try {
       // Use a simple valid query instead of '*' which Scopus may reject
       await this.search('ALL(test)', { count: 1, view: 'STANDARD' });
-      return true;
-    } catch {
-      return false;
+      return { ok: true };
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : String(error);
+      return { ok: false, error: message };
     }
   }
 

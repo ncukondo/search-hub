@@ -13,6 +13,7 @@ import type {
   ProviderError,
   SearchState,
   SearchResumeResult,
+  ConnectionTestResult,
 } from './types';
 import { isProviderError, isRateLimitError } from './types';
 
@@ -87,9 +88,10 @@ export abstract class BaseProvider implements Provider {
 
   /**
    * Verify API access and credentials.
-   * Returns false on failure (doesn't throw).
+   * Returns { ok: true } on success, { ok: false, error: string } on failure.
+   * Does not throw.
    */
-  abstract testConnection(): Promise<boolean>;
+  abstract testConnection(): Promise<ConnectionTestResult>;
 
   /**
    * Get the current search state for session persistence.

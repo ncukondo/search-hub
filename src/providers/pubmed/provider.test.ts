@@ -103,7 +103,8 @@ describe('PubMedProvider', () => {
 
       const provider = new PubMedProvider(baseConfig);
       const result = await provider.testConnection();
-      expect(typeof result).toBe('boolean');
+      expect(typeof result).toBe('object');
+      expect(result.ok).toBe(true);
     });
   });
 
@@ -265,7 +266,7 @@ describe('PubMedProvider', () => {
   });
 
   describe('testConnection', () => {
-    it('returns true on successful API call', async () => {
+    it('returns { ok: true } on successful API call', async () => {
       mockClientInstance.search.mockResolvedValueOnce({
         count: 0,
         retmax: 1,
@@ -276,17 +277,18 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const result = await provider.testConnection();
 
-      expect(result).toBe(true);
+      expect(result).toEqual({ ok: true });
       expect(mockClientInstance.search).toHaveBeenCalledWith('test', { retmax: 1 });
     });
 
-    it('returns false on API error', async () => {
+    it('returns { ok: false } on API error', async () => {
       mockClientInstance.search.mockRejectedValueOnce(new Error('API Error'));
 
       const provider = new PubMedProvider(baseConfig);
       const result = await provider.testConnection();
 
-      expect(result).toBe(false);
+      expect(result.ok).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 
