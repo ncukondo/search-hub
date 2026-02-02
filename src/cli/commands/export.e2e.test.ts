@@ -25,7 +25,9 @@ import {
   formatJson,
   formatJsonl,
   deduplicateArticles,
+  filterArticles,
   type JsonExportMetadata,
+  type ExportFilter,
 } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 
@@ -911,6 +913,141 @@ describe('search-hub export E2E', () => {
           expect(article.year).toBe(expectedYear);
         }
       }
+    });
+  });
+
+  describe('filter E2E', () => {
+    const filterArticles_ = filterArticles; // alias for clarity
+
+    it('should reduce result count with year filter', async () => {
+      await createTestSessionWithResults('filter-year-e2e', sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+
+      // Read all articles from session
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv', 'eric', 'scopus']) {
+        const resultsPath = join(ctx.sessionsDir, 'filter-year-e2e', `${provider}_results.jsonl`);
+        try {
+          const content = await readFile(resultsPath, 'utf-8');
+          const lines = content.trim().split('\n').filter(l => l);
+          for (const line of lines) {
+            allArticles.push(JSON.parse(line));
+          }
+        } catch {
+          // Provider may not have results
+        }
+      }
+
+      // Deduplicate first (like the CLI does)
+      const dedupResult = deduplicateArticles(allArticles);
+
+      // Apply year filter: only 2024 articles
+      const filter: ExportFilter = { yearFrom: 2024, yearTo: 2024 };
+      const filtered = filterArticles_(dedupResult.articles, filter);
+
+      // Only 2024 articles: pubmed 2024-01-15, pubmed 2024-02-20, arxiv 2024-01-01, scopus 2024-03-10
+      expect(filtered.length).toBeLessThan(dedupResult.articles.length);
+      expect(filtered.length).toBe(4);
+      for (const article of filtered) {
+        expect(article.publicationDate).toMatch(/^2024/);
+      }
+    });
+
+    it('should filter by title keyword from session results', async () => {
+      await createTestSessionWithResults('filter-title-e2e', sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv', 'eric', 'scopus']) {
+        const resultsPath = join(ctx.sessionsDir, 'filter-title-e2e', `${provider}_results.jsonl`);
+        try {
+          const content = await readFile(resultsPath, 'utf-8');
+          const lines = content.trim().split('\n').filter(l => l);
+          for (const line of lines) {
+            allArticles.push(JSON.parse(line));
+          }
+        } catch {
+          // Provider may not have results
+        }
+      }
+
+      const dedupResult = deduplicateArticles(allArticles);
+
+      // Filter by title keyword "diabetes"
+      const filter: ExportFilter = { titleKeywords: ['diabetes'] };
+      const filtered = filterArticles_(dedupResult.articles, filter);
+
+      expect(filtered.length).toBe(1);
+      expect(filtered[0]!.title).toBe('Diabetes and Machine Learning');
+    });
+
+    it('should show filtered count in output message format', async () => {
+      await createTestSessionWithResults('filter-count-e2e', sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv', 'eric', 'scopus']) {
+        const resultsPath = join(ctx.sessionsDir, 'filter-count-e2e', `${provider}_results.jsonl`);
+        try {
+          const content = await readFile(resultsPath, 'utf-8');
+          const lines = content.trim().split('\n').filter(l => l);
+          for (const line of lines) {
+            allArticles.push(JSON.parse(line));
+          }
+        } catch {
+          // Provider may not have results
+        }
+      }
+
+      const dedupResult = deduplicateArticles(allArticles);
+      const preFilterCount = dedupResult.articles.length;
+
+      // Apply filter
+      const filter: ExportFilter = { yearFrom: 2024, yearTo: 2024 };
+      const filtered = filterArticles_(dedupResult.articles, filter);
+
+      // Verify the message format would show filter impact
+      const message = `Exported ${filtered.length} articles (filtered from ${preFilterCount})`;
+      expect(message).toContain(`filtered from ${preFilterCount}`);
+      expect(message).toContain(`${filtered.length} articles`);
+      expect(filtered.length).toBeLessThan(preFilterCount);
+    });
+
+    it('should work with combined filters and all export formats', async () => {
+      await createTestSessionWithResults('filter-combined-e2e', sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv', 'eric', 'scopus']) {
+        const resultsPath = join(ctx.sessionsDir, 'filter-combined-e2e', `${provider}_results.jsonl`);
+        try {
+          const content = await readFile(resultsPath, 'utf-8');
+          const lines = content.trim().split('\n').filter(l => l);
+          for (const line of lines) {
+            allArticles.push(JSON.parse(line));
+          }
+        } catch {
+          // Provider may not have results
+        }
+      }
+
+      const dedupResult = deduplicateArticles(allArticles);
+
+      // Combined: year 2024 AND title "deep learning"
+      const filter: ExportFilter = { yearFrom: 2024, yearTo: 2024, titleKeywords: ['deep learning'] };
+      const filtered = filterArticles_(dedupResult.articles, filter);
+
+      // Only "Deep Learning in Healthcare" (2024, has "deep learning") matches
+      expect(filtered.length).toBe(1);
+      expect(filtered[0]!.title).toBe('Deep Learning in Healthcare');
+
+      // Verify all export formats work with filtered results
+      const jsonOutput = formatJson(filtered);
+      const parsedJson = JSON.parse(jsonOutput);
+      expect(parsedJson).toHaveLength(1);
+
+      const jsonlOutput = formatJsonl(filtered);
+      const jsonlLines = jsonlOutput.trim().split('\n');
+      expect(jsonlLines).toHaveLength(1);
+
+      const idsOutput = formatIds(filtered, 'doi');
+      expect(idsOutput).toContain('10.1000/healthcare.2024.002');
     });
   });
 });

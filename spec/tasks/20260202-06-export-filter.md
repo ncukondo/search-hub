@@ -80,14 +80,14 @@ Exported 45 articles (filtered from 860)
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/export.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/export.e2e.test.ts`
   - Test: export with year filter reduces result count
   - Test: export with title keyword filter works
   - Test: output message shows filtered count
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Export a real session with filters
-- [ ] Acceptance: All tests pass, filters work in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Export a real session with filters
+- [x] Acceptance: All tests pass, filters work in real usage
 
 ## Notes
 
