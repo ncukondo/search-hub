@@ -55,38 +55,47 @@ SETTINGS_EOF
 
 # --- 2. Split pane ---
 echo "[$SCRIPT_NAME] Splitting tmux pane..."
-tmux split-window -h -d -c "$WORKTREE_DIR"
-
-PANE_INDEX=$(tmux list-panes -F '#{pane_index}' | sort -n | tail -1)
-echo "[$SCRIPT_NAME] Agent pane: $PANE_INDEX"
+PANE_ID=$(tmux split-window -h -d -c "$WORKTREE_DIR" -P -F '#{pane_id}')
+echo "[$SCRIPT_NAME] Agent pane: $PANE_ID"
 
 # --- 3. Launch Claude interactively ---
-echo "[$SCRIPT_NAME] Launching Claude in pane $PANE_INDEX..."
-tmux send-keys -t "$PANE_INDEX" 'claude'
+echo "[$SCRIPT_NAME] Launching Claude in pane $PANE_ID..."
+tmux send-keys -t "$PANE_ID" 'claude'
 sleep 1
-tmux send-keys -t "$PANE_INDEX" Enter
+tmux send-keys -t "$PANE_ID" Enter
 
 echo "[$SCRIPT_NAME] Waiting for Claude to start..."
+TRUST_HANDLED=false
 for i in $(seq 1 30); do
   sleep 2
-  if tmux capture-pane -t "$PANE_INDEX" -p 2>/dev/null | grep -q '? for shortcuts'; then
+  PANE_CONTENT=$(tmux capture-pane -t "$PANE_ID" -p 2>/dev/null || true)
+
+  # Handle "Trust this folder?" prompt (appears on first launch in new directories)
+  if [ "$TRUST_HANDLED" = false ] && echo "$PANE_CONTENT" | grep -q 'Yes, I trust this folder'; then
+    echo "[$SCRIPT_NAME] Trust prompt detected, auto-accepting..."
+    tmux send-keys -t "$PANE_ID" Enter
+    TRUST_HANDLED=true
+    continue
+  fi
+
+  if echo "$PANE_CONTENT" | grep -q '? for shortcuts'; then
     echo "[$SCRIPT_NAME] Claude is ready (after ~$((i * 2))s)"
     break
   fi
   if [ "$i" -eq 30 ]; then
     echo "[$SCRIPT_NAME] WARNING: Claude startup not detected after 60s."
     echo "[$SCRIPT_NAME] Send prompt manually:"
-    echo "  tmux send-keys -t $PANE_INDEX '$PROMPT'"
-    echo "  tmux send-keys -t $PANE_INDEX Enter"
+    echo "  tmux send-keys -t $PANE_ID '$PROMPT'"
+    echo "  tmux send-keys -t $PANE_ID Enter"
     exit 0
   fi
 done
 
 # --- 4. Send prompt ---
 echo "[$SCRIPT_NAME] Sending prompt..."
-tmux send-keys -t "$PANE_INDEX" "$PROMPT"
+tmux send-keys -t "$PANE_ID" "$PROMPT"
 sleep 1
-tmux send-keys -t "$PANE_INDEX" Enter
+tmux send-keys -t "$PANE_ID" Enter
 
-echo "[$SCRIPT_NAME] Done. Agent running in pane $PANE_INDEX."
-echo "[$SCRIPT_NAME] Monitor: tmux capture-pane -t $PANE_INDEX -p | tail -20"
+echo "[$SCRIPT_NAME] Done. Agent running in pane $PANE_ID."
+echo "[$SCRIPT_NAME] Monitor: tmux capture-pane -t $PANE_ID -p | tail -20"
