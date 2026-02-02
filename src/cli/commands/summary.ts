@@ -178,3 +178,7 @@ export function formatSummary(summary: SessionSummary): string {
 
   return lines.join('\n');
 }
+
+export function formatSummaryJson(summary: SessionSummary): string {
+  return JSON.stringify(summary, null, 2);
+}

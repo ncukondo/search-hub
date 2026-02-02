@@ -114,14 +114,14 @@ Article data loading uses the same pattern as the `export` command: load session
 
 ### Step 3: Implement `formatSummaryJson()` and register CLI command
 
-- [ ] Write test: `src/cli/commands/summary.test.ts`
+- [x] Write test: `src/cli/commands/summary.test.ts`
   - Test: JSON output matches `SessionSummary` structure
-- [ ] Verify test fails (Red)
-- [ ] Implement `formatSummaryJson()`
-- [ ] Register `summary` command in `src/cli/index.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub summary <session> --json` produces valid JSON
+- [x] Verify test fails (Red)
+- [x] Implement `formatSummaryJson()`
+- [x] Register `summary` command in `src/cli/index.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub summary <session> --json` produces valid JSON
 
 ### Final Step: E2E Integration Tests
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeSummary, formatSummary } from './summary.js';
+import { computeSummary, formatSummary, formatSummaryJson } from './summary.js';
 import type { SessionSummary } from './summary.js';
 import type { Article } from '../../providers/base/types.js';
 
@@ -335,5 +335,32 @@ describe('formatSummary', () => {
     expect(output).toContain('Total: 0 articles (0 unique after deduplication)');
     // Should not crash
     expect(output).toContain('Year distribution:');
+  });
+});
+
+describe('formatSummaryJson', () => {
+  it('should produce valid JSON matching SessionSummary structure', () => {
+    const summary = makeSummary();
+    const output = formatSummaryJson(summary);
+
+    const parsed = JSON.parse(output) as SessionSummary;
+    expect(parsed.sessionId).toBe(summary.sessionId);
+    expect(parsed.sessionName).toBe(summary.sessionName);
+    expect(parsed.totalArticles).toBe(summary.totalArticles);
+    expect(parsed.uniqueArticles).toBe(summary.uniqueArticles);
+    expect(parsed.yearDistribution).toEqual(summary.yearDistribution);
+    expect(parsed.databaseBreakdown).toEqual(summary.databaseBreakdown);
+    expect(parsed.topJournals).toEqual(summary.topJournals);
+    expect(parsed.identifierCoverage).toEqual(summary.identifierCoverage);
+  });
+
+  it('should produce pretty-printed JSON', () => {
+    const summary = makeSummary();
+    const output = formatSummaryJson(summary);
+
+    // Pretty-printed JSON has newlines
+    expect(output).toContain('\n');
+    // Indented with 2 spaces
+    expect(output).toContain('  "sessionId"');
   });
 });
