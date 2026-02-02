@@ -22,16 +22,16 @@ Reuses the `articlesToCslJson()` conversion module from Task A (#31).
 
 ### Step 1: Add `csl-json` to ExportFormat type and format function
 
-- [ ] Write test: `src/cli/commands/export.test.ts`
+- [x] Write test: `src/cli/commands/export.test.ts`
   - Test: `formatCslJson()` produces valid CSL-JSON array
   - Test: output is pretty-printed JSON (2-space indent)
   - Test: all article fields are correctly mapped via `articlesToCslJson()`
-- [ ] Verify test fails (Red)
-- [ ] Add `'csl-json'` to `ExportFormat` type in `src/cli/commands/export.ts`
-- [ ] Implement `formatCslJson()` using `articlesToCslJson()` from `src/integration/csl-json.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `formatCslJson()` produces correct CSL-JSON output
+- [x] Verify test fails (Red)
+- [x] Add `'csl-json'` to `ExportFormat` type in `src/cli/commands/export.ts`
+- [x] Implement `formatCslJson()` using `articlesToCslJson()` from `src/integration/csl-json.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `formatCslJson()` produces correct CSL-JSON output
 
 ### Step 2: Wire up CLI option
 
