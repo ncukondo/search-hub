@@ -70,13 +70,13 @@ Exported 45 articles (filtered from 860)
 
 ### Step 2: Add CLI options and wire up filters
 
-- [ ] Add `--filter-year`, `--filter-title`, `--filter-abstract` options to export command in `src/cli/index.ts`
-- [ ] Parse `--filter-year` range string (e.g., `"2023-2025"` → `{ yearFrom: 2023, yearTo: 2025 }`)
-- [ ] Parse `--filter-title` and `--filter-abstract` comma-separated strings into arrays
-- [ ] Apply `filterArticles()` after deduplication, before formatting
-- [ ] Include filter summary in output message
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: CLI filter options work end-to-end
+- [x] Add `--filter-year`, `--filter-title`, `--filter-abstract` options to export command in `src/cli/index.ts`
+- [x] Parse `--filter-year` range string (e.g., `"2023-2025"` → `{ yearFrom: 2023, yearTo: 2025 }`)
+- [x] Parse `--filter-title` and `--filter-abstract` comma-separated strings into arrays
+- [x] Apply `filterArticles()` after deduplication, before formatting
+- [x] Include filter summary in output message
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: CLI filter options work end-to-end
 
 ### Final Step: E2E Integration Tests
 

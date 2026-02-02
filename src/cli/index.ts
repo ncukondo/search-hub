@@ -57,7 +57,9 @@ import {
   formatJson,
   formatJsonl,
   deduplicateArticles,
+  filterArticles,
   type JsonExportMetadata,
+  type ExportFilter,
 } from './commands/export.js';
 import {
   computeSummary,
@@ -690,12 +692,17 @@ Examples:
     .option('--db <providers>', 'export only specific database(s)')
     .option('--id-type <type>', 'for ids format: doi, pmid, all')
     .option('--no-dedup', 'disable deduplication of results')
+    .option('--filter-year <range>', 'year range filter (e.g., "2023-2025")')
+    .option('--filter-title <keywords>', 'title keyword filter (comma-separated)')
+    .option('--filter-abstract <keywords>', 'abstract keyword filter (comma-separated)')
     .addHelpText('after', `
 Examples:
   $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs
   $ search-hub export SESSION_ID --format json -o results.json
   $ search-hub export SESSION_ID --db pubmed --format jsonl
-  $ search-hub export SESSION_ID --no-dedup  # Export without deduplication`)
+  $ search-hub export SESSION_ID --no-dedup  # Export without deduplication
+  $ search-hub export SESSION_ID --filter-year 2023-2025     # Filter by year
+  $ search-hub export SESSION_ID --filter-title "machine learning,AI"  # Filter by title`)
     .action(
       async (
         sessionId: string,
@@ -705,6 +712,9 @@ Examples:
           db?: string;
           idType?: string;
           dedup?: boolean;
+          filterYear?: string;
+          filterTitle?: string;
+          filterAbstract?: string;
         }
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
@@ -785,6 +795,39 @@ Examples:
             exportArticles = articles;
           }
 
+          // Apply filters
+          const filter: ExportFilter = {};
+          if (options?.filterYear) {
+            const parts = options.filterYear.split('-');
+            if (parts.length === 2) {
+              const from = parseInt(parts[0]!, 10);
+              const to = parseInt(parts[1]!, 10);
+              if (!Number.isNaN(from)) filter.yearFrom = from;
+              if (!Number.isNaN(to)) filter.yearTo = to;
+            } else if (parts.length === 1) {
+              const year = parseInt(parts[0]!, 10);
+              if (!Number.isNaN(year)) {
+                filter.yearFrom = year;
+                filter.yearTo = year;
+              }
+            }
+          }
+          if (options?.filterTitle) {
+            filter.titleKeywords = options.filterTitle.split(',').map((s) => s.trim()).filter(Boolean);
+          }
+          if (options?.filterAbstract) {
+            filter.abstractKeywords = options.filterAbstract.split(',').map((s) => s.trim()).filter(Boolean);
+          }
+
+          const preFilterCount = exportArticles.length;
+          const hasFilter = filter.yearFrom !== undefined || filter.yearTo !== undefined
+            || (filter.titleKeywords && filter.titleKeywords.length > 0)
+            || (filter.abstractKeywords && filter.abstractKeywords.length > 0);
+
+          if (hasFilter) {
+            exportArticles = filterArticles(exportArticles, filter);
+          }
+
           // Format output
           let output: string;
           if (exportOpts.format === 'ids') {
@@ -810,7 +853,12 @@ Examples:
           if (exportOpts.outputPath) {
             await writeFile(exportOpts.outputPath, output, 'utf-8');
             if (!globalOpts.quiet) {
-              let message = `Exported ${exportArticles.length} articles to ${exportOpts.outputPath}`;
+              let message: string;
+              if (hasFilter) {
+                message = `Exported ${exportArticles.length} articles (filtered from ${preFilterCount}) to ${exportOpts.outputPath}`;
+              } else {
+                message = `Exported ${exportArticles.length} articles to ${exportOpts.outputPath}`;
+              }
               if (duplicatesRemoved > 0) {
                 message += ` (${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed)`;
               }
@@ -818,8 +866,17 @@ Examples:
             }
           } else {
             console.log(output);
-            if (!globalOpts.quiet && duplicatesRemoved > 0) {
-              console.error(`(${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed)`);
+            if (!globalOpts.quiet) {
+              const parts: string[] = [];
+              if (hasFilter) {
+                parts.push(`filtered from ${preFilterCount} to ${exportArticles.length} articles`);
+              }
+              if (duplicatesRemoved > 0) {
+                parts.push(`${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed`);
+              }
+              if (parts.length > 0) {
+                console.error(`(${parts.join(', ')})`);
+              }
             }
           }
 
