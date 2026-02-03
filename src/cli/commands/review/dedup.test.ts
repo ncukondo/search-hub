@@ -6,7 +6,7 @@ import { deduplicateForReview } from './dedup.js';
 const author = (family: string) => ({ family });
 
 describe('deduplicateForReview', () => {
-  it('returns articles with empty mergedFrom when no duplicates', () => {
+  it('always sets mergedFrom for articles with identifiers (single source)', () => {
     const articles: Article[] = [
       {
         title: 'Article 1',
@@ -28,9 +28,14 @@ describe('deduplicateForReview', () => {
     expect(result.articles).toHaveLength(2);
     expect(result.duplicatesRemoved).toBe(0);
 
-    // Articles without duplicates should have no mergedFrom
-    expect(result.articles[0]!.mergedFrom).toBeUndefined();
-    expect(result.articles[1]!.mergedFrom).toBeUndefined();
+    // Single-source articles should have mergedFrom with one entry to preserve source info
+    expect(result.articles[0]!.mergedFrom).toHaveLength(1);
+    expect(result.articles[0]!.mergedFrom![0]!.source).toBe('pubmed');
+    expect(result.articles[0]!.mergedFrom![0]!.pmid).toBe('111');
+
+    expect(result.articles[1]!.mergedFrom).toHaveLength(1);
+    expect(result.articles[1]!.mergedFrom![0]!.source).toBe('scopus');
+    expect(result.articles[1]!.mergedFrom![0]!.doi).toBe('10.1234/a');
   });
 
   it('tracks mergedFrom for DOI duplicates', () => {

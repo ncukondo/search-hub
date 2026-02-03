@@ -38,30 +38,37 @@ When `register --reviewed` converts `ArticleEntry` back to `Article`, it cannot 
 
 ### Step 1: Always set mergedFrom in dedup.ts
 
-- [ ] Write test: single article should have `mergedFrom` with one entry
-- [ ] Modify `deduplicateArticles()` to always set `mergedFrom`
-- [ ] Verify tests pass
-- [ ] Acceptance: All articles have `mergedFrom` after dedup
+- [x] Write test: single article should have `mergedFrom` with one entry
+- [x] Modify `deduplicateArticles()` to always set `mergedFrom`
+- [x] Verify tests pass
+- [x] Acceptance: All articles have `mergedFrom` after dedup
 
 ### Step 2: Update getIncludedArticles to use mergedFrom
 
-- [ ] Write test: source should come from `mergedFrom[0].source`
-- [ ] Write test: error if `mergedFrom` is missing or empty
-- [ ] Remove hardcoded `'pubmed'` fallback
-- [ ] Verify tests pass
-- [ ] Acceptance: Correct source is used, error on missing
+- [x] Write test: source should come from `mergedFrom[0].source`
+- [x] Write test: error if `mergedFrom` is missing or empty
+- [x] Remove hardcoded `'pubmed'` fallback
+- [x] Verify tests pass
+- [x] Acceptance: Correct source is used, error on missing
 
 ### Step 3: Handle multiple sources in Article type (optional)
 
-- [ ] Consider if `Article.source` should be `ProviderName[]`
-- [ ] Or add `Article.sources` as optional array
-- [ ] Document decision
+- [x] Consider if `Article.source` should be `ProviderName[]`
+- [x] Or add `Article.sources` as optional array
+- [x] Document decision
+
+**Decision**: Keep `Article.source` as a single `ProviderName` value.
+- `mergedFrom` already tracks all sources in the review workflow
+- For `register --reviewed`, the first source (primary source) is sufficient
+- Changing `Article.source` to an array would require widespread changes
+- Trade-off: simpler implementation vs. losing secondary sources in Article type
+- The `mergedFrom` array preserves full provenance for audit purposes
 
 ### Final Step: Integration Tests
 
-- [ ] E2E test: search → review init → register --reviewed preserves source
-- [ ] Run full test suite
-- [ ] Acceptance: All tests pass
+- [x] E2E test: search → review init → register --reviewed preserves source
+- [x] Run full test suite
+- [x] Acceptance: All tests pass
 
 ## Notes
 

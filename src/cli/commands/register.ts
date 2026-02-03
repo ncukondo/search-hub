@@ -285,6 +285,8 @@ function parseAuthorName(name: string): Author {
 /**
  * Get articles with finalDecision='include' from review file.
  * Converts from ArticleEntry format to Article format.
+ *
+ * @throws Error if mergedFrom is missing or empty (indicates legacy review file)
  */
 export async function getIncludedArticles(sessionId: string, sessionsDir: string): Promise<Article[]> {
   const reviewFile = await loadReviewFile(sessionId, sessionsDir);
@@ -293,15 +295,32 @@ export async function getIncludedArticles(sessionId: string, sessionsDir: string
   return articles
     .filter((entry) => entry.finalDecision === 'include')
     .map((entry): Article => {
+      // Validate mergedFrom exists
+      if (!entry.mergedFrom) {
+        throw new Error(
+          `Article "${entry.title}" has mergedFrom missing. ` +
+            `This may be a legacy review file created before source tracking was fixed. ` +
+            `Please re-run 'review init' to regenerate the review file with source tracking.`
+        );
+      }
+      if (entry.mergedFrom.length === 0) {
+        throw new Error(
+          `Article "${entry.title}" has empty mergedFrom array. ` +
+            `This is an invalid state - please re-run 'review init' to regenerate.`
+        );
+      }
+
       const authors: Author[] = entry.authors
         ? entry.authors.split(/,\s*/).map(parseAuthorName)
         : [];
 
+      // Get source from the first entry in mergedFrom
+      const source = entry.mergedFrom[0]!.source as ProviderName;
+
       const article: Article = {
         title: entry.title,
         authors,
-        // Use 'pubmed' as a placeholder source; real source is lost in review dedup
-        source: 'pubmed',
+        source,
         retrievedAt: new Date().toISOString(),
       };
       // Only set optional fields if they have values
