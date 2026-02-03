@@ -74,16 +74,16 @@ Two articles are considered the same if they share any identifier.
 
 ### Step 1: Core diff computation
 
-- [ ] Write test: `src/cli/commands/diff.test.ts`
+- [x] Write test: `src/cli/commands/diff.test.ts`
   - Test `computeDiff(articles1, articles2)` returns correct added/removed/common sets
   - Test matching by DOI, PMID, and other identifiers
   - Test edge cases: empty sessions, no overlap, full overlap
-- [ ] Create stub: `src/cli/commands/diff.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `computeDiff()` using identifier-based matching
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `computeDiff()` correctly classifies articles as added/removed/common
+- [x] Create stub: `src/cli/commands/diff.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `computeDiff()` using identifier-based matching
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `computeDiff()` correctly classifies articles as added/removed/common
 
 ### Step 2: Format diff output and register CLI command
 
