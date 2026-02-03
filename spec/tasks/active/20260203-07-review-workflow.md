@@ -255,14 +255,14 @@ search-hub review export --session <id> --only included [--format yaml|json|json
 
 #### Step 6: Implement `review extract` command
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - Test: extracts filtered subset
   - Test: applies sort (year, title, random, none)
   - Test: respects limit/offset
   - Test: outputs schema file alongside YAML
-- [ ] Implement `src/cli/commands/review/extract.ts`
-- [ ] Verify tests pass
-- [ ] Acceptance: Extracted files are self-contained and portable
+- [x] Implement `src/cli/commands/review/extract.ts`
+- [x] Verify tests pass
+- [x] Acceptance: Extracted files are self-contained and portable
 
 ### Phase 3: Merge and Export
 
