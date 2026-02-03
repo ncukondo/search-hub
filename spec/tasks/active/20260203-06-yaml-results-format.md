@@ -136,12 +136,12 @@ The presence of `resultsYaml` indicates that the human-readable view has been ge
 
 ### Step 4: Update all read sites to use unified reader
 
-- [ ] Write test: export, summary, and status commands work with YAML results
-- [ ] Replace direct JSONL reading in export.ts, summary.ts with `loadResults()`
-- [ ] Update resume-executor.ts to read YAML when loading existing results
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: all commands work with both YAML and legacy JSONL sessions
+- [x] Write test: export, summary, and status commands work with YAML results
+- [x] Replace direct JSONL reading in export.ts, summary.ts with `loadResults()`
+- [x] Update resume-executor.ts to read YAML when loading existing results
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: all commands work with both YAML and legacy JSONL sessions
 
 ### Step 5: Update resume flow
 

@@ -1,8 +1,9 @@
-import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { listSessions, loadSession } from '../../session/manager.js';
 import { deduplicateArticles } from './export.js';
 import { loadNotes, formatNotesList, type NoteEntry } from './notes.js';
+import { loadResults } from '../../session/results-io.js';
+import type { ProviderName } from '../../providers/base/types.js';
 
 export interface SessionListItem {
   id: string;
@@ -130,24 +131,11 @@ export async function computeDeduplicationStats(
   session: { databases: Record<string, { files?: { results?: string } } | undefined> }
 ): Promise<{ uniqueArticles: number; duplicatesRemoved: number }> {
   const articles: import('../../providers/base/types.js').Article[] = [];
+  const sessionDir = join(sessionsDir, sessionId);
 
-  for (const [, dbStatus] of Object.entries(session.databases)) {
-    if (!dbStatus || !dbStatus.files?.results) continue;
-
-    const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
-    try {
-      const content = await readFile(resultsPath, 'utf-8');
-      const lines = content.trim().split('\n').filter((line) => line);
-      for (const line of lines) {
-        try {
-          articles.push(JSON.parse(line));
-        } catch {
-          // Skip invalid JSON lines
-        }
-      }
-    } catch {
-      // Results file may not exist yet
-    }
+  for (const [providerName] of Object.entries(session.databases)) {
+    const providerArticles = await loadResults(sessionDir, providerName as ProviderName);
+    articles.push(...providerArticles);
   }
 
   if (articles.length === 0) {

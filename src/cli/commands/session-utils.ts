@@ -1,7 +1,7 @@
-import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Article, ProviderName } from '../../providers/base/types.js';
 import type { SessionFile } from '../../session/types.js';
+import { loadResults } from '../../session/results-io.js';
 
 /**
  * Extract identifier keys from an article for matching/deduplication.
@@ -18,7 +18,7 @@ export function getArticleKeys(article: Article): string[] {
 }
 
 /**
- * Load articles from a session's JSONL result files.
+ * Load articles from a session's result files (YAML preferred, JSONL fallback).
  *
  * @param session - The loaded session file
  * @param sessionId - The session ID
@@ -34,25 +34,14 @@ export async function loadSessionArticles(
 ): Promise<Article[]> {
   const articles: Article[] = [];
   const targetProviders = providers ?? (Object.keys(session.databases) as ProviderName[]);
+  const sessionDir = join(sessionsDir, sessionId);
 
   for (const provider of targetProviders) {
     const dbStatus = session.databases[provider];
-    if (!dbStatus || !dbStatus.files?.results) continue;
+    if (!dbStatus) continue;
 
-    const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
-    try {
-      const content = await readFile(resultsPath, 'utf-8');
-      const lines = content.trim().split('\n').filter((line) => line);
-      for (const line of lines) {
-        try {
-          articles.push(JSON.parse(line));
-        } catch {
-          // Skip invalid JSON lines
-        }
-      }
-    } catch {
-      // Results file may not exist yet
-    }
+    const providerArticles = await loadResults(sessionDir, provider);
+    articles.push(...providerArticles);
   }
 
   return articles;
