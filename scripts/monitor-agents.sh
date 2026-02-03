@@ -3,11 +3,12 @@ set -euo pipefail
 
 # Monitor all Claude agents by scanning state files.
 #
-# Usage: monitor-agents.sh [--watch] [--json]
+# Usage: monitor-agents.sh [--watch] [--wait-change] [--json]
 #
 # Options:
-#   --watch   Continuously monitor (refresh every 5s)
-#   --json    Output as JSON instead of table
+#   --watch        Continuously monitor (refresh every 5s, heartbeat every 60s)
+#   --wait-change  Wait for state change, output once, then exit
+#   --json         Output as JSON instead of table
 #
 # Output columns:
 #   PANE   - tmux pane ID (e.g., %42)
@@ -16,12 +17,17 @@ set -euo pipefail
 
 STATE_DIR="/tmp/claude-agent-states"
 WATCH=false
+WAIT_CHANGE=false
 JSON_OUTPUT=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --watch|-w)
       WATCH=true
+      shift
+      ;;
+    --wait-change|-c)
+      WAIT_CHANGE=true
       shift
       ;;
     --json|-j)
@@ -157,7 +163,21 @@ print_status() {
   fi
 }
 
-if [ "$WATCH" = true ]; then
+if [ "$WAIT_CHANGE" = true ]; then
+  # Wait for state change, output once, then exit
+  prev_sig=$(get_state_signature)
+
+  while true; do
+    sleep 5
+    current_sig=$(get_state_signature)
+
+    if [ "$current_sig" != "$prev_sig" ]; then
+      echo "=== $(date '+%H:%M:%S') (state changed) ==="
+      print_status
+      exit 0
+    fi
+  done
+elif [ "$WATCH" = true ]; then
   echo "Watching agent states... (output on state change, heartbeat every 60s)"
   echo ""
 
