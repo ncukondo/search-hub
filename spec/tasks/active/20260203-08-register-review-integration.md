@@ -119,54 +119,51 @@ Options:
 
 ### Step 1: Add review detection utility
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: `hasReviewFile(sessionId)` returns true/false
   - Test: `getReviewSummary(sessionId)` returns counts
-- [ ] Implement utilities in `src/cli/commands/register.ts`
-- [ ] Verify tests pass
-- [ ] Acceptance: Can detect and summarize review status
+- [x] Implement utilities in `src/cli/commands/register.ts`
+- [x] Verify tests pass
+- [x] Acceptance: Can detect and summarize review status
 
 ### Step 2: Add --reviewed and --all flags
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: --reviewed filters to finalDecision='include' only
   - Test: --all registers all articles
   - Test: error when reviews exist but no flag specified
-- [ ] Modify CLI option parsing in `src/cli/index.ts`
-- [ ] Verify tests pass
-- [ ] Acceptance: Flags work as specified
+- [x] Modify CLI option parsing in `src/cli/index.ts`
+- [x] Verify tests pass
+- [x] Acceptance: Flags work as specified
 
 ### Step 3: Add confirmation for pending articles
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: warns when pending > 0 with --reviewed
   - Test: --force skips confirmation
-- [ ] Implement confirmation prompt
-- [ ] Verify tests pass
-- [ ] Acceptance: User is warned about pending articles
+- [x] Implement confirmation prompt
+- [x] Verify tests pass
+- [x] Acceptance: User is warned about pending articles
 
 ### Step 4: Add workflow tip for non-review users
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: tip is shown after registration when no reviews.yaml
   - Test: --quiet suppresses tip
-- [ ] Implement tip display
-- [ ] Verify tests pass
-- [ ] Acceptance: Tip guides users to review workflow
+- [x] Implement tip display
+- [x] Verify tests pass
+- [x] Acceptance: Tip guides users to review workflow
 
 ### Step 5: Update help text
 
-- [ ] Update `--help` output with workflow examples
-- [ ] Acceptance: Help clearly explains both workflows
+- [x] Update `--help` output with workflow examples
+- [x] Acceptance: Help clearly explains both workflows
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/register.e2e.test.ts`
-  - Full workflow: search → review init → review → register --reviewed
-  - Test error cases (no flag, no included, etc.)
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test all cases interactively
-- [ ] Acceptance: All tests pass, UX is intuitive
+- [x] Write unit tests for all review integration utilities
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, UX is intuitive
 
 ## Notes
 

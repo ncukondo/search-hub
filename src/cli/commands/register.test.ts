@@ -1,9 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { Readable } from 'node:stream';
 import {
   parseRegisterOptions,
   validateRegisterInput,
   formatRegistrationSummary,
   formatDryRunOutput,
+  hasReviewFile,
+  getReviewSummary,
+  getIncludedArticles,
+  formatReviewRequiredMessage,
+  formatNoIncludedArticlesError,
+  formatPendingWarning,
+  formatReviewWorkflowTip,
+  formatIgnoringReviewsNote,
+  confirmPrompt,
+  type ReviewSummary,
 } from './register.js';
 
 describe('register command', () => {
@@ -56,6 +70,38 @@ describe('register command', () => {
       const result = parseRegisterOptions('session-123', {});
 
       expect(result.withAbstracts).toBe(false);
+    });
+
+    it('should parse --reviewed option', () => {
+      const result = parseRegisterOptions('session-123', {
+        reviewed: true,
+      });
+
+      expect(result.reviewed).toBe(true);
+    });
+
+    it('should parse --all option', () => {
+      const result = parseRegisterOptions('session-123', {
+        all: true,
+      });
+
+      expect(result.all).toBe(true);
+    });
+
+    it('should parse --force option', () => {
+      const result = parseRegisterOptions('session-123', {
+        force: true,
+      });
+
+      expect(result.force).toBe(true);
+    });
+
+    it('should parse --quiet option', () => {
+      const result = parseRegisterOptions('session-123', {
+        quiet: true,
+      });
+
+      expect(result.quiet).toBe(true);
     });
   });
 
@@ -273,6 +319,443 @@ describe('register command', () => {
 
       expect(output).toContain('"Scopus Article"');
       expect(output).toContain('has: scopus:2-s2.0-12345');
+    });
+  });
+
+  describe('hasReviewFile', () => {
+    let tempDir: string;
+    let sessionsDir: string;
+
+    beforeEach(async () => {
+      tempDir = await mkdtemp(join(tmpdir(), 'register-test-'));
+      sessionsDir = join(tempDir, 'sessions');
+      await mkdir(sessionsDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(tempDir, { recursive: true, force: true });
+    });
+
+    it('returns true when reviews.yaml exists', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+      await writeFile(join(sessionDir, 'reviews.yaml'), 'sessionId: test-session\narticles: []');
+
+      const result = await hasReviewFile(sessionId, sessionsDir);
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when reviews.yaml does not exist', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const result = await hasReviewFile(sessionId, sessionsDir);
+
+      expect(result).toBe(false);
+    });
+
+    it('returns false when session directory does not exist', async () => {
+      const result = await hasReviewFile('nonexistent', sessionsDir);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getReviewSummary', () => {
+    let tempDir: string;
+    let sessionsDir: string;
+
+    beforeEach(async () => {
+      tempDir = await mkdtemp(join(tmpdir(), 'register-test-'));
+      sessionsDir = join(tempDir, 'sessions');
+      await mkdir(sessionsDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(tempDir, { recursive: true, force: true });
+    });
+
+    it('returns correct counts for mixed review states', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1000/b"
+    title: "Article B"
+    reviews: []
+    finalDecision: exclude
+  - doi: "10.1000/c"
+    title: "Article C"
+    reviews: []
+  - doi: "10.1000/d"
+    title: "Article D"
+    reviews: []
+    finalDecision: include
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getReviewSummary(sessionId, sessionsDir);
+
+      expect(result).toEqual({
+        total: 4,
+        included: 2,
+        excluded: 1,
+        pending: 1,
+      });
+    });
+
+    it('returns all pending when no reviews or decisions exist', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews: []
+  - doi: "10.1000/b"
+    title: "Article B"
+    reviews: []
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getReviewSummary(sessionId, sessionsDir);
+
+      expect(result).toEqual({
+        total: 2,
+        included: 0,
+        excluded: 0,
+        pending: 2,
+      });
+    });
+
+    it('counts needs-final articles as pending', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews:
+      - reviewer: ai
+        decision: include
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getReviewSummary(sessionId, sessionsDir);
+
+      // has review but no finalDecision = needs-final = counted as pending
+      expect(result.pending).toBe(1);
+      expect(result.included).toBe(0);
+    });
+
+    it('throws error when reviews.yaml does not exist', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      await expect(getReviewSummary(sessionId, sessionsDir)).rejects.toThrow();
+    });
+
+    it('returns empty counts for session with no articles', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles: []
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getReviewSummary(sessionId, sessionsDir);
+
+      expect(result).toEqual({
+        total: 0,
+        included: 0,
+        excluded: 0,
+        pending: 0,
+      });
+    });
+  });
+
+  describe('getIncludedArticles', () => {
+    let tempDir: string;
+    let sessionsDir: string;
+
+    beforeEach(async () => {
+      tempDir = await mkdtemp(join(tmpdir(), 'register-test-'));
+      sessionsDir = join(tempDir, 'sessions');
+      await mkdir(sessionsDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(tempDir, { recursive: true, force: true });
+    });
+
+    it('returns only articles with finalDecision=include', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1000/b"
+    title: "Article B"
+    reviews: []
+    finalDecision: exclude
+  - pmid: "12345"
+    title: "Article C"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1000/d"
+    title: "Article D - pending"
+    reviews: []
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]?.title).toBe('Article A');
+      expect(result[1]?.title).toBe('Article C');
+    });
+
+    it('returns empty array when no included articles', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews: []
+    finalDecision: exclude
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('converts review ArticleEntry to Article format', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    pmid: "12345"
+    scopusId: "2-s2.0-123"
+    arxivId: "2401.12345"
+    ericId: "ED123456"
+    title: "Test Article"
+    authors: "Smith J, Doe A"
+    year: "2024"
+    reviews: []
+    finalDecision: include
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result).toHaveLength(1);
+      const article = result[0]!;
+      expect(article.doi).toBe('10.1000/a');
+      expect(article.pmid).toBe('12345');
+      expect(article.scopusId).toBe('2-s2.0-123');
+      expect(article.arxivId).toBe('2401.12345');
+      expect(article.ericId).toBe('ED123456');
+      expect(article.title).toBe('Test Article');
+      expect(article.publicationDate).toBe('2024');
+      expect(article.source).toBe('pubmed'); // placeholder source
+    });
+  });
+
+  describe('formatReviewRequiredMessage', () => {
+    it('shows review status and instructions', () => {
+      const summary: ReviewSummary = {
+        total: 150,
+        included: 32,
+        excluded: 108,
+        pending: 10,
+      };
+
+      const output = formatReviewRequiredMessage(summary, 'my-session');
+
+      expect(output).toContain('32 include');
+      expect(output).toContain('108 exclude');
+      expect(output).toContain('10 pending');
+      expect(output).toContain('--reviewed');
+      expect(output).toContain('--all');
+      expect(output).toContain('search-hub register my-session --reviewed');
+    });
+  });
+
+  describe('formatNoIncludedArticlesError', () => {
+    it('shows error with status counts', () => {
+      const summary: ReviewSummary = {
+        total: 150,
+        included: 0,
+        excluded: 140,
+        pending: 10,
+      };
+
+      const output = formatNoIncludedArticlesError(summary, 'my-session');
+
+      expect(output).toContain("No articles marked as 'include'");
+      expect(output).toContain('0 include');
+      expect(output).toContain('140 exclude');
+      expect(output).toContain('10 pending');
+      expect(output).toContain('review status my-session');
+    });
+  });
+
+  describe('formatPendingWarning', () => {
+    it('shows warning with pending count and included count', () => {
+      const summary: ReviewSummary = {
+        total: 150,
+        included: 32,
+        excluded: 108,
+        pending: 10,
+      };
+
+      const output = formatPendingWarning(summary);
+
+      expect(output).toContain('10 articles still pending');
+      expect(output).toContain('will be skipped');
+      expect(output).toContain('32 included articles');
+      expect(output).toContain('Proceed? [Y/n]');
+    });
+
+    it('uses singular when only 1 article pending', () => {
+      const summary: ReviewSummary = {
+        total: 150,
+        included: 32,
+        excluded: 117,
+        pending: 1,
+      };
+
+      const output = formatPendingWarning(summary);
+
+      expect(output).toContain('1 article still pending');
+      expect(output).not.toContain('articles still pending');
+    });
+  });
+
+  describe('formatReviewWorkflowTip', () => {
+    it('shows tip about review workflow', () => {
+      const output = formatReviewWorkflowTip('my-session');
+
+      expect(output).toContain('Tip:');
+      expect(output).toContain('systematic review');
+      expect(output).toContain('review init my-session');
+      expect(output).toContain('--reviewed');
+    });
+
+    it('includes session ID in example commands', () => {
+      const output = formatReviewWorkflowTip('test-session');
+
+      expect(output).toContain('test-session');
+      expect(output).toContain('search-hub review init test-session');
+      expect(output).toContain('search-hub register test-session --reviewed');
+    });
+  });
+
+  describe('formatIgnoringReviewsNote', () => {
+    it('shows note about ignoring reviews with total count', () => {
+      const output = formatIgnoringReviewsNote(150);
+
+      expect(output).toBe('Note: Ignoring review decisions. Registering all 150 articles.');
+    });
+
+    it('handles singular article count', () => {
+      const output = formatIgnoringReviewsNote(1);
+
+      expect(output).toBe('Note: Ignoring review decisions. Registering all 1 articles.');
+    });
+  });
+
+  describe('confirmPrompt', () => {
+    // Helper to create a mock stdin stream
+    function createMockInput(response: string): NodeJS.ReadableStream {
+      const stream = new Readable({
+        read() {
+          this.push(response);
+          this.push(null);
+        },
+      });
+      return stream as unknown as NodeJS.ReadableStream;
+    }
+
+    // Null output stream to suppress output during tests
+    const nullOutput = {
+      write: () => true,
+    } as unknown as NodeJS.WritableStream;
+
+    it('returns true for empty input (Enter)', async () => {
+      const result = await confirmPrompt(createMockInput('\n'), nullOutput);
+      expect(result).toBe(true);
+    });
+
+    it('returns true for "y"', async () => {
+      const result = await confirmPrompt(createMockInput('y\n'), nullOutput);
+      expect(result).toBe(true);
+    });
+
+    it('returns true for "Y"', async () => {
+      const result = await confirmPrompt(createMockInput('Y\n'), nullOutput);
+      expect(result).toBe(true);
+    });
+
+    it('returns true for "yes"', async () => {
+      const result = await confirmPrompt(createMockInput('yes\n'), nullOutput);
+      expect(result).toBe(true);
+    });
+
+    it('returns false for "n"', async () => {
+      const result = await confirmPrompt(createMockInput('n\n'), nullOutput);
+      expect(result).toBe(false);
+    });
+
+    it('returns false for "N"', async () => {
+      const result = await confirmPrompt(createMockInput('N\n'), nullOutput);
+      expect(result).toBe(false);
+    });
+
+    it('returns false for "no"', async () => {
+      const result = await confirmPrompt(createMockInput('no\n'), nullOutput);
+      expect(result).toBe(false);
+    });
+
+    it('returns false for arbitrary input', async () => {
+      const result = await confirmPrompt(createMockInput('xyz\n'), nullOutput);
+      expect(result).toBe(false);
     });
   });
 });
