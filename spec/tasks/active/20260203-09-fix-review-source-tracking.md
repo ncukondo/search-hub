@@ -53,15 +53,22 @@ When `register --reviewed` converts `ArticleEntry` back to `Article`, it cannot 
 
 ### Step 3: Handle multiple sources in Article type (optional)
 
-- [ ] Consider if `Article.source` should be `ProviderName[]`
-- [ ] Or add `Article.sources` as optional array
-- [ ] Document decision
+- [x] Consider if `Article.source` should be `ProviderName[]`
+- [x] Or add `Article.sources` as optional array
+- [x] Document decision
+
+**Decision**: Keep `Article.source` as a single `ProviderName` value.
+- `mergedFrom` already tracks all sources in the review workflow
+- For `register --reviewed`, the first source (primary source) is sufficient
+- Changing `Article.source` to an array would require widespread changes
+- Trade-off: simpler implementation vs. losing secondary sources in Article type
+- The `mergedFrom` array preserves full provenance for audit purposes
 
 ### Final Step: Integration Tests
 
-- [ ] E2E test: search → review init → register --reviewed preserves source
-- [ ] Run full test suite
-- [ ] Acceptance: All tests pass
+- [x] E2E test: search → review init → register --reviewed preserves source
+- [x] Run full test suite
+- [x] Acceptance: All tests pass
 
 ## Notes
 

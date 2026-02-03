@@ -16,6 +16,7 @@ import { executeReviewList } from './list.js';
 import { executeReviewExtract } from './extract.js';
 import { executeReviewMerge } from './merge.js';
 import { executeReviewExport } from './export.js';
+import { getIncludedArticles } from '../register.js';
 import type { ReviewFile } from './types.js';
 
 describe('Review Workflow E2E', () => {
@@ -324,5 +325,144 @@ summary:
     const status = await executeReviewStatus({ sessionId }, sessionsDir);
     expect(status.finalized).toBe(0);
     expect(status.pending).toBe(10);
+  });
+
+  it('preserves source information from search through register --reviewed', async () => {
+    // Setup session with multiple sources
+    const sessionDir = join(sessionsDir, sessionId);
+    await mkdir(sessionDir, { recursive: true });
+
+    // Write session.yaml
+    const sessionYaml = `version: 1
+id: ${sessionId}
+name: Multi-source Test Session
+createdAt: "2024-01-01T00:00:00Z"
+updatedAt: "2024-01-01T00:00:00Z"
+query:
+  file: query.yaml
+  hash: abc123
+  targets:
+    - pubmed
+    - scopus
+databases:
+  pubmed:
+    status: completed
+    files:
+      query: pubmed_query.txt
+      results: pubmed_results.jsonl
+  scopus:
+    status: completed
+    files:
+      query: scopus_query.txt
+      results: scopus_results.jsonl
+summary:
+  totalHits: 6
+  totalRetrieved: 6
+`;
+    await writeFile(join(sessionDir, 'session.yaml'), sessionYaml);
+
+    // Create articles from different sources
+    // Article 1: from PubMed only
+    // Article 2: from Scopus only
+    // Article 3: from both (will be merged by DOI)
+    const pubmedArticles = [
+      {
+        title: 'PubMed Only Article',
+        authors: [{ family: 'Smith' }],
+        pmid: '1001',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      },
+      {
+        title: 'Multi-source Article',
+        authors: [{ family: 'Jones' }],
+        pmid: '1003',
+        doi: '10.1234/multi',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      },
+    ];
+    await writeFile(
+      join(sessionDir, 'pubmed_results.jsonl'),
+      pubmedArticles.map((a) => JSON.stringify(a)).join('\n')
+    );
+
+    const scopusArticles = [
+      {
+        title: 'Scopus Only Article',
+        authors: [{ family: 'Brown' }],
+        scopusId: '2-s2.0-2002',
+        source: 'scopus',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      },
+      {
+        title: 'Multi-source Article from Scopus',
+        authors: [{ family: 'Jones' }],
+        scopusId: '2-s2.0-2003',
+        doi: '10.1234/multi',
+        source: 'scopus',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      },
+    ];
+    await writeFile(
+      join(sessionDir, 'scopus_results.jsonl'),
+      scopusArticles.map((a) => JSON.stringify(a)).join('\n')
+    );
+
+    // Step 1: Init review - should deduplicate and track mergedFrom
+    const initResult = await executeReviewInit({ sessionId }, sessionsDir);
+    expect(initResult.articleCount).toBe(3); // 2 unique + 1 merged
+
+    // Read and verify reviews.yaml has mergedFrom for all articles
+    const reviewsPath = join(sessionDir, 'reviews.yaml');
+    const reviewsContent = await readFile(reviewsPath, 'utf-8');
+    const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+
+    // All articles should have mergedFrom
+    for (const article of reviewFile.articles) {
+      expect(article.mergedFrom).toBeDefined();
+      expect(article.mergedFrom!.length).toBeGreaterThanOrEqual(1);
+    }
+
+    // Find the merged article (with DOI)
+    const mergedArticle = reviewFile.articles.find((a) => a.doi === '10.1234/multi');
+    expect(mergedArticle).toBeDefined();
+    expect(mergedArticle!.mergedFrom).toHaveLength(2);
+    const mergedSources = mergedArticle!.mergedFrom!.map((m) => m.source);
+    expect(mergedSources).toContain('pubmed');
+    expect(mergedSources).toContain('scopus');
+
+    // Find single-source articles
+    const pubmedOnlyArticle = reviewFile.articles.find((a) => a.pmid === '1001');
+    expect(pubmedOnlyArticle!.mergedFrom).toHaveLength(1);
+    expect(pubmedOnlyArticle!.mergedFrom![0]!.source).toBe('pubmed');
+
+    const scopusOnlyArticle = reviewFile.articles.find((a) => a.scopusId === '2-s2.0-2002');
+    expect(scopusOnlyArticle!.mergedFrom).toHaveLength(1);
+    expect(scopusOnlyArticle!.mergedFrom![0]!.source).toBe('scopus');
+
+    // Step 2: Simulate review decisions
+    for (const article of reviewFile.articles) {
+      article.reviews = [
+        { reviewer: 'test', decision: 'include', timestamp: '2024-01-02T00:00:00Z' },
+      ];
+      article.finalDecision = 'include';
+    }
+    await writeFile(reviewsPath, stringifyYaml(reviewFile));
+
+    // Step 3: Get included articles (simulating register --reviewed)
+    const includedArticles = await getIncludedArticles(sessionId, sessionsDir);
+    expect(includedArticles).toHaveLength(3);
+
+    // Verify each article has the correct source from mergedFrom
+    const pubmedOnlyIncluded = includedArticles.find((a) => a.pmid === '1001');
+    expect(pubmedOnlyIncluded!.source).toBe('pubmed');
+
+    const scopusOnlyIncluded = includedArticles.find((a) => a.scopusId === '2-s2.0-2002');
+    expect(scopusOnlyIncluded!.source).toBe('scopus');
+
+    // Merged article gets source from first mergedFrom entry (pubmed in this case, as it was added first)
+    const mergedIncluded = includedArticles.find((a) => a.doi === '10.1234/multi');
+    expect(mergedIncluded!.source).toBe('pubmed');
   });
 });
