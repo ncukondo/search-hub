@@ -51,7 +51,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 42 | Export to stdout by Default | 10 | ✅ Completed | [20260203-05](completed/20260203-05-export-stdout.md) |
 | 43 | YAML Results Format | 10 | ✅ Completed | [20260203-06](completed/20260203-06-yaml-results-format.md) |
 | 44 | Article Review Workflow | 28, 43 | ✅ Completed | [20260203-07](completed/20260203-07-review-workflow.md) |
-| 45 | Register Command Review Integration | 44 | 🔲 Planned | [20260203-08](active/20260203-08-register-review-integration.md) |
+| 45 | Register Command Review Integration | 44 | 🔄 In Progress | [20260203-08](active/20260203-08-register-review-integration.md) |
+| 46 | Fix Review Source Tracking | 44 | 🔲 Planned | [20260203-09](active/20260203-09-fix-review-source-tracking.md) |
 
 ## Development Flow
 
