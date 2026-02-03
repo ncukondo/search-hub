@@ -246,12 +246,12 @@ search-hub review export --session <id> --only included [--format yaml|json|json
 
 #### Step 5: Implement `review list` command
 
-- [ ] Write test: `src/cli/commands/review/list.test.ts`
+- [x] Write test: `src/cli/commands/review/list.test.ts`
   - Test: filters by status correctly
   - Test: human-readable and JSON output
-- [ ] Implement `src/cli/commands/review/list.ts`
-- [ ] Verify tests pass
-- [ ] Acceptance: `review list --filter pending` shows only pending
+- [x] Implement `src/cli/commands/review/list.ts`
+- [x] Verify tests pass
+- [x] Acceptance: `review list --filter pending` shows only pending
 
 #### Step 6: Implement `review extract` command
 
