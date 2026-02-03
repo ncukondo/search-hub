@@ -108,18 +108,18 @@ These structured fields enable future features like:
 
 ### Step 1: Notes storage and CRUD operations
 
-- [ ] Write test: `src/cli/commands/notes.test.ts`
+- [x] Write test: `src/cli/commands/notes.test.ts`
   - Test `addNote(sessionDir, note)` appends entry to notes.yaml
   - Test `loadNotes(sessionDir)` reads and parses notes.yaml
   - Test `addAssessment(sessionDir, assessment)` appends structured assessment entry
   - Test handling of missing notes.yaml (create new file with header comment)
   - Test handling of existing notes.yaml with manual edits / comments preserved
-- [ ] Create stub: `src/cli/commands/notes.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement CRUD functions for notes.yaml (parse → append → write)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Notes are correctly stored and loaded, existing comments are preserved
+- [x] Create stub: `src/cli/commands/notes.ts`
+- [x] Verify test fails (Red)
+- [x] Implement CRUD functions for notes.yaml (parse → append → write)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Notes are correctly stored and loaded, existing comments are preserved
 
 ### Step 2: CLI command registration
 
