@@ -45,25 +45,50 @@ npm run typecheck
 
 ### 5a. ワーカー完了検知 & レビューサイクル
 
-#### ワーカー完了の検知
-全ワーカーがPR作成まで完了したかを、`tmux capture-pane` でポーリングして確認する:
+#### エージェント状態の監視
 ```bash
-# 各ワーカーペインの最新出力を確認
-tmux capture-pane -t <pane_id> -p | tail -20
-```
-ワーカーがアイドル状態（プロンプト待ち or `?` 表示）になっていればPR作成済みと判断する。
+# 全エージェントの状態を一覧表示
+./scripts/monitor-agents.sh
 
-#### レビュー → 修正 → 再レビュー
-1. mainエージェントが各PRをレビュー (`/review-pr <PR番号>`)
-2. 修正が必要な場合、該当ワーカーに修正指示を送信:
-   ```bash
-   # tmux send-keys の注意: テキストと Enter は必ず別送信 + sleep 1
-   tmux send-keys -t <pane_id> '修正指示テキスト'
-   sleep 1
-   tmux send-keys -t <pane_id> Enter
-   ```
-3. ワーカーが修正してpush → 再レビュー
-4. 全PR承認まで繰り返す
+# 継続監視モード（10秒ごとに更新）
+./scripts/monitor-agents.sh --watch
+
+# 特定ペインの状態を確認
+./scripts/check-agent-state.sh <pane_id>
+# 出力: "idle" / "working" / "trust"
+```
+
+#### タスク完了の確認（GitHub API）
+```bash
+# PR作成とCI完了を確認
+./scripts/check-task-completion.sh <branch> pr-creation
+# 出力: "pending" / "ci-pending" / "ci-failed" / "completed"
+
+# レビュー状態を確認
+./scripts/check-task-completion.sh <branch> review <pr-number>
+# 出力: "pending" / "approved" / "changes_requested" / "commented"
+```
+
+#### 自動遷移（オプション）
+```bash
+# ワーカー完了を待ってレビュアーに自動遷移
+./scripts/wait-and-transition.sh <branch> worker
+
+# レビュー完了を待って次のアクションを決定
+./scripts/wait-and-transition.sh <branch> reviewer --pr <pr-number>
+```
+
+#### 手動でのレビュー起動
+```bash
+# レビュアーエージェントを起動
+./scripts/spawn-reviewer.sh <branch> <pr-number>
+```
+
+#### 修正指示の送信
+```bash
+# アイドル状態のエージェントに指示を送信
+./scripts/send-to-agent.sh <pane_id> "修正指示テキスト"
+```
 
 ### 5b. レイアウト適用
 全ワーカー起動後、ペインレイアウトを整える:
@@ -71,27 +96,34 @@ tmux capture-pane -t <pane_id> -p | tail -20
 ./scripts/apply-layout.sh
 ```
 
-### 6. マージ後（mainブランチで）
+### 6. マージ（mainエージェントで）
+ワーカー/レビュアーはマージを行わない。mainエージェントが以下を実行:
+```bash
+# PRをマージ
+gh pr merge <pr-number> --squash --delete-branch
+
+# worktreeをクリーンアップ
+git worktree remove <path> --force
+git branch -D <branch>
+```
+
+### 7. マージ後（mainブランチで）
 - ROADMAP.md のステータスを "Done" に更新
 - タスクファイルを `spec/tasks/completed/` に移動
 - worktree と ブランチを cleanup (`workmux remove <name>` または手動)
 
 ## 並列実行について
 - `workmux list` で全worktreeのステータスを確認可能
-- `workmux dashboard` でTUIダッシュボード表示
+- `./scripts/monitor-agents.sh` で全エージェントの状態を一覧表示
 - 依存関係のconflictに注意
 - マージ時の調整を意識する
 
-## tmux send-keys の注意
-- テキストと Enter は**必ず別々の `send-keys` 呼び出し**で送信する
-- 間に `sleep 1` を挟む（入力レースを防ぐため）
-- 悪い例: `tmux send-keys -t $PANE 'command' Enter`
-- 良い例:
-  ```bash
-  tmux send-keys -t $PANE 'command'
-  sleep 1
-  tmux send-keys -t $PANE Enter
-  ```
+## エージェント状態の判定
+- **idle**: エージェントが入力待ち（プロンプト `❯` が表示）
+- **working**: エージェントがタスク実行中
+- **trust**: Trust prompt表示中（自動でEnter送信される）
+
+**注意**: tmux出力にサジェスション（グレー表示のコマンド候補）が表示されることがあるが、これはアイドル状態であり、実行中ではない。完了判定には `check-task-completion.sh` を使うこと。
 
 ## context管理
 次の作業の完了までにcompactが必要になりそうなら、その時点で作業を中断し、進捗を報告して下さい。

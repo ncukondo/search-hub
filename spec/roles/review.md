@@ -27,13 +27,27 @@ You are a reviewer agent reviewing a PR in a worktree.
    - Request changes: `gh pr review <PR> --request-changes --body "..."`
    - If own PR (approve fails): `gh pr review <PR> --comment --body "..."`
 
+## Work Boundaries
+
+**Your scope is limited to:**
+1. Review the code
+2. Run tests locally
+3. Post review on GitHub
+
+**You must NOT:**
+- Merge PRs (main agent handles merges)
+- Make code changes (worker handles fixes)
+- Update ROADMAP.md
+
 ## Completion
 
-- After posting the review on GitHub, run `/exit` to terminate. Do NOT wait for further input.
+- After posting the review on GitHub, report the result and run `/exit` to terminate
+- Do NOT wait for fixes or further input
+- Do NOT attempt to merge the PR yourself
 
 ## Context Management
 
-- If context remaining drops to **15% or below**, post whatever review progress you have as a comment and run `/exit` to terminate.
+- If context remaining drops to **15% or below**, post whatever review progress you have as a comment and run `/exit` to terminate
 
 ## Compact Recovery
 

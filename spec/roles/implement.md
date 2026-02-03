@@ -15,9 +15,32 @@ You are a worker agent implementing a task in a worktree.
 - **Always `git add` specific files by name** — NEVER use `git add -A` or `git add .`
 - Do NOT commit `.worker-status.json` (it is in .gitignore)
 
+## Work Boundaries
+
+**Your scope is limited to:**
+1. Implement the task
+2. Write tests
+3. Create PR
+4. Push changes
+
+**You must NOT:**
+- Merge PRs (main agent handles merges)
+- Update ROADMAP.md (done on main after merge)
+- Move task files to completed/ (done on main after merge)
+
 ## Completion
 
-- After creating the PR, run `/exit` to terminate. Do NOT wait for further input.
+- After creating the PR, report completion and run `/exit` to terminate
+- Do NOT wait for review or further input
+- Do NOT attempt to merge the PR yourself
+
+## Handling Review Feedback
+
+If you receive a message about review feedback:
+1. Read the feedback carefully
+2. Make the requested changes
+3. Commit and push
+4. Report completion and run `/exit`
 
 ## Context Management
 
