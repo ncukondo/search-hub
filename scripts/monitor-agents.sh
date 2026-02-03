@@ -158,9 +158,17 @@ print_status() {
 }
 
 if [ "$WATCH" = true ]; then
+  echo "Watching agent states... (output on state change, heartbeat every 60s)"
+  echo ""
+
   prev_sig=""
+  last_output_time=$(date +%s)
+  HEARTBEAT_INTERVAL=60
+
   while true; do
     current_sig=$(get_state_signature)
+    now=$(date +%s)
+    time_since_output=$((now - last_output_time))
 
     if [ "$current_sig" != "$prev_sig" ]; then
       # State changed - show full output
@@ -168,6 +176,13 @@ if [ "$WATCH" = true ]; then
       print_status
       echo ""
       prev_sig="$current_sig"
+      last_output_time=$now
+    elif [ "$time_since_output" -ge "$HEARTBEAT_INTERVAL" ]; then
+      # Heartbeat - show status even without change
+      echo "=== $(date '+%H:%M:%S') (heartbeat) ==="
+      print_status
+      echo ""
+      last_output_time=$now
     fi
 
     sleep 5
