@@ -155,15 +155,15 @@ These structured fields enable future features like:
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test:
+- [x] Write E2E test:
   - Create a session, add notes, verify they persist
   - Add an assessment, verify structured fields
   - Check status command displays notes
   - Test cross-session view
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test with real sessions
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test with real sessions
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
