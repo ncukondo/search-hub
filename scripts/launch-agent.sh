@@ -34,7 +34,24 @@ fi
 # --- 1. Auto-permission settings (always overwrite) ---
 echo "[$SCRIPT_NAME] Setting up auto-permission..."
 mkdir -p "$WORKTREE_DIR/.claude"
-cat > "$WORKTREE_DIR/.claude/settings.local.json" << 'SETTINGS_EOF'
+
+# Generate unique worker ID for state tracking
+# PANE_ID will be set after split, so use a temp file approach:
+# We'll update the settings after getting PANE_ID
+WORKER_STATE_DIR="/tmp/claude-agent-states"
+mkdir -p "$WORKER_STATE_DIR"
+
+# --- 2. Split pane ---
+echo "[$SCRIPT_NAME] Splitting tmux pane..."
+PANE_ID=$(tmux split-window -h -d -c "$WORKTREE_DIR" -P -F '#{pane_id}')
+echo "[$SCRIPT_NAME] Agent pane: $PANE_ID"
+
+# --- 2b. Write settings with hooks (now that we have PANE_ID) ---
+# State file path uses PANE_ID (e.g., %5 -> /tmp/claude-agent-states/%5)
+STATE_FILE="$WORKER_STATE_DIR/$PANE_ID"
+echo "[$SCRIPT_NAME] State file: $STATE_FILE"
+
+cat > "$WORKTREE_DIR/.claude/settings.local.json" << SETTINGS_EOF
 {
   "permissions": {
     "allow": [
@@ -50,19 +67,81 @@ cat > "$WORKTREE_DIR/.claude/settings.local.json" << 'SETTINGS_EOF'
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "serena"
-  ]
+  ],
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo idle > '$STATE_FILE'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo working > '$STATE_FILE'",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo permission > '$STATE_FILE'"
+          }
+        ]
+      },
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo idle > '$STATE_FILE'"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo starting > '$STATE_FILE'"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rm -f '$STATE_FILE'"
+          }
+        ]
+      }
+    ]
+  }
 }
 SETTINGS_EOF
 
-# --- 2. Split pane ---
-echo "[$SCRIPT_NAME] Splitting tmux pane..."
-PANE_ID=$(tmux split-window -h -d -c "$WORKTREE_DIR" -P -F '#{pane_id}')
-echo "[$SCRIPT_NAME] Agent pane: $PANE_ID"
+# Initialize state file
+echo "starting" > "$STATE_FILE"
 
 # --- 3. Launch Claude interactively ---
 # NOTE: text and Enter must be separate send-keys calls (sleep 1 between).
+# Set CLAUDE_WORKER_ID to bypass the manual-launch check in ~/.claude/hooks/
 echo "[$SCRIPT_NAME] Launching Claude in pane $PANE_ID..."
-tmux send-keys -t "$PANE_ID" 'claude'
+tmux send-keys -t "$PANE_ID" "CLAUDE_WORKER_ID='$PANE_ID' claude"
 sleep 1
 tmux send-keys -t "$PANE_ID" Enter
 
