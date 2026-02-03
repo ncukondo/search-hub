@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { readFile, access } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { parse as parseYaml } from 'yaml';
-import type { ProviderName, Article } from '../../providers/base/types.js';
+import type { ProviderName, Article, Author } from '../../providers/base/types.js';
 import { parseProviderNames } from '../utils/validation.js';
 import { classifyStatus, type ReviewFile, type ArticleEntry } from './review/types.js';
 
@@ -16,12 +16,24 @@ export interface RegisterCommandOptions {
   providers?: ProviderName[];
   dryRun: boolean;
   withAbstracts: boolean;
+  /** Register only reviewed articles with finalDecision='include' */
+  reviewed?: boolean;
+  /** Register all articles, ignoring reviews */
+  all?: boolean;
+  /** Skip confirmation prompts */
+  force?: boolean;
+  /** Suppress tips and suggestions */
+  quiet?: boolean;
 }
 
 export interface CommandLineOptions {
   db?: string | undefined;
   dryRun?: boolean | undefined;
   withAbstracts?: boolean | undefined;
+  reviewed?: boolean | undefined;
+  all?: boolean | undefined;
+  force?: boolean | undefined;
+  quiet?: boolean | undefined;
 }
 
 export interface ValidationResult {
@@ -40,6 +52,10 @@ export function parseRegisterOptions(
     sessionId,
     dryRun: options.dryRun ?? false,
     withAbstracts: options.withAbstracts ?? false,
+    reviewed: options.reviewed ?? false,
+    all: options.all ?? false,
+    force: options.force ?? false,
+    quiet: options.quiet ?? false,
   };
 
   if (options.db) {
@@ -248,4 +264,78 @@ export async function getReviewSummary(sessionId: string, sessionsDir: string): 
   }
 
   return summary;
+}
+
+/**
+ * Parse author name string into Author object.
+ * Simple heuristic: last word is family name, rest is given name.
+ */
+function parseAuthorName(name: string): Author {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return { family: parts[0] ?? '' };
+  }
+  // Last part is family name (most common pattern in scientific citations)
+  const family = parts.pop() ?? '';
+  const given = parts.join(' ');
+  return { family, given };
+}
+
+/**
+ * Get articles with finalDecision='include' from review file.
+ * Converts from ArticleEntry format to Article format.
+ */
+export async function getIncludedArticles(sessionId: string, sessionsDir: string): Promise<Article[]> {
+  const reviewFile = await loadReviewFile(sessionId, sessionsDir);
+  const articles = reviewFile.articles ?? [];
+
+  return articles
+    .filter((entry) => entry.finalDecision === 'include')
+    .map((entry): Article => {
+      const authors: Author[] = entry.authors
+        ? entry.authors.split(/,\s*/).map(parseAuthorName)
+        : [];
+
+      const article: Article = {
+        title: entry.title,
+        authors,
+        // Use 'pubmed' as a placeholder source; real source is lost in review dedup
+        source: 'pubmed',
+        retrievedAt: new Date().toISOString(),
+      };
+      // Only set optional fields if they have values
+      if (entry.doi) article.doi = entry.doi;
+      if (entry.pmid) article.pmid = entry.pmid;
+      if (entry.scopusId) article.scopusId = entry.scopusId;
+      if (entry.arxivId) article.arxivId = entry.arxivId;
+      if (entry.ericId) article.ericId = entry.ericId;
+      if (entry.abstract) article.abstract = entry.abstract;
+      if (entry.year) article.publicationDate = entry.year;
+      return article;
+    });
+}
+
+/**
+ * Format message when reviews exist but no flag specified.
+ */
+export function formatReviewRequiredMessage(summary: ReviewSummary, sessionId: string): string {
+  return `This session has a review file.
+  Status: ${summary.included} include / ${summary.excluded} exclude / ${summary.pending} pending
+
+Please specify which articles to register:
+  --reviewed   Register ${summary.included} included articles
+  --all        Register all ${summary.total} articles (ignore reviews)
+
+Example:
+  search-hub register ${sessionId} --reviewed`;
+}
+
+/**
+ * Format error when --reviewed used but no articles are included.
+ */
+export function formatNoIncludedArticlesError(summary: ReviewSummary, sessionId: string): string {
+  return `Error: No articles marked as 'include' in reviews.
+  Status: ${summary.included} include / ${summary.excluded} exclude / ${summary.pending} pending
+
+Run 'search-hub review status ${sessionId}' for details.`;
 }

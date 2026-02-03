@@ -9,6 +9,9 @@ import {
   formatDryRunOutput,
   hasReviewFile,
   getReviewSummary,
+  getIncludedArticles,
+  formatReviewRequiredMessage,
+  formatNoIncludedArticlesError,
   type ReviewSummary,
 } from './register.js';
 
@@ -62,6 +65,38 @@ describe('register command', () => {
       const result = parseRegisterOptions('session-123', {});
 
       expect(result.withAbstracts).toBe(false);
+    });
+
+    it('should parse --reviewed option', () => {
+      const result = parseRegisterOptions('session-123', {
+        reviewed: true,
+      });
+
+      expect(result.reviewed).toBe(true);
+    });
+
+    it('should parse --all option', () => {
+      const result = parseRegisterOptions('session-123', {
+        all: true,
+      });
+
+      expect(result.all).toBe(true);
+    });
+
+    it('should parse --force option', () => {
+      const result = parseRegisterOptions('session-123', {
+        force: true,
+      });
+
+      expect(result.force).toBe(true);
+    });
+
+    it('should parse --quiet option', () => {
+      const result = parseRegisterOptions('session-123', {
+        quiet: true,
+      });
+
+      expect(result.quiet).toBe(true);
     });
   });
 
@@ -451,6 +486,148 @@ articles: []
         excluded: 0,
         pending: 0,
       });
+    });
+  });
+
+  describe('getIncludedArticles', () => {
+    let tempDir: string;
+    let sessionsDir: string;
+
+    beforeEach(async () => {
+      tempDir = await mkdtemp(join(tmpdir(), 'register-test-'));
+      sessionsDir = join(tempDir, 'sessions');
+      await mkdir(sessionsDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(tempDir, { recursive: true, force: true });
+    });
+
+    it('returns only articles with finalDecision=include', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1000/b"
+    title: "Article B"
+    reviews: []
+    finalDecision: exclude
+  - pmid: "12345"
+    title: "Article C"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1000/d"
+    title: "Article D - pending"
+    reviews: []
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]?.title).toBe('Article A');
+      expect(result[1]?.title).toBe('Article C');
+    });
+
+    it('returns empty array when no included articles', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews: []
+    finalDecision: exclude
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('converts review ArticleEntry to Article format', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    pmid: "12345"
+    scopusId: "2-s2.0-123"
+    arxivId: "2401.12345"
+    ericId: "ED123456"
+    title: "Test Article"
+    authors: "Smith J, Doe A"
+    year: "2024"
+    reviews: []
+    finalDecision: include
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result).toHaveLength(1);
+      const article = result[0]!;
+      expect(article.doi).toBe('10.1000/a');
+      expect(article.pmid).toBe('12345');
+      expect(article.scopusId).toBe('2-s2.0-123');
+      expect(article.arxivId).toBe('2401.12345');
+      expect(article.ericId).toBe('ED123456');
+      expect(article.title).toBe('Test Article');
+      expect(article.publicationDate).toBe('2024');
+      expect(article.source).toBe('pubmed'); // placeholder source
+    });
+  });
+
+  describe('formatReviewRequiredMessage', () => {
+    it('shows review status and instructions', () => {
+      const summary: ReviewSummary = {
+        total: 150,
+        included: 32,
+        excluded: 108,
+        pending: 10,
+      };
+
+      const output = formatReviewRequiredMessage(summary, 'my-session');
+
+      expect(output).toContain('32 include');
+      expect(output).toContain('108 exclude');
+      expect(output).toContain('10 pending');
+      expect(output).toContain('--reviewed');
+      expect(output).toContain('--all');
+      expect(output).toContain('search-hub register my-session --reviewed');
+    });
+  });
+
+  describe('formatNoIncludedArticlesError', () => {
+    it('shows error with status counts', () => {
+      const summary: ReviewSummary = {
+        total: 150,
+        included: 0,
+        excluded: 140,
+        pending: 10,
+      };
+
+      const output = formatNoIncludedArticlesError(summary, 'my-session');
+
+      expect(output).toContain("No articles marked as 'include'");
+      expect(output).toContain('0 include');
+      expect(output).toContain('140 exclude');
+      expect(output).toContain('10 pending');
+      expect(output).toContain('review status my-session');
     });
   });
 });

@@ -128,6 +128,11 @@ import {
   validateRegisterInput,
   formatRegistrationSummary,
   formatDryRunOutput as formatRegisterDryRunOutput,
+  hasReviewFile,
+  getReviewSummary,
+  getIncludedArticles,
+  formatReviewRequiredMessage,
+  formatNoIncludedArticlesError,
 } from './commands/register.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
@@ -1263,11 +1268,18 @@ Examples:
     .option('--db <providers>', 'register only specific database(s)')
     .option('--dry-run', 'show what would be registered without executing', false)
     .option('--with-abstracts', 'also update abstracts via ref update', false)
+    .option('--reviewed', 'register only articles with finalDecision=include', false)
+    .option('--all', 'register all articles (ignore reviews)', false)
+    .option('--force', 'skip confirmation prompts', false)
     .addHelpText('after', `
 Examples:
   $ search-hub register SESSION_ID                # Register all results
   $ search-hub register SESSION_ID --with-abstracts
-  $ search-hub register SESSION_ID --dry-run      # Preview only`)
+  $ search-hub register SESSION_ID --dry-run      # Preview only
+
+With review workflow:
+  $ search-hub register SESSION_ID --reviewed     # Register only included articles
+  $ search-hub register SESSION_ID --all          # Register all (ignore reviews)`)
     .action(
       async (
         sessionId: string,
@@ -1275,6 +1287,9 @@ Examples:
           db?: string;
           dryRun?: boolean;
           withAbstracts?: boolean;
+          reviewed?: boolean;
+          all?: boolean;
+          force?: boolean;
         }
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
@@ -1284,6 +1299,9 @@ Examples:
             db: options?.db,
             dryRun: options?.dryRun,
             withAbstracts: options?.withAbstracts,
+            reviewed: options?.reviewed,
+            all: options?.all,
+            force: options?.force,
           });
 
           const validation = validateRegisterInput(registerOpts);
@@ -1351,8 +1369,43 @@ Examples:
             return;
           }
 
-          // Collect articles from result files
-          const articles = await loadSessionArticles(session, sessionId, sessionsDir, registerOpts.providers);
+          // Check for review file and handle --reviewed/--all flags
+          const reviewExists = await hasReviewFile(sessionId, sessionsDir);
+          let articles: import('../providers/base/types.js').Article[];
+
+          if (registerOpts.reviewed) {
+            // --reviewed: only include reviewed articles
+            if (!reviewExists) {
+              if (!globalOpts.quiet) {
+                console.error('Error: No reviews.yaml found for this session.');
+                console.error('Run "search-hub review init --session ' + sessionId + '" first.');
+              }
+              process.exitCode = EXIT_CODES.SESSION_ERROR;
+              return;
+            }
+
+            const summary = await getReviewSummary(sessionId, sessionsDir);
+            if (summary.included === 0) {
+              if (!globalOpts.quiet) {
+                console.error(formatNoIncludedArticlesError(summary, sessionId));
+              }
+              process.exitCode = EXIT_CODES.SESSION_ERROR;
+              return;
+            }
+
+            articles = await getIncludedArticles(sessionId, sessionsDir);
+          } else if (reviewExists && !registerOpts.all) {
+            // reviews.yaml exists but no flag specified
+            const summary = await getReviewSummary(sessionId, sessionsDir);
+            if (!globalOpts.quiet) {
+              console.log(formatReviewRequiredMessage(summary, sessionId));
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          } else {
+            // --all or no reviews.yaml: collect all articles from result files
+            articles = await loadSessionArticles(session, sessionId, sessionsDir, registerOpts.providers);
+          }
 
           // Dry run mode
           if (registerOpts.dryRun) {

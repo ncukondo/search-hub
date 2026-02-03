@@ -128,13 +128,13 @@ Options:
 
 ### Step 2: Add --reviewed and --all flags
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: --reviewed filters to finalDecision='include' only
   - Test: --all registers all articles
   - Test: error when reviews exist but no flag specified
-- [ ] Modify CLI option parsing in `src/cli/index.ts`
-- [ ] Verify tests pass
-- [ ] Acceptance: Flags work as specified
+- [x] Modify CLI option parsing in `src/cli/index.ts`
+- [x] Verify tests pass
+- [x] Acceptance: Flags work as specified
 
 ### Step 3: Add confirmation for pending articles
 
