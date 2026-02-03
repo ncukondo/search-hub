@@ -74,11 +74,11 @@ Query: wba-genai-v6.yaml (count only)
 
 ### Step 2: Implement count for other providers
 
-- [ ] Write tests for ERIC, arXiv, Scopus count methods
-- [ ] Implement count for each provider using their respective count APIs
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All configured providers return count correctly
+- [x] Write tests for ERIC, arXiv, Scopus count methods
+- [x] Implement count for each provider using their respective count APIs
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All configured providers return count correctly
 
 ### Step 3: Wire up --count-only CLI option
 
