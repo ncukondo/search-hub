@@ -104,11 +104,11 @@ Two articles are considered the same if they share any identifier.
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: create two sessions with overlapping results, run diff
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Write E2E test: create two sessions with overlapping results, run diff
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Test with real sessions from query iteration
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
