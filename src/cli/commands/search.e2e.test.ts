@@ -1735,10 +1735,10 @@ describe('search-hub search --count-only E2E', () => {
       const output = formatCountOnlyOutput(counts, 'test-query.yaml');
 
       expect(output).toContain('Query: test-query.yaml (count only)');
-      expect(output).toContain('pubmed');
-      expect(output).toContain('eric');
+      expect(output).toContain('pubmed:');
+      expect(output).toContain('eric:');
       expect(output).toContain('hits');
-      expect(output).toContain('total');
+      expect(output).toContain('total:');
       expect(output).toContain('before deduplication');
     });
   });

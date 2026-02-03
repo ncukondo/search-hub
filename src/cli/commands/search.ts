@@ -233,18 +233,18 @@ export function formatCountOnlyOutput(
   lines.push(`Query: ${label} (count only)`);
   lines.push('');
 
-  // Find the max provider name length for alignment
-  const maxNameLen = Math.max(...counts.map((c) => c.provider.length), 5);
+  // Find the max provider name length for alignment (including colon)
+  const maxNameLen = Math.max(...counts.map((c) => c.provider.length + 1), 6);
 
   // Calculate total (excluding errors)
   let total = 0;
 
   for (const c of counts) {
     if (c.error) {
-      lines.push(`  ${c.provider.padEnd(maxNameLen)}  error: ${c.error}`);
+      lines.push(`  ${(c.provider + ':').padEnd(maxNameLen)}  error: ${c.error}`);
     } else {
       const countStr = String(c.count).padStart(6);
-      lines.push(`  ${c.provider.padEnd(maxNameLen)} ${countStr} hits`);
+      lines.push(`  ${(c.provider + ':').padEnd(maxNameLen)} ${countStr} hits`);
       total += c.count;
     }
   }
@@ -253,7 +253,7 @@ export function formatCountOnlyOutput(
   const separatorLen = maxNameLen + 14;
   lines.push(`  ${'─'.repeat(separatorLen)}`);
   const totalStr = String(total).padStart(6);
-  lines.push(`  ${'total'.padEnd(maxNameLen)} ${totalStr} hits (before deduplication)`);
+  lines.push(`  ${('total:').padEnd(maxNameLen)} ${totalStr} hits (before deduplication)`);
 
   return lines.join('\n');
 }

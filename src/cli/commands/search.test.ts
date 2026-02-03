@@ -430,13 +430,13 @@ describe('search command', () => {
 
       expect(result).toContain('wba-genai-v6.yaml');
       expect(result).toContain('count only');
-      expect(result).toContain('pubmed');
+      expect(result).toContain('pubmed:');
       expect(result).toContain('28');
-      expect(result).toContain('scopus');
+      expect(result).toContain('scopus:');
       expect(result).toContain('145');
-      expect(result).toContain('eric');
+      expect(result).toContain('eric:');
       expect(result).toContain('3');
-      expect(result).toContain('total');
+      expect(result).toContain('total:');
       expect(result).toContain('176');
     });
 
@@ -447,9 +447,9 @@ describe('search command', () => {
 
       const result = formatCountOnlyOutput(counts, 'query.yaml');
 
-      expect(result).toContain('pubmed');
+      expect(result).toContain('pubmed:');
       expect(result).toContain('42');
-      expect(result).toContain('total');
+      expect(result).toContain('total:');
       expect(result).toContain('42');
     });
 
@@ -461,9 +461,9 @@ describe('search command', () => {
 
       const result = formatCountOnlyOutput(counts, 'query.yaml');
 
-      expect(result).toContain('pubmed');
+      expect(result).toContain('pubmed:');
       expect(result).toContain('28');
-      expect(result).toContain('scopus');
+      expect(result).toContain('scopus:');
       expect(result).toContain('error');
       expect(result).toContain('API key invalid');
     });
