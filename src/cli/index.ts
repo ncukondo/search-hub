@@ -90,6 +90,40 @@ import {
 } from './commands/diff.js';
 
 import {
+  executeReviewInit,
+  type ReviewInitOptions,
+} from './commands/review/init.js';
+import {
+  executeReviewStatus,
+  formatStatusOutput,
+  type ReviewStatusOptions,
+} from './commands/review/status.js';
+import {
+  executeReviewList,
+  formatListOutput,
+  type ReviewListOptions,
+  type ListFilter,
+} from './commands/review/list.js';
+import {
+  executeReviewExtract,
+  type ReviewExtractOptions,
+  type SortOption,
+} from './commands/review/extract.js';
+import {
+  executeReviewMerge,
+  formatMergeOutput,
+  type ReviewMergeOptions,
+} from './commands/review/merge.js';
+import {
+  executeReviewExport,
+  formatExportOutput,
+  type ReviewExportOptions,
+  type ExportFormat as ReviewExportFormat,
+  type ExportFilter as ReviewExportFilter,
+} from './commands/review/export.js';
+import { type ReviewStatus } from './commands/review/types.js';
+
+import {
   parseRegisterOptions,
   validateRegisterInput,
   formatRegistrationSummary,
@@ -1368,6 +1402,266 @@ Examples:
         }
       }
     );
+
+  // Register review command group
+  const reviewCommand = program
+    .command('review')
+    .description('Article review workflow for systematic literature review')
+    .addHelpText('after', `
+Examples:
+  $ search-hub review init --session SESSION_ID           # Initialize reviews.yaml
+  $ search-hub review status --session SESSION_ID         # Show review progress
+  $ search-hub review list --session SESSION_ID --filter pending  # List articles
+  $ search-hub review extract --session SESSION_ID -o batch.yaml  # Extract for review
+  $ search-hub review merge --session SESSION_ID batch.yaml       # Merge reviews
+  $ search-hub review export --session SESSION_ID --only included -o included.yaml`);
+
+  reviewCommand
+    .command('init')
+    .description('Generate reviews.yaml from deduplicated search results')
+    .requiredOption('--session <id>', 'session ID')
+    .option('-f, --force', 'overwrite existing reviews.yaml', false)
+    .action(async (options: { session: string; force: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const initOptions: ReviewInitOptions = {
+          sessionId: options.session,
+          ...(options.force && { force: options.force }),
+        };
+        const result = await executeReviewInit(initOptions, sessionsDir);
+        if (!globalOpts.quiet) {
+          console.log(`Created ${result.reviewsPath}`);
+          console.log(`  Articles: ${result.articleCount}`);
+          if (result.duplicatesRemoved > 0) {
+            console.log(`  Duplicates removed: ${result.duplicatesRemoved}`);
+          }
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  reviewCommand
+    .command('status')
+    .description('Show review progress summary')
+    .requiredOption('--session <id>', 'session ID')
+    .option('--json', 'output as JSON')
+    .action(async (options: { session: string; json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const statusOptions: ReviewStatusOptions = {
+          sessionId: options.session,
+        };
+        const result = await executeReviewStatus(statusOptions, sessionsDir);
+        if (!globalOpts.quiet) {
+          if (options.json) {
+            console.log(JSON.stringify(result, null, 2));
+          } else {
+            console.log(formatStatusOutput(result));
+          }
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  reviewCommand
+    .command('list')
+    .description('List articles with optional filtering')
+    .requiredOption('--session <id>', 'session ID')
+    .option('--filter <type>', 'filter by status: pending, conflicting, needs-final, finalized, all', 'all')
+    .option('--json', 'output as JSON')
+    .action(async (options: { session: string; filter?: string; json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const validFilters: ListFilter[] = ['pending', 'conflicting', 'needs-final', 'finalized', 'all'];
+        const filter = (options.filter ?? 'all') as ListFilter;
+        if (!validFilters.includes(filter)) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: Invalid filter '${options.filter}'. Valid values: ${validFilters.join(', ')}`);
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const listOptions: ReviewListOptions = {
+          sessionId: options.session,
+          filter,
+        };
+        const result = await executeReviewList(listOptions, sessionsDir);
+        if (!globalOpts.quiet) {
+          if (options.json) {
+            console.log(JSON.stringify(result.articles, null, 2));
+          } else {
+            console.log(formatListOutput(result));
+          }
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  reviewCommand
+    .command('extract')
+    .description('Extract subset to separate file for distributed review')
+    .requiredOption('--session <id>', 'session ID')
+    .requiredOption('-o, --output <path>', 'output file path')
+    .option('--filter <types>', 'filter by status (comma-separated): pending, conflicting, needs-final')
+    .option('--sort <method>', 'sort method: year, title, random, none', 'none')
+    .option('--limit <n>', 'limit number of articles')
+    .option('--offset <n>', 'skip first n articles')
+    .option('--seed <n>', 'random seed for reproducible sorting')
+    .action(async (options: {
+      session: string;
+      output: string;
+      filter?: string;
+      sort?: string;
+      limit?: string;
+      offset?: string;
+      seed?: string;
+    }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const validSorts: SortOption[] = ['year', 'title', 'random', 'none'];
+        const sort = (options.sort ?? 'none') as SortOption;
+        if (!validSorts.includes(sort)) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: Invalid sort '${options.sort}'. Valid values: ${validSorts.join(', ')}`);
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const extractOptions: ReviewExtractOptions = {
+          sessionId: options.session,
+          output: options.output,
+          sort,
+        };
+
+        if (options.filter) {
+          extractOptions.filter = options.filter.split(',').map(s => s.trim()) as ReviewStatus[];
+        }
+        if (options.limit) {
+          extractOptions.limit = parseInt(options.limit, 10);
+        }
+        if (options.offset) {
+          extractOptions.offset = parseInt(options.offset, 10);
+        }
+        if (options.seed) {
+          extractOptions.seed = parseInt(options.seed, 10);
+        }
+
+        const result = await executeReviewExtract(extractOptions, sessionsDir);
+        if (!globalOpts.quiet) {
+          console.log(`Extracted ${result.extractedCount} of ${result.totalMatching} articles to ${result.outputPath}`);
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  reviewCommand
+    .command('merge')
+    .description('Merge edited file back into main reviews.yaml')
+    .requiredOption('--session <id>', 'session ID')
+    .argument('<file>', 'file to merge')
+    .option('--dry-run', 'show changes without applying', false)
+    .action(async (file: string, options: { session: string; dryRun: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const mergeOptions: ReviewMergeOptions = {
+          sessionId: options.session,
+          file,
+          ...(options.dryRun && { dryRun: options.dryRun }),
+        };
+        const result = await executeReviewMerge(mergeOptions, sessionsDir);
+        if (!globalOpts.quiet) {
+          console.log(formatMergeOutput(result, options.dryRun));
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  reviewCommand
+    .command('export')
+    .description('Export articles based on final decision')
+    .requiredOption('--session <id>', 'session ID')
+    .requiredOption('--only <filter>', 'export filter: included or excluded')
+    .requiredOption('-o, --output <path>', 'output file path')
+    .option('--format <fmt>', 'output format: yaml, json, jsonl', 'yaml')
+    .action(async (options: {
+      session: string;
+      only: string;
+      output: string;
+      format?: string;
+    }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const validOnlyValues: ReviewExportFilter[] = ['included', 'excluded'];
+        const only = options.only as ReviewExportFilter;
+        if (!validOnlyValues.includes(only)) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: Invalid --only value '${options.only}'. Valid values: ${validOnlyValues.join(', ')}`);
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        const validFormats: ReviewExportFormat[] = ['yaml', 'json', 'jsonl'];
+        const format = (options.format ?? 'yaml') as ReviewExportFormat;
+        if (!validFormats.includes(format)) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: Invalid format '${options.format}'. Valid values: ${validFormats.join(', ')}`);
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const exportOptions: ReviewExportOptions = {
+          sessionId: options.session,
+          only,
+          output: options.output,
+          format,
+        };
+        const result = await executeReviewExport(exportOptions, sessionsDir);
+        if (!globalOpts.quiet) {
+          console.log(formatExportOutput(result));
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
 
   // Register notes command group
   const notesCommand = program
