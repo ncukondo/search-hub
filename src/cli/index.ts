@@ -68,6 +68,12 @@ import {
   formatSummaryJson,
 } from './commands/summary.js';
 import {
+  computeDiff,
+  formatDiff,
+  formatDiffJson,
+  type ShowFilter,
+} from './commands/diff.js';
+import {
   parseRegisterOptions,
   validateRegisterInput,
   formatRegistrationSummary,
@@ -970,6 +976,130 @@ Examples:
           } else {
             if (!globalOpts.quiet) {
               console.log(formatSummary(summary));
+            }
+          }
+
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error(
+              'Error:',
+              error instanceof Error ? error.message : error
+            );
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+        }
+      }
+    );
+
+  // Register diff command
+  program
+    .command('diff')
+    .description('Compare results between two sessions')
+    .argument('<session-id-1>', 'first session ID')
+    .argument('<session-id-2>', 'second session ID')
+    .option('--show <section>', 'show only specific section: added, removed, or common')
+    .option('--json', 'output as JSON')
+    .addHelpText('after', `
+Examples:
+  $ search-hub diff session-v1 session-v2                # Compare two sessions
+  $ search-hub diff session-v1 session-v2 --show added   # Show only added articles
+  $ search-hub diff session-v1 session-v2 --show removed # Show only removed articles
+  $ search-hub diff session-v1 session-v2 --json         # JSON output for scripting`)
+    .action(
+      async (
+        sessionId1: string,
+        sessionId2: string,
+        options?: { show?: string; json?: boolean }
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          // Validate --show option
+          const validShowValues: ShowFilter[] = ['added', 'removed', 'common'];
+          let showFilter: ShowFilter | undefined;
+          if (options?.show) {
+            if (!validShowValues.includes(options.show as ShowFilter)) {
+              if (!globalOpts.quiet) {
+                console.error(`Error: Invalid --show value: ${options.show}. Valid values are: ${validShowValues.join(', ')}`);
+              }
+              process.exitCode = EXIT_CODES.GENERAL_ERROR;
+              return;
+            }
+            showFilter = options.show as ShowFilter;
+          }
+
+          const sessionsDir = await getSessionsDir(globalOpts);
+
+          // Load both sessions
+          let session1, session2;
+          try {
+            session1 = await loadSession(sessionId1, sessionsDir);
+          } catch (error) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error loading session 1: ${error instanceof Error ? error.message : 'Failed to load session'}`
+              );
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          try {
+            session2 = await loadSession(sessionId2, sessionsDir);
+          } catch (error) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error loading session 2: ${error instanceof Error ? error.message : 'Failed to load session'}`
+              );
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          // Collect articles from both sessions
+          const { readFile } = await import('node:fs/promises');
+          const { join } = await import('node:path');
+
+          const loadArticles = async (session: typeof session1, sessionId: string): Promise<import('../providers/base/types.js').Article[]> => {
+            const articles: import('../providers/base/types.js').Article[] = [];
+            const providers = Object.keys(session.databases) as ProviderName[];
+            for (const provider of providers) {
+              const dbStatus = session.databases[provider];
+              if (!dbStatus || !dbStatus.files?.results) continue;
+              const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
+              try {
+                const content = await readFile(resultsPath, 'utf-8');
+                const lines = content.trim().split('\n').filter((line) => line);
+                for (const line of lines) {
+                  try {
+                    articles.push(JSON.parse(line));
+                  } catch {
+                    // Skip invalid JSON lines
+                  }
+                }
+              } catch {
+                // Results file may not exist yet
+              }
+            }
+            return articles;
+          };
+
+          const articles1 = await loadArticles(session1, sessionId1);
+          const articles2 = await loadArticles(session2, sessionId2);
+
+          // Deduplicate each session's articles before diffing
+          const dedup1 = deduplicateArticles(articles1);
+          const dedup2 = deduplicateArticles(articles2);
+
+          // Compute diff
+          const diff = computeDiff(dedup1.articles, dedup2.articles);
+
+          // Format and output
+          if (options?.json) {
+            console.log(formatDiffJson(diff, sessionId1, sessionId2, showFilter));
+          } else {
+            if (!globalOpts.quiet) {
+              console.log(formatDiff(diff, sessionId1, sessionId2, showFilter));
             }
           }
 

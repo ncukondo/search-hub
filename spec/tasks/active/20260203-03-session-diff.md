@@ -87,20 +87,20 @@ Two articles are considered the same if they share any identifier.
 
 ### Step 2: Format diff output and register CLI command
 
-- [ ] Write test: output formatting and CLI option parsing
-- [ ] Implement `formatDiff()` for human-readable output and `formatDiffJson()` for JSON
-- [ ] Register `diff` command in `src/cli/index.ts` with session loading
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub diff <s1> <s2>` produces correctly formatted output
+- [x] Write test: output formatting and CLI option parsing
+- [x] Implement `formatDiff()` for human-readable output and `formatDiffJson()` for JSON
+- [x] Register `diff` command in `src/cli/index.ts` with session loading
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub diff <s1> <s2>` produces correctly formatted output
 
 ### Step 3: --show filter option
 
-- [ ] Write test: filtering to show only added/removed/common
-- [ ] Implement `--show` option
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `--show added` only displays added articles
+- [x] Write test: filtering to show only added/removed/common
+- [x] Implement `--show` option
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `--show added` only displays added articles
 
 ### Final Step: E2E Integration Tests
 

@@ -87,3 +87,126 @@ export function computeDiff(session1: Article[], session2: Article[]): DiffResul
     common,
   };
 }
+
+export type ShowFilter = 'added' | 'removed' | 'common';
+
+/**
+ * Extract a year string from publicationDate, or return empty string.
+ */
+function extractYear(publicationDate: string | undefined): string {
+  if (!publicationDate) return '';
+  const year = publicationDate.substring(0, 4);
+  return /^\d{4}$/.test(year) ? year : '';
+}
+
+/**
+ * Format an article line for display.
+ */
+function formatArticleLine(prefix: string, article: Article): string {
+  const year = extractYear(article.publicationDate);
+  const yearPart = year ? `[${year}] ` : '';
+  return `  ${prefix} ${yearPart}${article.title}`;
+}
+
+/**
+ * Format diff result as human-readable text.
+ */
+export function formatDiff(
+  diff: DiffResult,
+  session1Id: string,
+  session2Id: string,
+  show?: ShowFilter,
+): string {
+  const lines: string[] = [];
+
+  // Header
+  lines.push(`Diff: ${session1Id} → ${session2Id}`);
+  lines.push(`  Session 1: ${diff.session1Count} articles (${session1Id})`);
+  lines.push(`  Session 2: ${diff.session2Count} articles (${session2Id})`);
+  lines.push('');
+
+  // Summary counts
+  lines.push(`  Common:  ${diff.common.length} articles`);
+  lines.push(`  Added:   ${diff.added.length} articles (in ${session2Id} but not ${session1Id})`);
+  lines.push(`  Removed: ${diff.removed.length} articles (in ${session1Id} but not ${session2Id})`);
+
+  // Article lists based on show filter
+  const showAdded = !show || show === 'added';
+  const showRemoved = !show || show === 'removed';
+  const showCommon = show === 'common';
+
+  if (showAdded && diff.added.length > 0) {
+    lines.push('');
+    lines.push(`Added (+${diff.added.length}):`);
+    for (const article of diff.added) {
+      lines.push(formatArticleLine('+', article));
+    }
+  }
+
+  if (showRemoved && diff.removed.length > 0) {
+    lines.push('');
+    lines.push(`Removed (-${diff.removed.length}):`);
+    for (const article of diff.removed) {
+      lines.push(formatArticleLine('-', article));
+    }
+  }
+
+  if (showCommon && diff.common.length > 0) {
+    lines.push('');
+    lines.push(`Common (${diff.common.length}):`);
+    for (const article of diff.common) {
+      lines.push(formatArticleLine('=', article));
+    }
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Format diff result as JSON.
+ */
+interface DiffJsonOutput {
+  session1: string;
+  session2: string;
+  summary: {
+    session1Count: number;
+    session2Count: number;
+    commonCount: number;
+    addedCount: number;
+    removedCount: number;
+  };
+  added?: Article[];
+  removed?: Article[];
+  common?: Article[];
+}
+
+export function formatDiffJson(
+  diff: DiffResult,
+  session1Id: string,
+  session2Id: string,
+  show?: ShowFilter,
+): string {
+  const result: DiffJsonOutput = {
+    session1: session1Id,
+    session2: session2Id,
+    summary: {
+      session1Count: diff.session1Count,
+      session2Count: diff.session2Count,
+      commonCount: diff.common.length,
+      addedCount: diff.added.length,
+      removedCount: diff.removed.length,
+    },
+  };
+
+  if (!show || show === 'added') {
+    result.added = diff.added;
+  }
+  if (!show || show === 'removed') {
+    result.removed = diff.removed;
+  }
+  if (!show || show === 'common') {
+    result.common = diff.common;
+  }
+
+  return JSON.stringify(result, null, 2);
+}
