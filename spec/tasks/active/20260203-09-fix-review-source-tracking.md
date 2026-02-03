@@ -38,10 +38,10 @@ When `register --reviewed` converts `ArticleEntry` back to `Article`, it cannot 
 
 ### Step 1: Always set mergedFrom in dedup.ts
 
-- [ ] Write test: single article should have `mergedFrom` with one entry
-- [ ] Modify `deduplicateArticles()` to always set `mergedFrom`
-- [ ] Verify tests pass
-- [ ] Acceptance: All articles have `mergedFrom` after dedup
+- [x] Write test: single article should have `mergedFrom` with one entry
+- [x] Modify `deduplicateArticles()` to always set `mergedFrom`
+- [x] Verify tests pass
+- [x] Acceptance: All articles have `mergedFrom` after dedup
 
 ### Step 2: Update getIncludedArticles to use mergedFrom
 

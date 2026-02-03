@@ -67,7 +67,7 @@ function countMetadataFields(article: Article): number {
  *
  * Unlike the standard deduplicateArticles, this function:
  * - Tracks all source records that were merged into each unique article
- * - Only adds mergedFrom when there are actual duplicates
+ * - Always sets mergedFrom to preserve source information (even for single-source articles)
  */
 export function deduplicateForReview(articles: Article[]): DeduplicationWithTrackingResult {
   // Map from identifier key to index in the unique array
@@ -130,11 +130,10 @@ export function deduplicateForReview(articles: Article[]): DeduplicationWithTrac
     }
   }
 
-  // Add mergedFrom only when there were actual merges
+  // Always add mergedFrom to preserve source information
+  // (single-source articles need this too for source tracking)
   for (const [index, sources] of sourcesForIndex) {
-    if (sources.length > 1) {
-      unique[index]!.mergedFrom = sources;
-    }
+    unique[index]!.mergedFrom = sources;
   }
 
   return { articles: unique, duplicatesRemoved };
