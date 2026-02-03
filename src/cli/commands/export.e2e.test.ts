@@ -17,7 +17,6 @@ import { join } from 'node:path';
 import {
   setupE2EContext,
   execCli,
-  createConfig,
   type E2EContext,
 } from '../e2e-helpers.js';
 import {
