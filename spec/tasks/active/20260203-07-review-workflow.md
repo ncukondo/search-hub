@@ -268,15 +268,15 @@ search-hub review export --session <id> --only included [--format yaml|json|json
 
 #### Step 7: Implement `review merge` command
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts`
+- [x] Write test: `src/cli/commands/review/merge.test.ts`
   - Test: appends new reviews
   - Test: skips duplicate reviews (same reviewer+timestamp)
   - Test: overwrites finalDecision
   - Test: --dry-run shows changes without applying
   - Test: handles articles not in main file (warning)
-- [ ] Implement `src/cli/commands/review/merge.ts`
-- [ ] Verify tests pass
-- [ ] Acceptance: Merge correctly combines distributed reviews
+- [x] Implement `src/cli/commands/review/merge.ts`
+- [x] Verify tests pass
+- [x] Acceptance: Merge correctly combines distributed reviews
 
 #### Step 8: Implement `review export` command
 
