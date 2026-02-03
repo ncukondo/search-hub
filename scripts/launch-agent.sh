@@ -16,6 +16,7 @@ set -euo pipefail
 #   3. Launches claude interactively, waits for startup
 #   4. Sends the prompt
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORKTREE_DIR="${1:?Usage: launch-agent.sh <worktree-dir> <prompt>}"
 PROMPT="${2:?Usage: launch-agent.sh <worktree-dir> <prompt>}"
 SCRIPT_NAME="${LAUNCH_AGENT_LABEL:-launch-agent}"
@@ -66,31 +67,33 @@ sleep 1
 tmux send-keys -t "$PANE_ID" Enter
 
 echo "[$SCRIPT_NAME] Waiting for Claude to start..."
-TRUST_HANDLED=false
 DETECTED=false
 # Timeout: 45 iterations × 2s = 90s (extra headroom for parallel launches)
 for i in $(seq 1 45); do
   sleep 2
-  # Use -S - to capture full scrollback buffer, not just visible area.
-  # In narrow/short panes, startup text scrolls off the visible region.
-  PANE_CONTENT=$(tmux capture-pane -t "$PANE_ID" -p -S - 2>/dev/null || true)
 
-  # Handle "Trust this folder?" prompt (appears on first launch in new directories)
-  if [ "$TRUST_HANDLED" = false ] && echo "$PANE_CONTENT" | grep -q 'Yes, I trust this folder'; then
-    echo "[$SCRIPT_NAME] Trust prompt detected, auto-accepting..."
-    tmux send-keys -t "$PANE_ID" Enter
-    TRUST_HANDLED=true
-    continue
-  fi
+  # Use check-agent-state.sh for robust state detection
+  # This handles narrow panes (via -J) and distinguishes Trust prompt from input prompt
+  STATE=$("$SCRIPT_DIR/check-agent-state.sh" "$PANE_ID" 2>/dev/null || echo "error")
 
-  # Detect Claude ready state: the input prompt "❯" appears when Claude is
-  # ready for input. This is more reliable than "? for shortcuts" which can
-  # be truncated or wrapped in narrow panes.
-  if echo "$PANE_CONTENT" | grep -q '❯'; then
-    echo "[$SCRIPT_NAME] Claude is ready (after ~$((i * 2))s)"
-    DETECTED=true
-    break
-  fi
+  case "$STATE" in
+    trust)
+      echo "[$SCRIPT_NAME] Trust prompt detected, auto-accepting..."
+      tmux send-keys -t "$PANE_ID" Enter
+      # Continue waiting for idle state after accepting trust
+      ;;
+    idle)
+      echo "[$SCRIPT_NAME] Claude is ready (after ~$((i * 2))s)"
+      DETECTED=true
+      break
+      ;;
+    working)
+      # Agent is initializing, keep waiting
+      ;;
+    *)
+      # Error or unexpected state, keep waiting
+      ;;
+  esac
 done
 
 if [ "$DETECTED" = false ]; then
