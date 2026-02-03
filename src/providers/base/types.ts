@@ -116,6 +116,12 @@ export interface Provider {
   ): AsyncIterable<Article>;
 
   /**
+   * Get total hit count for a query without downloading results.
+   * Used for count-only mode during query refinement.
+   */
+  count(query: TranslatedQuery): Promise<number>;
+
+  /**
    * Convert QueryAST to database-native syntax.
    */
   translateQuery(ast: QueryAST): TranslatedQuery;

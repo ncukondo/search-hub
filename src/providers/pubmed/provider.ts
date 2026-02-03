@@ -173,6 +173,14 @@ export class PubMedProvider extends BaseProvider {
   }
 
   /**
+   * Get total hit count for a query without downloading results.
+   * Uses ESearch with rettype=count for efficiency.
+   */
+  async count(query: TranslatedQuery): Promise<number> {
+    return this.withRetry(() => this.client.searchCount(query.native));
+  }
+
+  /**
    * Convert QueryAST to PubMed native syntax.
    */
   translateQuery(ast: QueryAST): TranslatedQuery {

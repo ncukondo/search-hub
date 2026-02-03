@@ -49,6 +49,10 @@ class TestProvider extends BaseProvider {
     };
   }
 
+  async count(_query: TranslatedQuery): Promise<number> {
+    return 0;
+  }
+
   translateQuery(ast: QueryAST): TranslatedQuery {
     return {
       native: 'test query',

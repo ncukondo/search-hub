@@ -63,40 +63,40 @@ Query: wba-genai-v6.yaml (count only)
 
 ### Step 1: Add count method to provider interface
 
-- [ ] Write test: provider count method returns hit count
-- [ ] Add `count(query: string): Promise<number>` to provider base interface
-- [ ] Verify test fails (Red)
-- [ ] Implement count for PubMed provider (ESearch with rettype=count)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: PubMed `count()` returns correct hit count for a known query
+- [x] Write test: provider count method returns hit count
+- [x] Add `count(query: TranslatedQuery): Promise<number>` to provider base interface
+- [x] Verify test fails (Red)
+- [x] Implement count for PubMed provider (ESearch with rettype=count)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: PubMed `count()` returns correct hit count for a known query
 
 ### Step 2: Implement count for other providers
 
-- [ ] Write tests for ERIC, arXiv, Scopus count methods
-- [ ] Implement count for each provider using their respective count APIs
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All configured providers return count correctly
+- [x] Write tests for ERIC, arXiv, Scopus count methods
+- [x] Implement count for each provider using their respective count APIs
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All configured providers return count correctly
 
 ### Step 3: Wire up --count-only CLI option
 
-- [ ] Write test: CLI option parsing and output formatting
-- [ ] Add `--count-only` option to search command
-- [ ] Implement count execution flow (translate query → count per provider → format output)
-- [ ] Ensure no session is created in count-only mode
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub search ./query.yaml --count-only` shows hit counts without creating a session
+- [x] Write test: CLI option parsing and output formatting
+- [x] Add `--count-only` option to search command
+- [x] Implement count execution flow (translate query → count per provider → format output)
+- [x] Ensure no session is created in count-only mode
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub search ./query.yaml --count-only` shows hit counts without creating a session
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test with PubMed (real API call with known query)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Write E2E test with PubMed (real API call with known query)
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Test with real queries
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

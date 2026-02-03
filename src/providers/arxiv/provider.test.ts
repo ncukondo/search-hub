@@ -303,4 +303,40 @@ describe('ArxivProvider', () => {
       expect(result.valid).toBe(true);
     });
   });
+
+  describe('count', () => {
+    it('should return total hit count using minimal search', async () => {
+      const mockClientInstance = vi.mocked(ArxivClient).mock.results[0]?.value as { search: ReturnType<typeof vi.fn> };
+      mockClientInstance.search.mockResolvedValueOnce({
+        totalResults: 150,
+        startIndex: 0,
+        itemsPerPage: 1,
+        entries: [],
+      });
+
+      const query = createTranslatedQuery();
+      const count = await provider.count(query);
+
+      expect(count).toBe(150);
+      expect(mockClientInstance.search).toHaveBeenCalledWith(
+        query.native,
+        { start: 0, maxResults: 1 }
+      );
+    });
+
+    it('should return 0 for queries with no results', async () => {
+      const mockClientInstance = vi.mocked(ArxivClient).mock.results[0]?.value as { search: ReturnType<typeof vi.fn> };
+      mockClientInstance.search.mockResolvedValueOnce({
+        totalResults: 0,
+        startIndex: 0,
+        itemsPerPage: 1,
+        entries: [],
+      });
+
+      const query = createTranslatedQuery();
+      const count = await provider.count(query);
+
+      expect(count).toBe(0);
+    });
+  });
 });

@@ -34,6 +34,7 @@ vi.mock('../../providers/pubmed/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
+    count: vi.fn().mockResolvedValue(42),
     testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
@@ -54,6 +55,7 @@ vi.mock('../../providers/eric/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
+    count: vi.fn().mockResolvedValue(15),
     testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
@@ -74,6 +76,7 @@ vi.mock('../../providers/arxiv/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
+    count: vi.fn().mockResolvedValue(8),
     testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
@@ -94,6 +97,7 @@ vi.mock('../../providers/scopus/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       } as Article;
     }),
+    count: vi.fn().mockResolvedValue(120),
     testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
@@ -117,7 +121,7 @@ vi.mock('../../integration/ref-cli.js', () => ({
 }));
 
 // Import after mocking
-const { executeSearch, createProviderInstance, isProviderConfigured } = await import('./search-executor.js');
+const { executeSearch, executeCountOnly, createProviderInstance, isProviderConfigured } = await import('./search-executor.js');
 
 describe('search-executor', () => {
   let tempDir: string;
@@ -843,6 +847,103 @@ filters:
       expect(result.autoRegisterResult).toBeDefined();
       // The mock refUpdate would be called if withAbstracts is enabled
       // This verifies the option is passed through correctly
+    });
+  });
+
+  describe('executeCountOnly', () => {
+    it('should return count results for query file', async () => {
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const results = await executeCountOnly(options, config);
+
+      expect(results).toHaveLength(1); // Only pubmed enabled
+      expect(results[0]!.provider).toBe('pubmed');
+      expect(results[0]!.count).toBe(42);
+      expect(results[0]!.error).toBeUndefined();
+    });
+
+    it('should return count results for multiple providers', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = true;
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const results = await executeCountOnly(options, config);
+
+      expect(results).toHaveLength(3);
+      const pubmed = results.find((r) => r.provider === 'pubmed');
+      const eric = results.find((r) => r.provider === 'eric');
+      const arxiv = results.find((r) => r.provider === 'arxiv');
+      expect(pubmed?.count).toBe(42);
+      expect(eric?.count).toBe(15);
+      expect(arxiv?.count).toBe(8);
+    });
+
+    it('should return count results for direct query', async () => {
+      const options: SearchCommandOptions = {
+        directQuery: 'diabetes[tiab]',
+        providers: ['pubmed'],
+      };
+
+      const results = await executeCountOnly(options, config);
+
+      expect(results).toHaveLength(1);
+      expect(results[0]!.provider).toBe('pubmed');
+      expect(results[0]!.count).toBe(42);
+    });
+
+    it('should not create a session', async () => {
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      await executeCountOnly(options, config);
+
+      // Check that no session directories were created
+      const { readdir } = await import('node:fs/promises');
+      const entries = await readdir(sessionsDir);
+      expect(entries).toHaveLength(0);
+    });
+
+    it('should handle provider errors gracefully', async () => {
+      // Use scopus which will fail because we mock ScopusProvider to return null via config
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = ''; // Empty key will cause null provider
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+        providers: ['scopus'],
+      };
+
+      const results = await executeCountOnly(options, config);
+
+      expect(results).toHaveLength(1);
+      expect(results[0]!.provider).toBe('scopus');
+      expect(results[0]!.error).toBeDefined();
+
+      warnSpy.mockRestore();
+    });
+
+    it('should return empty array when no providers available', async () => {
+      config.providers.pubmed.enabled = false;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const results = await executeCountOnly(options, config);
+
+      expect(results).toHaveLength(0);
     });
   });
 });

@@ -416,4 +416,66 @@ describe('ScopusProvider', () => {
       expect(capturedState!.retrievedCount).toBe(30);
     });
   });
+
+  describe('count', () => {
+    it('should return total hit count using minimal search', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '256',
+            'opensearch:startIndex': '0',
+            'opensearch:itemsPerPage': '1',
+            entry: [
+              {
+                'dc:identifier': 'SCOPUS_ID:1',
+                'dc:title': 'Article 1',
+                'dc:creator': 'Smith J.',
+              },
+            ],
+          },
+        }),
+      });
+
+      const provider = new ScopusProvider(config);
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [{ field: 'title', terms: { keywords: ['diabetes'] }, operator: 'OR' }],
+        filters: {},
+        overrides: {},
+      };
+      const query = provider.translateQuery(ast);
+
+      const count = await provider.count(query);
+      expect(count).toBe(256);
+    });
+
+    it('should return 0 for queries with no results', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '0',
+            'opensearch:startIndex': '0',
+            'opensearch:itemsPerPage': '1',
+            entry: [],
+          },
+        }),
+      });
+
+      const provider = new ScopusProvider(config);
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [{ field: 'title', terms: { keywords: ['nonexistent'] }, operator: 'OR' }],
+        filters: {},
+        overrides: {},
+      };
+      const query = provider.translateQuery(ast);
+
+      const count = await provider.count(query);
+      expect(count).toBe(0);
+    });
+  });
 });

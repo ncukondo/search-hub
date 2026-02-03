@@ -142,6 +142,16 @@ export class MockProvider extends BaseProvider {
     }
   }
 
+  async count(_query: TranslatedQuery): Promise<number> {
+    if (this.searchError !== null) {
+      throw this.searchError;
+    }
+    if (this.searchDelay > 0) {
+      await this.delay(this.searchDelay);
+    }
+    return this.mockArticles.length;
+  }
+
   translateQuery(ast: QueryAST): TranslatedQuery {
     return {
       ...this.translatedQueryResponse,

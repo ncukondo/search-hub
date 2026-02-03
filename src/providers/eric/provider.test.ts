@@ -392,4 +392,38 @@ describe('ERIC Provider', () => {
       expect(articles).toHaveLength(50);
     });
   });
+
+  describe('count', () => {
+    it('should return total hit count without fetching results', async () => {
+      mockSearch.mockResolvedValueOnce({
+        totalResults: 42,
+        documents: [],
+      });
+
+      const query: TranslatedQuery = {
+        native: 'education AND technology',
+        provider: 'eric',
+      };
+
+      const count = await provider.count(query);
+
+      expect(count).toBe(42);
+      expect(mockSearch).toHaveBeenCalledWith('education AND technology', { start: 0, rows: 0 });
+    });
+
+    it('should return 0 for queries with no results', async () => {
+      mockSearch.mockResolvedValueOnce({
+        totalResults: 0,
+        documents: [],
+      });
+
+      const query: TranslatedQuery = {
+        native: 'nonexistent_xyz',
+        provider: 'eric',
+      };
+
+      const count = await provider.count(query);
+      expect(count).toBe(0);
+    });
+  });
 });

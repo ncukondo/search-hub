@@ -515,6 +515,7 @@ vi.mock('../../providers/pubmed/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       };
     }),
+    count: vi.fn().mockResolvedValue(2),
     testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
@@ -536,6 +537,7 @@ vi.mock('../../providers/eric/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       };
     }),
+    count: vi.fn().mockResolvedValue(1),
     testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
@@ -557,6 +559,7 @@ vi.mock('../../providers/arxiv/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       };
     }),
+    count: vi.fn().mockResolvedValue(1),
     testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
@@ -579,6 +582,7 @@ vi.mock('../../providers/scopus/provider.js', () => ({
         retrievedAt: new Date().toISOString(),
       };
     }),
+    count: vi.fn().mockResolvedValue(1),
     testConnection: vi.fn().mockResolvedValue({ ok: true }),
   })),
 }));
@@ -597,8 +601,9 @@ vi.mock('../../integration/ref-cli.js', () => ({
 }));
 
 // Import after mocking
-const { executeSearch } = await import('./search-executor.js');
+const { executeSearch, executeCountOnly } = await import('./search-executor.js');
 const { getDefaultConfig } = await import('../../config/index.js');
+const { formatCountOnlyOutput } = await import('./search.js');
 
 describe('search-hub search (Live with Mock API) E2E', () => {
   let ctx: E2EContext;
@@ -1622,6 +1627,180 @@ describe('search-hub search: skip unconfigured providers E2E', () => {
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Scopus requires an API key'));
 
       warnSpy.mockRestore();
+    });
+  });
+});
+
+describe('search-hub search --count-only E2E', () => {
+  let ctx: E2EContext;
+
+  beforeEach(async () => {
+    ctx = await setupE2EContext();
+    vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  describe('count-only with query file', () => {
+    it('should return hit counts from all enabled providers', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = true;
+      config.providers.scopus.enabled = false;
+
+      const counts = await executeCountOnly(
+        { queryFile: queryPath, countOnly: true },
+        config
+      );
+
+      expect(counts).toHaveLength(3);
+      expect(counts.find((c) => c.provider === 'pubmed')?.count).toBe(2);
+      expect(counts.find((c) => c.provider === 'eric')?.count).toBe(1);
+      expect(counts.find((c) => c.provider === 'arxiv')?.count).toBe(1);
+    });
+
+    it('should return counts for single provider with --db', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = true;
+      config.providers.scopus.enabled = false;
+
+      const counts = await executeCountOnly(
+        { queryFile: queryPath, countOnly: true, providers: ['pubmed'] },
+        config
+      );
+
+      expect(counts).toHaveLength(1);
+      expect(counts[0]!.provider).toBe('pubmed');
+      expect(counts[0]!.count).toBe(2);
+    });
+  });
+
+  describe('count-only with direct query', () => {
+    it('should return count for direct query with single provider', async () => {
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+
+      const counts = await executeCountOnly(
+        { directQuery: 'diabetes[tiab]', providers: ['pubmed'], countOnly: true },
+        config
+      );
+
+      expect(counts).toHaveLength(1);
+      expect(counts[0]!.provider).toBe('pubmed');
+      expect(counts[0]!.count).toBe(2);
+    });
+  });
+
+  describe('count-only does not create session', () => {
+    it('should not create any files in sessions directory', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      await executeCountOnly(
+        { queryFile: queryPath, countOnly: true },
+        config
+      );
+
+      // Sessions directory should remain empty
+      const entries = await readdir(ctx.sessionsDir);
+      expect(entries).toHaveLength(0);
+    });
+  });
+
+  describe('count-only output formatting', () => {
+    it('should format count results with totals', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const counts = await executeCountOnly(
+        { queryFile: queryPath, countOnly: true },
+        config
+      );
+
+      const output = formatCountOnlyOutput(counts, 'test-query.yaml');
+
+      expect(output).toContain('Query: test-query.yaml (count only)');
+      expect(output).toContain('pubmed:');
+      expect(output).toContain('eric:');
+      expect(output).toContain('hits');
+      expect(output).toContain('total:');
+      expect(output).toContain('before deduplication');
+    });
+  });
+
+  describe('count-only handles provider errors gracefully', () => {
+    it('should return error for failed provider without affecting others', async () => {
+      // Override ERIC to throw an error during count
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+      // @ts-expect-error - Mocking only the properties we need for testing
+      vi.mocked(ERICProvider).mockImplementationOnce(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({
+          native: 'test query',
+          provider: 'eric',
+        }),
+        count: vi.fn().mockRejectedValue(new Error('ERIC API timeout')),
+        search: vi.fn().mockImplementation(async function* () {}),
+        testConnection: vi.fn().mockResolvedValue({ ok: false }),
+      }));
+
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const counts = await executeCountOnly(
+        { queryFile: queryPath, countOnly: true },
+        config
+      );
+
+      expect(counts).toHaveLength(2);
+
+      const pubmed = counts.find((c) => c.provider === 'pubmed');
+      expect(pubmed?.count).toBe(2);
+      expect(pubmed?.error).toBeUndefined();
+
+      const eric = counts.find((c) => c.provider === 'eric');
+      expect(eric?.count).toBe(0);
+      expect(eric?.error).toContain('ERIC API timeout');
+    });
+  });
+
+  describe('count-only skips unconfigured providers', () => {
+    it('should skip Scopus without API key in default mode', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const counts = await executeCountOnly(
+        { queryFile: queryPath, countOnly: true },
+        config
+      );
+
+      // Scopus should be skipped since no API key and no explicit --db
+      expect(counts).toHaveLength(1);
+      expect(counts[0]!.provider).toBe('pubmed');
     });
   });
 });
