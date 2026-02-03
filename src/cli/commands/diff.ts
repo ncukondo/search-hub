@@ -1,4 +1,5 @@
 import type { Article } from '../../providers/base/types.js';
+import { getArticleKeys } from './session-utils.js';
 
 export interface DiffResult {
   session1Count: number;
@@ -6,20 +7,6 @@ export interface DiffResult {
   added: Article[];
   removed: Article[];
   common: Article[];
-}
-
-/**
- * Extract identifier keys from an article for matching.
- * Uses the same identifier types as deduplication in export.ts.
- */
-function getArticleKeys(article: Article): string[] {
-  const keys: string[] = [];
-  if (article.doi) keys.push(`doi:${article.doi.toLowerCase()}`);
-  if (article.pmid) keys.push(`pmid:${article.pmid}`);
-  if (article.arxivId) keys.push(`arxiv:${article.arxivId}`);
-  if (article.scopusId) keys.push(`scopus:${article.scopusId}`);
-  if (article.ericId) keys.push(`eric:${article.ericId}`);
-  return keys;
 }
 
 /**

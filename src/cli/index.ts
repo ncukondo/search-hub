@@ -83,9 +83,11 @@ import { registerArticles, saveRegistrationRecord } from '../integration/registe
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
 import { loadSession } from '../session/manager.js';
 import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getSessionsDir } from './utils/sessions-dir.js';
 import { expandPath } from '../utils/path.js';
+import { loadSessionArticles } from './commands/session-utils.js';
 
 /**
  * Global CLI options available to all commands.
@@ -761,34 +763,7 @@ Examples:
           }
 
           // Collect articles from result files
-          const { readFile } = await import('node:fs/promises');
-          const { join } = await import('node:path');
-          const articles: import('../providers/base/types.js').Article[] = [];
-
-          // Determine which providers to export
-          const providersToExport = exportOpts.providers
-            ? exportOpts.providers
-            : (Object.keys(session.databases) as ProviderName[]);
-
-          for (const provider of providersToExport) {
-            const dbStatus = session.databases[provider];
-            if (!dbStatus || !dbStatus.files?.results) continue;
-
-            const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
-            try {
-              const content = await readFile(resultsPath, 'utf-8');
-              const lines = content.trim().split('\n').filter((line) => line);
-              for (const line of lines) {
-                try {
-                  articles.push(JSON.parse(line));
-                } catch {
-                  // Skip invalid JSON lines
-                }
-              }
-            } catch {
-              // Results file may not exist yet
-            }
-          }
+          const articles = await loadSessionArticles(session, sessionId, sessionsDir, exportOpts.providers);
 
           // Deduplicate articles unless --no-dedup is set
           const shouldDedup = options?.dedup !== false;
@@ -936,30 +911,7 @@ Examples:
           }
 
           // Collect articles from result files
-          const { readFile } = await import('node:fs/promises');
-          const { join } = await import('node:path');
-          const allArticles: import('../providers/base/types.js').Article[] = [];
-
-          const providers = Object.keys(session.databases) as ProviderName[];
-          for (const provider of providers) {
-            const dbStatus = session.databases[provider];
-            if (!dbStatus || !dbStatus.files?.results) continue;
-
-            const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
-            try {
-              const content = await readFile(resultsPath, 'utf-8');
-              const lines = content.trim().split('\n').filter((line) => line);
-              for (const line of lines) {
-                try {
-                  allArticles.push(JSON.parse(line));
-                } catch {
-                  // Skip invalid JSON lines
-                }
-              }
-            } catch {
-              // Results file may not exist yet
-            }
-          }
+          const allArticles = await loadSessionArticles(session, sessionId, sessionsDir);
 
           // Deduplicate
           const dedupResult = deduplicateArticles(allArticles);
@@ -1057,35 +1009,8 @@ Examples:
           }
 
           // Collect articles from both sessions
-          const { readFile } = await import('node:fs/promises');
-          const { join } = await import('node:path');
-
-          const loadArticles = async (session: typeof session1, sessionId: string): Promise<import('../providers/base/types.js').Article[]> => {
-            const articles: import('../providers/base/types.js').Article[] = [];
-            const providers = Object.keys(session.databases) as ProviderName[];
-            for (const provider of providers) {
-              const dbStatus = session.databases[provider];
-              if (!dbStatus || !dbStatus.files?.results) continue;
-              const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
-              try {
-                const content = await readFile(resultsPath, 'utf-8');
-                const lines = content.trim().split('\n').filter((line) => line);
-                for (const line of lines) {
-                  try {
-                    articles.push(JSON.parse(line));
-                  } catch {
-                    // Skip invalid JSON lines
-                  }
-                }
-              } catch {
-                // Results file may not exist yet
-              }
-            }
-            return articles;
-          };
-
-          const articles1 = await loadArticles(session1, sessionId1);
-          const articles2 = await loadArticles(session2, sessionId2);
+          const articles1 = await loadSessionArticles(session1, sessionId1, sessionsDir);
+          const articles2 = await loadSessionArticles(session2, sessionId2, sessionsDir);
 
           // Deduplicate each session's articles before diffing
           const dedup1 = deduplicateArticles(articles1);
@@ -1213,34 +1138,7 @@ Examples:
           }
 
           // Collect articles from result files
-          const { readFile } = await import('node:fs/promises');
-          const { join } = await import('node:path');
-          const articles: import('../providers/base/types.js').Article[] = [];
-
-          // Determine which providers to register
-          const providersToRegister = registerOpts.providers
-            ? registerOpts.providers
-            : (Object.keys(session.databases) as ProviderName[]);
-
-          for (const provider of providersToRegister) {
-            const dbStatus = session.databases[provider];
-            if (!dbStatus || !dbStatus.files?.results) continue;
-
-            const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
-            try {
-              const content = await readFile(resultsPath, 'utf-8');
-              const lines = content.trim().split('\n').filter((line) => line);
-              for (const line of lines) {
-                try {
-                  articles.push(JSON.parse(line));
-                } catch {
-                  // Skip invalid JSON lines
-                }
-              }
-            } catch {
-              // Results file may not exist yet
-            }
-          }
+          const articles = await loadSessionArticles(session, sessionId, sessionsDir, registerOpts.providers);
 
           // Dry run mode
           if (registerOpts.dryRun) {
