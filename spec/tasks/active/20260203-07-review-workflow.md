@@ -280,13 +280,13 @@ search-hub review export --session <id> --only included [--format yaml|json|json
 
 #### Step 8: Implement `review export` command
 
-- [ ] Write test: `src/cli/commands/review/export.test.ts`
+- [x] Write test: `src/cli/commands/review/export.test.ts`
   - Test: `--only included` exports only finalDecision=include
   - Test: `--only excluded` exports only finalDecision=exclude
   - Test: supports yaml, json, jsonl formats
-- [ ] Implement `src/cli/commands/review/export.ts`
-- [ ] Verify tests pass
-- [ ] Acceptance: Final export produces correct subset
+- [x] Implement `src/cli/commands/review/export.ts`
+- [x] Verify tests pass
+- [x] Acceptance: Final export produces correct subset
 
 ### Final Step: E2E Integration Tests
 
