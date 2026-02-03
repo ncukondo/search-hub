@@ -5,7 +5,7 @@
 import { config as loadDotenv } from 'dotenv';
 
 // Load .env file as early as possible, before any config loading
-loadDotenv();
+loadDotenv({ quiet: true });
 import { Command } from 'commander';
 import { VERSION } from '../version.js';
 import { init } from './commands/init.js';
@@ -697,7 +697,7 @@ Examples:
     .description('Export session results to various formats')
     .argument('<session-id>', 'session ID to export')
     .option('--format <fmt>', 'output format: ids, json, jsonl, csl-json', 'jsonl')
-    .option('-o, --output <path>', 'output file path')
+    .option('-o, --output <path>', 'output file path (default: stdout)')
     .option('--db <providers>', 'export only specific database(s)')
     .option('--id-type <type>', 'for ids format: doi, pmid, all')
     .option('--no-dedup', 'disable deduplication of results')
@@ -706,11 +706,14 @@ Examples:
     .option('--filter-abstract <keywords>', 'abstract keyword filter (comma-separated)')
     .addHelpText('after', `
 Examples:
-  $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs
-  $ search-hub export SESSION_ID --format json -o results.json
-  $ search-hub export SESSION_ID --format csl-json -o refs.json  # CSL-JSON for reference managers
+  $ search-hub export SESSION_ID                             # JSONL to stdout
+  $ search-hub export SESSION_ID --format json               # JSON to stdout
+  $ search-hub export SESSION_ID --format json -o results.json  # JSON to file
+  $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs to stdout
+  $ search-hub export SESSION_ID --format csl-json -o refs.json  # CSL-JSON to file
   $ search-hub export SESSION_ID --db pubmed --format jsonl
   $ search-hub export SESSION_ID --no-dedup  # Export without deduplication
+  $ search-hub export SESSION_ID --format jsonl | jq '.title'  # Pipe to jq
   $ search-hub export SESSION_ID --filter-year 2023-2025     # Filter by year
   $ search-hub export SESSION_ID --filter-title "machine learning,AI"  # Filter by title`)
     .action(
@@ -847,10 +850,10 @@ Examples:
               if (duplicatesRemoved > 0) {
                 message += ` (${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed)`;
               }
-              console.log(message);
+              console.error(message);
             }
           } else {
-            console.log(output);
+            process.stdout.write(output + '\n');
             if (!globalOpts.quiet) {
               const parts: string[] = [];
               if (hasFilter) {

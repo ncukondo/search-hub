@@ -4,12 +4,12 @@ import type { GlobalOptions } from './index.js';
 import { Command } from 'commander';
 
 describe('dotenv loading', () => {
-  it('calls dotenv.config() when the module is loaded', async () => {
+  it('calls dotenv.config({ quiet: true }) when the module is loaded', async () => {
     vi.resetModules();
     const configFn = vi.fn();
     vi.doMock('dotenv', () => ({ config: configFn }));
     await import('./index.js');
-    expect(configFn).toHaveBeenCalled();
+    expect(configFn).toHaveBeenCalledWith({ quiet: true });
     vi.restoreAllMocks();
   });
 });
