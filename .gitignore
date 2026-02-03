@@ -40,3 +40,6 @@ sessions/
 
 # Worker status (auto-generated)
 .worker-status.json
+
+# Serena MCP server local data
+.serena/
