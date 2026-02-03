@@ -68,11 +68,20 @@ import {
   formatSummaryJson,
 } from './commands/summary.js';
 import {
+  loadNotes,
+  addNote,
+  addAssessment,
+  formatNotesList,
+  formatAllSessionNotes,
+  type SessionNotes,
+} from './commands/notes.js';
+import {
   computeDiff,
   formatDiff,
   formatDiffJson,
   type ShowFilter,
 } from './commands/diff.js';
+
 import {
   parseRegisterOptions,
   validateRegisterInput,
@@ -81,7 +90,7 @@ import {
 } from './commands/register.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
-import { loadSession } from '../session/manager.js';
+import { loadSession, sessionExists } from '../session/manager.js';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1191,6 +1200,180 @@ Examples:
         }
       }
     );
+
+  // Register notes command group
+  const notesCommand = program
+    .command('notes')
+    .description('Manage session notes and assessments')
+    .addHelpText('after', `
+Examples:
+  $ search-hub notes list SESSION_ID             # List notes for a session
+  $ search-hub notes add SESSION_ID "my note"    # Add a note
+  $ search-hub notes add SESSION_ID --file assessment.md  # Add from file
+  $ search-hub notes assess SESSION_ID --precision "~54%" --verdict good --comment "Good results"
+  $ search-hub notes list --all                  # Show notes from all sessions`);
+
+  notesCommand
+    .command('list')
+    .description('List notes for a session or all sessions')
+    .argument('[session-id]', 'session ID')
+    .option('--all', 'show notes from all sessions')
+    .option('--json', 'output as JSON')
+    .action(async (sessionId?: string, options?: { all?: boolean; json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const formatOpts = { json: options?.json ?? false };
+
+        if (options?.all) {
+          // Cross-session notes view
+          const { listSessions } = await import('../session/manager.js');
+          const summaries = await listSessions(sessionsDir);
+          const allNotes: SessionNotes[] = [];
+
+          for (const summary of summaries) {
+            const sessionNotesDir = join(sessionsDir, summary.id);
+            const notes = await loadNotes(sessionNotesDir);
+            allNotes.push({
+              sessionId: summary.id,
+              sessionName: summary.name,
+              notes,
+            });
+          }
+
+          if (!globalOpts.quiet) {
+            console.log(formatAllSessionNotes(allNotes, formatOpts));
+          }
+          process.exitCode = EXIT_CODES.SUCCESS;
+          return;
+        }
+
+        if (!sessionId) {
+          if (!globalOpts.quiet) {
+            console.error('Error: session-id is required (or use --all)');
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
+        // List notes for a specific session
+        const sessionDir = join(sessionsDir, sessionId);
+        const notes = await loadNotes(sessionDir);
+        if (!globalOpts.quiet) {
+          console.log(formatNotesList(notes, formatOpts));
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error(
+            'Error:',
+            error instanceof Error ? error.message : error
+          );
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  notesCommand
+    .command('add')
+    .description('Add a note to a session')
+    .argument('<session-id>', 'session ID')
+    .argument('[text]', 'note text')
+    .option('--file <path>', 'read note text from a file instead')
+    .action(async (sessionId: string, text?: string, options?: { file?: string }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const sessionDir = join(sessionsDir, sessionId);
+
+        if (!(await sessionExists(sessionId, sessionsDir))) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: session '${sessionId}' not found`);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
+        let noteText: string;
+        if (options?.file) {
+          const { readFile } = await import('node:fs/promises');
+          noteText = (await readFile(options.file, 'utf-8')).trim();
+        } else if (text) {
+          noteText = text;
+        } else {
+          if (!globalOpts.quiet) {
+            console.error('Error: note text or --file is required');
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        await addNote(sessionDir, noteText);
+
+        if (!globalOpts.quiet) {
+          console.log('Note added.');
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error(
+            'Error:',
+            error instanceof Error ? error.message : error
+          );
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  notesCommand
+    .command('assess')
+    .description('Add a structured assessment to a session')
+    .argument('<session-id>', 'session ID')
+    .option('--precision <value>', 'estimated precision (e.g., "~54%", "15/28")')
+    .option('--verdict <value>', 'quality judgment: good, refine, reject')
+    .option('--comment <text>', 'free text explanation')
+    .action(async (sessionId: string, options?: { precision?: string; verdict?: string; comment?: string }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        if (!options?.precision && !options?.verdict && !options?.comment) {
+          if (!globalOpts.quiet) {
+            console.error('Error: at least one of --precision, --verdict, or --comment is required');
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const sessionDir = join(sessionsDir, sessionId);
+
+        if (!(await sessionExists(sessionId, sessionsDir))) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: session '${sessionId}' not found`);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
+        await addAssessment(sessionDir, {
+          precision: options?.precision,
+          verdict: options?.verdict,
+          comment: options?.comment,
+        });
+
+        if (!globalOpts.quiet) {
+          console.log('Assessment added.');
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error(
+            'Error:',
+            error instanceof Error ? error.message : error
+          );
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
 
   return program;
 }

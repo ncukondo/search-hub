@@ -8,6 +8,7 @@ import {
   type SessionDetails,
 } from './status.js';
 import type { SessionFile, SessionSummary, DatabaseStatus } from '../../session/types.js';
+import type { AssessmentEntry } from './notes.js';
 
 // Mock the session manager
 vi.mock('../../session/manager.js', () => ({
@@ -336,6 +337,73 @@ describe('status command', () => {
 
       expect(result).toContain('150/500 results');
       expect(result).not.toContain('duplicates');
+    });
+
+    it('should display notes section when notes are present', () => {
+      const details: SessionDetails = {
+        id: '20240115_diabetes-ai_a3f2c1',
+        name: 'diabetes-ai',
+        status: 'completed',
+        createdAt: '2024-01-15T10:30:00Z',
+        updatedAt: '2024-01-15T10:45:00Z',
+        queryFile: 'diabetes-ai.yaml',
+        totalHits: 500,
+        totalRetrieved: 500,
+        databases: [],
+        notes: [
+          { date: '2026-02-03 10:30', text: 'MeSH terms too broad' },
+          { date: '2026-02-03 10:45', type: 'assessment', precision: '~54%', verdict: 'good', text: 'Core papers captured' } as AssessmentEntry,
+        ],
+      };
+
+      const result = formatSessionDetails(details, { json: false });
+
+      expect(result).toContain('Notes:');
+      expect(result).toContain('[2026-02-03 10:30]');
+      expect(result).toContain('MeSH terms too broad');
+      expect(result).toContain('Assessment');
+      expect(result).toContain('precision ~54%');
+    });
+
+    it('should not display notes section when notes are empty', () => {
+      const details: SessionDetails = {
+        id: '20240115_diabetes-ai_a3f2c1',
+        name: 'diabetes-ai',
+        status: 'completed',
+        createdAt: '2024-01-15T10:30:00Z',
+        updatedAt: '2024-01-15T10:45:00Z',
+        queryFile: 'diabetes-ai.yaml',
+        totalHits: 500,
+        totalRetrieved: 500,
+        databases: [],
+      };
+
+      const result = formatSessionDetails(details, { json: false });
+
+      expect(result).not.toContain('Notes:');
+    });
+
+    it('should include notes in JSON output when present', () => {
+      const details: SessionDetails = {
+        id: '20240115_diabetes-ai_a3f2c1',
+        name: 'diabetes-ai',
+        status: 'completed',
+        createdAt: '2024-01-15T10:30:00Z',
+        updatedAt: '2024-01-15T10:45:00Z',
+        queryFile: 'diabetes-ai.yaml',
+        totalHits: 500,
+        totalRetrieved: 500,
+        databases: [],
+        notes: [
+          { date: '2026-02-03 10:30', text: 'A note' },
+        ],
+      };
+
+      const result = formatSessionDetails(details, { json: true });
+      const parsed = JSON.parse(result);
+
+      expect(parsed.notes).toHaveLength(1);
+      expect(parsed.notes[0].text).toBe('A note');
     });
   });
 });
