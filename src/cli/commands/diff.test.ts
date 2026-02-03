@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeDiff, formatDiff, formatDiffJson, type DiffResult, type ShowFilter } from './diff.js';
+import { computeDiff, formatDiff, formatDiffJson, type DiffResult } from './diff.js';
 import type { Article } from '../../providers/base/types.js';
 
 const makeArticle = (overrides: Partial<Article> & Pick<Article, 'title' | 'source'>): Article => ({
