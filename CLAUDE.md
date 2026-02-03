@@ -29,3 +29,4 @@ If context was compacted, re-read these before continuing:
 1. Task file in spec/tasks/ (check completed steps)
 2. git log --oneline -10 (recent commits)
 3. git status and git diff (uncommitted work)
+<!-- role: implement -->
