@@ -201,14 +201,14 @@ search-hub review export --session <id> --only included [--format yaml|json|json
 
 #### Step 1: Define types and JSON Schema
 
-- [ ] Create `src/cli/commands/review/types.ts`
+- [x] Create `src/cli/commands/review/types.ts`
   - Define `Review`, `ArticleEntry`, `ReviewFile` interfaces
   - Define `ReviewStatus` type and classification function
-- [ ] Create `schemas/review.schema.json`
+- [x] Create `schemas/review.schema.json`
   - JSON Schema for VS Code validation
-- [ ] Write unit tests for status classification
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Types compile, schema is valid JSON Schema
+- [x] Write unit tests for status classification
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Types compile, schema is valid JSON Schema
 
 #### Step 2: Extend deduplication with mergedFrom tracking
 
