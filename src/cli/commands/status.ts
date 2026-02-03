@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { listSessions, loadSession } from '../../session/manager.js';
 import { deduplicateArticles } from './export.js';
+import { loadNotes, formatNotesList, type NoteEntry } from './notes.js';
 
 export interface SessionListItem {
   id: string;
@@ -32,6 +33,7 @@ export interface SessionDetails {
   databases: DatabaseDetails[];
   uniqueArticles?: number;
   duplicatesRemoved?: number;
+  notes?: NoteEntry[];
 }
 
 export interface ListOptions {
@@ -96,6 +98,17 @@ export async function getSessionDetails(
     };
     if (session.description) {
       sessionDetails.description = session.description;
+    }
+
+    // Load notes (optional - don't fail if notes can't be loaded)
+    try {
+      const sessionDir = join(sessionsDir, sessionId);
+      const notes = await loadNotes(sessionDir);
+      if (notes.length > 0) {
+        sessionDetails.notes = notes;
+      }
+    } catch {
+      // Notes are optional - ignore errors
     }
 
     return {
@@ -206,6 +219,13 @@ export function formatSessionDetails(
       line += ` (${db.error})`;
     }
     lines.push(line);
+  }
+
+  // Display notes if present
+  if (details.notes && details.notes.length > 0) {
+    lines.push('');
+    lines.push('Notes:');
+    lines.push(formatNotesList(details.notes));
   }
 
   return lines.join('\n');

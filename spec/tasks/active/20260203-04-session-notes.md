@@ -137,12 +137,12 @@ These structured fields enable future features like:
 
 ### Step 3: Integrate notes display into status command
 
-- [ ] Write test: status output includes notes when present
-- [ ] Modify `status` command to load and display notes
-- [ ] Format notes with timestamps and types
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub status <session-id>` shows notes section when notes exist
+- [x] Write test: status output includes notes when present
+- [x] Modify `status` command to load and display notes
+- [x] Format notes with timestamps and types
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub status <session-id>` shows notes section when notes exist
 
 ### Step 4: Cross-session notes view
 
