@@ -7,7 +7,7 @@ set -euo pipefail
 # Example: spawn-worker.sh feat/deduplicate-results deduplicate
 #
 # What it does:
-#   1. Creates worktree (via workmux or manually)
+#   1. Creates worktree (if it doesn't exist)
 #   2. Sets role marker in CLAUDE.md
 #   3. Delegates to launch-agent.sh for pane + Claude setup
 
@@ -19,18 +19,14 @@ WORKTREE_BASE="/workspaces/search-hub--worktrees"
 WORKTREE_DIR="$WORKTREE_BASE/$(echo "$BRANCH" | tr '/' '-')"
 
 # --- 1. Create worktree ---
+# All agents run in panes within the current tmux window (no separate windows).
 if [ -d "$WORKTREE_DIR" ]; then
   echo "[spawn-worker] Worktree already exists: $WORKTREE_DIR"
 else
-  if command -v workmux &>/dev/null; then
-    echo "[spawn-worker] Creating worktree via workmux..."
-    workmux add "$BRANCH" -b
-  else
-    echo "[spawn-worker] Creating worktree manually..."
-    mkdir -p "$WORKTREE_BASE"
-    git worktree add "$WORKTREE_DIR" -b "$BRANCH"
-    (cd "$WORKTREE_DIR" && npm install)
-  fi
+  echo "[spawn-worker] Creating worktree manually..."
+  mkdir -p "$WORKTREE_BASE"
+  git worktree add "$WORKTREE_DIR" -b "$BRANCH"
+  (cd "$WORKTREE_DIR" && npm install)
 fi
 
 # --- 2. Set role marker in CLAUDE.md ---

@@ -123,9 +123,7 @@ Set the role marker in a worktree's CLAUDE.md.
 ## Typical Workflow
 
 ```bash
-# 1. Create worktrees and spawn workers
-workmux add feat/task-a -b
-workmux add feat/task-b -b
+# 1. Spawn workers (automatically creates worktrees and panes)
 ./scripts/spawn-worker.sh feat-task-a 20260203-01
 ./scripts/spawn-worker.sh feat-task-b 20260203-02
 ./scripts/apply-layout.sh

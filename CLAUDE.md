@@ -20,3 +20,21 @@ Read the corresponding role file from `spec/roles/{role}.md` and follow its inst
 Available roles:
 - `implement` — TDD implementation worker (`spec/roles/implement.md`)
 - `review` — PR reviewer (`spec/roles/review.md`)
+
+## tmux send-keys Guidelines
+
+When sending input to tmux panes (e.g., to other Claude agents), **always send text and Enter separately with sleep 1 in between**:
+
+```bash
+# Correct: separate commands with sleep
+tmux send-keys -t %42 "/code-with-task example"
+sleep 1
+tmux send-keys -t %42 Enter
+
+# WRONG: combining text and Enter causes input races
+tmux send-keys -t %42 "/code-with-task example" Enter
+```
+
+This prevents input race conditions where tmux processes the Enter before the text is fully buffered.
+
+Use `scripts/send-to-agent.sh` when possible, as it handles this correctly.

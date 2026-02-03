@@ -20,7 +20,7 @@ WORKTREE_DIR="$WORKTREE_BASE/$(echo "$BRANCH" | tr '/' '-')"
 
 if [ ! -d "$WORKTREE_DIR" ]; then
   echo "[spawn-reviewer] ERROR: Worktree does not exist: $WORKTREE_DIR"
-  echo "[spawn-reviewer] Create it first with: workmux add $BRANCH"
+  echo "[spawn-reviewer] Create it first with: git worktree add $WORKTREE_DIR -b $BRANCH && (cd $WORKTREE_DIR && npm install)"
   exit 1
 fi
 

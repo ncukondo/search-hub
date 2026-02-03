@@ -14,13 +14,6 @@ gh pr merge $ARGUMENTS --merge
 
 ### 3. cleanup（順序重要）
 
-#### workmuxが利用可能な場合（推奨）
-```bash
-# worktree + tmuxウィンドウ + ブランチを一括cleanup
-workmux remove <name>
-```
-
-#### workmuxが無い場合
 **必ずこの順序で実行する**（worktree存在時にブランチ削除は失敗する）:
 
 1. mainを最新にする:

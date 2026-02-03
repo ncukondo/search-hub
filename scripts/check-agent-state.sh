@@ -102,5 +102,13 @@ if echo "$CONTENT" | grep -qE '^❯'; then
   exit 0
 fi
 
+# No "❯" prompt found
+# If state file says "starting", return "starting" (Claude may still be initializing,
+# or tmux capture-pane hasn't caught up with the display yet)
+if [[ "$IS_STARTING" == "true" ]]; then
+  echo "starting"
+  exit 0
+fi
+
 # Otherwise, agent is working
 echo "working"
