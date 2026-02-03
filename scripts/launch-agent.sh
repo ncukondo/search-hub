@@ -71,7 +71,9 @@ DETECTED=false
 # Timeout: 45 iterations × 2s = 90s (extra headroom for parallel launches)
 for i in $(seq 1 45); do
   sleep 2
-  PANE_CONTENT=$(tmux capture-pane -t "$PANE_ID" -p 2>/dev/null || true)
+  # Use -S - to capture full scrollback buffer, not just visible area.
+  # In narrow/short panes, startup text scrolls off the visible region.
+  PANE_CONTENT=$(tmux capture-pane -t "$PANE_ID" -p -S - 2>/dev/null || true)
 
   # Handle "Trust this folder?" prompt (appears on first launch in new directories)
   if [ "$TRUST_HANDLED" = false ] && echo "$PANE_CONTENT" | grep -q 'Yes, I trust this folder'; then
@@ -81,7 +83,10 @@ for i in $(seq 1 45); do
     continue
   fi
 
-  if echo "$PANE_CONTENT" | grep -q '? for shortcuts'; then
+  # Detect Claude ready state: the input prompt "❯" appears when Claude is
+  # ready for input. This is more reliable than "? for shortcuts" which can
+  # be truncated or wrapped in narrow panes.
+  if echo "$PANE_CONTENT" | grep -q '❯'; then
     echo "[$SCRIPT_NAME] Claude is ready (after ~$((i * 2))s)"
     DETECTED=true
     break
