@@ -135,6 +135,8 @@ import {
   formatNoIncludedArticlesError,
   formatPendingWarning,
   formatReviewWorkflowTip,
+  formatIgnoringReviewsNote,
+  confirmPrompt,
 } from './commands/register.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
@@ -1400,8 +1402,12 @@ With review workflow:
               if (!globalOpts.quiet) {
                 console.log(formatPendingWarning(summary));
               }
-              // In non-interactive mode, proceed automatically
-              // TODO: In interactive mode, wait for user confirmation
+              // Wait for user confirmation
+              const confirmed = await confirmPrompt();
+              if (!confirmed) {
+                process.exitCode = EXIT_CODES.SUCCESS;
+                return;
+              }
             }
 
             articles = await getIncludedArticles(sessionId, sessionsDir);
@@ -1415,6 +1421,10 @@ With review workflow:
             return;
           } else {
             // --all or no reviews.yaml: collect all articles from result files
+            if (reviewExists && !globalOpts.quiet) {
+              const summary = await getReviewSummary(sessionId, sessionsDir);
+              console.log(formatIgnoringReviewsNote(summary.total));
+            }
             articles = await loadSessionArticles(session, sessionId, sessionsDir, registerOpts.providers);
           }
 

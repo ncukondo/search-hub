@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 import {
   parseRegisterOptions,
   validateRegisterInput,
@@ -14,6 +15,8 @@ import {
   formatNoIncludedArticlesError,
   formatPendingWarning,
   formatReviewWorkflowTip,
+  formatIgnoringReviewsNote,
+  confirmPrompt,
   type ReviewSummary,
 } from './register.js';
 
@@ -681,6 +684,78 @@ articles:
       expect(output).toContain('test-session');
       expect(output).toContain('search-hub review init test-session');
       expect(output).toContain('search-hub register test-session --reviewed');
+    });
+  });
+
+  describe('formatIgnoringReviewsNote', () => {
+    it('shows note about ignoring reviews with total count', () => {
+      const output = formatIgnoringReviewsNote(150);
+
+      expect(output).toBe('Note: Ignoring review decisions. Registering all 150 articles.');
+    });
+
+    it('handles singular article count', () => {
+      const output = formatIgnoringReviewsNote(1);
+
+      expect(output).toBe('Note: Ignoring review decisions. Registering all 1 articles.');
+    });
+  });
+
+  describe('confirmPrompt', () => {
+    // Helper to create a mock stdin stream
+    function createMockInput(response: string): NodeJS.ReadableStream {
+      const stream = new Readable({
+        read() {
+          this.push(response);
+          this.push(null);
+        },
+      });
+      return stream as unknown as NodeJS.ReadableStream;
+    }
+
+    // Null output stream to suppress output during tests
+    const nullOutput = {
+      write: () => true,
+    } as unknown as NodeJS.WritableStream;
+
+    it('returns true for empty input (Enter)', async () => {
+      const result = await confirmPrompt(createMockInput('\n'), nullOutput);
+      expect(result).toBe(true);
+    });
+
+    it('returns true for "y"', async () => {
+      const result = await confirmPrompt(createMockInput('y\n'), nullOutput);
+      expect(result).toBe(true);
+    });
+
+    it('returns true for "Y"', async () => {
+      const result = await confirmPrompt(createMockInput('Y\n'), nullOutput);
+      expect(result).toBe(true);
+    });
+
+    it('returns true for "yes"', async () => {
+      const result = await confirmPrompt(createMockInput('yes\n'), nullOutput);
+      expect(result).toBe(true);
+    });
+
+    it('returns false for "n"', async () => {
+      const result = await confirmPrompt(createMockInput('n\n'), nullOutput);
+      expect(result).toBe(false);
+    });
+
+    it('returns false for "N"', async () => {
+      const result = await confirmPrompt(createMockInput('N\n'), nullOutput);
+      expect(result).toBe(false);
+    });
+
+    it('returns false for "no"', async () => {
+      const result = await confirmPrompt(createMockInput('no\n'), nullOutput);
+      expect(result).toBe(false);
+    });
+
+    it('returns false for arbitrary input', async () => {
+      const result = await confirmPrompt(createMockInput('xyz\n'), nullOutput);
+      expect(result).toBe(false);
     });
   });
 });

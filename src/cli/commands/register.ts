@@ -6,6 +6,7 @@
 import { join } from 'node:path';
 import { readFile, access } from 'node:fs/promises';
 import { constants } from 'node:fs';
+import { createInterface } from 'node:readline';
 import { parse as parseYaml } from 'yaml';
 import type { ProviderName, Article, Author } from '../../providers/base/types.js';
 import { parseProviderNames } from '../utils/validation.js';
@@ -360,4 +361,36 @@ Tip: For systematic reviews, consider using the review workflow:
   1. search-hub review init ${sessionId}
   2. (AI/human review in reviews.yaml)
   3. search-hub register ${sessionId} --reviewed`;
+}
+
+
+/**
+ * Format note when --all is used with reviews.yaml present.
+ */
+export function formatIgnoringReviewsNote(total: number): string {
+  return `Note: Ignoring review decisions. Registering all ${total} articles.`;
+}
+
+/**
+ * Prompt user for Y/n confirmation.
+ * Returns true if user confirms (Y/y/Enter), false otherwise.
+ */
+export async function confirmPrompt(
+  input: NodeJS.ReadableStream = process.stdin,
+  output: NodeJS.WritableStream = process.stdout
+): Promise<boolean> {
+  const rl = createInterface({
+    input,
+    output,
+    terminal: false,
+  });
+
+  return new Promise((resolve) => {
+    rl.question('', (answer) => {
+      rl.close();
+      const trimmed = answer.trim().toLowerCase();
+      // Empty (Enter) or 'y' or 'yes' means confirm
+      resolve(trimmed === '' || trimmed === 'y' || trimmed === 'yes');
+    });
+  });
 }
