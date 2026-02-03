@@ -30,9 +30,9 @@ export interface AssessmentEntry extends NoteEntry {
  * Options for adding an assessment.
  */
 export interface AssessmentOptions {
-  precision?: string;
-  verdict?: string;
-  comment?: string;
+  precision?: string | undefined;
+  verdict?: string | undefined;
+  comment?: string | undefined;
 }
 
 /**

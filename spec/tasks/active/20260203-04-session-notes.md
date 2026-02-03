@@ -28,20 +28,23 @@ This is especially important for systematic reviews where the search strategy mu
 
 ```bash
 # Add a note to a session
-search-hub notes <session-id> add "MeSH 'Clinical Competence' too broad, removing in next iteration"
+search-hub notes add <session-id> "MeSH 'Clinical Competence' too broad, removing in next iteration"
 
 # Add a note from a file (e.g., for longer assessments)
-search-hub notes <session-id> add --file assessment.md
+search-hub notes add <session-id> --file assessment.md
 
 # List all notes for a session
-search-hub notes <session-id>
+search-hub notes list <session-id>
 
 # Add structured assessment
-search-hub notes <session-id> assess --precision "~54%" --verdict "good" --comment "Core WBA papers captured, some OSCE noise remains"
+search-hub notes assess <session-id> --precision "~54%" --verdict "good" --comment "Core WBA papers captured, some OSCE noise remains"
 
 # Compare notes across sessions (useful for documenting search strategy evolution)
-search-hub notes --all
+search-hub notes list --all
 ```
+
+> Note: session-id is passed to each subcommand (not the parent) because Commander.js
+> cannot mix parent arguments with subcommands.
 
 ### Storage
 
@@ -123,14 +126,14 @@ These structured fields enable future features like:
 
 ### Step 2: CLI command registration
 
-- [ ] Write test: CLI option parsing for `notes add`, `notes`, `notes assess`
-- [ ] Register `notes` command in `src/cli/index.ts`
-- [ ] Implement `add` subcommand with `--file` option
-- [ ] Implement `assess` subcommand with `--precision`, `--verdict`, `--comment`
-- [ ] Implement default list view
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All subcommands work correctly
+- [x] Write test: CLI option parsing for `notes add`, `notes`, `notes assess`
+- [x] Register `notes` command in `src/cli/index.ts`
+- [x] Implement `add` subcommand with `--file` option
+- [x] Implement `assess` subcommand with `--precision`, `--verdict`, `--comment`
+- [x] Implement default list view
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All subcommands work correctly
 
 ### Step 3: Integrate notes display into status command
 
