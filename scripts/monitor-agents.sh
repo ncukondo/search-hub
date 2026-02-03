@@ -52,6 +52,38 @@ format_age() {
   fi
 }
 
+# Get current state signature (pane:state pairs, sorted)
+# This is used for change detection in watch mode
+get_state_signature() {
+  if [ ! -d "$STATE_DIR" ]; then
+    echo ""
+    return
+  fi
+
+  local existing_panes
+  existing_panes=$(get_existing_panes)
+
+  local sig=""
+  for state_file in "$STATE_DIR"/*; do
+    [ -f "$state_file" ] || continue
+
+    local pane_id
+    pane_id=$(basename "$state_file")
+
+    # Check if pane still exists
+    if ! echo "$existing_panes" | grep -qx "$pane_id"; then
+      rm -f "$state_file"
+      continue
+    fi
+
+    local state
+    state=$(cat "$state_file" 2>/dev/null || echo "unknown")
+    sig+="$pane_id:$state "
+  done
+
+  echo "$sig" | tr ' ' '\n' | sort | tr '\n' ' '
+}
+
 print_status() {
   # Check if state directory exists
   if [ ! -d "$STATE_DIR" ]; then
@@ -126,13 +158,18 @@ print_status() {
 }
 
 if [ "$WATCH" = true ]; then
+  prev_sig=""
   while true; do
-    clear
-    echo "=== Agent Monitor ($(date '+%H:%M:%S')) ==="
-    echo ""
-    print_status
-    echo ""
-    echo "Press Ctrl+C to exit"
+    current_sig=$(get_state_signature)
+
+    if [ "$current_sig" != "$prev_sig" ]; then
+      # State changed - show full output
+      echo "=== $(date '+%H:%M:%S') ==="
+      print_status
+      echo ""
+      prev_sig="$current_sig"
+    fi
+
     sleep 5
   done
 else
