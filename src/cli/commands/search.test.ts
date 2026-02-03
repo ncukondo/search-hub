@@ -5,8 +5,10 @@ import {
   formatDryRunOutput,
   formatProviderReadiness,
   formatQueryDiagnostics,
+  formatCountOnlyOutput,
   type SearchCommandOptions,
   type TranslationResult,
+  type CountResult,
 } from './search.js';
 import { getDefaultConfig } from '../../config/index.js';
 import type { ProviderName } from '../../session/types.js';
@@ -60,6 +62,14 @@ describe('search command', () => {
       });
 
       expect(result.dryRun).toBe(true);
+    });
+
+    it('should parse count-only option', () => {
+      const result = parseSearchOptions('query.yaml', {
+        countOnly: true,
+      });
+
+      expect(result.countOnly).toBe(true);
     });
 
     it('should parse session name option', () => {
@@ -405,6 +415,78 @@ describe('search command', () => {
 
       expect(result).toContain('NOT');
       expect(result).toContain('wildcard');
+    });
+  });
+
+  describe('formatCountOnlyOutput', () => {
+    it('should format count results for multiple providers', () => {
+      const counts: CountResult[] = [
+        { provider: 'pubmed', count: 28 },
+        { provider: 'scopus', count: 145 },
+        { provider: 'eric', count: 3 },
+      ];
+
+      const result = formatCountOnlyOutput(counts, 'wba-genai-v6.yaml');
+
+      expect(result).toContain('wba-genai-v6.yaml');
+      expect(result).toContain('count only');
+      expect(result).toContain('pubmed');
+      expect(result).toContain('28');
+      expect(result).toContain('scopus');
+      expect(result).toContain('145');
+      expect(result).toContain('eric');
+      expect(result).toContain('3');
+      expect(result).toContain('total');
+      expect(result).toContain('176');
+    });
+
+    it('should format count results for a single provider', () => {
+      const counts: CountResult[] = [
+        { provider: 'pubmed', count: 42 },
+      ];
+
+      const result = formatCountOnlyOutput(counts, 'query.yaml');
+
+      expect(result).toContain('pubmed');
+      expect(result).toContain('42');
+      expect(result).toContain('total');
+      expect(result).toContain('42');
+    });
+
+    it('should include error information for failed providers', () => {
+      const counts: CountResult[] = [
+        { provider: 'pubmed', count: 28 },
+        { provider: 'scopus', count: 0, error: 'API key invalid' },
+      ];
+
+      const result = formatCountOnlyOutput(counts, 'query.yaml');
+
+      expect(result).toContain('pubmed');
+      expect(result).toContain('28');
+      expect(result).toContain('scopus');
+      expect(result).toContain('error');
+      expect(result).toContain('API key invalid');
+    });
+
+    it('should handle zero results', () => {
+      const counts: CountResult[] = [
+        { provider: 'pubmed', count: 0 },
+      ];
+
+      const result = formatCountOnlyOutput(counts, 'query.yaml');
+
+      expect(result).toContain('0');
+      expect(result).toContain('total');
+    });
+
+    it('should use direct-query as label when no query file', () => {
+      const counts: CountResult[] = [
+        { provider: 'pubmed', count: 10 },
+      ];
+
+      const result = formatCountOnlyOutput(counts);
+
+      expect(result).toContain('direct-query');
     });
   });
 });

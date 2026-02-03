@@ -41,8 +41,9 @@ import {
   parseSearchOptions,
   validateSearchInput,
   formatDryRunOutput,
+  formatCountOnlyOutput,
 } from './commands/search.js';
-import { executeSearch } from './commands/search-executor.js';
+import { executeSearch, executeCountOnly } from './commands/search-executor.js';
 import {
   parseResumeOptions,
   validateResumeInput,
@@ -409,6 +410,7 @@ Examples:
     .option('--name <string>', 'session name')
     .option('--max-results <n>', 'limit results per database')
     .option('--dry-run', 'show translated queries without executing')
+    .option('--count-only', 'get hit counts without downloading results')
     .option('--skip-connection-test', 'skip API connection test during dry-run')
     .option('--no-resume', 'start fresh even if session exists')
     .addHelpText('after', `
@@ -417,6 +419,7 @@ Examples:
   $ search-hub search ./query.yaml --db pubmed,eric     # Specific databases
   $ search-hub search --db pubmed --query "diabetes[tiab]"  # Direct query
   $ search-hub search ./query.yaml --dry-run            # Preview translations
+  $ search-hub search ./query.yaml --count-only         # Get hit counts only
   $ search-hub search ./query.yaml --max-results 100    # Limit results`)
     .action(
       async (
@@ -427,6 +430,7 @@ Examples:
           name?: string;
           maxResults?: string;
           dryRun?: boolean;
+          countOnly?: boolean;
           skipConnectionTest?: boolean;
           resume?: boolean;
         }
@@ -440,6 +444,7 @@ Examples:
             name: options?.name,
             maxResults: options?.maxResults,
             dryRun: options?.dryRun,
+            countOnly: options?.countOnly,
             noResume: options?.resume === false,
           });
 
@@ -505,6 +510,34 @@ Examples:
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;
+            return;
+          }
+
+          // Handle count-only mode
+          if (searchOpts.countOnly) {
+            let countConfig;
+            try {
+              countConfig = await loadConfig(globalOpts.config ? { globalConfigPath: globalOpts.config } : {});
+            } catch {
+              countConfig = getDefaultConfig();
+            }
+
+            const counts = await executeCountOnly(searchOpts, countConfig);
+
+            if (counts.length === 0) {
+              if (!globalOpts.quiet) {
+                console.error('Error: No providers enabled or selected');
+              }
+              process.exitCode = EXIT_CODES.GENERAL_ERROR;
+              return;
+            }
+
+            if (!globalOpts.quiet) {
+              console.log(formatCountOnlyOutput(counts, searchOpts.queryFile));
+            }
+
+            const hasErrors = counts.some((c) => c.error);
+            process.exitCode = hasErrors ? EXIT_CODES.NETWORK_ERROR : EXIT_CODES.SUCCESS;
             return;
           }
 

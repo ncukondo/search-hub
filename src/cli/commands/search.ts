@@ -11,6 +11,7 @@ export interface SearchCommandOptions {
   sessionName?: string;
   maxResults?: number;
   dryRun?: boolean;
+  countOnly?: boolean;
   noResume?: boolean;
 }
 
@@ -20,6 +21,7 @@ export interface CommandLineOptions {
   name?: string | undefined;
   maxResults?: string | undefined;
   dryRun?: boolean | undefined;
+  countOnly?: boolean | undefined;
   noResume?: boolean | undefined;
 }
 
@@ -70,6 +72,10 @@ export function parseSearchOptions(
 
   if (options.dryRun) {
     result.dryRun = true;
+  }
+
+  if (options.countOnly) {
+    result.countOnly = true;
   }
 
   if (options.noResume) {
@@ -202,6 +208,53 @@ export function formatQueryDiagnostics(translations: TranslationResult[]): strin
   const lines: string[] = [];
   lines.push('Diagnostics:');
   lines.push(...warnings);
+  return lines.join('\n');
+}
+
+/**
+ * Result of a count-only query for a single provider.
+ */
+export interface CountResult {
+  provider: string;
+  count: number;
+  error?: string;
+}
+
+/**
+ * Format count-only output for display.
+ */
+export function formatCountOnlyOutput(
+  counts: CountResult[],
+  queryLabel?: string
+): string {
+  const label = queryLabel ?? 'direct-query';
+  const lines: string[] = [];
+
+  lines.push(`Query: ${label} (count only)`);
+  lines.push('');
+
+  // Find the max provider name length for alignment
+  const maxNameLen = Math.max(...counts.map((c) => c.provider.length), 5);
+
+  // Calculate total (excluding errors)
+  let total = 0;
+
+  for (const c of counts) {
+    if (c.error) {
+      lines.push(`  ${c.provider.padEnd(maxNameLen)}  error: ${c.error}`);
+    } else {
+      const countStr = String(c.count).padStart(6);
+      lines.push(`  ${c.provider.padEnd(maxNameLen)} ${countStr} hits`);
+      total += c.count;
+    }
+  }
+
+  // Separator and total
+  const separatorLen = maxNameLen + 14;
+  lines.push(`  ${'─'.repeat(separatorLen)}`);
+  const totalStr = String(total).padStart(6);
+  lines.push(`  ${'total'.padEnd(maxNameLen)} ${totalStr} hits (before deduplication)`);
+
   return lines.join('\n');
 }
 

@@ -82,13 +82,13 @@ Query: wba-genai-v6.yaml (count only)
 
 ### Step 3: Wire up --count-only CLI option
 
-- [ ] Write test: CLI option parsing and output formatting
-- [ ] Add `--count-only` option to search command
-- [ ] Implement count execution flow (translate query → count per provider → format output)
-- [ ] Ensure no session is created in count-only mode
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub search ./query.yaml --count-only` shows hit counts without creating a session
+- [x] Write test: CLI option parsing and output formatting
+- [x] Add `--count-only` option to search command
+- [x] Implement count execution flow (translate query → count per provider → format output)
+- [x] Ensure no session is created in count-only mode
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub search ./query.yaml --count-only` shows hit counts without creating a session
 
 ### Final Step: E2E Integration Tests
 

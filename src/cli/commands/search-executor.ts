@@ -7,7 +7,7 @@
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import type { SearchCommandOptions } from './search.js';
+import type { SearchCommandOptions, CountResult } from './search.js';
 import type { Config } from '../../config/index.js';
 import type {
   Article,
@@ -501,6 +501,86 @@ export async function executeSearch(
   }
 
   return result;
+}
+
+/**
+ * Execute count-only mode: get hit counts from each provider without downloading results.
+ * No session is created.
+ */
+export async function executeCountOnly(
+  options: SearchCommandOptions,
+  config: Config
+): Promise<CountResult[]> {
+  let ast: QueryAST | undefined;
+
+  // Handle direct query mode
+  if (options.directQuery && options.providers && options.providers.length === 1) {
+    ast = {
+      name: options.sessionName ?? 'direct-query',
+      blocks: [
+        {
+          field: 'all',
+          terms: { keywords: [options.directQuery] },
+          operator: 'AND',
+        },
+      ],
+      filters: {},
+      overrides: {},
+    };
+  } else if (options.queryFile) {
+    const queryContent = await readFile(options.queryFile, 'utf-8');
+    ast = parseQueryString(queryContent);
+  } else {
+    return [];
+  }
+
+  // Determine which providers to use
+  let providers = getEnabledProviders(config, options.providers);
+
+  // In default mode (no --db), skip unconfigured providers
+  const isExplicitSelection = options.providers && options.providers.length > 0;
+  if (!isExplicitSelection) {
+    providers = providers.filter((name) => isProviderConfigured(name, config));
+  }
+
+  if (providers.length === 0) {
+    return [];
+  }
+
+  // Execute count for each provider concurrently
+  const results: CountResult[] = await Promise.all(
+    providers.map(async (providerName): Promise<CountResult> => {
+      try {
+        const provider = createProviderInstance(providerName, config);
+        if (provider === null) {
+          return { provider: providerName, count: 0, error: 'Provider configuration incomplete' };
+        }
+
+        // Translate query
+        let translatedQuery: TranslatedQuery;
+        if (options.directQuery && options.providers?.length === 1) {
+          translatedQuery = {
+            native: options.directQuery,
+            provider: providerName,
+          };
+        } else {
+          translatedQuery = translateQueryForProvider(ast!, providerName);
+        }
+
+        const count = await provider.count(translatedQuery);
+        return { provider: providerName, count };
+      } catch (error) {
+        const errorMessage = error instanceof Error
+          ? error.message
+          : isProviderError(error)
+            ? error.message
+            : String(error);
+        return { provider: providerName, count: 0, error: errorMessage };
+      }
+    })
+  );
+
+  return results;
 }
 
 /**
