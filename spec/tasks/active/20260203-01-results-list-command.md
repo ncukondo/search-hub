@@ -74,47 +74,47 @@ Showing 1-20 of 28 articles
 
 ### Step 1: Core results listing with default format
 
-- [ ] Write test: `src/cli/commands/results.test.ts`
+- [x] Write test: `src/cli/commands/results.test.ts`
   - Test `formatResultsList()` with sample articles
   - Test pagination logic (limit/offset)
   - Test field selection
-- [ ] Create stub: `src/cli/commands/results.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `parseResultsOptions()`, `formatResultsList()`, `formatResultsJson()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: `formatResultsList()` produces correct terminal output with numbering, truncation, and pagination info
+- [x] Create stub: `src/cli/commands/results.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `parseResultsOptions()`, `formatResultsList()`, `formatResultsJson()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: `formatResultsList()` produces correct terminal output with numbering, truncation, and pagination info
 
 ### Step 2: Register CLI command with options
 
-- [ ] Write test: command registration and option parsing
-- [ ] Implement command registration in `src/cli/index.ts`
-- [ ] Wire up session loading → article loading → dedup → filter → format → output
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub results <session-id>` works end-to-end
+- [x] Write test: command registration and option parsing
+- [x] Implement command registration in `src/cli/index.ts`
+- [x] Wire up session loading → article loading → dedup → filter → format → output
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub results <session-id>` works end-to-end
 
 ### Step 3: Filter and provider options
 
-- [ ] Write test: filter integration (year, title, abstract keywords)
-- [ ] Implement `--filter-year`, `--filter-title`, `--filter-abstract`, `--db` options
-- [ ] Reuse `filterArticles()` from export.ts
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: filters correctly narrow displayed results, count header reflects filtered total
+- [x] Write test: filter integration (year, title, abstract keywords)
+- [x] Implement `--filter-year`, `--filter-title`, `--filter-abstract`, `--db` options
+- [x] Reuse `filterArticles()` from export.ts
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: filters correctly narrow displayed results, count header reflects filtered total
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/results.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/results.e2e.test.ts`
   - Create a session with sample results
   - Run `search-hub results <session-id>` and verify output
   - Test with `--limit`, `--offset`, `--json`, `--filter-year`
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Test with a real session
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
