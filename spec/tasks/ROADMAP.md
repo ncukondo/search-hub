@@ -50,7 +50,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 41 | Session Notes and Assessment | 4, 10 | ✅ Completed | [20260203-04](completed/20260203-04-session-notes.md) |
 | 42 | Export to stdout by Default | 10 | ✅ Completed | [20260203-05](completed/20260203-05-export-stdout.md) |
 | 43 | YAML Results Format | 10 | ✅ Completed | [20260203-06](completed/20260203-06-yaml-results-format.md) |
-| 44 | Article Review Workflow | 28, 43 | 🔲 Planned | [20260203-07](active/20260203-07-review-workflow.md) |
+| 44 | Article Review Workflow | 28, 43 | ✅ Completed | [20260203-07](completed/20260203-07-review-workflow.md) |
 | 45 | Register Command Review Integration | 44 | 🔲 Planned | [20260203-08](active/20260203-08-register-review-integration.md) |
 
 ## Development Flow
