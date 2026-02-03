@@ -40,6 +40,7 @@ import { buildFailureErrorMessage } from './search-utils.js';
 import { getConfigDir } from '../../config/paths.js';
 import type { RegistrationRecord } from '../../integration/types.js';
 import { checkRefAvailable } from '../../integration/ref-cli.js';
+import { convertResultsToYaml } from '../../session/results-io.js';
 
 /**
  * Result of a search execution.
@@ -381,6 +382,14 @@ export async function executeSearch(
       // Mark as completed
       progress?.complete(providerName);
 
+      // Convert JSONL to YAML for human-readable view
+      const yamlFilename = `${providerName}_results.yaml`;
+      const yamlPath = join(sessionsDir, sessionId, yamlFilename);
+      await convertResultsToYaml(resultsPath, yamlPath, {
+        provider: providerName,
+        queryName: ast.name,
+      });
+
       // Update database status
       await updateDatabaseStatus(
         sessionId,
@@ -393,6 +402,7 @@ export async function executeSearch(
           files: {
             query: `${providerName}_query.txt`,
             results: `${providerName}_results.jsonl`,
+            resultsYaml: yamlFilename,
           },
         },
         sessionsDir

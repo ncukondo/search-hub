@@ -245,6 +245,37 @@ filters:
       expect(lines.length).toBe(2);
     });
 
+    it('should create both JSONL and YAML results files on completion', async () => {
+      const options: SearchCommandOptions = {
+        queryFile: queryFilePath,
+      };
+
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+
+      // Check that both JSONL and YAML files were created
+      const jsonlPath = join(sessionsDir, result.sessionId!, 'pubmed_results.jsonl');
+      const yamlPath = join(sessionsDir, result.sessionId!, 'pubmed_results.yaml');
+
+      const jsonlContent = await readFile(jsonlPath, 'utf-8');
+      const yamlContent = await readFile(yamlPath, 'utf-8');
+
+      // JSONL should have 2 articles
+      const lines = jsonlContent.trim().split('\n');
+      expect(lines.length).toBe(2);
+
+      // YAML should have header comment with provider name and count
+      expect(yamlContent).toMatch(/^# Results: pubmed/);
+      expect(yamlContent).toContain('2 articles');
+
+      // Check session.json has resultsYaml in files
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const session = JSON.parse(sessionContent);
+      expect(session.databases.pubmed.files.resultsYaml).toBe('pubmed_results.yaml');
+    });
+
     it('should update session status on completion', async () => {
       const options: SearchCommandOptions = {
         queryFile: queryFilePath,

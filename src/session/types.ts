@@ -63,6 +63,8 @@ export interface DatabaseStatus {
   files: {
     query: string;
     results: string;
+    /** Human-readable YAML results file (present when search is completed) */
+    resultsYaml?: string;
   };
 }
 

@@ -57,8 +57,13 @@ export async function convertResultsToYaml(
   yamlPath: string,
   metadata: ConversionMetadata
 ): Promise<void> {
-  // Read JSONL file
-  const content = await readFile(jsonlPath, 'utf-8');
+  // Read JSONL file (may not exist if 0 results)
+  let content = '';
+  try {
+    content = await readFile(jsonlPath, 'utf-8');
+  } catch {
+    // File doesn't exist - 0 results case
+  }
   const lines = content.trim().split('\n').filter((line) => line.length > 0);
 
   const articles: Array<Omit<Article, 'rawResponse'>> = [];

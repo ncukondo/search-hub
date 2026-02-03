@@ -127,12 +127,12 @@ The presence of `resultsYaml` indicates that the human-readable view has been ge
 
 ### Step 3: Post-completion conversion in search executor
 
-- [ ] Write test: after search completes, both JSONL and YAML files exist
-- [ ] Modify `executeSearch()` to call conversion after each provider completes
-- [ ] Add `resultsYaml` to `DatabaseStatus.files`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: completed sessions have both JSONL (raw archive) and YAML (readable view)
+- [x] Write test: after search completes, both JSONL and YAML files exist
+- [x] Modify `executeSearch()` to call conversion after each provider completes
+- [x] Add `resultsYaml` to `DatabaseStatus.files`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: completed sessions have both JSONL (raw archive) and YAML (readable view)
 
 ### Step 4: Update all read sites to use unified reader
 
