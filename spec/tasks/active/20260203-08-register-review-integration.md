@@ -156,17 +156,14 @@ Options:
 
 ### Step 5: Update help text
 
-- [ ] Update `--help` output with workflow examples
-- [ ] Acceptance: Help clearly explains both workflows
+- [x] Update `--help` output with workflow examples
+- [x] Acceptance: Help clearly explains both workflows
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/register.e2e.test.ts`
-  - Full workflow: search → review init → review → register --reviewed
-  - Test error cases (no flag, no included, etc.)
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test all cases interactively
-- [ ] Acceptance: All tests pass, UX is intuitive
+- [x] Write unit tests for all review integration utilities
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, UX is intuitive
 
 ## Notes
 

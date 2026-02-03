@@ -9,7 +9,7 @@ import { constants } from 'node:fs';
 import { parse as parseYaml } from 'yaml';
 import type { ProviderName, Article, Author } from '../../providers/base/types.js';
 import { parseProviderNames } from '../utils/validation.js';
-import { classifyStatus, type ReviewFile, type ArticleEntry } from './review/types.js';
+import { classifyStatus, type ReviewFile } from './review/types.js';
 
 export interface RegisterCommandOptions {
   sessionId: string;
