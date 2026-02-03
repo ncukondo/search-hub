@@ -674,6 +674,32 @@ describe('resume-executor', () => {
       expect(lines.length).toBeGreaterThan(1);
     });
 
+    it('should regenerate YAML file after resume completes', async () => {
+      // Add existing results
+      const resultsPath = join(sessionsDir, sessionId, 'pubmed_results.jsonl');
+      const existingResult = { title: 'Existing', authors: [], pmid: '00001', source: 'pubmed', retrievedAt: new Date().toISOString() };
+      await writeFile(resultsPath, JSON.stringify(existingResult) + '\n', 'utf-8');
+
+      const options: ResumeCommandOptions = {
+        sessionId,
+      };
+
+      const result = await executeResume(options, sessionsDir, config, false);
+
+      expect(result.success).toBe(true);
+
+      // Check that YAML file was created/updated
+      const yamlPath = join(sessionsDir, sessionId, 'pubmed_results.yaml');
+      const yamlContent = await readFile(yamlPath, 'utf-8');
+      expect(yamlContent).toMatch(/^# Results: pubmed/);
+
+      // Check session.json has resultsYaml
+      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionContent = await readFile(sessionPath, 'utf-8');
+      const session = JSON.parse(sessionContent);
+      expect(session.databases.pubmed.files.resultsYaml).toBe('pubmed_results.yaml');
+    });
+
     it('should include per-provider error details in error message when all providers fail', async () => {
       // Enable both pubmed and eric
       config.providers.pubmed.enabled = true;

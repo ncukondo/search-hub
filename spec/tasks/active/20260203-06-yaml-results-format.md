@@ -145,13 +145,13 @@ The presence of `resultsYaml` indicates that the human-readable view has been ge
 
 ### Step 5: Update resume flow
 
-- [ ] Write test: resume reads JSONL (authoritative source), appends new results, regenerates YAML
+- [x] Write test: resume reads JSONL (authoritative source), appends new results, regenerates YAML
   - Test resume of completed session (JSONL still present as archive)
   - Test resume of interrupted session (JSONL only, no YAML yet)
-- [ ] Implement: resume reads existing JSONL, streams new articles to JSONL, regenerates YAML on completion
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: resumed sessions have correct JSONL and regenerated YAML
+- [x] Implement: resume reads existing JSONL, streams new articles to JSONL, regenerates YAML on completion
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: resumed sessions have correct JSONL and regenerated YAML
 
 ### Final Step: E2E Integration Tests
 
