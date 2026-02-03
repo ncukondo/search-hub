@@ -222,15 +222,15 @@ search-hub review export --session <id> --only included [--format yaml|json|json
 
 #### Step 3: Implement `review init` command
 
-- [ ] Write test: `src/cli/commands/review/init.test.ts`
+- [x] Write test: `src/cli/commands/review/init.test.ts`
   - Test: generates reviews.yaml with correct structure
   - Test: includes schema reference comment
   - Test: copies schema file to .search-hub/schemas/
   - Test: fails if reviews.yaml already exists (unless --force)
-- [ ] Implement `src/cli/commands/review/init.ts`
+- [x] Implement `src/cli/commands/review/init.ts`
 - [ ] Register command in CLI
-- [ ] Verify tests pass
-- [ ] Acceptance: `review init` creates valid reviews.yaml
+- [x] Verify tests pass
+- [x] Acceptance: `review init` creates valid reviews.yaml
 
 #### Step 4: Implement `review status` command
 
