@@ -2,6 +2,7 @@ import type { ProviderName } from '../../providers/base/types.js';
 import type { Article } from '../../providers/base/types.js';
 import { parseProviderNames } from '../utils/validation.js';
 import { articlesToCslJson } from '../../integration/csl-json.js';
+import { getArticleKeys } from './session-utils.js';
 
 export type ExportFormat = 'ids' | 'json' | 'jsonl' | 'csl-json';
 export type IdType = 'doi' | 'pmid' | 'all';
@@ -184,15 +185,6 @@ export function formatCslJson(articles: Article[]): string {
   return JSON.stringify(cslItems, null, 2);
 }
 
-function getArticleKeys(article: Article): string[] {
-  const keys: string[] = [];
-  if (article.pmid) keys.push(`pmid:${article.pmid}`);
-  if (article.doi) keys.push(`doi:${article.doi.toLowerCase()}`);
-  if (article.arxivId) keys.push(`arxiv:${article.arxivId}`);
-  if (article.scopusId) keys.push(`scopus:${article.scopusId}`);
-  if (article.ericId) keys.push(`eric:${article.ericId}`);
-  return keys;
-}
 
 const METADATA_FIELDS: (keyof Article)[] = [
   'doi', 'pmid', 'arxivId', 'scopusId', 'ericId',

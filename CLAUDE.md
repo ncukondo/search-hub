@@ -12,20 +12,11 @@ search-hub: CLI tool for systematic literature searching across multiple academi
 
 3. **Context Management**: If compact (context summarization) appears likely before completing the current task, report this to the user and pause work to avoid losing important context.
 
-## Worker Agent Instructions
+## Agent Role
 
-You are a worker agent implementing a task in a worktree.
+When working in a worktree, a role file is specified at the bottom of this file (e.g. `<!-- role: implement -->`).
+Read the corresponding role file from `spec/roles/{role}.md` and follow its instructions.
 
-### Responsibilities
-- Follow TDD (Red -> Green -> Refactor)
-- Update task file checkboxes after each step and commit
-- Write .worker-status.json at worktree root with current progress
-- Create PR when all steps complete
-- Work scope: implementation + tests + PR only (ROADMAP changes are done on main after merge)
-- **All commit messages, PR titles/bodies, and PR comments MUST be in English**
-
-### Compact Recovery
-If context was compacted, re-read these before continuing:
-1. Task file in spec/tasks/ (check completed steps)
-2. git log --oneline -10 (recent commits)
-3. git status and git diff (uncommitted work)
+Available roles:
+- `implement` — TDD implementation worker (`spec/roles/implement.md`)
+- `review` — PR reviewer (`spec/roles/review.md`)

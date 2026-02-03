@@ -11,7 +11,8 @@
       "Bash(tmux has-session:*)",
       "Bash(which workmux)",
       "Bash(which tmux)",
-      "Bash(sleep:*)"
+      "Bash(sleep:*)",
+      "Read(/workspaces/search-hub--worktrees/**)"
     ]
   },
   "hooks": {
