@@ -12,7 +12,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
-import { loadNotes, addNote, addAssessment, formatNotesList, formatAllSessionNotes, type SessionNotes } from './notes.js';
+import { loadNotes, addNote, addAssessment, formatAllSessionNotes, type SessionNotes } from './notes.js';
 import { getSessionDetails, formatSessionDetails } from './status.js';
 
 describe('search-hub notes E2E', () => {
