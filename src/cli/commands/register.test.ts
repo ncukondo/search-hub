@@ -12,6 +12,7 @@ import {
   getIncludedArticles,
   formatReviewRequiredMessage,
   formatNoIncludedArticlesError,
+  formatPendingWarning,
   type ReviewSummary,
 } from './register.js';
 
@@ -628,6 +629,38 @@ articles:
       expect(output).toContain('140 exclude');
       expect(output).toContain('10 pending');
       expect(output).toContain('review status my-session');
+    });
+  });
+
+  describe('formatPendingWarning', () => {
+    it('shows warning with pending count and included count', () => {
+      const summary: ReviewSummary = {
+        total: 150,
+        included: 32,
+        excluded: 108,
+        pending: 10,
+      };
+
+      const output = formatPendingWarning(summary);
+
+      expect(output).toContain('10 articles still pending');
+      expect(output).toContain('will be skipped');
+      expect(output).toContain('32 included articles');
+      expect(output).toContain('Proceed? [Y/n]');
+    });
+
+    it('uses singular when only 1 article pending', () => {
+      const summary: ReviewSummary = {
+        total: 150,
+        included: 32,
+        excluded: 117,
+        pending: 1,
+      };
+
+      const output = formatPendingWarning(summary);
+
+      expect(output).toContain('1 article still pending');
+      expect(output).not.toContain('articles still pending');
     });
   });
 });

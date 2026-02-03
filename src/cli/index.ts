@@ -133,6 +133,7 @@ import {
   getIncludedArticles,
   formatReviewRequiredMessage,
   formatNoIncludedArticlesError,
+  formatPendingWarning,
 } from './commands/register.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
@@ -1391,6 +1392,15 @@ With review workflow:
               }
               process.exitCode = EXIT_CODES.SESSION_ERROR;
               return;
+            }
+
+            // Warn about pending articles (unless --force or --dry-run)
+            if (summary.pending > 0 && !registerOpts.force && !registerOpts.dryRun) {
+              if (!globalOpts.quiet) {
+                console.log(formatPendingWarning(summary));
+              }
+              // In non-interactive mode, proceed automatically
+              // TODO: In interactive mode, wait for user confirmation
             }
 
             articles = await getIncludedArticles(sessionId, sessionsDir);

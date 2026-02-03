@@ -138,12 +138,12 @@ Options:
 
 ### Step 3: Add confirmation for pending articles
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: warns when pending > 0 with --reviewed
   - Test: --force skips confirmation
-- [ ] Implement confirmation prompt
-- [ ] Verify tests pass
-- [ ] Acceptance: User is warned about pending articles
+- [x] Implement confirmation prompt
+- [x] Verify tests pass
+- [x] Acceptance: User is warned about pending articles
 
 ### Step 4: Add workflow tip for non-review users
 

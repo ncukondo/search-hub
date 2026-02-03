@@ -339,3 +339,14 @@ export function formatNoIncludedArticlesError(summary: ReviewSummary, sessionId:
 
 Run 'search-hub review status ${sessionId}' for details.`;
 }
+
+/**
+ * Format warning when pending articles exist with --reviewed.
+ */
+export function formatPendingWarning(summary: ReviewSummary): string {
+  const articleWord = summary.pending === 1 ? 'article' : 'articles';
+  return `Warning: ${summary.pending} ${articleWord} still pending review (will be skipped).
+Registering ${summary.included} included articles...
+
+Proceed? [Y/n]`;
+}
