@@ -146,12 +146,12 @@ These structured fields enable future features like:
 
 ### Step 4: Cross-session notes view
 
-- [ ] Write test: `--all` flag lists notes across all sessions
-- [ ] Implement cross-session notes aggregation
-- [ ] Format output grouped by session with session name and date
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub notes --all` shows notes from all sessions chronologically
+- [x] Write test: `--all` flag lists notes across all sessions
+- [x] Implement cross-session notes aggregation
+- [x] Format output grouped by session with session name and date
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub notes list --all` shows notes from all sessions grouped by session
 
 ### Final Step: E2E Integration Tests
 
