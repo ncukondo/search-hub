@@ -14,6 +14,7 @@ vi.mock('./client', () => ({
     search: vi.fn(),
     fetch: vi.fn(),
     fetchFromHistory: vi.fn(),
+    searchCount: vi.fn(),
   })),
 }));
 
@@ -63,6 +64,7 @@ describe('PubMedProvider', () => {
     search: ReturnType<typeof vi.fn>;
     fetch: ReturnType<typeof vi.fn>;
     fetchFromHistory: ReturnType<typeof vi.fn>;
+    searchCount: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -72,6 +74,7 @@ describe('PubMedProvider', () => {
       search: vi.fn(),
       fetch: vi.fn(),
       fetchFromHistory: vi.fn(),
+      searchCount: vi.fn(),
     };
 
     MockPubMedClient.mockImplementation(() => mockClientInstance as unknown as InstanceType<typeof PubMedClient>);
@@ -632,6 +635,65 @@ describe('PubMedProvider', () => {
       const result = await provider.validateState(state);
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('Server-side history expired');
+    });
+  });
+
+  describe('count', () => {
+    it('returns hit count for a query without fetching results', async () => {
+      mockClientInstance.searchCount.mockResolvedValueOnce(42);
+
+      const provider = new PubMedProvider(baseConfig);
+      const query: TranslatedQuery = {
+        native: 'diabetes[tiab]',
+        originalAst: createMockQueryAST(),
+        provider: 'pubmed',
+      };
+
+      const count = await provider.count(query);
+
+      expect(count).toBe(42);
+      expect(mockClientInstance.searchCount).toHaveBeenCalledWith('diabetes[tiab]');
+      expect(mockClientInstance.fetch).not.toHaveBeenCalled();
+    });
+
+    it('returns 0 for queries with no results', async () => {
+      mockClientInstance.searchCount.mockResolvedValueOnce(0);
+
+      const provider = new PubMedProvider(baseConfig);
+      const query: TranslatedQuery = {
+        native: 'nonexistent_query_xyz[tiab]',
+        originalAst: createMockQueryAST(),
+        provider: 'pubmed',
+      };
+
+      const count = await provider.count(query);
+
+      expect(count).toBe(0);
+    });
+
+    it('retries on retryable errors', async () => {
+      const serverError = {
+        code: 'SERVER_ERROR',
+        message: 'Server error: 503',
+        provider: 'pubmed',
+        retryable: true,
+      };
+      mockClientInstance.searchCount
+        .mockRejectedValueOnce(serverError)
+        .mockResolvedValueOnce(10);
+
+      const provider = new PubMedProvider(baseConfig);
+      const query: TranslatedQuery = {
+        native: 'test[tiab]',
+        provider: 'pubmed',
+      };
+
+      const p = provider.count(query);
+      await vi.advanceTimersByTimeAsync(5000);
+      const count = await p;
+
+      expect(count).toBe(10);
+      expect(mockClientInstance.searchCount).toHaveBeenCalledTimes(2);
     });
   });
 });

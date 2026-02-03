@@ -64,6 +64,17 @@ export class ArxivProvider extends BaseProvider {
   }
 
   /**
+   * Get total hit count for a query without downloading results.
+   * Uses a minimal search with maxResults=1 to get the total count from response metadata.
+   */
+  async count(query: TranslatedQuery): Promise<number> {
+    const response = await this.withRetry(() =>
+      this.client.search(query.native, { start: 0, maxResults: 1 })
+    );
+    return response.totalResults;
+  }
+
+  /**
    * Search arXiv and yield articles as async iterable.
    */
   async *search(query: TranslatedQuery, options?: SearchOptions): AsyncIterable<Article> {

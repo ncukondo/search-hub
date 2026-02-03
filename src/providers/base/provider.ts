@@ -82,6 +82,12 @@ export abstract class BaseProvider implements Provider {
   ): AsyncIterable<Article>;
 
   /**
+   * Get total hit count for a query without downloading results.
+   * Used for count-only mode during query refinement.
+   */
+  abstract count(query: TranslatedQuery): Promise<number>;
+
+  /**
    * Convert QueryAST to database-native syntax.
    */
   abstract translateQuery(ast: QueryAST): TranslatedQuery;

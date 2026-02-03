@@ -65,6 +65,18 @@ export class ScopusProvider extends BaseProvider {
   }
 
   /**
+   * Get total hit count for a query without downloading results.
+   * Uses a minimal search with count=1 to get the total from response metadata.
+   */
+  async count(query: TranslatedQuery): Promise<number> {
+    await this.rateLimiter.acquire();
+    const response = await this.withRetry(async () => {
+      return await this.client.search(query.native, { start: 0, count: 1 });
+    });
+    return response.totalResults;
+  }
+
+  /**
    * Execute search and return results as async iterable.
    */
   async *search(

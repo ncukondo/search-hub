@@ -85,6 +85,18 @@ export class ERICProvider extends BaseProvider {
   }
 
   /**
+   * Get total hit count for a query without downloading results.
+   * Uses a minimal search with rows=0 to get only the total count.
+   */
+  async count(query: TranslatedQuery): Promise<number> {
+    await this.rateLimiter.acquire();
+    const result = await this.withRetry(() =>
+      this.client.search(query.native, { start: 0, rows: 0 })
+    );
+    return result.totalResults;
+  }
+
+  /**
    * Execute search and return results as async iterable (streaming).
    */
   async *search(

@@ -89,6 +89,34 @@ export class PubMedClient {
   }
 
   /**
+   * Get total hit count for a query using ESearch with rettype=count.
+   * Does not return IDs or download any results.
+   */
+  async searchCount(query: string): Promise<number> {
+    await this.rateLimiter.acquire();
+
+    const params = new URLSearchParams({
+      db: 'pubmed',
+      term: query,
+      email: this.config.email,
+      rettype: 'count',
+      retmode: 'xml',
+    });
+
+    if (this.config.apiKey) {
+      params.set('api_key', this.config.apiKey);
+    }
+
+    const url = `${BASE_URL}/esearch.fcgi?${params.toString()}`;
+    const response = await this.fetchWithErrorHandling(url);
+    const xml = await response.text();
+
+    this.rateLimiter.resetBackoff();
+    const parsed = parseESearchResponse(xml);
+    return parsed.count;
+  }
+
+  /**
    * Fetch articles by PMID list using efetch API.
    */
   async fetch(pmids: string[]): Promise<PubMedArticle[]> {

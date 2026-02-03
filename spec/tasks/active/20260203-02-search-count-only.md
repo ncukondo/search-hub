@@ -63,14 +63,14 @@ Query: wba-genai-v6.yaml (count only)
 
 ### Step 1: Add count method to provider interface
 
-- [ ] Write test: provider count method returns hit count
-- [ ] Add `count(query: string): Promise<number>` to provider base interface
-- [ ] Verify test fails (Red)
-- [ ] Implement count for PubMed provider (ESearch with rettype=count)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: PubMed `count()` returns correct hit count for a known query
+- [x] Write test: provider count method returns hit count
+- [x] Add `count(query: TranslatedQuery): Promise<number>` to provider base interface
+- [x] Verify test fails (Red)
+- [x] Implement count for PubMed provider (ESearch with rettype=count)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: PubMed `count()` returns correct hit count for a known query
 
 ### Step 2: Implement count for other providers
 
