@@ -40,6 +40,7 @@ import { buildFailureErrorMessage } from './search-utils.js';
 import { getConfigDir } from '../../config/paths.js';
 import type { RegistrationRecord } from '../../integration/types.js';
 import { checkRefAvailable } from '../../integration/ref-cli.js';
+import { convertResultsToYaml, loadResults } from '../../session/results-io.js';
 
 /**
  * Result of a search execution.
@@ -381,6 +382,14 @@ export async function executeSearch(
       // Mark as completed
       progress?.complete(providerName);
 
+      // Convert JSONL to YAML for human-readable view
+      const yamlFilename = `${providerName}_results.yaml`;
+      const yamlPath = join(sessionsDir, sessionId, yamlFilename);
+      await convertResultsToYaml(resultsPath, yamlPath, {
+        provider: providerName,
+        queryName: ast.name,
+      });
+
       // Update database status
       await updateDatabaseStatus(
         sessionId,
@@ -393,6 +402,7 @@ export async function executeSearch(
           files: {
             query: `${providerName}_query.txt`,
             results: `${providerName}_results.jsonl`,
+            resultsYaml: yamlFilename,
           },
         },
         sessionsDir
@@ -584,7 +594,7 @@ export async function executeCountOnly(
 }
 
 /**
- * Load all articles from a session's results files.
+ * Load all articles from a session's results files (YAML preferred, JSONL fallback).
  */
 async function loadArticlesFromSession(
   sessionsDir: string,
@@ -592,23 +602,11 @@ async function loadArticlesFromSession(
   providers: ProviderName[]
 ): Promise<Article[]> {
   const articles: Article[] = [];
+  const sessionDir = join(sessionsDir, sessionId);
 
   for (const provider of providers) {
-    const resultsPath = join(sessionsDir, sessionId, `${provider}_results.jsonl`);
-    try {
-      const content = await readFile(resultsPath, 'utf-8');
-      const lines = content.trim().split('\n').filter((line) => line.length > 0);
-      for (const line of lines) {
-        try {
-          const article = JSON.parse(line) as Article;
-          articles.push(article);
-        } catch {
-          // Skip invalid JSON lines
-        }
-      }
-    } catch {
-      // Skip if file doesn't exist
-    }
+    const providerArticles = await loadResults(sessionDir, provider);
+    articles.push(...providerArticles);
   }
 
   return articles;

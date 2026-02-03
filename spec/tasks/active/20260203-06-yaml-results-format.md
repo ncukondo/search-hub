@@ -101,70 +101,70 @@ The presence of `resultsYaml` indicates that the human-readable view has been ge
 
 ### Step 1: JSONL → YAML conversion function
 
-- [ ] Write test: `src/session/results-io.test.ts`
+- [x] Write test: `src/session/results-io.test.ts`
   - Test `convertResultsToYaml(jsonlPath, yamlPath, metadata)` produces valid YAML
   - Test YAML output omits null fields and `rawResponse`
   - Test YAML output uses block scalar for abstracts
   - Test header comment includes provider name and count
   - Test round-trip: articles loaded from YAML match original JSONL
-- [ ] Create: `src/session/results-io.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement conversion function using `yaml` package
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: YAML output is human-readable and parseable
+- [x] Create: `src/session/results-io.ts`
+- [x] Verify test fails (Red)
+- [x] Implement conversion function using `yaml` package
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: YAML output is human-readable and parseable
 
 ### Step 2: Unified results reader with fallback
 
-- [ ] Write test: `loadResults(sessionDir, provider)` reads YAML, falls back to JSONL
+- [x] Write test: `loadResults(sessionDir, provider)` reads YAML, falls back to JSONL
   - Test reads YAML when present
   - Test falls back to JSONL when YAML absent
   - Test returns Article[] in both cases
-- [ ] Implement `loadResults()` in `src/session/results-io.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: single function handles both formats transparently
+- [x] Implement `loadResults()` in `src/session/results-io.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: single function handles both formats transparently
 
 ### Step 3: Post-completion conversion in search executor
 
-- [ ] Write test: after search completes, both JSONL and YAML files exist
-- [ ] Modify `executeSearch()` to call conversion after each provider completes
-- [ ] Add `resultsYaml` to `DatabaseStatus.files`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: completed sessions have both JSONL (raw archive) and YAML (readable view)
+- [x] Write test: after search completes, both JSONL and YAML files exist
+- [x] Modify `executeSearch()` to call conversion after each provider completes
+- [x] Add `resultsYaml` to `DatabaseStatus.files`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: completed sessions have both JSONL (raw archive) and YAML (readable view)
 
 ### Step 4: Update all read sites to use unified reader
 
-- [ ] Write test: export, summary, and status commands work with YAML results
-- [ ] Replace direct JSONL reading in export.ts, summary.ts with `loadResults()`
-- [ ] Update resume-executor.ts to read YAML when loading existing results
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: all commands work with both YAML and legacy JSONL sessions
+- [x] Write test: export, summary, and status commands work with YAML results
+- [x] Replace direct JSONL reading in export.ts, summary.ts with `loadResults()`
+- [x] Update resume-executor.ts to read YAML when loading existing results
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: all commands work with both YAML and legacy JSONL sessions
 
 ### Step 5: Update resume flow
 
-- [ ] Write test: resume reads JSONL (authoritative source), appends new results, regenerates YAML
+- [x] Write test: resume reads JSONL (authoritative source), appends new results, regenerates YAML
   - Test resume of completed session (JSONL still present as archive)
   - Test resume of interrupted session (JSONL only, no YAML yet)
-- [ ] Implement: resume reads existing JSONL, streams new articles to JSONL, regenerates YAML on completion
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: resumed sessions have correct JSONL and regenerated YAML
+- [x] Implement: resume reads existing JSONL, streams new articles to JSONL, regenerates YAML on completion
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: resumed sessions have correct JSONL and regenerated YAML
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test:
+- [x] Write E2E test:
   - Run a search, verify both JSONL and YAML files are created
   - Verify YAML is valid, parseable, and excludes `rawResponse`
   - Verify JSONL is complete and includes `rawResponse`
   - Verify export/summary commands work with YAML results
   - Test with a legacy JSONL-only session (backward compatibility)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: run real search, open YAML in editor
-- [ ] Acceptance: All tests pass, YAML files are readable in editor
+- [x] Acceptance: All tests pass, YAML files are readable in editor
 
 ## Notes
 

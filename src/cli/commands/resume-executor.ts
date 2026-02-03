@@ -23,6 +23,7 @@ import {
 import { MultiProviderProgress } from '../utils/progress.js';
 import { createProviderInstance } from './search-executor.js';
 import { buildFailureErrorMessage } from './search-utils.js';
+import { convertResultsToYaml } from '../../session/results-io.js';
 
 /**
  * Result of a resume execution.
@@ -216,6 +217,14 @@ export async function executeResume(
       // Mark as completed
       progress?.complete(providerName);
 
+      // Convert JSONL to YAML for human-readable view
+      const yamlFilename = `${providerName}_results.yaml`;
+      const yamlPath = join(sessionsDir, options.sessionId, yamlFilename);
+      await convertResultsToYaml(resultsPath, yamlPath, {
+        provider: providerName,
+        queryName: session.name,
+      });
+
       // Update database status
       await updateDatabaseStatus(
         options.sessionId,
@@ -225,6 +234,11 @@ export async function executeResume(
           completedAt: new Date().toISOString(),
           totalHits: totalHits || retrievedCount,
           retrievedCount,
+          files: {
+            query: dbStatus.files.query,
+            results: dbStatus.files.results,
+            resultsYaml: yamlFilename,
+          },
         },
         sessionsDir
       );
