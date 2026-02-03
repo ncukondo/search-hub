@@ -83,7 +83,7 @@ import {
 } from './commands/register.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
-import { loadSession } from '../session/manager.js';
+import { loadSession, sessionExists } from '../session/manager.js';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1255,6 +1255,14 @@ Examples:
         const sessionsDir = await getSessionsDir(globalOpts);
         const sessionDir = join(sessionsDir, sessionId);
 
+        if (!(await sessionExists(sessionId, sessionsDir))) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: session '${sessionId}' not found`);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
         let noteText: string;
         if (options?.file) {
           const { readFile } = await import('node:fs/promises');
@@ -1306,6 +1314,15 @@ Examples:
 
         const sessionsDir = await getSessionsDir(globalOpts);
         const sessionDir = join(sessionsDir, sessionId);
+
+        if (!(await sessionExists(sessionId, sessionsDir))) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: session '${sessionId}' not found`);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
         await addAssessment(sessionDir, {
           precision: options?.precision,
           verdict: options?.verdict,

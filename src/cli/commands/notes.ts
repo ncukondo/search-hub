@@ -158,13 +158,13 @@ export async function addAssessment(
     type: 'assessment',
   };
 
-  if (options.precision) {
+  if (options.precision !== undefined) {
     entry['precision'] = options.precision;
   }
-  if (options.verdict) {
+  if (options.verdict !== undefined) {
     entry['verdict'] = options.verdict;
   }
-  if (options.comment) {
+  if (options.comment !== undefined) {
     entry['text'] = options.comment;
   }
 
