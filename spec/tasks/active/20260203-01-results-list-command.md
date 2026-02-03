@@ -98,23 +98,23 @@ Showing 1-20 of 28 articles
 
 ### Step 3: Filter and provider options
 
-- [ ] Write test: filter integration (year, title, abstract keywords)
-- [ ] Implement `--filter-year`, `--filter-title`, `--filter-abstract`, `--db` options
-- [ ] Reuse `filterArticles()` from export.ts
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: filters correctly narrow displayed results, count header reflects filtered total
+- [x] Write test: filter integration (year, title, abstract keywords)
+- [x] Implement `--filter-year`, `--filter-title`, `--filter-abstract`, `--db` options
+- [x] Reuse `filterArticles()` from export.ts
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: filters correctly narrow displayed results, count header reflects filtered total
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/results.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/results.e2e.test.ts`
   - Create a session with sample results
   - Run `search-hub results <session-id>` and verify output
   - Test with `--limit`, `--offset`, `--json`, `--filter-year`
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Test with a real session
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
