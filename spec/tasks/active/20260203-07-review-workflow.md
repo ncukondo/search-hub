@@ -212,13 +212,13 @@ search-hub review export --session <id> --only included [--format yaml|json|json
 
 #### Step 2: Extend deduplication with mergedFrom tracking
 
-- [ ] Write test: `src/cli/commands/review/dedup.test.ts`
+- [x] Write test: `src/cli/commands/review/dedup.test.ts`
   - Test: deduplicated articles include `mergedFrom` array
   - Test: `mergedFrom` contains source identifiers from merged duplicates
-- [ ] Modify or wrap `deduplicateArticles` to return `mergedFrom` info
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Dedup preserves provenance information
+- [x] Modify or wrap `deduplicateArticles` to return `mergedFrom` info
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Dedup preserves provenance information
 
 #### Step 3: Implement `review init` command
 
