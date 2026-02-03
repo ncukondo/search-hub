@@ -3,9 +3,13 @@
  * Registers search results with reference-manager CLI.
  */
 
-import type { ProviderName } from '../../providers/base/types.js';
-import type { Article } from '../../providers/base/types.js';
+import { join } from 'node:path';
+import { readFile, access } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { parse as parseYaml } from 'yaml';
+import type { ProviderName, Article } from '../../providers/base/types.js';
 import { parseProviderNames } from '../utils/validation.js';
+import { classifyStatus, type ReviewFile, type ArticleEntry } from './review/types.js';
 
 export interface RegisterCommandOptions {
   sessionId: string;
@@ -175,4 +179,73 @@ function getAlternativeIds(article: Article): string[] {
   if (article.ericId) ids.push(`eric:${article.ericId}`);
   if (article.scopusId) ids.push(`scopus:${article.scopusId}`);
   return ids;
+}
+
+/**
+ * Summary of review decisions for a session.
+ */
+export interface ReviewSummary {
+  /** Total articles in review file */
+  total: number;
+  /** Articles with finalDecision='include' */
+  included: number;
+  /** Articles with finalDecision='exclude' */
+  excluded: number;
+  /** Articles without finalDecision (pending, needs-final, conflicting) */
+  pending: number;
+}
+
+/**
+ * Check if a session has a reviews.yaml file.
+ */
+export async function hasReviewFile(sessionId: string, sessionsDir: string): Promise<boolean> {
+  const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+  try {
+    await access(reviewsPath, constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Load and parse the review file for a session.
+ */
+async function loadReviewFile(sessionId: string, sessionsDir: string): Promise<ReviewFile> {
+  const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+  const content = await readFile(reviewsPath, 'utf-8');
+  return parseYaml(content) as ReviewFile;
+}
+
+/**
+ * Get review summary (counts) for a session.
+ * Throws if reviews.yaml does not exist.
+ */
+export async function getReviewSummary(sessionId: string, sessionsDir: string): Promise<ReviewSummary> {
+  const reviewFile = await loadReviewFile(sessionId, sessionsDir);
+  const articles = reviewFile.articles ?? [];
+
+  const summary: ReviewSummary = {
+    total: articles.length,
+    included: 0,
+    excluded: 0,
+    pending: 0,
+  };
+
+  for (const article of articles) {
+    const status = classifyStatus(article);
+
+    if (status === 'finalized') {
+      if (article.finalDecision === 'include') {
+        summary.included++;
+      } else {
+        summary.excluded++;
+      }
+    } else {
+      // pending, needs-final, conflicting all count as pending for registration
+      summary.pending++;
+    }
+  }
+
+  return summary;
 }

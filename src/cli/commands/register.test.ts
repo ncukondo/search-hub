@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   parseRegisterOptions,
   validateRegisterInput,
   formatRegistrationSummary,
   formatDryRunOutput,
+  hasReviewFile,
+  getReviewSummary,
+  type ReviewSummary,
 } from './register.js';
 
 describe('register command', () => {
@@ -273,6 +279,178 @@ describe('register command', () => {
 
       expect(output).toContain('"Scopus Article"');
       expect(output).toContain('has: scopus:2-s2.0-12345');
+    });
+  });
+
+  describe('hasReviewFile', () => {
+    let tempDir: string;
+    let sessionsDir: string;
+
+    beforeEach(async () => {
+      tempDir = await mkdtemp(join(tmpdir(), 'register-test-'));
+      sessionsDir = join(tempDir, 'sessions');
+      await mkdir(sessionsDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(tempDir, { recursive: true, force: true });
+    });
+
+    it('returns true when reviews.yaml exists', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+      await writeFile(join(sessionDir, 'reviews.yaml'), 'sessionId: test-session\narticles: []');
+
+      const result = await hasReviewFile(sessionId, sessionsDir);
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when reviews.yaml does not exist', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const result = await hasReviewFile(sessionId, sessionsDir);
+
+      expect(result).toBe(false);
+    });
+
+    it('returns false when session directory does not exist', async () => {
+      const result = await hasReviewFile('nonexistent', sessionsDir);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getReviewSummary', () => {
+    let tempDir: string;
+    let sessionsDir: string;
+
+    beforeEach(async () => {
+      tempDir = await mkdtemp(join(tmpdir(), 'register-test-'));
+      sessionsDir = join(tempDir, 'sessions');
+      await mkdir(sessionsDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(tempDir, { recursive: true, force: true });
+    });
+
+    it('returns correct counts for mixed review states', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1000/b"
+    title: "Article B"
+    reviews: []
+    finalDecision: exclude
+  - doi: "10.1000/c"
+    title: "Article C"
+    reviews: []
+  - doi: "10.1000/d"
+    title: "Article D"
+    reviews: []
+    finalDecision: include
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getReviewSummary(sessionId, sessionsDir);
+
+      expect(result).toEqual({
+        total: 4,
+        included: 2,
+        excluded: 1,
+        pending: 1,
+      });
+    });
+
+    it('returns all pending when no reviews or decisions exist', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews: []
+  - doi: "10.1000/b"
+    title: "Article B"
+    reviews: []
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getReviewSummary(sessionId, sessionsDir);
+
+      expect(result).toEqual({
+        total: 2,
+        included: 0,
+        excluded: 0,
+        pending: 2,
+      });
+    });
+
+    it('counts needs-final articles as pending', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article A"
+    reviews:
+      - reviewer: ai
+        decision: include
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getReviewSummary(sessionId, sessionsDir);
+
+      // has review but no finalDecision = needs-final = counted as pending
+      expect(result.pending).toBe(1);
+      expect(result.included).toBe(0);
+    });
+
+    it('throws error when reviews.yaml does not exist', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      await expect(getReviewSummary(sessionId, sessionsDir)).rejects.toThrow();
+    });
+
+    it('returns empty counts for session with no articles', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles: []
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getReviewSummary(sessionId, sessionsDir);
+
+      expect(result).toEqual({
+        total: 0,
+        included: 0,
+        excluded: 0,
+        pending: 0,
+      });
     });
   });
 });

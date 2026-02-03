@@ -119,12 +119,12 @@ Options:
 
 ### Step 1: Add review detection utility
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: `hasReviewFile(sessionId)` returns true/false
   - Test: `getReviewSummary(sessionId)` returns counts
-- [ ] Implement utilities in `src/cli/commands/register.ts`
-- [ ] Verify tests pass
-- [ ] Acceptance: Can detect and summarize review status
+- [x] Implement utilities in `src/cli/commands/register.ts`
+- [x] Verify tests pass
+- [x] Acceptance: Can detect and summarize review status
 
 ### Step 2: Add --reviewed and --all flags
 
