@@ -45,10 +45,10 @@ This file tracks high-level progress. For implementation details, see individual
 | 36 | Export Filter Options | 10 | ✅ Completed | [20260202-06](completed/20260202-06-export-filter.md) |
 | 37 | Summary Command | 10 | ✅ Completed | [20260202-07](completed/20260202-07-summary-command.md) |
 | 38 | Results Listing Command | 10, 37 | 🔲 Pending | [20260203-01](active/20260203-01-results-list-command.md) |
-| 39 | Search Count-Only Mode | 6-9, 10 | 🔲 Pending | [20260203-02](active/20260203-02-search-count-only.md) |
-| 40 | Session Diff Command | 10, 28 | 🔲 Pending | [20260203-03](active/20260203-03-session-diff.md) |
-| 41 | Session Notes and Assessment | 4, 10 | 🔲 Pending | [20260203-04](active/20260203-04-session-notes.md) |
-| 42 | Export to stdout by Default | 10 | 🔲 Pending | [20260203-05](active/20260203-05-export-stdout.md) |
+| 39 | Search Count-Only Mode | 6-9, 10 | ✅ Completed | [20260203-02](completed/20260203-02-search-count-only.md) |
+| 40 | Session Diff Command | 10, 28 | ✅ Completed | [20260203-03](completed/20260203-03-session-diff.md) |
+| 41 | Session Notes and Assessment | 4, 10 | ✅ Completed | [20260203-04](completed/20260203-04-session-notes.md) |
+| 42 | Export to stdout by Default | 10 | ✅ Completed | [20260203-05](completed/20260203-05-export-stdout.md) |
 | 43 | YAML Results Format | 10 | 🔲 Pending | [20260203-06](active/20260203-06-yaml-results-format.md) |
 
 ## Development Flow
