@@ -25,6 +25,8 @@ export default defineConfig({
           name: "e2e",
           include: ["src/**/*.e2e.test.ts", "tests/**/*.e2e.test.ts"],
           exclude: ["**/*.api.test.ts", "**/node_modules/**"],
+          // Verify build exists before running e2e tests
+          setupFiles: ["./src/test/e2e-setup.ts"],
           // Longer timeout for external API calls
           testTimeout: 30000,
           // Run tests sequentially to avoid rate limiting issues
