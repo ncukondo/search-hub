@@ -350,3 +350,14 @@ Registering ${summary.included} included articles...
 
 Proceed? [Y/n]`;
 }
+
+/**
+ * Format tip about review workflow for users who haven't used it.
+ */
+export function formatReviewWorkflowTip(sessionId: string): string {
+  return `
+Tip: For systematic reviews, consider using the review workflow:
+  1. search-hub review init ${sessionId}
+  2. (AI/human review in reviews.yaml)
+  3. search-hub register ${sessionId} --reviewed`;
+}

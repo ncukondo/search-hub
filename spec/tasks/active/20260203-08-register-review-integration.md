@@ -147,12 +147,12 @@ Options:
 
 ### Step 4: Add workflow tip for non-review users
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test: tip is shown after registration when no reviews.yaml
   - Test: --quiet suppresses tip
-- [ ] Implement tip display
-- [ ] Verify tests pass
-- [ ] Acceptance: Tip guides users to review workflow
+- [x] Implement tip display
+- [x] Verify tests pass
+- [x] Acceptance: Tip guides users to review workflow
 
 ### Step 5: Update help text
 

@@ -134,6 +134,7 @@ import {
   formatReviewRequiredMessage,
   formatNoIncludedArticlesError,
   formatPendingWarning,
+  formatReviewWorkflowTip,
 } from './commands/register.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
@@ -1451,6 +1452,11 @@ With review workflow:
             console.log('\n');
             console.log(formatRegistrationSummary(record.summary));
             console.log(`\nResults saved to: ${join(sessionDir, 'registration.json')}`);
+
+            // Show tip about review workflow for users who haven't used it
+            if (!reviewExists && !registerOpts.quiet) {
+              console.log(formatReviewWorkflowTip(sessionId));
+            }
           }
 
           process.exitCode = EXIT_CODES.SUCCESS;
