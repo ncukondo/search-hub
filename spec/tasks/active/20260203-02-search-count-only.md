@@ -92,11 +92,11 @@ Query: wba-genai-v6.yaml (count only)
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test with PubMed (real API call with known query)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Write E2E test with PubMed (real API call with known query)
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Test with real queries
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
