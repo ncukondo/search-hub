@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (extended by [ADR-006](006-yaml-human-readable-layer.md))
 
 ## Context
 
