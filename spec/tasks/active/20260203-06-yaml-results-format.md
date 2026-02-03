@@ -155,16 +155,16 @@ The presence of `resultsYaml` indicates that the human-readable view has been ge
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test:
+- [x] Write E2E test:
   - Run a search, verify both JSONL and YAML files are created
   - Verify YAML is valid, parseable, and excludes `rawResponse`
   - Verify JSONL is complete and includes `rawResponse`
   - Verify export/summary commands work with YAML results
   - Test with a legacy JSONL-only session (backward compatibility)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: run real search, open YAML in editor
-- [ ] Acceptance: All tests pass, YAML files are readable in editor
+- [x] Acceptance: All tests pass, YAML files are readable in editor
 
 ## Notes
 
