@@ -16,14 +16,14 @@ export interface ResultsCommandOptions {
 }
 
 export interface CommandLineOptions {
-  limit?: string;
-  offset?: string;
-  json?: boolean;
-  fields?: string;
-  db?: string;
-  filterYear?: string;
-  filterTitle?: string;
-  filterAbstract?: string;
+  limit?: string | undefined;
+  offset?: string | undefined;
+  json?: boolean | undefined;
+  fields?: string | undefined;
+  db?: string | undefined;
+  filterYear?: string | undefined;
+  filterTitle?: string | undefined;
+  filterAbstract?: string | undefined;
 }
 
 export interface ValidationResult {
@@ -35,8 +35,8 @@ export interface FormatOptions {
   sessionId: string;
   sessionName: string;
   total: number;
-  offset?: number;
-  filteredFrom?: number;
+  offset?: number | undefined;
+  filteredFrom?: number | undefined;
 }
 
 export function parseResultsOptions(

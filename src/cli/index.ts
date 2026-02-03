@@ -69,6 +69,12 @@ import {
   formatSummaryJson,
 } from './commands/summary.js';
 import {
+  parseResultsOptions,
+  validateResultsInput,
+  formatResultsList,
+  formatResultsJson,
+} from './commands/results.js';
+import {
   loadNotes,
   addNote,
   addAssessment,
@@ -973,6 +979,135 @@ Examples:
           } else {
             if (!globalOpts.quiet) {
               console.log(formatSummary(summary));
+            }
+          }
+
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error(
+              'Error:',
+              error instanceof Error ? error.message : error
+            );
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+        }
+      }
+    );
+
+  // Register results command
+  program
+    .command('results')
+    .description('List articles from a session with title, year, and journal')
+    .argument('<session-id>', 'session ID to list results from')
+    .option('--limit <n>', 'maximum number of results to show')
+    .option('--offset <n>', 'skip first n results')
+    .option('--json', 'output as JSON array')
+    .option('--fields <fields>', 'fields to display (comma-separated)')
+    .option('--db <providers>', 'filter by database(s), comma-separated')
+    .option('--filter-year <range>', 'year range filter (e.g., "2023-2025")')
+    .option('--filter-title <keywords>', 'title keyword filter (comma-separated)')
+    .option('--filter-abstract <keywords>', 'abstract keyword filter (comma-separated)')
+    .addHelpText('after', `
+Examples:
+  $ search-hub results SESSION_ID                         # List all articles
+  $ search-hub results SESSION_ID --limit 20              # First 20 articles
+  $ search-hub results SESSION_ID --limit 20 --offset 40  # Articles 41-60
+  $ search-hub results SESSION_ID --json                  # JSON output for scripting
+  $ search-hub results SESSION_ID --db pubmed             # Only PubMed articles
+  $ search-hub results SESSION_ID --filter-year 2023-2025 # Filter by year`)
+    .action(
+      async (
+        sessionId: string,
+        options?: {
+          limit?: string;
+          offset?: string;
+          json?: boolean;
+          fields?: string;
+          db?: string;
+          filterYear?: string;
+          filterTitle?: string;
+          filterAbstract?: string;
+        }
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          // Parse and validate options
+          const resultsOpts = parseResultsOptions(sessionId, {
+            limit: options?.limit,
+            offset: options?.offset,
+            json: options?.json,
+            fields: options?.fields,
+            db: options?.db,
+            filterYear: options?.filterYear,
+            filterTitle: options?.filterTitle,
+            filterAbstract: options?.filterAbstract,
+          });
+
+          const validation = validateResultsInput(resultsOpts);
+          if (!validation.valid) {
+            if (!globalOpts.quiet) {
+              console.error(`Error: ${validation.error}`);
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          const sessionsDir = await getSessionsDir(globalOpts);
+
+          // Load session
+          let session;
+          try {
+            session = await loadSession(sessionId, sessionsDir);
+          } catch (error) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`
+              );
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          // Collect articles from result files
+          const articles = await loadSessionArticles(session, sessionId, sessionsDir, resultsOpts.providers);
+
+          // Deduplicate articles
+          const dedupResult = deduplicateArticles(articles);
+          let displayArticles = dedupResult.articles;
+
+          // Apply filters
+          let filteredFrom: number | undefined;
+          if (resultsOpts.filter) {
+            const preFilterCount = displayArticles.length;
+            displayArticles = filterArticles(displayArticles, resultsOpts.filter);
+            if (displayArticles.length !== preFilterCount) {
+              filteredFrom = preFilterCount;
+            }
+          }
+
+          // Apply pagination
+          const total = displayArticles.length;
+          const offset = resultsOpts.offset ?? 0;
+          if (offset > 0) {
+            displayArticles = displayArticles.slice(offset);
+          }
+          if (resultsOpts.limit !== undefined && resultsOpts.limit > 0) {
+            displayArticles = displayArticles.slice(0, resultsOpts.limit);
+          }
+
+          // Format output
+          if (resultsOpts.json) {
+            console.log(formatResultsJson(displayArticles));
+          } else {
+            if (!globalOpts.quiet) {
+              console.log(formatResultsList(displayArticles, {
+                sessionId,
+                sessionName: session.name,
+                total,
+                offset,
+                filteredFrom,
+              }));
             }
           }
 

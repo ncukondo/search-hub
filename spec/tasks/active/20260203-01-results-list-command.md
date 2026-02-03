@@ -89,12 +89,12 @@ Showing 1-20 of 28 articles
 
 ### Step 2: Register CLI command with options
 
-- [ ] Write test: command registration and option parsing
-- [ ] Implement command registration in `src/cli/index.ts`
-- [ ] Wire up session loading → article loading → dedup → filter → format → output
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub results <session-id>` works end-to-end
+- [x] Write test: command registration and option parsing
+- [x] Implement command registration in `src/cli/index.ts`
+- [x] Wire up session loading → article loading → dedup → filter → format → output
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub results <session-id>` works end-to-end
 
 ### Step 3: Filter and provider options
 
