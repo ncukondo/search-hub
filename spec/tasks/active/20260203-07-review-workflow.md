@@ -228,7 +228,7 @@ search-hub review export --session <id> --only included [--format yaml|json|json
   - Test: copies schema file to .search-hub/schemas/
   - Test: fails if reviews.yaml already exists (unless --force)
 - [x] Implement `src/cli/commands/review/init.ts`
-- [ ] Register command in CLI
+- [x] Register command in CLI
 - [x] Verify tests pass
 - [x] Acceptance: `review init` creates valid reviews.yaml
 
@@ -238,7 +238,7 @@ search-hub review export --session <id> --only included [--format yaml|json|json
   - Test: counts articles by status correctly
   - Test: JSON output format
 - [x] Implement `src/cli/commands/review/status.ts`
-- [ ] Register command in CLI
+- [x] Register command in CLI
 - [x] Verify tests pass
 - [x] Acceptance: `review status` shows accurate counts
 
