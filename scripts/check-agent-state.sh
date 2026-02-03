@@ -37,14 +37,19 @@ if [[ -f "$STATE_FILE" ]]; then
   if [[ $AGE -lt 120 ]]; then
     STATE=$(cat "$STATE_FILE" 2>/dev/null || echo "")
     if [[ -n "$STATE" ]]; then
+      # "starting" state means hooks are set up but idle_prompt hasn't fired yet
+      # (idle_prompt only fires after 60s of idle). Fall through to tmux detection.
+      if [[ "$STATE" == "starting" ]]; then
+        : # Fall through to tmux detection below
       # Map "permission" to "trust" for backward compatibility with callers
       # that expect "trust" for any permission-related prompt
-      if [[ "$STATE" == "permission" ]]; then
+      elif [[ "$STATE" == "permission" ]]; then
         echo "trust"
+        exit 0
       else
         echo "$STATE"
+        exit 0
       fi
-      exit 0
     fi
   fi
 fi
@@ -56,8 +61,8 @@ if ! tmux has-session -t "$PANE" 2>/dev/null; then
   exit 1
 fi
 
-# Capture pane content with wrapped lines joined
-CONTENT=$(tmux capture-pane -t "$PANE" -p -J 2>/dev/null | tail -15)
+# Capture pane content (include scroll-back to ensure we get content)
+CONTENT=$(tmux capture-pane -t "$PANE" -p -S -50 2>/dev/null | tail -20)
 
 # Trust prompt detection:
 #   - Has selection marker " ❯ 1." or " ❯ 2." (indented)
