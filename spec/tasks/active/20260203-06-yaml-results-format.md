@@ -101,29 +101,29 @@ The presence of `resultsYaml` indicates that the human-readable view has been ge
 
 ### Step 1: JSONL → YAML conversion function
 
-- [ ] Write test: `src/session/results-io.test.ts`
+- [x] Write test: `src/session/results-io.test.ts`
   - Test `convertResultsToYaml(jsonlPath, yamlPath, metadata)` produces valid YAML
   - Test YAML output omits null fields and `rawResponse`
   - Test YAML output uses block scalar for abstracts
   - Test header comment includes provider name and count
   - Test round-trip: articles loaded from YAML match original JSONL
-- [ ] Create: `src/session/results-io.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement conversion function using `yaml` package
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: YAML output is human-readable and parseable
+- [x] Create: `src/session/results-io.ts`
+- [x] Verify test fails (Red)
+- [x] Implement conversion function using `yaml` package
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: YAML output is human-readable and parseable
 
 ### Step 2: Unified results reader with fallback
 
-- [ ] Write test: `loadResults(sessionDir, provider)` reads YAML, falls back to JSONL
+- [x] Write test: `loadResults(sessionDir, provider)` reads YAML, falls back to JSONL
   - Test reads YAML when present
   - Test falls back to JSONL when YAML absent
   - Test returns Article[] in both cases
-- [ ] Implement `loadResults()` in `src/session/results-io.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: single function handles both formats transparently
+- [x] Implement `loadResults()` in `src/session/results-io.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: single function handles both formats transparently
 
 ### Step 3: Post-completion conversion in search executor
 
