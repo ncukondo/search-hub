@@ -411,6 +411,7 @@ describe('resume-executor', () => {
           native: 'test query',
           provider: 'pubmed',
         }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         search: vi.fn().mockImplementation(async function* () {
           throw {
             code: 'NETWORK_ERROR',
@@ -419,6 +420,7 @@ describe('resume-executor', () => {
             retryable: true,
           };
         }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         resumeSearch: vi.fn().mockImplementation(async function* () {
           throw {
             code: 'NETWORK_ERROR',
@@ -502,9 +504,11 @@ describe('resume-executor', () => {
       mockedPubMed.mockImplementation(() => ({
         name: 'pubmed',
         translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('API rate limit exceeded');
         }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         resumeSearch: vi.fn().mockImplementation(async function* () {
           throw new Error('API rate limit exceeded');
         }),
@@ -536,7 +540,7 @@ describe('resume-executor', () => {
       await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
 
       const options: ResumeCommandOptions = { sessionId, retryFailed: true };
-      const result = await executeResume(options, sessionsDir, config, false);
+      await executeResume(options, sessionsDir, config, false);
 
       // Restore original mock
       if (originalImpl) {
@@ -715,9 +719,11 @@ describe('resume-executor', () => {
       mockedPubMed.mockImplementation(() => ({
         name: 'pubmed',
         translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('Network request failed');
         }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         resumeSearch: vi.fn().mockImplementation(async function* () {
           throw new Error('Network request failed');
         }),
@@ -727,9 +733,11 @@ describe('resume-executor', () => {
       mockedEric.mockImplementation(() => ({
         name: 'eric',
         translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('ERIC service unavailable');
         }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         resumeSearch: vi.fn().mockImplementation(async function* () {
           throw new Error('ERIC service unavailable');
         }),

@@ -330,6 +330,7 @@ filters:
           native: 'test query',
           provider: 'pubmed',
         }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         search: vi.fn().mockImplementation(async function* () {
           throw {
             code: 'NETWORK_ERROR',
@@ -396,6 +397,7 @@ filters:
       mockedPubMed.mockImplementation(() => ({
         name: 'pubmed',
         translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('API rate limit exceeded');
         }),
@@ -429,6 +431,7 @@ filters:
       mockedPubMed.mockImplementation(() => ({
         name: 'pubmed',
         translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('Network request failed');
         }),
@@ -438,6 +441,7 @@ filters:
       mockedEric.mockImplementation(() => ({
         name: 'eric',
         translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('Timeout');
         }),

@@ -115,7 +115,7 @@ cat > "$WORKTREE_DIR/.claude/settings.local.json" << SETTINGS_EOF
         "hooks": [
           {
             "type": "command",
-            "command": "echo starting > '$STATE_FILE'"
+            "command": "mkdir -p '$WORKER_STATE_DIR' && echo starting > '$STATE_FILE'"
           }
         ]
       }

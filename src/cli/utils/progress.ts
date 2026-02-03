@@ -1,4 +1,4 @@
-import { MultiBar, SingleBar, Presets } from 'cli-progress';
+import { MultiBar, Presets, type SingleBar } from 'cli-progress';
 
 export type ProgressStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'partial';
 
