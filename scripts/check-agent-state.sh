@@ -21,6 +21,9 @@ PANE="${1:?Usage: check-agent-state.sh <pane-id>}"
 WORKER_STATE_DIR="/tmp/claude-agent-states"
 STATE_FILE="$WORKER_STATE_DIR/$PANE"
 
+# Track if we're in starting state (used to relax working indicator detection)
+IS_STARTING=false
+
 # --- Method 1: Hooks-based state file (highest priority) ---
 if [[ -f "$STATE_FILE" ]]; then
   # Check file age - if older than 120s, consider it stale
@@ -40,7 +43,8 @@ if [[ -f "$STATE_FILE" ]]; then
       # "starting" state means hooks are set up but idle_prompt hasn't fired yet
       # (idle_prompt only fires after 60s of idle). Fall through to tmux detection.
       if [[ "$STATE" == "starting" ]]; then
-        : # Fall through to tmux detection below
+        IS_STARTING=true
+        # Fall through to tmux detection below
       # Map "permission" to "trust" for backward compatibility with callers
       # that expect "trust" for any permission-related prompt
       elif [[ "$STATE" == "permission" ]]; then
@@ -78,10 +82,22 @@ fi
 #   - No spinner characters or "esc to interrupt" (working indicators)
 if echo "$CONTENT" | grep -qE '^❯'; then
   # Check for working indicators
-  if echo "$CONTENT" | grep -qE '(esc to interrupt|⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)'; then
-    echo "working"
+  # During startup (IS_STARTING=true), ignore "esc to interrupt" because
+  # MCP server initialization can show this while Claude is actually ready
+  if [[ "$IS_STARTING" == "true" ]]; then
+    # Only check for spinner characters during startup
+    if echo "$CONTENT" | grep -qE '(⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)'; then
+      echo "working"
+    else
+      echo "idle"
+    fi
   else
-    echo "idle"
+    # Normal operation: check all working indicators
+    if echo "$CONTENT" | grep -qE '(esc to interrupt|⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)'; then
+      echo "working"
+    else
+      echo "idle"
+    fi
   fi
   exit 0
 fi
