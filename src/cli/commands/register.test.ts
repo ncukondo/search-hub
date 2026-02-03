@@ -520,17 +520,29 @@ articles:
     title: "Article A"
     reviews: []
     finalDecision: include
+    mergedFrom:
+      - source: scopus
+        doi: "10.1000/a"
   - doi: "10.1000/b"
     title: "Article B"
     reviews: []
     finalDecision: exclude
+    mergedFrom:
+      - source: scopus
+        doi: "10.1000/b"
   - pmid: "12345"
     title: "Article C"
     reviews: []
     finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
   - doi: "10.1000/d"
     title: "Article D - pending"
     reviews: []
+    mergedFrom:
+      - source: scopus
+        doi: "10.1000/d"
 `;
       await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
 
@@ -579,6 +591,10 @@ articles:
     year: "2024"
     reviews: []
     finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
+        doi: "10.1000/a"
 `;
       await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
 
@@ -593,7 +609,103 @@ articles:
       expect(article.ericId).toBe('ED123456');
       expect(article.title).toBe('Test Article');
       expect(article.publicationDate).toBe('2024');
-      expect(article.source).toBe('pubmed'); // placeholder source
+      expect(article.source).toBe('pubmed');
+    });
+
+    it('gets source from mergedFrom when available', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article from Scopus"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: scopus
+        scopusId: "2-s2.0-123"
+        doi: "10.1000/a"
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]!.source).toBe('scopus');
+    });
+
+    it('gets source from first entry of mergedFrom for merged articles', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    pmid: "12345"
+    title: "Article from multiple sources"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
+        doi: "10.1000/a"
+      - source: scopus
+        scopusId: "2-s2.0-123"
+        doi: "10.1000/a"
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]!.source).toBe('pubmed');
+    });
+
+    it('throws error when mergedFrom is missing', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      // Legacy review file without mergedFrom
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Legacy article"
+    reviews: []
+    finalDecision: include
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      await expect(getIncludedArticles(sessionId, sessionsDir)).rejects.toThrow(
+        /mergedFrom.*missing/i
+      );
+    });
+
+    it('throws error when mergedFrom is empty array', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      await mkdir(sessionDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/a"
+    title: "Article with empty mergedFrom"
+    reviews: []
+    finalDecision: include
+    mergedFrom: []
+`;
+      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+
+      await expect(getIncludedArticles(sessionId, sessionsDir)).rejects.toThrow(
+        /mergedFrom.*empty/i
+      );
     });
   });
 

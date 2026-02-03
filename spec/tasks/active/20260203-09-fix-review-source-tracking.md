@@ -45,11 +45,11 @@ When `register --reviewed` converts `ArticleEntry` back to `Article`, it cannot 
 
 ### Step 2: Update getIncludedArticles to use mergedFrom
 
-- [ ] Write test: source should come from `mergedFrom[0].source`
-- [ ] Write test: error if `mergedFrom` is missing or empty
-- [ ] Remove hardcoded `'pubmed'` fallback
-- [ ] Verify tests pass
-- [ ] Acceptance: Correct source is used, error on missing
+- [x] Write test: source should come from `mergedFrom[0].source`
+- [x] Write test: error if `mergedFrom` is missing or empty
+- [x] Remove hardcoded `'pubmed'` fallback
+- [x] Verify tests pass
+- [x] Acceptance: Correct source is used, error on missing
 
 ### Step 3: Handle multiple sources in Article type (optional)
 
