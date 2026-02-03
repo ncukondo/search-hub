@@ -5,7 +5,7 @@
 import { config as loadDotenv } from 'dotenv';
 
 // Load .env file as early as possible, before any config loading
-loadDotenv();
+loadDotenv({ quiet: true });
 import { Command } from 'commander';
 import { VERSION } from '../version.js';
 import { init } from './commands/init.js';
@@ -69,6 +69,21 @@ import {
   formatSummaryJson,
 } from './commands/summary.js';
 import {
+  loadNotes,
+  addNote,
+  addAssessment,
+  formatNotesList,
+  formatAllSessionNotes,
+  type SessionNotes,
+} from './commands/notes.js';
+import {
+  computeDiff,
+  formatDiff,
+  formatDiffJson,
+  type ShowFilter,
+} from './commands/diff.js';
+
+import {
   parseRegisterOptions,
   validateRegisterInput,
   formatRegistrationSummary,
@@ -76,11 +91,13 @@ import {
 } from './commands/register.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
-import { loadSession } from '../session/manager.js';
+import { loadSession, sessionExists } from '../session/manager.js';
 import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getSessionsDir } from './utils/sessions-dir.js';
 import { expandPath } from '../utils/path.js';
+import { loadSessionArticles } from './commands/session-utils.js';
 
 /**
  * Global CLI options available to all commands.
@@ -722,7 +739,7 @@ Examples:
     .description('Export session results to various formats')
     .argument('<session-id>', 'session ID to export')
     .option('--format <fmt>', 'output format: ids, json, jsonl, csl-json', 'jsonl')
-    .option('-o, --output <path>', 'output file path')
+    .option('-o, --output <path>', 'output file path (default: stdout)')
     .option('--db <providers>', 'export only specific database(s)')
     .option('--id-type <type>', 'for ids format: doi, pmid, all')
     .option('--no-dedup', 'disable deduplication of results')
@@ -731,11 +748,14 @@ Examples:
     .option('--filter-abstract <keywords>', 'abstract keyword filter (comma-separated)')
     .addHelpText('after', `
 Examples:
-  $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs
-  $ search-hub export SESSION_ID --format json -o results.json
-  $ search-hub export SESSION_ID --format csl-json -o refs.json  # CSL-JSON for reference managers
+  $ search-hub export SESSION_ID                             # JSONL to stdout
+  $ search-hub export SESSION_ID --format json               # JSON to stdout
+  $ search-hub export SESSION_ID --format json -o results.json  # JSON to file
+  $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs to stdout
+  $ search-hub export SESSION_ID --format csl-json -o refs.json  # CSL-JSON to file
   $ search-hub export SESSION_ID --db pubmed --format jsonl
   $ search-hub export SESSION_ID --no-dedup  # Export without deduplication
+  $ search-hub export SESSION_ID --format jsonl | jq '.title'  # Pipe to jq
   $ search-hub export SESSION_ID --filter-year 2023-2025     # Filter by year
   $ search-hub export SESSION_ID --filter-title "machine learning,AI"  # Filter by title`)
     .action(
@@ -788,34 +808,7 @@ Examples:
           }
 
           // Collect articles from result files
-          const { readFile } = await import('node:fs/promises');
-          const { join } = await import('node:path');
-          const articles: import('../providers/base/types.js').Article[] = [];
-
-          // Determine which providers to export
-          const providersToExport = exportOpts.providers
-            ? exportOpts.providers
-            : (Object.keys(session.databases) as ProviderName[]);
-
-          for (const provider of providersToExport) {
-            const dbStatus = session.databases[provider];
-            if (!dbStatus || !dbStatus.files?.results) continue;
-
-            const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
-            try {
-              const content = await readFile(resultsPath, 'utf-8');
-              const lines = content.trim().split('\n').filter((line) => line);
-              for (const line of lines) {
-                try {
-                  articles.push(JSON.parse(line));
-                } catch {
-                  // Skip invalid JSON lines
-                }
-              }
-            } catch {
-              // Results file may not exist yet
-            }
-          }
+          const articles = await loadSessionArticles(session, sessionId, sessionsDir, exportOpts.providers);
 
           // Deduplicate articles unless --no-dedup is set
           const shouldDedup = options?.dedup !== false;
@@ -899,10 +892,10 @@ Examples:
               if (duplicatesRemoved > 0) {
                 message += ` (${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed)`;
               }
-              console.log(message);
+              console.error(message);
             }
           } else {
-            console.log(output);
+            process.stdout.write(output + '\n');
             if (!globalOpts.quiet) {
               const parts: string[] = [];
               if (hasFilter) {
@@ -963,30 +956,7 @@ Examples:
           }
 
           // Collect articles from result files
-          const { readFile } = await import('node:fs/promises');
-          const { join } = await import('node:path');
-          const allArticles: import('../providers/base/types.js').Article[] = [];
-
-          const providers = Object.keys(session.databases) as ProviderName[];
-          for (const provider of providers) {
-            const dbStatus = session.databases[provider];
-            if (!dbStatus || !dbStatus.files?.results) continue;
-
-            const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
-            try {
-              const content = await readFile(resultsPath, 'utf-8');
-              const lines = content.trim().split('\n').filter((line) => line);
-              for (const line of lines) {
-                try {
-                  allArticles.push(JSON.parse(line));
-                } catch {
-                  // Skip invalid JSON lines
-                }
-              }
-            } catch {
-              // Results file may not exist yet
-            }
-          }
+          const allArticles = await loadSessionArticles(session, sessionId, sessionsDir);
 
           // Deduplicate
           const dedupResult = deduplicateArticles(allArticles);
@@ -1003,6 +973,103 @@ Examples:
           } else {
             if (!globalOpts.quiet) {
               console.log(formatSummary(summary));
+            }
+          }
+
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error(
+              'Error:',
+              error instanceof Error ? error.message : error
+            );
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+        }
+      }
+    );
+
+  // Register diff command
+  program
+    .command('diff')
+    .description('Compare results between two sessions')
+    .argument('<session-id-1>', 'first session ID')
+    .argument('<session-id-2>', 'second session ID')
+    .option('--show <section>', 'show only specific section: added, removed, or common')
+    .option('--json', 'output as JSON')
+    .addHelpText('after', `
+Examples:
+  $ search-hub diff session-v1 session-v2                # Compare two sessions
+  $ search-hub diff session-v1 session-v2 --show added   # Show only added articles
+  $ search-hub diff session-v1 session-v2 --show removed # Show only removed articles
+  $ search-hub diff session-v1 session-v2 --json         # JSON output for scripting`)
+    .action(
+      async (
+        sessionId1: string,
+        sessionId2: string,
+        options?: { show?: string; json?: boolean }
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          // Validate --show option
+          const validShowValues: ShowFilter[] = ['added', 'removed', 'common'];
+          let showFilter: ShowFilter | undefined;
+          if (options?.show) {
+            if (!validShowValues.includes(options.show as ShowFilter)) {
+              if (!globalOpts.quiet) {
+                console.error(`Error: Invalid --show value: ${options.show}. Valid values are: ${validShowValues.join(', ')}`);
+              }
+              process.exitCode = EXIT_CODES.GENERAL_ERROR;
+              return;
+            }
+            showFilter = options.show as ShowFilter;
+          }
+
+          const sessionsDir = await getSessionsDir(globalOpts);
+
+          // Load both sessions
+          let session1, session2;
+          try {
+            session1 = await loadSession(sessionId1, sessionsDir);
+          } catch (error) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error loading session 1: ${error instanceof Error ? error.message : 'Failed to load session'}`
+              );
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          try {
+            session2 = await loadSession(sessionId2, sessionsDir);
+          } catch (error) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error loading session 2: ${error instanceof Error ? error.message : 'Failed to load session'}`
+              );
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          // Collect articles from both sessions
+          const articles1 = await loadSessionArticles(session1, sessionId1, sessionsDir);
+          const articles2 = await loadSessionArticles(session2, sessionId2, sessionsDir);
+
+          // Deduplicate each session's articles before diffing
+          const dedup1 = deduplicateArticles(articles1);
+          const dedup2 = deduplicateArticles(articles2);
+
+          // Compute diff
+          const diff = computeDiff(dedup1.articles, dedup2.articles);
+
+          // Format and output
+          if (options?.json) {
+            console.log(formatDiffJson(diff, sessionId1, sessionId2, showFilter));
+          } else {
+            if (!globalOpts.quiet) {
+              console.log(formatDiff(diff, sessionId1, sessionId2, showFilter));
             }
           }
 
@@ -1116,34 +1183,7 @@ Examples:
           }
 
           // Collect articles from result files
-          const { readFile } = await import('node:fs/promises');
-          const { join } = await import('node:path');
-          const articles: import('../providers/base/types.js').Article[] = [];
-
-          // Determine which providers to register
-          const providersToRegister = registerOpts.providers
-            ? registerOpts.providers
-            : (Object.keys(session.databases) as ProviderName[]);
-
-          for (const provider of providersToRegister) {
-            const dbStatus = session.databases[provider];
-            if (!dbStatus || !dbStatus.files?.results) continue;
-
-            const resultsPath = join(sessionsDir, sessionId, dbStatus.files.results);
-            try {
-              const content = await readFile(resultsPath, 'utf-8');
-              const lines = content.trim().split('\n').filter((line) => line);
-              for (const line of lines) {
-                try {
-                  articles.push(JSON.parse(line));
-                } catch {
-                  // Skip invalid JSON lines
-                }
-              }
-            } catch {
-              // Results file may not exist yet
-            }
-          }
+          const articles = await loadSessionArticles(session, sessionId, sessionsDir, registerOpts.providers);
 
           // Dry run mode
           if (registerOpts.dryRun) {
@@ -1193,6 +1233,180 @@ Examples:
         }
       }
     );
+
+  // Register notes command group
+  const notesCommand = program
+    .command('notes')
+    .description('Manage session notes and assessments')
+    .addHelpText('after', `
+Examples:
+  $ search-hub notes list SESSION_ID             # List notes for a session
+  $ search-hub notes add SESSION_ID "my note"    # Add a note
+  $ search-hub notes add SESSION_ID --file assessment.md  # Add from file
+  $ search-hub notes assess SESSION_ID --precision "~54%" --verdict good --comment "Good results"
+  $ search-hub notes list --all                  # Show notes from all sessions`);
+
+  notesCommand
+    .command('list')
+    .description('List notes for a session or all sessions')
+    .argument('[session-id]', 'session ID')
+    .option('--all', 'show notes from all sessions')
+    .option('--json', 'output as JSON')
+    .action(async (sessionId?: string, options?: { all?: boolean; json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const formatOpts = { json: options?.json ?? false };
+
+        if (options?.all) {
+          // Cross-session notes view
+          const { listSessions } = await import('../session/manager.js');
+          const summaries = await listSessions(sessionsDir);
+          const allNotes: SessionNotes[] = [];
+
+          for (const summary of summaries) {
+            const sessionNotesDir = join(sessionsDir, summary.id);
+            const notes = await loadNotes(sessionNotesDir);
+            allNotes.push({
+              sessionId: summary.id,
+              sessionName: summary.name,
+              notes,
+            });
+          }
+
+          if (!globalOpts.quiet) {
+            console.log(formatAllSessionNotes(allNotes, formatOpts));
+          }
+          process.exitCode = EXIT_CODES.SUCCESS;
+          return;
+        }
+
+        if (!sessionId) {
+          if (!globalOpts.quiet) {
+            console.error('Error: session-id is required (or use --all)');
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
+        // List notes for a specific session
+        const sessionDir = join(sessionsDir, sessionId);
+        const notes = await loadNotes(sessionDir);
+        if (!globalOpts.quiet) {
+          console.log(formatNotesList(notes, formatOpts));
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error(
+            'Error:',
+            error instanceof Error ? error.message : error
+          );
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  notesCommand
+    .command('add')
+    .description('Add a note to a session')
+    .argument('<session-id>', 'session ID')
+    .argument('[text]', 'note text')
+    .option('--file <path>', 'read note text from a file instead')
+    .action(async (sessionId: string, text?: string, options?: { file?: string }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const sessionDir = join(sessionsDir, sessionId);
+
+        if (!(await sessionExists(sessionId, sessionsDir))) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: session '${sessionId}' not found`);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
+        let noteText: string;
+        if (options?.file) {
+          const { readFile } = await import('node:fs/promises');
+          noteText = (await readFile(options.file, 'utf-8')).trim();
+        } else if (text) {
+          noteText = text;
+        } else {
+          if (!globalOpts.quiet) {
+            console.error('Error: note text or --file is required');
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        await addNote(sessionDir, noteText);
+
+        if (!globalOpts.quiet) {
+          console.log('Note added.');
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error(
+            'Error:',
+            error instanceof Error ? error.message : error
+          );
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  notesCommand
+    .command('assess')
+    .description('Add a structured assessment to a session')
+    .argument('<session-id>', 'session ID')
+    .option('--precision <value>', 'estimated precision (e.g., "~54%", "15/28")')
+    .option('--verdict <value>', 'quality judgment: good, refine, reject')
+    .option('--comment <text>', 'free text explanation')
+    .action(async (sessionId: string, options?: { precision?: string; verdict?: string; comment?: string }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        if (!options?.precision && !options?.verdict && !options?.comment) {
+          if (!globalOpts.quiet) {
+            console.error('Error: at least one of --precision, --verdict, or --comment is required');
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const sessionDir = join(sessionsDir, sessionId);
+
+        if (!(await sessionExists(sessionId, sessionsDir))) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: session '${sessionId}' not found`);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
+        await addAssessment(sessionDir, {
+          precision: options?.precision,
+          verdict: options?.verdict,
+          comment: options?.comment,
+        });
+
+        if (!globalOpts.quiet) {
+          console.log('Assessment added.');
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error(
+            'Error:',
+            error instanceof Error ? error.message : error
+          );
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
 
   return program;
 }

@@ -28,20 +28,23 @@ This is especially important for systematic reviews where the search strategy mu
 
 ```bash
 # Add a note to a session
-search-hub notes <session-id> add "MeSH 'Clinical Competence' too broad, removing in next iteration"
+search-hub notes add <session-id> "MeSH 'Clinical Competence' too broad, removing in next iteration"
 
 # Add a note from a file (e.g., for longer assessments)
-search-hub notes <session-id> add --file assessment.md
+search-hub notes add <session-id> --file assessment.md
 
 # List all notes for a session
-search-hub notes <session-id>
+search-hub notes list <session-id>
 
 # Add structured assessment
-search-hub notes <session-id> assess --precision "~54%" --verdict "good" --comment "Core WBA papers captured, some OSCE noise remains"
+search-hub notes assess <session-id> --precision "~54%" --verdict "good" --comment "Core WBA papers captured, some OSCE noise remains"
 
 # Compare notes across sessions (useful for documenting search strategy evolution)
-search-hub notes --all
+search-hub notes list --all
 ```
+
+> Note: session-id is passed to each subcommand (not the parent) because Commander.js
+> cannot mix parent arguments with subcommands.
 
 ### Storage
 
@@ -108,59 +111,59 @@ These structured fields enable future features like:
 
 ### Step 1: Notes storage and CRUD operations
 
-- [ ] Write test: `src/cli/commands/notes.test.ts`
+- [x] Write test: `src/cli/commands/notes.test.ts`
   - Test `addNote(sessionDir, note)` appends entry to notes.yaml
   - Test `loadNotes(sessionDir)` reads and parses notes.yaml
   - Test `addAssessment(sessionDir, assessment)` appends structured assessment entry
   - Test handling of missing notes.yaml (create new file with header comment)
   - Test handling of existing notes.yaml with manual edits / comments preserved
-- [ ] Create stub: `src/cli/commands/notes.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement CRUD functions for notes.yaml (parse → append → write)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Notes are correctly stored and loaded, existing comments are preserved
+- [x] Create stub: `src/cli/commands/notes.ts`
+- [x] Verify test fails (Red)
+- [x] Implement CRUD functions for notes.yaml (parse → append → write)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Notes are correctly stored and loaded, existing comments are preserved
 
 ### Step 2: CLI command registration
 
-- [ ] Write test: CLI option parsing for `notes add`, `notes`, `notes assess`
-- [ ] Register `notes` command in `src/cli/index.ts`
-- [ ] Implement `add` subcommand with `--file` option
-- [ ] Implement `assess` subcommand with `--precision`, `--verdict`, `--comment`
-- [ ] Implement default list view
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All subcommands work correctly
+- [x] Write test: CLI option parsing for `notes add`, `notes`, `notes assess`
+- [x] Register `notes` command in `src/cli/index.ts`
+- [x] Implement `add` subcommand with `--file` option
+- [x] Implement `assess` subcommand with `--precision`, `--verdict`, `--comment`
+- [x] Implement default list view
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All subcommands work correctly
 
 ### Step 3: Integrate notes display into status command
 
-- [ ] Write test: status output includes notes when present
-- [ ] Modify `status` command to load and display notes
-- [ ] Format notes with timestamps and types
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub status <session-id>` shows notes section when notes exist
+- [x] Write test: status output includes notes when present
+- [x] Modify `status` command to load and display notes
+- [x] Format notes with timestamps and types
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub status <session-id>` shows notes section when notes exist
 
 ### Step 4: Cross-session notes view
 
-- [ ] Write test: `--all` flag lists notes across all sessions
-- [ ] Implement cross-session notes aggregation
-- [ ] Format output grouped by session with session name and date
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub notes --all` shows notes from all sessions chronologically
+- [x] Write test: `--all` flag lists notes across all sessions
+- [x] Implement cross-session notes aggregation
+- [x] Format output grouped by session with session name and date
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub notes list --all` shows notes from all sessions grouped by session
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test:
+- [x] Write E2E test:
   - Create a session, add notes, verify they persist
   - Add an assessment, verify structured fields
   - Check status command displays notes
   - Test cross-session view
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test with real sessions
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test with real sessions
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

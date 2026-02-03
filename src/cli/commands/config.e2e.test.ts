@@ -231,7 +231,10 @@ describe('search-hub config E2E', () => {
         output: { color: false, progress_bar: true },
       });
 
-      const config = await loadConfig({ globalConfigPath: configPath });
+      const config = await loadConfig({
+        globalConfigPath: configPath,
+        localConfigPath: '', // Disable local config to avoid interference from project root
+      });
 
       // Check loaded values
       expect(config.log.level).toBe('debug');
@@ -250,7 +253,10 @@ describe('search-hub config E2E', () => {
         session: { directory: customSessionDir },
       });
 
-      const config = await loadConfig({ globalConfigPath: configPath });
+      const config = await loadConfig({
+        globalConfigPath: configPath,
+        localConfigPath: '', // Disable local config to avoid interference from project root
+      });
       const result = viewConfigKey(config, 'session.directory');
 
       expect(result.success).toBe(true);
