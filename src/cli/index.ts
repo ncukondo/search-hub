@@ -140,8 +140,9 @@ import {
 } from './commands/register.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
-import { loadSession, sessionExists } from '../session/manager.js';
-import { writeFile } from 'node:fs/promises';
+import { loadSession, sessionExists, listSessions } from '../session/manager.js';
+import { writeFile, readFile } from 'node:fs/promises';
+import { realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getSessionsDir } from './utils/sessions-dir.js';
@@ -1768,7 +1769,6 @@ Examples:
 
         if (options?.all) {
           // Cross-session notes view
-          const { listSessions } = await import('../session/manager.js');
           const summaries = await listSessions(sessionsDir);
           const allNotes: SessionNotes[] = [];
 
@@ -1837,7 +1837,6 @@ Examples:
 
         let noteText: string;
         if (options?.file) {
-          const { readFile } = await import('node:fs/promises');
           noteText = (await readFile(options.file, 'utf-8')).trim();
         } else if (text) {
           noteText = text;
@@ -1931,7 +1930,6 @@ export async function main(): Promise<void> {
 const currentFile = fileURLToPath(import.meta.url);
 const executedFile = process.argv[1];
 if (executedFile) {
-  const { realpathSync } = await import('node:fs');
   if (realpathSync(executedFile) === realpathSync(currentFile)) {
     main().catch((error) => {
       console.error('Fatal error:', error);
