@@ -104,6 +104,33 @@ describe('executeReviewMerge', () => {
       expect(merged.articles[0]!.reviews).toHaveLength(3);
     });
 
+    it('auto-assigns timestamp when not provided', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const extractedArticles: ArticleEntry[] = [
+        {
+          title: 'Article 1',
+          pmid: '1',
+          reviews: [{ reviewer: 'human:alice', decision: 'include' }], // No timestamp
+        },
+      ];
+      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
+      await writeExtractedFile(extractedArticles, extractedPath);
+
+      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[0]!.reviews[0]!.timestamp).toBeDefined();
+      // Should be a valid ISO timestamp
+      expect(new Date(merged.articles[0]!.reviews[0]!.timestamp!).toISOString()).toBe(
+        merged.articles[0]!.reviews[0]!.timestamp
+      );
+    });
+
     it('skips duplicate reviews (same reviewer+timestamp)', async () => {
       const mainArticles: ArticleEntry[] = [
         {

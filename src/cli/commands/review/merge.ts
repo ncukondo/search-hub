@@ -44,8 +44,10 @@ function getArticleKey(article: ArticleEntry): string {
 
 /**
  * Check if two reviews are duplicates (same reviewer + timestamp)
+ * Note: If incoming review has no timestamp, it's never considered a duplicate
  */
 function isDuplicateReview(existing: Review, incoming: Review): boolean {
+  if (!incoming.timestamp) return false;
   return existing.reviewer === incoming.reviewer && existing.timestamp === incoming.timestamp;
 }
 
@@ -113,9 +115,17 @@ export async function executeReviewMerge(
       continue;
     }
 
-    // Merge reviews
-    for (const review of extracted.reviews) {
-      const isDuplicate = mainArticle.reviews.some((existing) =>
+    // Merge reviews (reviews can be null from YAML parsing with only comments)
+    const extractedReviews = extracted.reviews ?? [];
+    const mainReviews = mainArticle.reviews ?? [];
+
+    // Ensure mainArticle.reviews is an array
+    if (!mainArticle.reviews) {
+      mainArticle.reviews = [];
+    }
+
+    for (const review of extractedReviews) {
+      const isDuplicate = mainReviews.some((existing) =>
         isDuplicateReview(existing, review)
       );
 
@@ -123,7 +133,12 @@ export async function executeReviewMerge(
         result.reviewsSkipped++;
       } else {
         if (!options.dryRun) {
-          mainArticle.reviews.push(review);
+          // Auto-assign timestamp if not provided
+          const reviewWithTimestamp: Review = {
+            ...review,
+            timestamp: review.timestamp ?? new Date().toISOString(),
+          };
+          mainArticle.reviews.push(reviewWithTimestamp);
         }
         result.reviewsAdded++;
       }

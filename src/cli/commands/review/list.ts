@@ -66,7 +66,7 @@ export async function executeReviewList(
     const item: ArticleListItem = {
       title: article.title,
       status,
-      reviewCount: article.reviews.length,
+      reviewCount: (article.reviews ?? []).length,
     };
 
     // Add optional identifiers

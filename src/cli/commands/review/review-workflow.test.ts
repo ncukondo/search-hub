@@ -130,7 +130,8 @@ summary:
     // Step 5: Simulate manual review by editing extracted file
     const extractedFile = parseYaml(extractedContent) as ReviewFile;
 
-    // Add reviews to extracted articles
+    // Add reviews to extracted articles (initialize reviews array if null from YAML parsing)
+    extractedFile.articles[0]!.reviews = extractedFile.articles[0]!.reviews ?? [];
     extractedFile.articles[0]!.reviews.push({
       reviewer: 'gpt-4o',
       decision: 'include',
@@ -138,6 +139,7 @@ summary:
     });
     extractedFile.articles[0]!.finalDecision = 'include';
 
+    extractedFile.articles[1]!.reviews = extractedFile.articles[1]!.reviews ?? [];
     extractedFile.articles[1]!.reviews.push({
       reviewer: 'gpt-4o',
       decision: 'exclude',
@@ -145,6 +147,7 @@ summary:
     });
     extractedFile.articles[1]!.finalDecision = 'exclude';
 
+    extractedFile.articles[2]!.reviews = extractedFile.articles[2]!.reviews ?? [];
     extractedFile.articles[2]!.reviews.push({
       reviewer: 'gpt-4o',
       decision: 'include',
@@ -157,6 +160,7 @@ summary:
     });
     // Leave as conflicting (no finalDecision)
 
+    extractedFile.articles[3]!.reviews = extractedFile.articles[3]!.reviews ?? [];
     extractedFile.articles[3]!.reviews.push({
       reviewer: 'human:reviewer1',
       decision: 'include',
@@ -240,6 +244,7 @@ summary:
 
     const batch1Content = await readFile(batch1Path, 'utf-8');
     const batch1 = parseYaml(batch1Content) as ReviewFile;
+    batch1.articles[0]!.reviews = batch1.articles[0]!.reviews ?? [];
     batch1.articles[0]!.reviews.push({
       reviewer: 'reviewer1',
       decision: 'include',
@@ -258,6 +263,7 @@ summary:
 
     const batch2Content = await readFile(batch2Path, 'utf-8');
     const batch2 = parseYaml(batch2Content) as ReviewFile;
+    batch2.articles[0]!.reviews = batch2.articles[0]!.reviews ?? [];
     batch2.articles[0]!.reviews.push({
       reviewer: 'reviewer2',
       decision: 'include',
@@ -297,6 +303,7 @@ summary:
     // Edit batch
     const batchContent = await readFile(batchPath, 'utf-8');
     const batch = parseYaml(batchContent) as ReviewFile;
+    batch.articles[0]!.reviews = batch.articles[0]!.reviews ?? [];
     batch.articles[0]!.reviews.push({
       reviewer: 'test',
       decision: 'include',

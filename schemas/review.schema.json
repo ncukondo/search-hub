@@ -26,7 +26,7 @@
     "Review": {
       "type": "object",
       "description": "Individual assessment of an article",
-      "required": ["reviewer", "timestamp"],
+      "required": ["reviewer"],
       "properties": {
         "reviewer": {
           "type": "string",

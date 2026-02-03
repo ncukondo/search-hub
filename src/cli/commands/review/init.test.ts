@@ -75,9 +75,15 @@ summary:
     const reviewFile = parseYaml(content) as ReviewFile;
     expect(reviewFile.sessionId).toBe(sessionId);
     expect(reviewFile.articles).toHaveLength(2);
-    expect(reviewFile.articles[0]!.reviews).toEqual([]);
+    // reviews is null when parsed because it has only comments (no actual items)
+    // This is expected - the comments serve as examples for users
+    expect(reviewFile.articles[0]!.reviews).toBeNull();
     expect(reviewFile.articles[0]!.title).toBe('Article 1');
     expect(reviewFile.articles[1]!.title).toBe('Article 2');
+
+    // Verify that example comments are present in the raw YAML
+    expect(content).toContain('# - reviewer: human:your-name');
+    expect(content).toContain('# include / exclude / uncertain');
   });
 
   it('includes schema reference comment at the top', async () => {

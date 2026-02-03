@@ -14,8 +14,8 @@ export interface Review {
   decision?: ReviewDecision;
   /** Optional comment or reason */
   comment?: string;
-  /** ISO 8601 timestamp */
-  timestamp: string;
+  /** ISO 8601 timestamp (optional - auto-assigned on merge if not provided) */
+  timestamp?: string;
 }
 
 /**
@@ -85,13 +85,14 @@ export function classifyStatus(entry: ArticleEntry): ReviewStatus {
     return 'finalized';
   }
 
-  // No reviews = pending
-  if (entry.reviews.length === 0) {
+  // No reviews = pending (reviews can be null from YAML parsing with only comments)
+  const reviews = entry.reviews ?? [];
+  if (reviews.length === 0) {
     return 'pending';
   }
 
   // Check for conflicts among reviews that have decisions
-  const decisions = entry.reviews
+  const decisions = reviews
     .filter((r) => r.decision !== undefined)
     .map((r) => r.decision);
 

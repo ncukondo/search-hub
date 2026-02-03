@@ -158,7 +158,16 @@ export async function executeReviewInit(
   // Add schema reference comment at top
   const schemaPath = '../../../.search-hub/schemas/review.schema.json';
   const schemaComment = `# yaml-language-server: $schema=${schemaPath}\n`;
-  const finalContent = schemaComment + yamlContent;
+
+  // Replace empty reviews arrays with commented example
+  const reviewsExample = `reviews:
+        # - reviewer: human:your-name
+        #   decision: include  # include / exclude / uncertain
+        #   comment: reason`;
+  const finalContent = schemaComment + yamlContent.replace(
+    /reviews: \[\]/g,
+    reviewsExample
+  );
 
   // Write reviews.yaml
   await writeFile(reviewsPath, finalContent, 'utf-8');
