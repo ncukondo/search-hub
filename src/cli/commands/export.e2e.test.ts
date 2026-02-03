@@ -16,6 +16,8 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   setupE2EContext,
+  execCli,
+  createConfig,
   type E2EContext,
 } from '../e2e-helpers.js';
 import {
@@ -1042,6 +1044,148 @@ describe('search-hub export E2E', () => {
           expect(article.year).toBe(expectedYear);
         }
       }
+    });
+  });
+
+  describe('stdout output via CLI process', () => {
+    it('should write JSONL data to stdout when no -o is specified', async () => {
+      const sessionId = 'stdout-jsonl-cli';
+      await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
+
+      const result = await execCli(
+        ['export', sessionId, '--format', 'jsonl', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+
+      // stdout should contain valid JSONL
+      const lines = result.stdout.trim().split('\n');
+      expect(lines).toHaveLength(2);
+      for (const line of lines) {
+        expect(() => JSON.parse(line)).not.toThrow();
+      }
+
+      // Each line should be a valid article object
+      const firstArticle = JSON.parse(lines[0]!);
+      expect(firstArticle).toHaveProperty('title');
+      expect(firstArticle).toHaveProperty('source');
+    });
+
+    it('should write JSON data to stdout when no -o is specified', async () => {
+      const sessionId = 'stdout-json-cli';
+      await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
+
+      const result = await execCli(
+        ['export', sessionId, '--format', 'json', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+
+      // stdout should contain valid JSON with metadata envelope
+      const parsed = JSON.parse(result.stdout);
+      expect(parsed).toHaveProperty('session');
+      expect(parsed).toHaveProperty('summary');
+      expect(parsed).toHaveProperty('results');
+      expect(parsed.results).toHaveLength(2);
+    });
+
+    it('should write IDs data to stdout when no -o is specified', async () => {
+      const sessionId = 'stdout-ids-cli';
+      await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
+
+      const result = await execCli(
+        ['export', sessionId, '--format', 'ids', '--id-type', 'doi', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+
+      // stdout should contain DOIs only
+      const lines = result.stdout.trim().split('\n');
+      expect(lines).toHaveLength(2);
+      expect(lines[0]).toMatch(/^10\.\d+\//);
+      expect(lines[1]).toMatch(/^10\.\d+\//);
+    });
+
+    it('should write CSL-JSON data to stdout when no -o is specified', async () => {
+      const sessionId = 'stdout-csljson-cli';
+      await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
+
+      const result = await execCli(
+        ['export', sessionId, '--format', 'csl-json', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+
+      // stdout should contain valid CSL-JSON array
+      const parsed = JSON.parse(result.stdout);
+      expect(Array.isArray(parsed)).toBe(true);
+      expect(parsed).toHaveLength(2);
+      expect(parsed[0]).toHaveProperty('type', 'article-journal');
+    });
+
+    it('should not mix informational messages into stdout', async () => {
+      // Create articles that will trigger dedup message
+      const articlesWithDup: Article[] = [
+        ...sampleArticles.slice(0, 2),
+        { ...sampleArticles[0]! }, // duplicate
+      ];
+      const sessionId = 'stdout-clean-cli';
+      await createTestSessionWithResults(sessionId, articlesWithDup, ['pubmed']);
+
+      const result = await execCli(
+        ['export', sessionId, '--format', 'jsonl', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+
+      // stdout should contain only valid JSONL (no informational messages)
+      const lines = result.stdout.trim().split('\n');
+      for (const line of lines) {
+        expect(() => JSON.parse(line)).not.toThrow();
+      }
+
+      // stderr should contain dedup info
+      expect(result.stderr).toContain('duplicate');
+    });
+
+    it('should write dedup/filter info to stderr when outputting to stdout', async () => {
+      const sessionId = 'stdout-stderr-info-cli';
+      await createTestSessionWithResults(sessionId, sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+
+      const result = await execCli(
+        ['export', sessionId, '--format', 'jsonl', '--filter-year', '2024-2024', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+
+      // stdout should contain only valid JSONL
+      const lines = result.stdout.trim().split('\n');
+      for (const line of lines) {
+        expect(() => JSON.parse(line)).not.toThrow();
+      }
+
+      // stderr should contain filter info
+      expect(result.stderr).toContain('filtered');
+    });
+
+    it('should write "Exported N articles to" message to stderr when -o is specified', async () => {
+      const sessionId = 'stdout-file-stderr-cli';
+      await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
+
+      const outputPath = join(ctx.tempDir, 'output-stderr-test.jsonl');
+
+      const result = await execCli(
+        ['export', sessionId, '--format', 'jsonl', '-o', outputPath, '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+
+      // stdout should be empty (data goes to file)
+      expect(result.stdout.trim()).toBe('');
+
+      // stderr should contain the "Exported" message
+      expect(result.stderr).toContain('Exported');
+      expect(result.stderr).toContain('articles');
     });
   });
 

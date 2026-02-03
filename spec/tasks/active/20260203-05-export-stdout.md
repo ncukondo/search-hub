@@ -44,30 +44,30 @@ search-hub export <session-id> --format ids --id-type doi | wc -l
 
 ### Step 1: Enable stdout output when -o is omitted
 
-- [ ] Write test: export without `-o` writes to stdout
-- [ ] Modify export command to write to `process.stdout` when no `-o` is specified
-- [ ] Move informational messages to stderr
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub export <session-id>` outputs results to stdout
+- [x] Write test: export without `-o` writes to stdout
+- [x] Modify export command to write to `process.stdout` when no `-o` is specified
+- [x] Move informational messages to stderr
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub export <session-id>` outputs results to stdout
 
 ### Step 2: Suppress progress/info messages for stdout mode
 
-- [ ] Write test: no informational messages mixed into stdout output
-- [ ] Ensure "Exported N articles" message goes to stderr
-- [ ] Ensure any progress indicators are suppressed or redirected
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: stdout output is clean and pipeable
+- [x] Write test: no informational messages mixed into stdout output
+- [x] Ensure "Exported N articles" message goes to stderr
+- [x] Ensure any progress indicators are suppressed or redirected
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: stdout output is clean and pipeable
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: capture stdout output and verify it's valid JSON/JSONL/IDs
-- [ ] Test piping: `search-hub export <session-id> --format jsonl | head -5`
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Write E2E test: capture stdout output and verify it's valid JSON/JSONL/IDs
+- [x] Test piping: `search-hub export <session-id> --format jsonl | head -5`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Test piping with jq, wc, grep
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
