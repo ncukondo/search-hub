@@ -234,13 +234,13 @@ search-hub review export --session <id> --only included [--format yaml|json|json
 
 #### Step 4: Implement `review status` command
 
-- [ ] Write test: `src/cli/commands/review/status.test.ts`
+- [x] Write test: `src/cli/commands/review/status.test.ts`
   - Test: counts articles by status correctly
   - Test: JSON output format
-- [ ] Implement `src/cli/commands/review/status.ts`
+- [x] Implement `src/cli/commands/review/status.ts`
 - [ ] Register command in CLI
-- [ ] Verify tests pass
-- [ ] Acceptance: `review status` shows accurate counts
+- [x] Verify tests pass
+- [x] Acceptance: `review status` shows accurate counts
 
 ### Phase 2: List and Extract
 
