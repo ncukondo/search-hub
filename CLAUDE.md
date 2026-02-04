@@ -38,3 +38,4 @@ tmux send-keys -t %42 "/code-with-task example" Enter
 This prevents input race conditions where tmux processes the Enter before the text is fully buffered.
 
 Use `scripts/send-to-agent.sh` when possible, as it handles this correctly.
+<!-- role: implement -->

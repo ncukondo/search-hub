@@ -170,15 +170,15 @@ AI Agent Workflow:
 
 ### Step 4: Implement review mark command
 
-- [ ] Create new command `review mark`
-  - [ ] Write test: mark single article in work file
-  - [ ] Write test: mark multiple articles via JSON input
-  - [ ] Write test: error if file doesn't have basis field
-  - [ ] Verify tests fail (Red)
-  - [ ] Implement mark command
-  - [ ] Verify tests pass (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review mark --file phase1.yaml --id "..." --decision include` updates file
+- [x] Create new command `review mark`
+  - [x] Write test: mark single article in work file
+  - [x] Write test: mark multiple articles via JSON input
+  - [x] Write test: error if file doesn't have basis field
+  - [x] Verify tests fail (Red)
+  - [x] Implement mark command
+  - [x] Verify tests pass (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review mark --file phase1.yaml --id "..." --decision include` updates file
 
 ### Step 5: Update review merge for basis/timestamp
 
