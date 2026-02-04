@@ -126,24 +126,24 @@ AI Agent Workflow:
 
 ### Step 1: Move reviews.yaml to .internal/
 
-- [ ] Update `review init` to create `.internal/reviews.yaml`
-  - [ ] Write test: `src/cli/commands/review/init.test.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement: create `.internal/` directory, write reviews.yaml there
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review init` creates `sessions/{id}/.internal/reviews.yaml`
+- [x] Update `review init` to create `.internal/reviews.yaml`
+  - [x] Write test: `src/cli/commands/review/init.test.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement: create `.internal/` directory, write reviews.yaml there
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review init` creates `sessions/{id}/.internal/reviews.yaml`
 
 ### Step 2: Add basis and timestamp to review schema
 
-- [ ] Update review type definition
-  - [ ] Write test for new fields
-  - [ ] Verify test fails (Red)
-  - [ ] Add `basis: 'title' | 'abstract' | 'fulltext'` field
-  - [ ] Add `timestamp: string` field (ISO 8601)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Review type includes basis and timestamp
+- [x] Update review type definition
+  - [x] Write test for new fields
+  - [x] Verify test fails (Red)
+  - [x] Add `basis: 'title' | 'abstract' | 'fulltext'` field
+  - [x] Add `timestamp: string` field (ISO 8601) - already existed
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Review type includes basis and timestamp
 
 ### Step 3: Implement review extract --basis --reviewer
 
