@@ -65,6 +65,55 @@ search-hub search query.yaml
 search-hub export <session-id> --format ids
 ```
 
+## Query Development
+
+Developing an effective search query is iterative. Start broad, then refine based on results.
+
+### Workflow
+
+1. **Start with a broad query** - Get an initial set of results:
+   ```bash
+   search-hub search query-v1.yaml --max-results 100
+   ```
+
+2. **Review initial results** - Check titles to assess quality:
+   ```bash
+   search-hub results <session-v1> --limit 50
+   ```
+
+3. **Refine the query** - Copy and modify your query file:
+   ```bash
+   cp query-v1.yaml query-v2.yaml
+   # Edit query-v2.yaml to add/remove terms, adjust filters
+   ```
+
+4. **Run the refined search**:
+   ```bash
+   search-hub search query-v2.yaml --max-results 100
+   ```
+
+5. **Compare results with diff** - See what changed:
+   ```bash
+   search-hub diff <session-v1> <session-v2> --show removed
+   ```
+   This shows articles excluded by your refinements. Review these to ensure you're not losing relevant papers.
+
+### Tips for Effective Refinement
+
+- **Use `--count-only` first**: Check hit counts before downloading full results.
+  ```bash
+  search-hub search query.yaml --count-only
+  ```
+
+- **Use `--dry-run`** to preview translations: See exactly what query each database will receive.
+  ```bash
+  search-hub search query.yaml --dry-run
+  ```
+
+- **Compare removed articles carefully**: When narrowing a search, `--show removed` reveals what you're excluding. If important papers are removed, your refinement may be too aggressive.
+
+- **Keep query versions**: Save each iteration (v1, v2, v3) to track your development process and maintain reproducibility.
+
 ## Documentation
 
 - [Query Guide](./docs/query-guide.md) - How to write query files
