@@ -13,6 +13,8 @@ export interface ResultsCommandOptions {
   fields?: string[];
   providers?: ProviderName[];
   filter?: ExportFilter;
+  showAbstract: boolean;
+  abstractLength?: number;
 }
 
 export interface CommandLineOptions {
@@ -24,6 +26,8 @@ export interface CommandLineOptions {
   filterYear?: string | undefined;
   filterTitle?: string | undefined;
   filterAbstract?: string | undefined;
+  abstract?: boolean | undefined;
+  abstractLength?: string | undefined;
 }
 
 export interface ValidationResult {
@@ -37,6 +41,8 @@ export interface FormatOptions {
   total: number;
   offset?: number | undefined;
   filteredFrom?: number | undefined;
+  showAbstract?: boolean | undefined;
+  abstractLength?: number | undefined;
 }
 
 export function parseResultsOptions(
@@ -46,7 +52,12 @@ export function parseResultsOptions(
   const result: ResultsCommandOptions = {
     sessionId,
     json: options.json ?? false,
+    showAbstract: options.abstract ?? false,
   };
+
+  if (options.abstractLength) {
+    result.abstractLength = parseInt(options.abstractLength, 10);
+  }
 
   if (options.limit) {
     result.limit = parseInt(options.limit, 10);
@@ -129,6 +140,7 @@ export function validateResultsInput(options: ResultsCommandOptions): Validation
 }
 
 const DEFAULT_TITLE_MAX_LENGTH = 70;
+const DEFAULT_ABSTRACT_MAX_LENGTH = 300;
 
 function extractYear(publicationDate: string | undefined): number | null {
   if (!publicationDate) return null;
@@ -136,9 +148,13 @@ function extractYear(publicationDate: string | undefined): number | null {
   return Number.isNaN(year) ? null : year;
 }
 
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
+}
+
 function truncateTitle(title: string, maxLength: number = DEFAULT_TITLE_MAX_LENGTH): string {
-  if (title.length <= maxLength) return title;
-  return title.substring(0, maxLength - 3) + '...';
+  return truncateText(title, maxLength);
 }
 
 export function formatResultsList(
@@ -184,6 +200,17 @@ export function formatResultsList(
 
     if (article.doi) {
       lines.push(`    DOI: ${article.doi}`);
+    }
+
+    if (options.showAbstract) {
+      lines.push('');
+      if (article.abstract && article.abstract.trim() !== '') {
+        const maxLength = options.abstractLength ?? DEFAULT_ABSTRACT_MAX_LENGTH;
+        const truncatedAbstract = truncateText(article.abstract, maxLength);
+        lines.push(`    Abstract: ${truncatedAbstract}`);
+      } else {
+        lines.push('    (No abstract available)');
+      }
     }
 
     lines.push('');

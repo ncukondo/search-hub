@@ -18,21 +18,21 @@ When evaluating query quality, users need to see more than just article titles. 
 
 ### Step 1: Add --abstract flag to results command
 
-- [ ] Step 1: Add command-line option for abstract display
-  - [ ] Write test: `src/cli/commands/results.test.ts` - test --abstract flag parsing
-  - [ ] Implement: Add `--abstract` option to results command
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `search-hub results --help` shows --abstract option
+- [x] Step 1: Add command-line option for abstract display
+  - [x] Write test: `src/cli/commands/results.test.ts` - test --abstract flag parsing
+  - [x] Implement: Add `--abstract` option to results command
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `search-hub results --help` shows --abstract option
 
 ### Step 2: Implement abstract display formatting
 
-- [ ] Step 2: Format and display abstracts with titles
-  - [ ] Write test: Test output includes abstract text
-  - [ ] Implement: Fetch and display abstract from session data
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Abstracts display below titles when flag is set
+- [x] Step 2: Format and display abstracts with titles
+  - [x] Write test: Test output includes abstract text
+  - [x] Implement: Fetch and display abstract from session data
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Abstracts display below titles when flag is set
 
 Expected output:
 ```
@@ -49,32 +49,32 @@ Expected output:
 
 ### Step 3: Add --abstract-length option for truncation
 
-- [ ] Step 3: Allow users to control abstract length
-  - [ ] Write test: Test truncation at specified length
-  - [ ] Implement: Add `--abstract-length <n>` option (default: 300 characters)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Abstracts truncate at specified length with "..."
+- [x] Step 3: Allow users to control abstract length
+  - [x] Write test: Test truncation at specified length
+  - [x] Implement: Add `--abstract-length <n>` option (default: 300 characters)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Abstracts truncate at specified length with "..."
 
 ### Step 4: Handle missing abstracts gracefully
 
-- [ ] Step 4: Display placeholder when abstract is unavailable
-  - [ ] Write test: Test output when abstract is null/empty
-  - [ ] Implement: Show "(No abstract available)" for missing abstracts
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Missing abstracts show clear placeholder
+- [x] Step 4: Display placeholder when abstract is unavailable
+  - [x] Write test: Test output when abstract is null/empty
+  - [x] Implement: Show "(No abstract available)" for missing abstracts
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Missing abstracts show clear placeholder
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/results.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/results.e2e.test.ts`
   - Test with real session data
   - Verify abstract display formatting
   - Test truncation behavior
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] Manual verification: Run with real search session
-- [ ] Acceptance: Abstracts display correctly and help evaluate query quality
+- [x] Acceptance: Abstracts display correctly and help evaluate query quality
 
 ## Notes
 

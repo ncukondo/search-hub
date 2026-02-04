@@ -1052,6 +1052,8 @@ Examples:
     .option('--filter-year <range>', 'year range filter (e.g., "2023-2025")')
     .option('--filter-title <keywords>', 'title keyword filter (comma-separated)')
     .option('--filter-abstract <keywords>', 'abstract keyword filter (comma-separated)')
+    .option('--abstract', 'show abstracts with results')
+    .option('--abstract-length <n>', 'maximum abstract length in characters (default: 300)')
     .addHelpText('after', `
 Examples:
   $ search-hub results SESSION_ID                         # List all articles
@@ -1059,7 +1061,8 @@ Examples:
   $ search-hub results SESSION_ID --limit 20 --offset 40  # Articles 41-60
   $ search-hub results SESSION_ID --json                  # JSON output for scripting
   $ search-hub results SESSION_ID --db pubmed             # Only PubMed articles
-  $ search-hub results SESSION_ID --filter-year 2023-2025 # Filter by year`)
+  $ search-hub results SESSION_ID --filter-year 2023-2025 # Filter by year
+  $ search-hub results SESSION_ID --abstract              # Show with abstracts`)
     .action(
       async (
         sessionId: string,
@@ -1072,6 +1075,8 @@ Examples:
           filterYear?: string;
           filterTitle?: string;
           filterAbstract?: string;
+          abstract?: boolean;
+          abstractLength?: string;
         }
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
@@ -1086,6 +1091,8 @@ Examples:
             filterYear: options?.filterYear,
             filterTitle: options?.filterTitle,
             filterAbstract: options?.filterAbstract,
+            abstract: options?.abstract,
+            abstractLength: options?.abstractLength,
           });
 
           const validation = validateResultsInput(resultsOpts);
@@ -1151,6 +1158,8 @@ Examples:
                 total,
                 offset,
                 filteredFrom,
+                showAbstract: resultsOpts.showAbstract,
+                abstractLength: resultsOpts.abstractLength,
               }));
             }
           }

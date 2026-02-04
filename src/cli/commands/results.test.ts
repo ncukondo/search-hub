@@ -184,6 +184,112 @@ describe('formatResultsList', () => {
 
     expect(output).toContain('filtered from 10');
   });
+
+  it('displays abstract when showAbstract is true', () => {
+    const articles = [createTestArticle({
+      abstract: 'This is a test abstract for the article.',
+    })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+    });
+
+    expect(output).toContain('Abstract: This is a test abstract for the article.');
+  });
+
+  it('does not display abstract when showAbstract is false', () => {
+    const articles = [createTestArticle({
+      abstract: 'This is a test abstract.',
+    })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: false,
+    });
+
+    expect(output).not.toContain('Abstract:');
+    expect(output).not.toContain('This is a test abstract.');
+  });
+
+  it('truncates abstract at specified length', () => {
+    const longAbstract = 'A'.repeat(500);
+    const articles = [createTestArticle({ abstract: longAbstract })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+      abstractLength: 100,
+    });
+
+    expect(output).toContain('Abstract:');
+    // Should be truncated with ellipsis
+    expect(output).toContain('...');
+    // Should not contain the full abstract
+    expect(output).not.toContain(longAbstract);
+  });
+
+  it('truncates abstract at default length (300) when no length specified', () => {
+    const longAbstract = 'B'.repeat(500);
+    const articles = [createTestArticle({ abstract: longAbstract })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+    });
+
+    expect(output).toContain('Abstract:');
+    expect(output).toContain('...');
+    // Check it's around 300 characters (prefix + content + ellipsis)
+    const abstractLine = output.split('\n').find(line => line.includes('Abstract:'));
+    expect(abstractLine).toBeDefined();
+    // "    Abstract: " is 14 chars, plus 297 content chars, plus "..." = 314
+    expect(abstractLine!.length).toBeLessThanOrEqual(320);
+  });
+
+  it('does not truncate short abstracts', () => {
+    const shortAbstract = 'This is a short abstract.';
+    const articles = [createTestArticle({ abstract: shortAbstract })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+      abstractLength: 300,
+    });
+
+    expect(output).toContain(`Abstract: ${shortAbstract}`);
+    expect(output).not.toContain('...');
+  });
+
+  it('shows placeholder when abstract is missing and showAbstract is true', () => {
+    const articles = [createTestArticle({}, ['journal'])]; // No abstract field
+    delete (articles[0] as Partial<Article>).abstract;
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+    });
+
+    expect(output).toContain('(No abstract available)');
+  });
+
+  it('shows placeholder when abstract is empty string and showAbstract is true', () => {
+    const articles = [createTestArticle({ abstract: '' })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+    });
+
+    expect(output).toContain('(No abstract available)');
+  });
 });
 
 describe('formatResultsJson', () => {
@@ -234,6 +340,29 @@ describe('parseResultsOptions', () => {
     expect(result.offset).toBeUndefined();
     expect(result.json).toBe(false);
     expect(result.fields).toBeUndefined();
+    expect(result.showAbstract).toBe(false);
+  });
+
+  it('parses abstract flag', () => {
+    const result = parseResultsOptions('my-session', { abstract: true });
+
+    expect(result.showAbstract).toBe(true);
+  });
+
+  it('parses abstract-length option', () => {
+    const result = parseResultsOptions('my-session', { abstractLength: '500' });
+
+    expect(result.abstractLength).toBe(500);
+  });
+
+  it('parses abstract and abstract-length together', () => {
+    const result = parseResultsOptions('my-session', {
+      abstract: true,
+      abstractLength: '200',
+    });
+
+    expect(result.showAbstract).toBe(true);
+    expect(result.abstractLength).toBe(200);
   });
 
   it('parses limit and offset options', () => {
@@ -298,6 +427,7 @@ describe('validateResultsInput', () => {
     const options: ResultsCommandOptions = {
       sessionId: 'my-session',
       json: false,
+      showAbstract: false,
     };
 
     const result = validateResultsInput(options);
@@ -309,6 +439,7 @@ describe('validateResultsInput', () => {
     const options: ResultsCommandOptions = {
       sessionId: '',
       json: false,
+      showAbstract: false,
     };
 
     const result = validateResultsInput(options);
@@ -321,6 +452,7 @@ describe('validateResultsInput', () => {
     const options: ResultsCommandOptions = {
       sessionId: '   ',
       json: false,
+      showAbstract: false,
     };
 
     const result = validateResultsInput(options);
@@ -332,6 +464,7 @@ describe('validateResultsInput', () => {
     const options: ResultsCommandOptions = {
       sessionId: 'my-session',
       json: false,
+      showAbstract: false,
       limit: -5,
     };
 
@@ -344,6 +477,7 @@ describe('validateResultsInput', () => {
   it('rejects negative offset', () => {
     const options: ResultsCommandOptions = {
       sessionId: 'my-session',
+      showAbstract: false,
       json: false,
       offset: -10,
     };
