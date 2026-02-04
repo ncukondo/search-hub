@@ -46,6 +46,7 @@ import {
   formatSearchCompletionTip,
   formatCountOnlyTip,
   formatDirectQueryTip,
+  formatShortKeywordWarning,
 } from './commands/search.js';
 import { executeSearch, executeCountOnly, executePreview } from './commands/search-executor.js';
 import {
@@ -145,6 +146,7 @@ import {
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
 import { loadSession, sessionExists, listSessions } from '../session/manager.js';
+import { parseQueryFile, detectShortKeywords } from '../query/parser.js';
 import { writeFile, readFile } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import { join } from 'node:path';
@@ -547,6 +549,20 @@ Query Refinement:
             }
             process.exitCode = EXIT_CODES.GENERAL_ERROR;
             return;
+          }
+
+          // Check for short keywords and display warning
+          if (searchOpts.queryFile && !globalOpts.quiet) {
+            try {
+              const ast = await parseQueryFile(searchOpts.queryFile);
+              const shortKeywords = detectShortKeywords(ast);
+              if (shortKeywords.length > 0) {
+                console.error(formatShortKeywordWarning(shortKeywords));
+                console.error('');
+              }
+            } catch {
+              // Ignore parse errors here - they'll be caught later during execution
+            }
           }
 
           // Handle dry-run mode

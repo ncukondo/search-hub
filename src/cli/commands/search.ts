@@ -391,3 +391,19 @@ export function formatDirectQueryTip(): string {
 Tip: For reproducible searches, consider using a YAML query file:
      search-hub query init -o my-search.yaml`;
 }
+
+
+/**
+ * Format warning for short keywords that may cause noisy results.
+ */
+export function formatShortKeywordWarning(shortKeywords: string[]): string {
+  if (shortKeywords.length === 0) {
+    return '';
+  }
+
+  const keywordList = shortKeywords.join(', ');
+  return `⚠ Query contains short keywords: ${keywordList}
+  Short terms may match unrelated acronyms. Consider:
+  - Adding full phrases (e.g., "Objective Structured Clinical Examination")
+  - Using exclude terms to filter false matches`;
+}

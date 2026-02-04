@@ -63,13 +63,13 @@ arXivでの医学教育検索テスト中に発見された問題を解決する
 
 3文字以下のキーワード（略語）が含まれる場合に警告を表示する。
 
-- [ ] Write test: `src/query/parser.test.ts`
+- [x] Write test: `src/query/parser.test.ts`
   - 短いキーワードを検出する関数のテスト
-- [ ] Write test: `src/cli/commands/search.test.ts`
+- [x] Write test: `src/cli/commands/search.test.ts`
   - 短いキーワード使用時に警告が表示されることを確認
-- [ ] Implement short keyword detection in `src/query/parser.ts`
+- [x] Implement short keyword detection in `src/query/parser.ts`
   - `detectShortKeywords(query: QueryFile): string[]` 関数追加
-- [ ] Display warning in search command
+- [x] Display warning in search command
   - 検索実行前に警告を表示:
     ```
     ⚠ Query contains short keywords: OSCE, EPA
@@ -77,9 +77,9 @@ arXivでの医学教育検索テスト中に発見された問題を解決する
       - Adding full phrases (e.g., "Objective Structured Clinical Examination")
       - Using exclude terms to filter false matches
     ```
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 短いキーワード使用時に警告が表示される
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 短いキーワード使用時に警告が表示される
 
 ### Step 4: Improve query init template with exclude examples
 

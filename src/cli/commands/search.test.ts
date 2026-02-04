@@ -10,6 +10,7 @@ import {
   formatCountOnlyTip,
   formatDirectQueryTip,
   formatPreviewOutput,
+  formatShortKeywordWarning,
   type SearchCommandOptions,
   type TranslationResult,
   type CountResult,
@@ -573,6 +574,36 @@ describe('search command', () => {
       const result = formatDirectQueryTip();
 
       expect(result).toContain('search-hub query init');
+    });
+  });
+
+  describe('formatShortKeywordWarning', () => {
+    it('should format warning with list of short keywords', () => {
+      const result = formatShortKeywordWarning(['EPA', 'OSCE', 'AI']);
+
+      expect(result).toContain('⚠');
+      expect(result).toContain('EPA');
+      expect(result).toContain('OSCE');
+      expect(result).toContain('AI');
+      expect(result).toContain('short');
+    });
+
+    it('should include suggestion for full phrases', () => {
+      const result = formatShortKeywordWarning(['EPA']);
+
+      expect(result).toContain('full phrases');
+    });
+
+    it('should include suggestion for exclude terms', () => {
+      const result = formatShortKeywordWarning(['EPA']);
+
+      expect(result).toContain('exclude');
+    });
+
+    it('should return empty string for empty array', () => {
+      const result = formatShortKeywordWarning([]);
+
+      expect(result).toBe('');
     });
   });
 
