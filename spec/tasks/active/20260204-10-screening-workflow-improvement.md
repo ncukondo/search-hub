@@ -224,18 +224,18 @@ AI Agent Workflow:
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: full screening workflow
-  - [ ] Create session with articles
-  - [ ] `review init`
-  - [ ] `review extract --basis title --reviewer "ai:test" -o phase1.yaml`
-  - [ ] `review mark --file phase1.yaml --input decisions.json`
-  - [ ] `review merge --session ID phase1.yaml`
-  - [ ] Verify master has correct reviews with basis/timestamp
-- [ ] Write E2E test: two-phase screening (title then abstract)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Write E2E test: full screening workflow
+  - [x] Create session with articles
+  - [x] `review init`
+  - [x] `review extract --basis title --reviewer "ai:test" -o phase1.yaml`
+  - [x] `review mark --file phase1.yaml --input decisions.json`
+  - [x] `review merge --session ID phase1.yaml`
+  - [x] Verify master has correct reviews with basis/timestamp
+- [x] Write E2E test: two-phase screening (title then abstract)
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Test the feature manually
-- [ ] Acceptance: All tests pass, workflow works end-to-end
+- [x] Acceptance: All tests pass, workflow works end-to-end
 
 ## File Layout
 
