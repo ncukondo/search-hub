@@ -69,20 +69,23 @@ fi
 CONTENT=$(tmux capture-pane -t "$PANE" -p -S -50 2>/dev/null | tail -20)
 
 # Trust prompt detection:
-#   - Has selection marker " ❯ 1." or " ❯ 2." (indented)
-#   - Has "Enter to confirm" text
-if echo "$CONTENT" | grep -qE '^\s+❯\s+[12]\.' && \
-   echo "$CONTENT" | grep -q 'Enter to confirm'; then
+#   - Contains "Yes, I trust" (from the trust folder prompt)
+#   - Contains "confirm" (from "Enter to confirm")
+#   Note: We use keyword-based detection instead of line patterns because
+#   narrow panes cause line wrapping that breaks pattern matching.
+if echo "$CONTENT" | grep -q 'Yes, I trust' && \
+   echo "$CONTENT" | grep -q 'confirm'; then
   echo "trust"
   exit 0
 fi
 
 # Idle detection:
-#   - Has input prompt "❯" at line start (not indented)
+#   - Has input prompt "❯" (with or without suggestion text)
 #   - No spinner characters (working indicators)
-#   - Note: "esc to interrupt" appears in status bar even when idle, so we only check spinners
-if echo "$CONTENT" | grep -qE '^❯'; then
-  # Check for spinner characters only (esc to interrupt is always shown in status bar)
+#   Note: In narrow panes, "❯" may not be at line start due to wrapping.
+#   We check for "❯" anywhere, then distinguish idle from working by spinners.
+if echo "$CONTENT" | grep -q '❯'; then
+  # Check for spinner characters (working indicators)
   if echo "$CONTENT" | grep -qE '(⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)'; then
     echo "working"
   else
