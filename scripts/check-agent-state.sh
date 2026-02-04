@@ -66,7 +66,8 @@ if ! tmux has-session -t "$PANE" 2>/dev/null; then
 fi
 
 # Capture pane content (include scroll-back to ensure we get content)
-CONTENT=$(tmux capture-pane -t "$PANE" -p -S -50 2>/dev/null | tail -20)
+# Note: Don't use tail here - narrow panes or short content may push ❯ outside the range
+CONTENT=$(tmux capture-pane -t "$PANE" -p -S -50 2>/dev/null)
 
 # Trust prompt detection:
 #   - Contains "folder" (from "trust this folder" prompt)
