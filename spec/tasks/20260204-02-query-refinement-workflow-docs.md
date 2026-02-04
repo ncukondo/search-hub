@@ -54,10 +54,10 @@ Query Refinement Workflow:
 
 ### Final Step: Manual Verification
 
-- [ ] Verify help messages are clear and actionable
-- [ ] Test the documented workflow manually with a real search
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: Documentation guides users through effective query refinement
+- [x] Verify help messages are clear and actionable
+- [x] Test the documented workflow manually with a real search
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: Documentation guides users through effective query refinement
 
 ## Notes
 
