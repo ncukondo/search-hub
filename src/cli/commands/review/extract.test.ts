@@ -23,7 +23,8 @@ describe('executeReviewExtract', () => {
 
   async function writeReviewFile(articles: ArticleEntry[]): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
-    await mkdir(sessionDir, { recursive: true });
+    const internalDir = join(sessionDir, '.internal');
+    await mkdir(internalDir, { recursive: true });
 
     const reviewFile: ReviewFile = {
       sessionId,
@@ -31,7 +32,7 @@ describe('executeReviewExtract', () => {
     };
 
     const content = stringifyYaml(reviewFile);
-    await writeFile(join(sessionDir, 'reviews.yaml'), content);
+    await writeFile(join(internalDir, 'reviews.yaml'), content);
   }
 
   const sampleArticles: ArticleEntry[] = [

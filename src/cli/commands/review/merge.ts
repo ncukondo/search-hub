@@ -87,7 +87,7 @@ export async function executeReviewMerge(
   sessionsDir: string
 ): Promise<ReviewMergeResult> {
   const sessionDir = join(sessionsDir, options.sessionId);
-  const mainReviewsPath = join(sessionDir, 'reviews.yaml');
+  const mainReviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
 
   // Load both files
   const mainFile = await loadReviewFile(mainReviewsPath);
@@ -160,7 +160,8 @@ export async function executeReviewMerge(
     });
 
     // Preserve schema reference comment
-    const schemaPath = '../../../.search-hub/schemas/review.schema.json';
+    // Path from sessions/{id}/.internal/ to .search-hub/schemas/
+    const schemaPath = '../../../../.search-hub/schemas/review.schema.json';
     const schemaComment = `# yaml-language-server: $schema=${schemaPath}\n`;
     const finalContent = schemaComment + yamlContent;
 

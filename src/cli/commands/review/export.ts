@@ -43,7 +43,7 @@ interface ExportedArticle {
  * Load review file from session directory
  */
 async function loadReviewFile(sessionDir: string): Promise<ReviewFile> {
-  const reviewsPath = join(sessionDir, 'reviews.yaml');
+  const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
   const content = await readFile(reviewsPath, 'utf-8');
   return parseYaml(content) as ReviewFile;
 }

@@ -23,7 +23,8 @@ describe('executeReviewMerge', () => {
 
   async function writeMainReviewFile(articles: ArticleEntry[]): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
-    await mkdir(sessionDir, { recursive: true });
+    const internalDir = join(sessionDir, '.internal');
+    await mkdir(internalDir, { recursive: true });
 
     const reviewFile: ReviewFile = {
       sessionId,
@@ -31,7 +32,7 @@ describe('executeReviewMerge', () => {
     };
 
     const content = stringifyYaml(reviewFile);
-    await writeFile(join(sessionDir, 'reviews.yaml'), content);
+    await writeFile(join(internalDir, 'reviews.yaml'), content);
   }
 
   async function writeExtractedFile(articles: ArticleEntry[], filePath: string): Promise<void> {
@@ -46,7 +47,7 @@ describe('executeReviewMerge', () => {
   }
 
   async function readMainReviewFile(): Promise<ReviewFile> {
-    const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
     const content = await readFile(reviewsPath, 'utf-8');
     return parseYaml(content) as ReviewFile;
   }

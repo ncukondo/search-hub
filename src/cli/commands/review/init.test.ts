@@ -55,6 +55,24 @@ summary:
     }
   }
 
+  it('creates reviews.yaml inside .internal/ directory', async () => {
+    await setupSession('pubmed', [
+      JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+    ]);
+
+    const options: ReviewInitOptions = { sessionId };
+    const result = await executeReviewInit(options, sessionsDir);
+
+    // Should create in .internal/ directory
+    expect(result.reviewsPath).toContain('.internal');
+    expect(result.reviewsPath).toContain('reviews.yaml');
+
+    // Verify file exists at .internal/reviews.yaml
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
+    const content = await readFile(reviewsPath, 'utf-8');
+    expect(content).toContain('yaml-language-server');
+  });
+
   it('generates reviews.yaml with correct structure', async () => {
     await setupSession('pubmed', [
       JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
@@ -64,7 +82,7 @@ summary:
     const options: ReviewInitOptions = { sessionId };
     await executeReviewInit(options, sessionsDir);
 
-    const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
     const content = await readFile(reviewsPath, 'utf-8');
 
     // Should include schema reference comment
@@ -94,7 +112,7 @@ summary:
     const options: ReviewInitOptions = { sessionId };
     await executeReviewInit(options, sessionsDir);
 
-    const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
     const content = await readFile(reviewsPath, 'utf-8');
 
     // Schema comment should be first line
@@ -123,8 +141,10 @@ summary:
       JSON.stringify({ title: 'Article', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
     ]);
 
-    // Create existing reviews.yaml
-    const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+    // Create existing .internal/reviews.yaml
+    const internalDir = join(sessionsDir, sessionId, '.internal');
+    await mkdir(internalDir, { recursive: true });
+    const reviewsPath = join(internalDir, 'reviews.yaml');
     await writeFile(reviewsPath, 'existing: content');
 
     const options: ReviewInitOptions = { sessionId };
@@ -136,8 +156,10 @@ summary:
       JSON.stringify({ title: 'New Article', authors: [], pmid: '999', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
     ]);
 
-    // Create existing reviews.yaml
-    const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+    // Create existing .internal/reviews.yaml
+    const internalDir = join(sessionsDir, sessionId, '.internal');
+    await mkdir(internalDir, { recursive: true });
+    const reviewsPath = join(internalDir, 'reviews.yaml');
     await writeFile(reviewsPath, 'sessionId: old\narticles: []');
 
     const options: ReviewInitOptions = { sessionId, force: true };
@@ -194,7 +216,7 @@ summary:
     const options: ReviewInitOptions = { sessionId };
     await executeReviewInit(options, sessionsDir);
 
-    const reviewsPath = join(sessionDir, 'reviews.yaml');
+    const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
     const content = await readFile(reviewsPath, 'utf-8');
     const reviewFile = parseYaml(content) as ReviewFile;
 
@@ -212,7 +234,7 @@ summary:
     const options: ReviewInitOptions = { sessionId };
     await executeReviewInit(options, sessionsDir);
 
-    const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
     const content = await readFile(reviewsPath, 'utf-8');
     const reviewFile = parseYaml(content) as ReviewFile;
 
@@ -233,7 +255,7 @@ summary:
     const options: ReviewInitOptions = { sessionId };
     await executeReviewInit(options, sessionsDir);
 
-    const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
     const content = await readFile(reviewsPath, 'utf-8');
     const reviewFile = parseYaml(content) as ReviewFile;
 

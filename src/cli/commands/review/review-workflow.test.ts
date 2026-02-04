@@ -100,8 +100,8 @@ summary:
     const initResult = await executeReviewInit({ sessionId }, sessionsDir);
     expect(initResult.articleCount).toBe(10);
 
-    // Verify reviews.yaml was created
-    const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+    // Verify reviews.yaml was created in .internal/
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
     await access(reviewsPath);
 
     // Step 2: Status - Check initial status (all pending)
@@ -283,7 +283,7 @@ summary:
     expect(status.pending).toBe(8);
 
     // Verify the first article has the review from cycle 1
-    const finalReviews = await readFile(join(sessionsDir, sessionId, 'reviews.yaml'), 'utf-8');
+    const finalReviews = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
     const finalFile = parseYaml(finalReviews) as ReviewFile;
     const article1 = finalFile.articles[0];
     expect(article1!.reviews).toHaveLength(1); // reviewer1's review
@@ -414,7 +414,7 @@ summary:
     expect(initResult.articleCount).toBe(3); // 2 unique + 1 merged
 
     // Read and verify reviews.yaml has mergedFrom for all articles
-    const reviewsPath = join(sessionDir, 'reviews.yaml');
+    const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
     const reviewsContent = await readFile(reviewsPath, 'utf-8');
     const reviewFile = parseYaml(reviewsContent) as ReviewFile;
 

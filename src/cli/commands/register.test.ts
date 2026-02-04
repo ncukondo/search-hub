@@ -339,8 +339,9 @@ describe('register command', () => {
     it('returns true when reviews.yaml exists', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
-      await writeFile(join(sessionDir, 'reviews.yaml'), 'sessionId: test-session\narticles: []');
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
+      await writeFile(join(internalDir, 'reviews.yaml'), 'sessionId: test-session\narticles: []');
 
       const result = await hasReviewFile(sessionId, sessionsDir);
 
@@ -381,7 +382,8 @@ describe('register command', () => {
     it('returns correct counts for mixed review states', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
@@ -402,7 +404,7 @@ articles:
     reviews: []
     finalDecision: include
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       const result = await getReviewSummary(sessionId, sessionsDir);
 
@@ -417,7 +419,8 @@ articles:
     it('returns all pending when no reviews or decisions exist', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
@@ -429,7 +432,7 @@ articles:
     title: "Article B"
     reviews: []
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       const result = await getReviewSummary(sessionId, sessionsDir);
 
@@ -444,7 +447,8 @@ articles:
     it('counts needs-final articles as pending', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
@@ -455,7 +459,7 @@ articles:
       - reviewer: ai
         decision: include
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       const result = await getReviewSummary(sessionId, sessionsDir);
 
@@ -475,13 +479,14 @@ articles:
     it('returns empty counts for session with no articles', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
 articles: []
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       const result = await getReviewSummary(sessionId, sessionsDir);
 
@@ -511,7 +516,8 @@ articles: []
     it('returns only articles with finalDecision=include', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
@@ -544,7 +550,7 @@ articles:
       - source: scopus
         doi: "10.1000/d"
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       const result = await getIncludedArticles(sessionId, sessionsDir);
 
@@ -556,7 +562,8 @@ articles:
     it('returns empty array when no included articles', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
@@ -566,7 +573,7 @@ articles:
     reviews: []
     finalDecision: exclude
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       const result = await getIncludedArticles(sessionId, sessionsDir);
 
@@ -576,7 +583,8 @@ articles:
     it('converts review ArticleEntry to Article format', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
@@ -596,7 +604,7 @@ articles:
         pmid: "12345"
         doi: "10.1000/a"
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       const result = await getIncludedArticles(sessionId, sessionsDir);
 
@@ -615,7 +623,8 @@ articles:
     it('gets source from mergedFrom when available', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
@@ -629,7 +638,7 @@ articles:
         scopusId: "2-s2.0-123"
         doi: "10.1000/a"
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       const result = await getIncludedArticles(sessionId, sessionsDir);
 
@@ -640,7 +649,8 @@ articles:
     it('gets source from first entry of mergedFrom for merged articles', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
@@ -658,7 +668,7 @@ articles:
         scopusId: "2-s2.0-123"
         doi: "10.1000/a"
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       const result = await getIncludedArticles(sessionId, sessionsDir);
 
@@ -669,7 +679,8 @@ articles:
     it('throws error when mergedFrom is missing', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       // Legacy review file without mergedFrom
       const reviewContent = `
@@ -680,7 +691,7 @@ articles:
     reviews: []
     finalDecision: include
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       await expect(getIncludedArticles(sessionId, sessionsDir)).rejects.toThrow(
         /mergedFrom.*missing/i
@@ -690,7 +701,8 @@ articles:
     it('throws error when mergedFrom is empty array', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
-      await mkdir(sessionDir, { recursive: true });
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
 
       const reviewContent = `
 sessionId: test-session
@@ -701,7 +713,7 @@ articles:
     finalDecision: include
     mergedFrom: []
 `;
-      await writeFile(join(sessionDir, 'reviews.yaml'), reviewContent);
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       await expect(getIncludedArticles(sessionId, sessionsDir)).rejects.toThrow(
         /mergedFrom.*empty/i
