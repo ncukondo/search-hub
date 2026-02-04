@@ -20,12 +20,12 @@ This task improves help messages to guide users toward the optimal workflow, inc
 
 ### Step 1: Add Quick Start and Query Refinement sections to main help
 
-- [ ] Step 1: Add recommended workflow including diff to main CLI help
-  - [ ] Write test: `src/cli/index.test.ts` - verify help includes "Quick Start" and "Query Refinement" sections
-  - [ ] Implement: Update help output in `src/cli/index.ts`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `search-hub --help` shows both workflows
+- [x] Step 1: Add recommended workflow including diff to main CLI help
+  - [x] Write test: `src/cli/index.test.ts` - verify help includes "Quick Start" and "Query Refinement" sections
+  - [x] Implement: Update help output in `src/cli/index.ts`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `search-hub --help` shows both workflows
 
 Expected output:
 ```

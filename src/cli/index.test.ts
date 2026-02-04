@@ -145,6 +145,37 @@ describe('CLI Entry Point', () => {
     });
   });
 
+  describe('main help sections', () => {
+    /**
+     * Helper to capture full help output including addHelpText sections.
+     * Commander's helpInformation() only returns base help, not custom text.
+     */
+    function captureHelpOutput(program: Command): string {
+      let output = '';
+      program.configureOutput({
+        writeOut: (str) => { output += str; },
+        writeErr: (str) => { output += str; },
+      });
+      program.outputHelp();
+      return output;
+    }
+
+    it('should include Quick Start section in help output', () => {
+      const program = createProgram();
+      const helpOutput = captureHelpOutput(program);
+      expect(helpOutput).toContain('Quick Start:');
+      expect(helpOutput).toContain('query init');
+      expect(helpOutput).toContain('--count-only');
+    });
+
+    it('should include Query Refinement section in help output', () => {
+      const program = createProgram();
+      const helpOutput = captureHelpOutput(program);
+      expect(helpOutput).toContain('Query Refinement');
+      expect(helpOutput).toContain('diff');
+    });
+  });
+
   describe('register command', () => {
     it('should have register command registered', () => {
       const program = createProgram();

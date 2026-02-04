@@ -181,7 +181,19 @@ export function createProgram(): Command {
     .option('--session-dir <path>', 'path to session directory')
     .option('-v, --verbose', 'enable verbose output', false)
     .option('-q, --quiet', 'suppress all output except errors', false)
-    .option('--no-color', 'disable color output');
+    .option('--no-color', 'disable color output')
+    .addHelpText('after', `
+Quick Start:
+  $ search-hub query init -o search.yaml        # Create query template
+  $ search-hub search search.yaml --count-only  # Check hit counts
+  $ search-hub search search.yaml               # Execute search
+  $ search-hub results <session>                # Review titles
+
+Query Refinement (iterate until satisfied):
+  $ cp search.yaml search-v2.yaml               # Create variant
+  $ (edit search-v2.yaml)                       # Adjust terms
+  $ search-hub search search-v2.yaml            # Search again
+  $ search-hub diff <old> <new> --show removed  # Compare results`);
 
   // Register init command
   program
