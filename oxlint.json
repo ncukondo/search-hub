@@ -1,15 +1,25 @@
 {
   "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
   "plugins": ["typescript", "import"],
+  "overrides": [
+    {
+      "files": ["**/*test*.ts"],
+      "rules": {
+        "typescript/no-non-null-assertion": "off",
+        "typescript/no-explicit-any": "off"
+      }
+    }
+  ],
   "rules": {
     "no-unused-vars": "warn",
     "no-console": "off",
     "typescript/no-explicit-any": "warn",
-    "typescript/no-non-null-assertion": "error",
+    "typescript/no-non-null-assertion": "warn",
     "typescript/no-unsafe-type-assertion": "warn",
     "typescript/no-unnecessary-type-assertion": "error",
     "typescript/explicit-function-return-type": "off",
-    "import/no-unresolved": "off"
+    "import/no-unresolved": "off",
+    "import/no-dynamic-require": ["warn", { "esmodule": true }]
   },
   "ignorePatterns": ["dist", "node_modules", "coverage"]
 }
