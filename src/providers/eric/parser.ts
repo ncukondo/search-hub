@@ -4,7 +4,92 @@
  */
 
 import type { Author } from '../base/types';
+import { createProviderError } from '../base/types';
 import type { ERICDocument, ERICRawDocument, ERICSearchResponse } from './types';
+
+/**
+ * Truncate a string or object for error messages.
+ * Prevents leaking large response bodies in errors.
+ */
+function truncateForError(value: unknown, maxLength = 200): string {
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
+  const str = typeof value === 'string' ? value : JSON.stringify(value);
+  if (str.length <= maxLength) {
+    return str;
+  }
+  return str.slice(0, maxLength) + '... (truncated)';
+}
+
+/**
+ * Validate ERIC API response structure.
+ * Throws descriptive ProviderError if the response is malformed.
+ */
+export function validateSearchResponse(response: unknown): asserts response is ERICSearchResponse {
+  // Check for null/undefined
+  if (response == null) {
+    throw createProviderError(
+      'PARSE_ERROR',
+      'ERIC API error: Unexpected response format (response is null/undefined). ' +
+        'This may indicate an API change or service issue. ' +
+        'Response received: ' + truncateForError(response),
+      'eric',
+      { retryable: false }
+    );
+  }
+
+  // Check for response.response object
+  if (typeof response !== 'object' || !('response' in response)) {
+    throw createProviderError(
+      'PARSE_ERROR',
+      "ERIC API error: Unexpected response format (missing 'response' property). " +
+        'This may indicate an API change or service issue. ' +
+        'Response received: ' + truncateForError(response),
+      'eric',
+      { retryable: false }
+    );
+  }
+
+  const inner = (response as Record<string, unknown>)['response'];
+
+  // Check for response.response being an object
+  if (inner == null || typeof inner !== 'object') {
+    throw createProviderError(
+      'PARSE_ERROR',
+      "ERIC API error: Unexpected response format ('response' is not an object). " +
+        'This may indicate an API change or service issue. ' +
+        'Response received: ' + truncateForError(response),
+      'eric',
+      { retryable: false }
+    );
+  }
+
+  const innerObj = inner as Record<string, unknown>;
+
+  // Check for numFound
+  if (!('numFound' in innerObj) || typeof innerObj['numFound'] !== 'number') {
+    throw createProviderError(
+      'PARSE_ERROR',
+      "ERIC API error: Unexpected response format (missing 'numFound'). " +
+        'This may indicate an API change or service issue. ' +
+        'Response received: ' + truncateForError(response),
+      'eric',
+      { retryable: false }
+    );
+  }
+
+  // Check for docs array
+  if (!('docs' in innerObj) || !Array.isArray(innerObj['docs'])) {
+    throw createProviderError(
+      'PARSE_ERROR',
+      "ERIC API error: Unexpected response format ('docs' is not an array). " +
+        'This may indicate an API change or service issue. ' +
+        'Response received: ' + truncateForError(response),
+      'eric',
+      { retryable: false }
+    );
+  }
+}
 
 /**
  * Result of parsing an ERIC search response.
@@ -115,8 +200,12 @@ export function parseDocument(doc: ERICRawDocument): ERICDocument {
 
 /**
  * Parse an ERIC API search response.
+ * Validates the response structure before parsing.
  */
-export function parseSearchResponse(response: ERICSearchResponse): ERICSearchResult {
+export function parseSearchResponse(response: unknown): ERICSearchResult {
+  // Validate response structure first
+  validateSearchResponse(response);
+
   const { numFound, start, docs } = response.response;
 
   const documents = docs.map(parseDocument);

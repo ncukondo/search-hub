@@ -25,20 +25,20 @@ This task improves error handling to provide clear, actionable error messages wh
 
 ### Step 1: Add defensive response validation in ERIC client
 
-- [ ] Step 1: Validate API response structure before accessing properties
-  - [ ] Write test: `src/providers/eric/client.test.ts` - test with malformed responses
-  - [ ] Create stub: Add validation function
-  - [ ] Verify test fails (Red)
-  - [ ] Implement: Add response validation with clear error messages
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Malformed responses throw descriptive errors
+- [x] Step 1: Validate API response structure before accessing properties
+  - [x] Write test: `src/providers/eric/client.test.ts` - test with malformed responses
+  - [x] Create stub: Add validation function
+  - [x] Verify test fails (Red)
+  - [x] Implement: Add response validation with clear error messages
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Malformed responses throw descriptive errors
 
 Test cases:
-- Response is null/undefined
-- Response.response is missing
-- Response.response.numFound is missing
-- Response.response.docs is not an array
+- [x] Response is null/undefined
+- [x] Response.response is missing
+- [x] Response.response.numFound is missing
+- [x] Response.response.docs is not an array
 
 ### Step 2: Improve error messages for common failure modes
 

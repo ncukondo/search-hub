@@ -204,4 +204,84 @@ describe('ERIC Client', () => {
       expect(DEFAULT_FIELDS).toContain('peerreviewed');
     });
   });
+
+  describe('malformed response handling', () => {
+    it('should throw descriptive error when response is null', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(null),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining('Unexpected response format'),
+        provider: 'eric',
+      });
+    });
+
+    it('should throw descriptive error when response is undefined', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(undefined),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining('Unexpected response format'),
+        provider: 'eric',
+      });
+    });
+
+    it('should throw descriptive error when response.response is missing', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining("missing 'response'"),
+        provider: 'eric',
+      });
+    });
+
+    it('should throw descriptive error when numFound is missing', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ response: { start: 0, docs: [] } }),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining("missing 'numFound'"),
+        provider: 'eric',
+      });
+    });
+
+    it('should throw descriptive error when docs is not an array', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ response: { numFound: 10, start: 0, docs: 'invalid' } }),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining("'docs' is not an array"),
+        provider: 'eric',
+      });
+    });
+
+    it('should include truncated response in error message', async () => {
+      const malformedResponse = { error: 'Something went wrong', details: 'a'.repeat(500) };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(malformedResponse),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringMatching(/Response received:/),
+      });
+    });
+  });
 });
