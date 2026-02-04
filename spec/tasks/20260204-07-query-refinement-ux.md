@@ -85,14 +85,14 @@ arXivでの医学教育検索テスト中に発見された問題を解決する
 
 `query init` のテンプレートで `exclude` セクションを目立たせる。
 
-- [ ] Write test: `src/cli/commands/query.test.ts`
+- [x] Write test: `src/cli/commands/query.test.ts`
   - 生成されるテンプレートに `exclude: []` が含まれることを確認
-- [ ] Update template in `src/cli/commands/query.ts`
+- [x] Update template in `src/cli/commands/query.ts`
   - `exclude` を空配列として明示的に表示
   - コメントで使用例を追加
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: テンプレートに `exclude` が目立つ形で含まれる
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: テンプレートに `exclude` が目立つ形で含まれる
 
 ### Final Step: E2E Integration Tests
 

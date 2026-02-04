@@ -35,6 +35,17 @@ describe('query init', () => {
       expect(template).toContain('# exclude:');
       expect(template).toContain('# Terms to exclude (NOT operator)');
     });
+
+    it('should include explicit exclude: [] in template', () => {
+      const template = generateQueryTemplate();
+      expect(template).toContain('exclude: []');
+    });
+
+    it('should include exclude usage tips in comments', () => {
+      const template = generateQueryTemplate();
+      expect(template).toContain('Tip:');
+      expect(template).toContain('acronym');
+    });
   });
 
   describe('writeQueryTemplate', () => {
