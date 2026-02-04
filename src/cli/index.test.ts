@@ -176,6 +176,32 @@ describe('CLI Entry Point', () => {
     });
   });
 
+  describe('search command', () => {
+    /**
+     * Helper to capture full help output including addHelpText sections.
+     */
+    function captureSubcommandHelp(program: Command, commandName: string): string {
+      const searchCommand = program.commands.find((cmd) => cmd.name() === commandName);
+      if (!searchCommand) throw new Error(`Command ${commandName} not found`);
+      let output = '';
+      searchCommand.configureOutput({
+        writeOut: (str) => { output += str; },
+        writeErr: (str) => { output += str; },
+      });
+      searchCommand.outputHelp();
+      return output;
+    }
+
+    it('should have --query option with improved description', () => {
+      const program = createProgram();
+      const helpOutput = captureSubcommandHelp(program, 'search');
+      // Should mention database-native syntax and advanced usage
+      expect(helpOutput).toContain('--query');
+      expect(helpOutput).toContain('database-native');
+      expect(helpOutput).toContain('prefer YAML');
+    });
+  });
+
   describe('register command', () => {
     it('should have register command registered', () => {
       const program = createProgram();

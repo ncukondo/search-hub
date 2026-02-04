@@ -485,7 +485,7 @@ Examples:
     .description('Execute search across databases')
     .argument('[query-file]', 'path to query YAML file')
     .option('--db <providers>', 'target specific database(s), comma-separated')
-    .option('--query <string>', 'direct query string (requires --db)')
+    .option('--query <string>', 'direct query in database-native syntax (advanced; requires --db; prefer YAML files)')
     .option('--name <string>', 'session name')
     .option('--max-results <n>', 'limit results per database')
     .option('--dry-run', 'show translated queries without executing')

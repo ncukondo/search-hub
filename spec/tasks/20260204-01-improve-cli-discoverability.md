@@ -44,12 +44,12 @@ Query Refinement (iterate until satisfied):
 
 ### Step 2: Improve --query option description
 
-- [ ] Step 2: Clarify that --query requires database-specific syntax
-  - [ ] Write test: `src/cli/commands/search.test.ts` - verify help text for --query
-  - [ ] Implement: Update option description in `src/cli/commands/search.ts`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `search-hub search --help` shows warning about database-specific syntax
+- [x] Step 2: Clarify that --query requires database-specific syntax
+  - [x] Write test: `src/cli/index.test.ts` - verify help text for --query
+  - [x] Implement: Update option description in `src/cli/index.ts`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `search-hub search --help` shows warning about database-specific syntax
 
 Expected description:
 ```
