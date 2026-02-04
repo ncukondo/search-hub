@@ -283,5 +283,31 @@ describe('ERIC Client', () => {
         message: expect.stringMatching(/Response received:/),
       });
     });
+
+    it('should include troubleshooting hints in error message', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ unexpected: 'format' }),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining('This may indicate an API change or service issue'),
+      });
+    });
+
+    it('should have actionable error format with what happened and potential causes', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const error = await client.search('test').catch(e => e);
+
+      // Error should follow expected format: what happened + potential causes + response
+      expect(error.message).toMatch(/ERIC API error: Unexpected response format/);
+      expect(error.message).toMatch(/This may indicate an API change or service issue/);
+      expect(error.message).toMatch(/Response received:/);
+    });
   });
 });

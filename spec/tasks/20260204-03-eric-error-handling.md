@@ -42,12 +42,12 @@ Test cases:
 
 ### Step 2: Improve error messages for common failure modes
 
-- [ ] Step 2: Provide actionable error messages
-  - [ ] Write test: Verify error messages include troubleshooting hints
-  - [ ] Implement: Add context to error messages (e.g., "ERIC API returned unexpected format")
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Errors include what happened and potential causes
+- [x] Step 2: Provide actionable error messages
+  - [x] Write test: Verify error messages include troubleshooting hints
+  - [x] Implement: Add context to error messages (e.g., "ERIC API returned unexpected format")
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Errors include what happened and potential causes
 
 Expected error format:
 ```
