@@ -280,5 +280,97 @@ describe('Scopus Response Parser', () => {
       expect(result.entries).toHaveLength(1);
       expect(result.entries[0]!['dc:identifier']).toBe('SCOPUS_ID:12345');
     });
+
+    it('should include parseWarning when parse fails', () => {
+      const json = { wrongStructure: true };
+      const result = parseSearchResponse(json);
+      expect(result.parseWarning).toBeDefined();
+      expect(result.parseWarning).toContain('Scopus API response parse failed');
+    });
+  });
+
+  describe('null value handling', () => {
+    it('should handle null values in entry fields', () => {
+      const json = {
+        'search-results': {
+          'opensearch:totalResults': '1',
+          'opensearch:startIndex': '0',
+          'opensearch:itemsPerPage': '25',
+          entry: [
+            {
+              'dc:identifier': 'SCOPUS_ID:12345',
+              'dc:title': 'Test Article',
+              'prism:pageRange': null,
+              'prism:volume': null,
+              'prism:doi': null,
+            },
+          ],
+        },
+      };
+      const result = parseSearchResponse(json);
+      expect(result.totalResults).toBe(1);
+      expect(result.entries).toHaveLength(1);
+      expect(result.entries[0]!['dc:identifier']).toBe('SCOPUS_ID:12345');
+      expect(result.parseWarning).toBeUndefined();
+    });
+
+    it('should handle null values in author fields', () => {
+      const json = {
+        'search-results': {
+          'opensearch:totalResults': '1',
+          'opensearch:startIndex': '0',
+          'opensearch:itemsPerPage': '25',
+          entry: [
+            {
+              'dc:identifier': 'SCOPUS_ID:12345',
+              'dc:title': 'Test Article',
+              author: [
+                {
+                  authname: 'Smith, John',
+                  authid: null,
+                  afid: null,
+                },
+              ],
+            },
+          ],
+        },
+      };
+      const result = parseSearchResponse(json);
+      expect(result.totalResults).toBe(1);
+      expect(result.entries).toHaveLength(1);
+      expect(result.entries[0]!.author).toHaveLength(1);
+      expect(result.parseWarning).toBeUndefined();
+    });
+
+    it('should handle mixed null and undefined values', () => {
+      const json = {
+        'search-results': {
+          'opensearch:totalResults': '2',
+          'opensearch:startIndex': '0',
+          'opensearch:itemsPerPage': '25',
+          entry: [
+            {
+              'dc:identifier': 'SCOPUS_ID:11111',
+              'dc:title': 'Article One',
+              'prism:pageRange': '100-110',
+              'prism:volume': '5',
+            },
+            {
+              'dc:identifier': 'SCOPUS_ID:22222',
+              'dc:title': 'Article Two',
+              'prism:pageRange': null,
+              'prism:volume': null,
+              'dc:description': null,
+            },
+          ],
+        },
+      };
+      const result = parseSearchResponse(json);
+      expect(result.totalResults).toBe(2);
+      expect(result.entries).toHaveLength(2);
+      expect(result.entries[0]!['prism:pageRange']).toBe('100-110');
+      expect(result.entries[1]!['prism:pageRange']).toBeNull();
+      expect(result.parseWarning).toBeUndefined();
+    });
   });
 });

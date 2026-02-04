@@ -73,6 +73,9 @@ export interface ScopusSearchResponse {
 
   /** Array of result entries */
   entries: ScopusRawEntry[];
+
+  /** Warning message if parse failed or had issues */
+  parseWarning?: string | undefined;
 }
 
 /**

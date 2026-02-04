@@ -73,6 +73,9 @@ export class ScopusProvider extends BaseProvider {
     const response = await this.withRetry(async () => {
       return await this.client.search(query.native, { start: 0, count: 1 });
     });
+    if (response.parseWarning) {
+      console.error(`Warning: ${response.parseWarning}`);
+    }
     return response.totalResults;
   }
 
@@ -105,9 +108,12 @@ export class ScopusProvider extends BaseProvider {
         });
       });
 
-      // Update total on first page
+      // Update total on first page and check for parse warnings
       if (offset === 0) {
         totalResults = response.totalResults;
+        if (response.parseWarning) {
+          console.error(`Warning: ${response.parseWarning}`);
+        }
       }
 
       // Update state

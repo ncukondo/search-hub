@@ -61,12 +61,19 @@ export function parseSearchResponse(json: unknown): ScopusSearchResponse {
   const parseResult = ScopusApiResponseSchema.safeParse(json);
 
   if (!parseResult.success) {
+    // Build warning message from Zod errors
+    const issues = parseResult.error.issues
+      .map(issue => `${issue.path.join('.')}: ${issue.message}`)
+      .join('; ');
+    const warning = `Scopus API response parse failed: ${issues}`;
+
     // Fallback to empty response on invalid structure
     return {
       totalResults: 0,
       startIndex: 0,
       itemsPerPage: 25,
       entries: [],
+      parseWarning: warning,
     };
   }
 
