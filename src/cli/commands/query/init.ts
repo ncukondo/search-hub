@@ -22,6 +22,8 @@ const QUERY_TEMPLATE =
   "        - \"search term 2\"\n" +
   "      # mesh:                 # PubMed MeSH terms (optional)\n" +
   "      #   - \"MeSH Heading\"\n" +
+  "      # eric:                 # ERIC Descriptors (optional, ERIC only)\n" +
+  "      #   - \"ERIC Descriptor\"\n" +
   "      exclude: []             # Terms to exclude (NOT operator)\n" +
   "      # Tip: Use exclude to filter out false matches from short keywords/acronyms\n" +
   "      # exclude:\n" +

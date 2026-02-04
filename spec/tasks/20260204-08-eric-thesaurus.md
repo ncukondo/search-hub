@@ -74,13 +74,13 @@ PubMedのMeSH用語と同様に、ERICでも統制語彙（ERIC Descriptors）�
 
 ### Step 5: Update documentation
 
-- [ ] Update `docs/query-guide.md`
+- [x] Update `docs/query-guide.md`
   - TermBlockセクションに`eric`フィールドの説明を追加
   - 使用例を追加
-- [ ] Update query template in `src/cli/commands/query.ts`
+- [x] Update query template in `src/cli/commands/query.ts`
   - `query init`で生成されるテンプレートに`eric`のコメント例を追加
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: ドキュメントとテンプレートが更新されている
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: ドキュメントとテンプレートが更新されている
 
 ### Final Step: E2E Integration Tests
 
