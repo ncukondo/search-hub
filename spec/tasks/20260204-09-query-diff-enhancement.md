@@ -139,17 +139,17 @@ Result changes:
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/diff.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/diff.e2e.test.ts`
   - 2つの異なるクエリで検索を実行
   - diffコマンドでクエリ変更が表示されることを確認
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**:
   - [ ] 実際に2つのセッションを作成してdiffを実行
   - [ ] クエリ変更が正しく表示されることを確認
   - [ ] `--no-query-diff`で非表示になることを確認
   - [ ] `--json`でJSON出力を確認
-- [ ] Acceptance: All tests pass, query diff works in real usage
+- [x] Acceptance: All tests pass, query diff works in real usage
 
 ## Notes
 
