@@ -66,30 +66,35 @@ export function translateTerms(prefix: string, keywords: string[], operator: Ope
 
 /**
  * Translate a single query block to arXiv syntax.
+ * Returns an object with the main query part and optional ANDNOT clause.
  */
-function translateBlock(block: QueryBlock): string {
+function translateBlock(block: QueryBlock): { query: string; notClause: string | null } {
   const { field, terms, operator } = block;
 
   // arXiv only uses keywords; ignore mesh and emtree
   const keywords = terms.keywords;
 
-  if (keywords.length === 0) {
-    return '';
+  let query = '';
+
+  if (keywords.length > 0) {
+    // Handle title_abstract expansion
+    if (field === 'title_abstract') {
+      query = translateTitleAbstract(keywords, operator);
+    } else {
+      // Get field prefix
+      const prefix = translateFieldPrefix(field);
+      if (prefix !== null) {
+        query = translateTerms(prefix, keywords, operator);
+      }
+    }
   }
 
-  // Handle title_abstract expansion
-  if (field === 'title_abstract') {
-    return translateTitleAbstract(keywords, operator);
-  }
+  // Translate exclude terms
+  const notClause = terms.exclude
+    ? translateExcludeTerms(terms.exclude, field)
+    : null;
 
-  // Get field prefix
-  const prefix = translateFieldPrefix(field);
-  if (prefix === null) {
-    // Unsupported field (e.g., keyword)
-    return '';
-  }
-
-  return translateTerms(prefix, keywords, operator);
+  return { query, notClause };
 }
 
 /**
@@ -111,6 +116,45 @@ function translateTitleAbstract(keywords: string[], operator: Operator): string 
   }
 
   return `(${expandedTerms.join(` ${operator} `)})`;
+}
+
+/**
+ * Translate exclude terms to ANDNOT clause.
+ * arXiv uses ANDNOT instead of NOT.
+ */
+function translateExcludeTerms(
+  exclude: string[],
+  field: FieldType
+): string | null {
+  if (exclude.length === 0) {
+    return null;
+  }
+
+  // Handle title_abstract expansion
+  if (field === 'title_abstract') {
+    const expandedTerms = exclude.map((term) => {
+      const quoted = quoteIfNeeded(term);
+      return `(ti:${quoted} OR abs:${quoted})`;
+    });
+    if (expandedTerms.length === 1) {
+      return `ANDNOT (${expandedTerms[0]})`;
+    }
+    return `ANDNOT (${expandedTerms.join(' OR ')})`;
+  }
+
+  // Get field prefix
+  const prefix = translateFieldPrefix(field);
+  if (prefix === null) {
+    // Unsupported field
+    return null;
+  }
+
+  const translatedTerms = exclude.map((term) => `${prefix}${quoteIfNeeded(term)}`);
+
+  if (translatedTerms.length === 1) {
+    return `ANDNOT ${translatedTerms[0]}`;
+  }
+  return `ANDNOT (${translatedTerms.join(' OR ')})`;
 }
 
 /**
@@ -156,9 +200,16 @@ function translateCategories(categories: string[]): string {
  */
 export function translateQuery(ast: QueryAST): TranslatedQuery {
   const parts: string[] = [];
+  const notClauses: string[] = [];
 
   // Translate all blocks (AND'd together)
-  const blockParts = ast.blocks.map(translateBlock).filter((part) => part !== '');
+  const blockResults = ast.blocks.map(translateBlock);
+  const blockParts = blockResults.map((r) => r.query).filter((part) => part !== '');
+  const blockNotClauses = blockResults
+    .map((r) => r.notClause)
+    .filter((s): s is string => s !== null);
+
+  notClauses.push(...blockNotClauses);
 
   if (blockParts.length > 0) {
     if (blockParts.length === 1) {
@@ -191,6 +242,15 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
     native = parts[0]!;
   } else {
     native = parts.join(' AND ');
+  }
+
+  // Append ANDNOT clauses
+  for (const notClause of notClauses) {
+    if (native) {
+      native = `${native} ${notClause}`;
+    } else {
+      native = notClause;
+    }
   }
 
   return {

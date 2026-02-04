@@ -281,4 +281,75 @@ describe('translateQuery', () => {
       expect(result.originalAst).toBe(ast);
     });
   });
+
+  describe('exclude term translation', () => {
+    it('should translate single exclude term with ANDNOT', () => {
+      const ast = createQueryAST([
+        createBlock('title', {
+          keywords: ['EPA', 'entrustable professional activities'],
+          exclude: ['environmental protection'],
+        }),
+      ]);
+      const result = translateQuery(ast);
+      expect(result.native).toContain('ti:EPA OR ti:"entrustable professional activities"');
+      expect(result.native).toContain('ANDNOT ti:"environmental protection"');
+    });
+
+    it('should translate multiple exclude terms with OR in ANDNOT clause', () => {
+      const ast = createQueryAST([
+        createBlock('title', {
+          keywords: ['EPA'],
+          exclude: ['pollution', 'agency'],
+        }),
+      ]);
+      const result = translateQuery(ast);
+      expect(result.native).toContain('ANDNOT (ti:pollution OR ti:agency)');
+    });
+
+    it('should translate exclude terms with title_abstract field', () => {
+      const ast = createQueryAST([
+        createBlock('title_abstract', {
+          keywords: ['diabetes'],
+          exclude: ['animal'],
+        }),
+      ]);
+      const result = translateQuery(ast);
+      // title_abstract expands to ti and abs
+      expect(result.native).toContain('ti:diabetes OR abs:diabetes');
+      expect(result.native).toContain('ANDNOT ((ti:animal OR abs:animal))');
+    });
+
+    it('should combine exclude with date filters', () => {
+      const ast = createQueryAST(
+        [
+          createBlock('title', {
+            keywords: ['quantum'],
+            exclude: ['classical'],
+          }),
+        ],
+        { yearFrom: 2020, yearTo: 2024 }
+      );
+      const result = translateQuery(ast);
+      expect(result.native).toContain('ti:quantum');
+      expect(result.native).toContain('ANDNOT ti:classical');
+      expect(result.native).toContain('submittedDate:');
+    });
+
+    it('should combine exclude with category filters', () => {
+      const ast = createQueryAST(
+        [
+          createBlock('title', {
+            keywords: ['machine learning'],
+            exclude: ['survey'],
+          }),
+        ],
+        {},
+        { arxiv: { categories: ['cs.AI'] } }
+      );
+      const result = translateQuery(ast);
+      expect(result.native).toContain('ti:"machine learning"');
+      expect(result.native).toContain('ANDNOT ti:survey');
+      expect(result.native).toContain('cat:cs.AI');
+    });
+  });
 });
