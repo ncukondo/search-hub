@@ -120,23 +120,40 @@ export class ERICClient {
       const json = (await response.json()) as ERICSearchResponse;
       return parseSearchResponse(json);
     } catch (error) {
+      // Handle AbortError (timeout or user cancellation)
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw createProviderError(
           'TIMEOUT',
-          'ERIC API request timed out or was aborted',
+          'ERIC API request timed out or was aborted. ' +
+            'This may be due to slow network or server issues. ' +
+            'Try again later or check your network connection.',
           'eric',
           { retryable: true, cause: error }
         );
       }
-      if (error instanceof Error && error.message === 'Network error') {
+      // Handle network errors (connection refused, DNS failure, etc.)
+      if (error instanceof TypeError ||
+          (error instanceof Error && /network|fetch|connect|ECONNREFUSED|ENOTFOUND|dns/i.test(error.message))) {
         throw createProviderError(
           'NETWORK_ERROR',
-          'Failed to connect to ERIC API',
+          'Failed to connect to ERIC API. ' +
+            'This may be due to network issues or the ERIC service being unavailable. ' +
+            `Error: ${error instanceof Error ? error.message : String(error)}`,
           'eric',
           { retryable: true, cause: error }
         );
       }
-      throw error;
+      // Re-throw ProviderErrors as-is (from parseSearchResponse validation)
+      if (error && typeof error === 'object' && 'code' in error && 'provider' in error) {
+        throw error;
+      }
+      // Wrap unexpected errors
+      throw createProviderError(
+        'SERVER_ERROR',
+        `ERIC API unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+        'eric',
+        { retryable: false, cause: error }
+      );
     } finally {
       clearTimeout(timeoutId);
     }

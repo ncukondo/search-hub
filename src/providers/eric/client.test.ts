@@ -166,7 +166,44 @@ describe('ERIC Client', () => {
     it('should throw on network error', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(client.search('test')).rejects.toThrow('Failed to connect to ERIC API');
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'NETWORK_ERROR',
+        message: expect.stringContaining('Failed to connect to ERIC API'),
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should handle TypeError from fetch (network failure)', async () => {
+      mockFetch.mockRejectedValueOnce(new TypeError('fetch failed'));
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'NETWORK_ERROR',
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should handle DNS resolution errors', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('getaddrinfo ENOTFOUND api.ies.ed.gov'));
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'NETWORK_ERROR',
+        message: expect.stringContaining('ENOTFOUND'),
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should handle connection refused errors', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('connect ECONNREFUSED'));
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'NETWORK_ERROR',
+        message: expect.stringContaining('ECONNREFUSED'),
+        provider: 'eric',
+        retryable: true,
+      });
     });
 
     it('should respect AbortSignal', async () => {
@@ -179,7 +216,23 @@ describe('ERIC Client', () => {
 
       await expect(
         client.search('test', { signal: controller.signal })
-      ).rejects.toThrow();
+      ).rejects.toMatchObject({
+        code: 'TIMEOUT',
+        message: expect.stringContaining('timed out or was aborted'),
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should include troubleshooting hints in timeout errors', async () => {
+      mockFetch.mockImplementationOnce(() => {
+        throw new DOMException('Aborted', 'AbortError');
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'TIMEOUT',
+        message: expect.stringContaining('check your network connection'),
+      });
     });
 
     it('should accept timeout option', () => {
@@ -202,6 +255,112 @@ describe('ERIC Client', () => {
       expect(DEFAULT_FIELDS).toContain('publicationdateyear');
       expect(DEFAULT_FIELDS).toContain('source');
       expect(DEFAULT_FIELDS).toContain('peerreviewed');
+    });
+  });
+
+  describe('malformed response handling', () => {
+    it('should throw descriptive error when response is null', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(null),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining('Unexpected response format'),
+        provider: 'eric',
+      });
+    });
+
+    it('should throw descriptive error when response is undefined', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(undefined),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining('Unexpected response format'),
+        provider: 'eric',
+      });
+    });
+
+    it('should throw descriptive error when response.response is missing', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining("missing 'response'"),
+        provider: 'eric',
+      });
+    });
+
+    it('should throw descriptive error when numFound is missing', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ response: { start: 0, docs: [] } }),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining("missing 'numFound'"),
+        provider: 'eric',
+      });
+    });
+
+    it('should throw descriptive error when docs is not an array', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ response: { numFound: 10, start: 0, docs: 'invalid' } }),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining("'docs' is not an array"),
+        provider: 'eric',
+      });
+    });
+
+    it('should include truncated response in error message', async () => {
+      const malformedResponse = { error: 'Something went wrong', details: 'a'.repeat(500) };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(malformedResponse),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringMatching(/Response received:/),
+      });
+    });
+
+    it('should include troubleshooting hints in error message', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ unexpected: 'format' }),
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        message: expect.stringContaining('This may indicate an API change or service issue'),
+      });
+    });
+
+    it('should have actionable error format with what happened and potential causes', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const error = await client.search('test').catch(e => e);
+
+      // Error should follow expected format: what happened + potential causes + response
+      expect(error.message).toMatch(/ERIC API error: Unexpected response format/);
+      expect(error.message).toMatch(/This may indicate an API change or service issue/);
+      expect(error.message).toMatch(/Response received:/);
     });
   });
 });
