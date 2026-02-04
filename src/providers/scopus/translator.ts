@@ -71,14 +71,25 @@ function quoteTerm(term: string): string {
 
 /**
  * Translate a single query block to Scopus syntax.
+ * Returns an object with the main query part and optional NOT clause.
  */
-function translateBlock(block: QueryBlock): string {
+function translateBlock(block: QueryBlock): { query: string; notClause: string | null } {
   const field = FIELD_MAP[block.field];
   const terms = block.terms.keywords.map(quoteTerm);
   const operator = block.operator;
 
   const termsStr = terms.join(` ${operator} `);
-  return `${field}(${termsStr})`;
+  const query = `${field}(${termsStr})`;
+
+  // Translate exclude terms (without AND prefix - will be added during join)
+  let notClause: string | null = null;
+  if (block.terms.exclude && block.terms.exclude.length > 0) {
+    const excludeTerms = block.terms.exclude.map(quoteTerm);
+    const excludeStr = excludeTerms.join(' OR ');
+    notClause = `NOT ${field}(${excludeStr})`;
+  }
+
+  return { query, notClause };
 }
 
 /**
@@ -119,14 +130,20 @@ function translateFilters(filters: Filters, scopusOverrides?: OverrideBlock): st
  */
 export function translateQuery(ast: QueryAST): TranslatedQuery {
   // Translate query blocks
-  const blockParts = ast.blocks.map(translateBlock);
+  const blockResults = ast.blocks.map(translateBlock);
+
+  // Collect query parts and NOT clauses
+  const blockParts = blockResults.map((r) => r.query);
+  const notClauses = blockResults
+    .map((r) => r.notClause)
+    .filter((s): s is string => s !== null);
 
   // Translate filters
   const scopusOverrides = ast.overrides.scopus;
   const filterParts = translateFilters(ast.filters, scopusOverrides);
 
-  // Combine all parts with AND
-  const allParts = [...blockParts, ...filterParts];
+  // Build native query: blocks AND NOT(excludes) AND filters
+  const allParts: string[] = [...blockParts, ...notClauses, ...filterParts];
   const native = allParts.join(' AND ');
 
   return {

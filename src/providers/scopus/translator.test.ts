@@ -393,6 +393,98 @@ describe('Scopus Query Translator', () => {
     });
   });
 
+  describe('Exclude Term Translation', () => {
+    it('should translate single exclude term with AND NOT', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: {
+              keywords: ['EPA', 'entrustable professional activities'],
+              exclude: ['environmental protection'],
+            },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe(
+        'TITLE-ABS-KEY(EPA OR "entrustable professional activities") AND NOT TITLE-ABS-KEY("environmental protection")'
+      );
+    });
+
+    it('should translate multiple exclude terms with OR in AND NOT clause', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: {
+              keywords: ['EPA'],
+              exclude: ['environmental protection', 'pollution', 'agency'],
+            },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe(
+        'TITLE-ABS-KEY(EPA) AND NOT TITLE-ABS-KEY("environmental protection" OR pollution OR agency)'
+      );
+    });
+
+    it('should translate exclude terms with same field as keywords', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title',
+            terms: {
+              keywords: ['diabetes'],
+              exclude: ['animal model'],
+            },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe('TITLE(diabetes) AND NOT TITLE("animal model")');
+    });
+
+    it('should combine exclude with filters', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: {
+              keywords: ['diabetes'],
+              exclude: ['mice', 'rats'],
+            },
+            operator: 'OR',
+          },
+        ],
+        filters: { yearFrom: 2020, languages: ['en'] },
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe(
+        'TITLE-ABS-KEY(diabetes) AND NOT TITLE-ABS-KEY(mice OR rats) AND PUBYEAR > 2019 AND LANGUAGE(english)'
+      );
+    });
+  });
+
   describe('Complex Queries', () => {
     it('should handle complex multi-block query', () => {
       const ast: QueryAST = {
