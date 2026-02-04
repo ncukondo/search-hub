@@ -5,13 +5,20 @@
 export type ReviewDecision = 'include' | 'exclude' | 'uncertain';
 
 /**
+ * Basis of the review decision (what information was used)
+ */
+export type ReviewBasis = 'title' | 'abstract' | 'fulltext';
+
+/**
  * Individual assessment of an article by a reviewer
  */
 export interface Review {
-  /** Reviewer identifier: "gpt-4o", "claude-sonnet", "human:tanaka" */
+  /** Reviewer identifier: "human:name" or "ai:name" */
   reviewer: string;
   /** Assessment decision */
   decision?: ReviewDecision;
+  /** Basis of the decision (what information was used) */
+  basis?: ReviewBasis;
   /** Optional comment or reason */
   comment?: string;
   /** ISO 8601 timestamp (optional - auto-assigned on merge if not provided) */
