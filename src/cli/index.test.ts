@@ -202,6 +202,22 @@ describe('CLI Entry Point', () => {
     });
   });
 
+  describe('command ordering', () => {
+    it('should list query command before search command in help output', () => {
+      const program = createProgram();
+      const helpInfo = program.helpInformation();
+      // Match command lines: "  query" and "  search" at the start of a line
+      const commandsSection = helpInfo.split('Commands:')[1] || '';
+      const queryMatch = commandsSection.match(/^\s+query\b/m);
+      const searchMatch = commandsSection.match(/^\s+search\b/m);
+      expect(queryMatch).not.toBeNull();
+      expect(searchMatch).not.toBeNull();
+      const queryIndex = queryMatch?.index ?? 0;
+      const searchIndex = searchMatch?.index ?? 0;
+      expect(queryIndex).toBeLessThan(searchIndex);
+    });
+  });
+
   describe('register command', () => {
     it('should have register command registered', () => {
       const program = createProgram();

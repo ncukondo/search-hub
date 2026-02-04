@@ -59,12 +59,12 @@ Expected description:
 
 ### Step 3: Reorder commands to emphasize query first
 
-- [ ] Step 3: List `query` command before `search` in help output
-  - [ ] Write test: Verify command order in help
-  - [ ] Implement: Reorder command registration or use custom help formatter
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `query` appears before `search` in command list
+- [x] Step 3: List `query` command before `search` in help output
+  - [x] Write test: Verify command order in help
+  - [x] Verify: Commands already ordered correctly (query before search)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `query` appears before `search` in command list
 
 ### Step 4: Add tip after search completion
 
