@@ -365,4 +365,252 @@ describe('executeReviewMerge', () => {
       executeReviewMerge({ sessionId, file: '/nonexistent/file.yaml' }, sessionsDir)
     ).rejects.toThrow();
   });
+
+  describe('work file format (with basis/reviewer)', () => {
+    interface WorkFile {
+      sessionId: string;
+      basis: 'title' | 'abstract' | 'fulltext';
+      reviewer: string;
+      articles: Array<{
+        id: string;
+        title: string;
+        abstract?: string;
+        decision: 'include' | 'exclude' | 'uncertain' | null;
+        comment: string;
+      }>;
+    }
+
+    async function writeWorkFile(workFile: WorkFile, filePath: string): Promise<void> {
+      const content = stringifyYaml(workFile);
+      await mkdir(join(filePath, '..'), { recursive: true });
+      await writeFile(filePath, content);
+    }
+
+    it('merges work file with basis attached to each review', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: 'Relevant' },
+        ],
+      };
+      const workFilePath = join(tempDir, 'phase1.yaml');
+      await writeWorkFile(workFile, workFilePath);
+
+      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[0]!.reviews[0]!.basis).toBe('title');
+    });
+
+    it('merges work file with reviewer attached to each review', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: 'Relevant' },
+        ],
+      };
+      const workFilePath = join(tempDir, 'phase1.yaml');
+      await writeWorkFile(workFile, workFilePath);
+
+      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[0]!.reviews[0]!.reviewer).toBe('ai:claude');
+    });
+
+    it('merges work file with timestamp attached to each review', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: 'Relevant' },
+        ],
+      };
+      const workFilePath = join(tempDir, 'phase1.yaml');
+      await writeWorkFile(workFile, workFilePath);
+
+      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[0]!.reviews[0]!.timestamp).toBeDefined();
+      // Should be a valid ISO timestamp
+      expect(new Date(merged.articles[0]!.reviews[0]!.timestamp!).toISOString()).toBe(
+        merged.articles[0]!.reviews[0]!.timestamp
+      );
+    });
+
+    it('merges work file with decision and comment', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'abstract',
+        reviewer: 'ai:gpt-4o',
+        articles: [
+          { id: '10.1234/test', title: 'Article 1', decision: 'exclude', comment: 'Not relevant' },
+        ],
+      };
+      const workFilePath = join(tempDir, 'phase2.yaml');
+      await writeWorkFile(workFile, workFilePath);
+
+      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[0]!.reviews[0]!.decision).toBe('exclude');
+      expect(merged.articles[0]!.reviews[0]!.comment).toBe('Not relevant');
+    });
+
+    it('matches work file articles by id (doi)', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Original Title', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1234/test', title: 'Different Title', decision: 'include', comment: '' },
+        ],
+      };
+      const workFilePath = join(tempDir, 'phase1.yaml');
+      await writeWorkFile(workFile, workFilePath);
+
+      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+    });
+
+    it('matches work file articles by id (pmid)', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '12345', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '12345', title: 'Article 1', decision: 'include', comment: '' },
+        ],
+      };
+      const workFilePath = join(tempDir, 'phase1.yaml');
+      await writeWorkFile(workFile, workFilePath);
+
+      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+    });
+
+    it('skips articles with null decision', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test1', reviews: [] },
+        { title: 'Article 2', doi: '10.1234/test2', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1234/test1', title: 'Article 1', decision: 'include', comment: 'Yes' },
+          { id: '10.1234/test2', title: 'Article 2', decision: null, comment: '' },
+        ],
+      };
+      const workFilePath = join(tempDir, 'phase1.yaml');
+      await writeWorkFile(workFile, workFilePath);
+
+      const result = await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[1]!.reviews).toHaveLength(0);
+      expect(result.reviewsAdded).toBe(1);
+    });
+
+    it('warns about unknown article ids', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.9999/unknown', title: 'Unknown Article', decision: 'include', comment: '' },
+        ],
+      };
+      const workFilePath = join(tempDir, 'phase1.yaml');
+      await writeWorkFile(workFile, workFilePath);
+
+      const result = await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+
+      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings[0]).toContain('10.9999/unknown');
+    });
+
+    it('merges multiple articles from work file', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test1', reviews: [] },
+        { title: 'Article 2', doi: '10.1234/test2', reviews: [] },
+        { title: 'Article 3', pmid: '999', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1234/test1', title: 'Article 1', decision: 'include', comment: 'Good' },
+          { id: '10.1234/test2', title: 'Article 2', decision: 'exclude', comment: 'Bad' },
+          { id: '999', title: 'Article 3', decision: 'uncertain', comment: 'Maybe' },
+        ],
+      };
+      const workFilePath = join(tempDir, 'phase1.yaml');
+      await writeWorkFile(workFile, workFilePath);
+
+      const result = await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+
+      expect(result.reviewsAdded).toBe(3);
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews[0]!.decision).toBe('include');
+      expect(merged.articles[1]!.reviews[0]!.decision).toBe('exclude');
+      expect(merged.articles[2]!.reviews[0]!.decision).toBe('uncertain');
+    });
+  });
 });

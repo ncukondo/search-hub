@@ -182,25 +182,25 @@ AI Agent Workflow:
 
 ### Step 5: Update review merge for basis/timestamp
 
-- [ ] Auto-attach basis from work file
-  - [ ] Write test: merge adds basis from work file to each review
-  - [ ] Verify test fails (Red)
-  - [ ] Implement basis attachment
-  - [ ] Verify test passes (Green)
+- [x] Auto-attach basis from work file
+  - [x] Write test: merge adds basis from work file to each review
+  - [x] Verify test fails (Red)
+  - [x] Implement basis attachment
+  - [x] Verify test passes (Green)
 
-- [ ] Auto-attach timestamp
-  - [ ] Write test: merge adds timestamp to each review
-  - [ ] Verify test fails (Red)
-  - [ ] Implement timestamp attachment
-  - [ ] Verify test passes (Green)
+- [x] Auto-attach timestamp
+  - [x] Write test: merge adds timestamp to each review
+  - [x] Verify test fails (Red)
+  - [x] Implement timestamp attachment
+  - [x] Verify test passes (Green)
 
-- [ ] Auto-attach reviewer from work file
-  - [ ] Write test: merge uses reviewer from work file
-  - [ ] Verify test fails (Red)
-  - [ ] Implement reviewer attachment
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review merge --session ID phase1.yaml` correctly merges with basis/timestamp/reviewer
+- [x] Auto-attach reviewer from work file
+  - [x] Write test: merge uses reviewer from work file
+  - [x] Verify test fails (Red)
+  - [x] Implement reviewer attachment
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review merge --session ID phase1.yaml` correctly merges with basis/timestamp/reviewer
 
 ### Step 6: Add workflow guidance to review status
 
