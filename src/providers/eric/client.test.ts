@@ -166,7 +166,44 @@ describe('ERIC Client', () => {
     it('should throw on network error', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(client.search('test')).rejects.toThrow('Failed to connect to ERIC API');
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'NETWORK_ERROR',
+        message: expect.stringContaining('Failed to connect to ERIC API'),
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should handle TypeError from fetch (network failure)', async () => {
+      mockFetch.mockRejectedValueOnce(new TypeError('fetch failed'));
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'NETWORK_ERROR',
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should handle DNS resolution errors', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('getaddrinfo ENOTFOUND api.ies.ed.gov'));
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'NETWORK_ERROR',
+        message: expect.stringContaining('ENOTFOUND'),
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should handle connection refused errors', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('connect ECONNREFUSED'));
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'NETWORK_ERROR',
+        message: expect.stringContaining('ECONNREFUSED'),
+        provider: 'eric',
+        retryable: true,
+      });
     });
 
     it('should respect AbortSignal', async () => {
@@ -179,7 +216,23 @@ describe('ERIC Client', () => {
 
       await expect(
         client.search('test', { signal: controller.signal })
-      ).rejects.toThrow();
+      ).rejects.toMatchObject({
+        code: 'TIMEOUT',
+        message: expect.stringContaining('timed out or was aborted'),
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should include troubleshooting hints in timeout errors', async () => {
+      mockFetch.mockImplementationOnce(() => {
+        throw new DOMException('Aborted', 'AbortError');
+      });
+
+      await expect(client.search('test')).rejects.toMatchObject({
+        code: 'TIMEOUT',
+        message: expect.stringContaining('check your network connection'),
+      });
     });
 
     it('should accept timeout option', () => {

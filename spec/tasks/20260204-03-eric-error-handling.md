@@ -58,12 +58,12 @@ Response received: { ... truncated ... }
 
 ### Step 3: Handle network and timeout errors gracefully
 
-- [ ] Step 3: Wrap network errors with ERIC-specific context
-  - [ ] Write test: `src/providers/eric/provider.test.ts` - test network error handling
-  - [ ] Implement: Catch and wrap network errors
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Network errors show ERIC-specific context
+- [x] Step 3: Wrap network errors with ERIC-specific context
+  - [x] Write test: `src/providers/eric/provider.test.ts` - test network error handling
+  - [x] Implement: Catch and wrap network errors
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Network errors show ERIC-specific context
 
 ### Final Step: E2E Integration Tests
 

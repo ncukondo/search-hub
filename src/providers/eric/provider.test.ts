@@ -288,6 +288,88 @@ describe('ERIC Provider', () => {
         }
       }).rejects.toThrow('API Error');
     });
+
+    it('should propagate network errors with ERIC context', async () => {
+      // Create provider with retries disabled for fast test
+      const noRetryProvider = new ERICProvider({ client: mockClient, retries: 0 });
+      const networkError = {
+        code: 'NETWORK_ERROR',
+        message: 'Failed to connect to ERIC API. This may be due to network issues.',
+        provider: 'eric',
+        retryable: true,
+      };
+      mockSearch.mockRejectedValueOnce(networkError);
+
+      const query: TranslatedQuery = {
+        native: 'title:test',
+        originalAst: createMockQueryAST(),
+        provider: 'eric',
+      };
+
+      await expect(async () => {
+        for await (const _ of noRetryProvider.search(query)) {
+          // consume
+        }
+      }).rejects.toMatchObject({
+        code: 'NETWORK_ERROR',
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should propagate timeout errors with ERIC context', async () => {
+      // Create provider with retries disabled for fast test
+      const noRetryProvider = new ERICProvider({ client: mockClient, retries: 0 });
+      const timeoutError = {
+        code: 'TIMEOUT',
+        message: 'ERIC API request timed out or was aborted.',
+        provider: 'eric',
+        retryable: true,
+      };
+      mockSearch.mockRejectedValueOnce(timeoutError);
+
+      const query: TranslatedQuery = {
+        native: 'title:test',
+        originalAst: createMockQueryAST(),
+        provider: 'eric',
+      };
+
+      await expect(async () => {
+        for await (const _ of noRetryProvider.search(query)) {
+          // consume
+        }
+      }).rejects.toMatchObject({
+        code: 'TIMEOUT',
+        provider: 'eric',
+        retryable: true,
+      });
+    });
+
+    it('should propagate parse errors for malformed responses', async () => {
+      const parseError = {
+        code: 'PARSE_ERROR',
+        message: "ERIC API error: Unexpected response format (missing 'numFound').",
+        provider: 'eric',
+        retryable: false,
+      };
+      mockSearch.mockRejectedValueOnce(parseError);
+
+      const query: TranslatedQuery = {
+        native: 'title:test',
+        originalAst: createMockQueryAST(),
+        provider: 'eric',
+      };
+
+      await expect(async () => {
+        for await (const _ of provider.search(query)) {
+          // consume
+        }
+      }).rejects.toMatchObject({
+        code: 'PARSE_ERROR',
+        provider: 'eric',
+        retryable: false,
+      });
+    });
   });
 
   describe('Session Resume (Step 5a)', () => {
