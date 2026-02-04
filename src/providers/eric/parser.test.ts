@@ -221,6 +221,25 @@ describe('ERIC Response Parser', () => {
     });
   });
 
+  describe('validateSearchResponse', () => {
+    it('should throw QUERY_ERROR for error response from ERIC API', () => {
+      const errorResponse = {
+        error: {
+          msg: 'field "text" was indexed without position data; cannot run PhraseQuery',
+        },
+      };
+
+      expect(() => parseSearchResponse(errorResponse)).toThrow();
+      try {
+        parseSearchResponse(errorResponse);
+      } catch (error: unknown) {
+        const e = error as { code: string; message: string };
+        expect(e.code).toBe('QUERY_ERROR');
+        expect(e.message).toContain('ERIC API error:');
+      }
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle malformed author names gracefully', () => {
       const doc: ERICRawDocument = {

@@ -145,6 +145,7 @@ export type ProviderErrorCode =
   | 'RATE_LIMIT_EXCEEDED'
   | 'NETWORK_ERROR'
   | 'PARSE_ERROR'
+  | 'QUERY_ERROR'
   | 'SERVER_ERROR'
   | 'TIMEOUT';
 

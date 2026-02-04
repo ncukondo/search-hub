@@ -38,6 +38,17 @@ export function validateSearchResponse(response: unknown): asserts response is E
     );
   }
 
+  // Check for error response from ERIC API
+  if (typeof response === 'object' && 'error' in response) {
+    const errorObj = (response as { error: { msg?: string } }).error;
+    throw createProviderError(
+      'QUERY_ERROR',
+      `ERIC API error: ${errorObj.msg ?? 'Unknown error'}`,
+      'eric',
+      { retryable: false }
+    );
+  }
+
   // Check for response.response object
   if (typeof response !== 'object' || !('response' in response)) {
     throw createProviderError(
