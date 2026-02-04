@@ -53,11 +53,11 @@ This file tracks high-level progress. For implementation details, see individual
 | 44 | Article Review Workflow | 28, 43 | ✅ Completed | [20260203-07](completed/20260203-07-review-workflow.md) |
 | 45 | Register Command Review Integration | 44 | ✅ Completed | [20260203-08](completed/20260203-08-register-review-integration.md) |
 | 46 | Fix Review Source Tracking | 44 | ✅ Completed | [20260203-09](completed/20260203-09-fix-review-source-tracking.md) |
-| 47 | Improve CLI Discoverability | 10 | 🔲 Pending | [20260204-01](20260204-01-improve-cli-discoverability.md) |
+| 47 | Improve CLI Discoverability | 10 | ✅ Completed | [20260204-01](completed/20260204-01-improve-cli-discoverability.md) |
 | 48 | Document Query Refinement Workflow with Diff | 40, 47 | 🔲 Pending | [20260204-02](20260204-02-query-refinement-workflow-docs.md) |
-| 49 | Improve ERIC API Error Handling | 7 | 🔲 Pending | [20260204-03](20260204-03-eric-error-handling.md) |
-| 50 | Add Exclude Keywords (NOT Operator) to Query DSL | 3 | 🔲 Pending | [20260204-04](20260204-04-exclude-keywords.md) |
-| 51 | Add Abstract Preview to Results Command | 38 | 🔲 Pending | [20260204-05](20260204-05-results-abstract-preview.md) |
+| 49 | Improve ERIC API Error Handling | 7 | ✅ Completed | [20260204-03](completed/20260204-03-eric-error-handling.md) |
+| 50 | Add Exclude Keywords (NOT Operator) to Query DSL | 3 | ✅ Completed | [20260204-04](completed/20260204-04-exclude-keywords.md) |
+| 51 | Add Abstract Preview to Results Command | 38 | ✅ Completed | [20260204-05](completed/20260204-05-results-abstract-preview.md) |
 
 ## Development Flow
 

@@ -79,25 +79,14 @@ fi
 
 # Idle detection:
 #   - Has input prompt "❯" at line start (not indented)
-#   - No spinner characters or "esc to interrupt" (working indicators)
+#   - No spinner characters (working indicators)
+#   - Note: "esc to interrupt" appears in status bar even when idle, so we only check spinners
 if echo "$CONTENT" | grep -qE '^❯'; then
-  # Check for working indicators
-  # During startup (IS_STARTING=true), ignore "esc to interrupt" because
-  # MCP server initialization can show this while Claude is actually ready
-  if [[ "$IS_STARTING" == "true" ]]; then
-    # Only check for spinner characters during startup
-    if echo "$CONTENT" | grep -qE '(⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)'; then
-      echo "working"
-    else
-      echo "idle"
-    fi
+  # Check for spinner characters only (esc to interrupt is always shown in status bar)
+  if echo "$CONTENT" | grep -qE '(⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)'; then
+    echo "working"
   else
-    # Normal operation: check all working indicators
-    if echo "$CONTENT" | grep -qE '(esc to interrupt|⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)'; then
-      echo "working"
-    else
-      echo "idle"
-    fi
+    echo "idle"
   fi
   exit 0
 fi
