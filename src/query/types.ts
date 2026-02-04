@@ -37,6 +37,8 @@ export interface TermBlock {
   mesh?: string[] | undefined;
   /** Emtree terms (Embase only) */
   emtree?: string[] | undefined;
+  /** ERIC Descriptors (ERIC only) */
+  eric?: string[] | undefined;
   /** Terms to exclude from search results (NOT operator) */
   exclude?: string[] | undefined;
 }

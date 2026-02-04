@@ -27,14 +27,14 @@ PubMedのMeSH用語と同様に、ERICでも統制語彙（ERIC Descriptors）�
 
 ### Step 1: Add `eric` field to TermBlock interface
 
-- [ ] Write test: `src/query/types.test.ts`
+- [x] Write test: `src/query/types.test.ts`
   - TermBlockが`eric`プロパティを持つことを型レベルで確認
-- [ ] Update `src/query/types.ts`
+- [x] Update `src/query/types.ts`
   - TermBlockに`eric?: string[]`を追加
   - JSDocコメントで「ERIC Descriptors (ERIC only)」と記載
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: TermBlockにericプロパティが存在する
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: TermBlockにericプロパティが存在する
 
 ### Step 2: Parse `eric` field from YAML
 
