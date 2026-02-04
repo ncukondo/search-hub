@@ -213,6 +213,58 @@ describe('formatResultsList', () => {
     expect(output).not.toContain('Abstract:');
     expect(output).not.toContain('This is a test abstract.');
   });
+
+  it('truncates abstract at specified length', () => {
+    const longAbstract = 'A'.repeat(500);
+    const articles = [createTestArticle({ abstract: longAbstract })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+      abstractLength: 100,
+    });
+
+    expect(output).toContain('Abstract:');
+    // Should be truncated with ellipsis
+    expect(output).toContain('...');
+    // Should not contain the full abstract
+    expect(output).not.toContain(longAbstract);
+  });
+
+  it('truncates abstract at default length (300) when no length specified', () => {
+    const longAbstract = 'B'.repeat(500);
+    const articles = [createTestArticle({ abstract: longAbstract })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+    });
+
+    expect(output).toContain('Abstract:');
+    expect(output).toContain('...');
+    // Check it's around 300 characters (prefix + content + ellipsis)
+    const abstractLine = output.split('\n').find(line => line.includes('Abstract:'));
+    expect(abstractLine).toBeDefined();
+    // "    Abstract: " is 14 chars, plus 297 content chars, plus "..." = 314
+    expect(abstractLine!.length).toBeLessThanOrEqual(320);
+  });
+
+  it('does not truncate short abstracts', () => {
+    const shortAbstract = 'This is a short abstract.';
+    const articles = [createTestArticle({ abstract: shortAbstract })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+      abstractLength: 300,
+    });
+
+    expect(output).toContain(`Abstract: ${shortAbstract}`);
+    expect(output).not.toContain('...');
+  });
 });
 
 describe('formatResultsJson', () => {

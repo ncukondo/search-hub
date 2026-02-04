@@ -49,12 +49,12 @@ Expected output:
 
 ### Step 3: Add --abstract-length option for truncation
 
-- [ ] Step 3: Allow users to control abstract length
-  - [ ] Write test: Test truncation at specified length
-  - [ ] Implement: Add `--abstract-length <n>` option (default: 300 characters)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Abstracts truncate at specified length with "..."
+- [x] Step 3: Allow users to control abstract length
+  - [x] Write test: Test truncation at specified length
+  - [x] Implement: Add `--abstract-length <n>` option (default: 300 characters)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Abstracts truncate at specified length with "..."
 
 ### Step 4: Handle missing abstracts gracefully
 

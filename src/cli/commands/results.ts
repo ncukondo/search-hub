@@ -140,6 +140,7 @@ export function validateResultsInput(options: ResultsCommandOptions): Validation
 }
 
 const DEFAULT_TITLE_MAX_LENGTH = 70;
+const DEFAULT_ABSTRACT_MAX_LENGTH = 300;
 
 function extractYear(publicationDate: string | undefined): number | null {
   if (!publicationDate) return null;
@@ -147,9 +148,13 @@ function extractYear(publicationDate: string | undefined): number | null {
   return Number.isNaN(year) ? null : year;
 }
 
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
+}
+
 function truncateTitle(title: string, maxLength: number = DEFAULT_TITLE_MAX_LENGTH): string {
-  if (title.length <= maxLength) return title;
-  return title.substring(0, maxLength - 3) + '...';
+  return truncateText(title, maxLength);
 }
 
 export function formatResultsList(
@@ -199,7 +204,9 @@ export function formatResultsList(
 
     if (options.showAbstract && article.abstract) {
       lines.push('');
-      lines.push(`    Abstract: ${article.abstract}`);
+      const maxLength = options.abstractLength ?? DEFAULT_ABSTRACT_MAX_LENGTH;
+      const truncatedAbstract = truncateText(article.abstract, maxLength);
+      lines.push(`    Abstract: ${truncatedAbstract}`);
     }
 
     lines.push('');
