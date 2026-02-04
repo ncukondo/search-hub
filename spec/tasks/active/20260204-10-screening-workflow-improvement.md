@@ -147,26 +147,26 @@ AI Agent Workflow:
 
 ### Step 3: Implement review extract --basis --reviewer
 
-- [ ] Add `--basis` option (required: title / abstract)
-  - [ ] Write test: extract with --basis title outputs only id, title
-  - [ ] Write test: extract with --basis abstract outputs id, title, abstract
-  - [ ] Verify tests fail (Red)
-  - [ ] Implement basis filtering
-  - [ ] Verify tests pass (Green)
+- [x] Add `--basis` option (required: title / abstract)
+  - [x] Write test: extract with --basis title outputs only id, title
+  - [x] Write test: extract with --basis abstract outputs id, title, abstract
+  - [x] Verify tests fail (Red)
+  - [x] Implement basis filtering
+  - [x] Verify tests pass (Green)
 
-- [ ] Add `--reviewer` option
-  - [ ] Write test: extract includes reviewer in output file
-  - [ ] Verify test fails (Red)
-  - [ ] Implement reviewer option
-  - [ ] Verify test passes (Green)
+- [x] Add `--reviewer` option
+  - [x] Write test: extract includes reviewer in output file
+  - [x] Verify test fails (Red)
+  - [x] Implement reviewer option
+  - [x] Verify test passes (Green)
 
-- [ ] Output format update
-  - [ ] Write test: output includes sessionId, basis, reviewer, articles
-  - [ ] Verify test fails (Red)
-  - [ ] Implement new output format
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review extract --basis title --reviewer "ai:claude" -o phase1.yaml` produces correct format
+- [x] Output format update
+  - [x] Write test: output includes sessionId, basis, reviewer, articles
+  - [x] Verify test fails (Red)
+  - [x] Implement new output format
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review extract --basis title --reviewer "ai:claude" -o phase1.yaml` produces correct format
 
 ### Step 4: Implement review mark command
 
@@ -234,7 +234,7 @@ AI Agent Workflow:
 - [x] Write E2E test: two-phase screening (title then abstract)
 - [x] Verify all E2E tests pass
 - [x] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test the feature manually
+- [x] **Manual verification**: Test the feature manually
 - [x] Acceptance: All tests pass, workflow works end-to-end
 
 ## File Layout

@@ -121,6 +121,10 @@ import {
   type ReviewMergeOptions,
 } from './commands/review/merge.js';
 import {
+  executeReviewMark,
+  type ReviewMarkOptions,
+} from './commands/review/mark.js';
+import {
   executeReviewExport,
   formatExportOutput,
   type ReviewExportOptions,
@@ -1696,7 +1700,7 @@ Examples:
         const result = await executeReviewList(listOptions, sessionsDir);
         if (!globalOpts.quiet) {
           if (options.json) {
-            console.log(JSON.stringify(result.articles, null, 2));
+            console.log(JSON.stringify(result, null, 2));
           } else {
             console.log(formatListOutput(result));
           }
@@ -1720,6 +1724,8 @@ Examples:
     .option('--limit <n>', 'limit number of articles')
     .option('--offset <n>', 'skip first n articles')
     .option('--seed <n>', 'random seed for reproducible sorting')
+    .option('--basis <type>', 'basis for review: title or abstract (outputs work file format)')
+    .option('--reviewer <id>', 'reviewer identifier (e.g., "ai:claude")')
     .action(async (options: {
       session: string;
       output: string;
@@ -1728,6 +1734,8 @@ Examples:
       limit?: string;
       offset?: string;
       seed?: string;
+      basis?: string;
+      reviewer?: string;
     }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -1761,6 +1769,29 @@ Examples:
           extractOptions.seed = parseInt(options.seed, 10);
         }
 
+        // Handle basis and reviewer options
+        if (options.basis) {
+          const validBasis = ['title', 'abstract'];
+          if (!validBasis.includes(options.basis)) {
+            if (!globalOpts.quiet) {
+              console.error(`Error: Invalid basis '${options.basis}'. Valid values: ${validBasis.join(', ')}`);
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          }
+          extractOptions.basis = options.basis as 'title' | 'abstract';
+
+          // Reviewer is required when basis is specified
+          if (!options.reviewer) {
+            if (!globalOpts.quiet) {
+              console.error('Error: --reviewer is required when --basis is specified');
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          }
+          extractOptions.reviewer = options.reviewer;
+        }
+
         const result = await executeReviewExtract(extractOptions, sessionsDir);
         if (!globalOpts.quiet) {
           console.log(`Extracted ${result.extractedCount} of ${result.totalMatching} articles to ${result.outputPath}`);
@@ -1792,6 +1823,67 @@ Examples:
         const result = await executeReviewMerge(mergeOptions, sessionsDir);
         if (!globalOpts.quiet) {
           console.log(formatMergeOutput(result, options.dryRun));
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  reviewCommand
+    .command('mark')
+    .description('Mark decisions in work files')
+    .requiredOption('--file <path>', 'path to work file')
+    .option('--id <id>', 'article ID to mark')
+    .option('--decision <decision>', 'decision: include, exclude, or uncertain')
+    .option('--comment <text>', 'optional comment')
+    .option('--input <path>', 'path to JSON file with decisions for batch marking')
+    .action(async (options: {
+      file: string;
+      id?: string;
+      decision?: string;
+      comment?: string;
+      input?: string;
+    }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        // Validate decision if provided
+        const validDecisions = ['include', 'exclude', 'uncertain'];
+        if (options.decision && !validDecisions.includes(options.decision)) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: Invalid decision '${options.decision}'. Valid values: ${validDecisions.join(', ')}`);
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        // Validate options
+        if (!options.input && (!options.id || !options.decision)) {
+          if (!globalOpts.quiet) {
+            console.error('Error: Either --id with --decision, or --input must be specified');
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+
+        const markOptions: ReviewMarkOptions = {
+          file: options.file,
+        };
+
+        if (options.id) markOptions.id = options.id;
+        if (options.decision) markOptions.decision = options.decision as 'include' | 'exclude' | 'uncertain';
+        if (options.comment) markOptions.comment = options.comment;
+        if (options.input) markOptions.input = options.input;
+
+        const result = await executeReviewMark(markOptions);
+        if (!globalOpts.quiet) {
+          console.log(`Marked ${result.marked} article(s)`);
+          for (const warning of result.warnings) {
+            console.warn(`Warning: ${warning}`);
+          }
         }
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
