@@ -106,36 +106,36 @@ Result changes:
 
 ### Step 4: Integrate query diff into diff command
 
-- [ ] Write test: `src/cli/commands/diff.test.ts`
+- [x] Write test: `src/cli/commands/diff.test.ts`
   - diff出力に「Query changes」セクションが含まれることを確認
   - `--no-query-diff`オプションでクエリdiffを非表示にできることを確認
-- [ ] Update `src/cli/commands/diff.ts`
+- [x] Update `src/cli/commands/diff.ts`
   - セッションからクエリを読み込み
   - `formatDiff`の出力に`formatQueryDiff`の結果を追加
   - `--no-query-diff`オプション追加
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: diffコマンドでクエリ変更が表示される
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: diffコマンドでクエリ変更が表示される
 
 ### Step 5: Handle missing query data gracefully
 
-- [ ] Write test: `src/cli/commands/diff.test.ts`
+- [x] Write test: `src/cli/commands/diff.test.ts`
   - 古いセッション（query情報なし）でもエラーにならないことを確認
   - クエリ情報がない場合は「Query changes: (query data not available)」と表示
-- [ ] Update implementation to handle missing query
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: クエリ情報がないセッションでも正常動作
+- [x] Update implementation to handle missing query
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: クエリ情報がないセッションでも正常動作
 
 ### Step 6: Add JSON output support
 
-- [ ] Write test: `src/cli/commands/diff.test.ts`
+- [x] Write test: `src/cli/commands/diff.test.ts`
   - `--json`オプションでqueryDiffがJSON出力に含まれることを確認
-- [ ] Update `formatDiffJson` in `src/cli/commands/diff.ts`
+- [x] Update `formatDiffJson` in `src/cli/commands/diff.ts`
   - `queryDiff`フィールドを追加
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: JSON出力にクエリdiffが含まれる
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: JSON出力にクエリdiffが含まれる
 
 ### Final Step: E2E Integration Tests
 

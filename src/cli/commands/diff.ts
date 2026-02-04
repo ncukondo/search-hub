@@ -97,6 +97,15 @@ function formatArticleLine(prefix: string, article: Article): string {
 }
 
 /**
+ * Options for formatting diff with query information.
+ */
+export interface FormatDiffOptions {
+  queryDiff?: QueryDiff | undefined;
+  noQueryDiff?: boolean | undefined;
+  showQueryDiffPlaceholder?: boolean | undefined;
+}
+
+/**
  * Format diff result as human-readable text.
  */
 export function formatDiff(
@@ -104,6 +113,7 @@ export function formatDiff(
   session1Id: string,
   session2Id: string,
   show?: ShowFilter,
+  options?: FormatDiffOptions,
 ): string {
   const lines: string[] = [];
 
@@ -112,6 +122,19 @@ export function formatDiff(
   lines.push(`  Session 1: ${diff.session1Count} articles (${session1Id})`);
   lines.push(`  Session 2: ${diff.session2Count} articles (${session2Id})`);
   lines.push('');
+
+  // Query changes section (if available and not disabled)
+  const shouldShowQueryDiff = options?.queryDiff && !options?.noQueryDiff;
+  const shouldShowPlaceholder = options?.showQueryDiffPlaceholder && !options?.queryDiff && !options?.noQueryDiff;
+
+  if (shouldShowPlaceholder) {
+    lines.push('Query changes: (query data not available)');
+    lines.push('');
+  } else if (shouldShowQueryDiff) {
+    lines.push(formatQueryDiff(options.queryDiff!));
+    lines.push('');
+    lines.push('Result changes:');
+  }
 
   // Summary counts
   lines.push(`  Common:  ${diff.common.length} articles`);
@@ -163,6 +186,7 @@ interface DiffJsonOutput {
     addedCount: number;
     removedCount: number;
   };
+  queryDiff?: QueryDiff;
   added?: Article[];
   removed?: Article[];
   common?: Article[];
@@ -173,6 +197,7 @@ export function formatDiffJson(
   session1Id: string,
   session2Id: string,
   show?: ShowFilter,
+  options?: FormatDiffOptions,
 ): string {
   const result: DiffJsonOutput = {
     session1: session1Id,
@@ -185,6 +210,11 @@ export function formatDiffJson(
       removedCount: diff.removed.length,
     },
   };
+
+  // Add queryDiff if available and not disabled
+  if (options?.queryDiff && !options?.noQueryDiff) {
+    result.queryDiff = options.queryDiff;
+  }
 
   if (!show || show === 'added') {
     result.added = diff.added;

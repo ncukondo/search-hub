@@ -89,6 +89,7 @@ import {
 } from './commands/notes.js';
 import {
   computeDiff,
+  computeQueryDiff,
   formatDiff,
   formatDiffJson,
   type ShowFilter,
@@ -153,7 +154,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getSessionsDir } from './utils/sessions-dir.js';
 import { expandPath } from '../utils/path.js';
-import { loadSessionArticles } from './commands/session-utils.js';
+import { loadSessionArticles, loadSessionQuery } from './commands/session-utils.js';
 
 /**
  * Global CLI options available to all commands.
@@ -1264,12 +1265,14 @@ Examples:
     .argument('<session-id-2>', 'second session ID')
     .option('--show <section>', 'show only specific section: added, removed, or common')
     .option('--json', 'output as JSON')
+    .option('--no-query-diff', 'hide query changes section')
     .addHelpText('after', `
 Examples:
   $ search-hub diff session-v1 session-v2                # Compare two sessions
   $ search-hub diff session-v1 session-v2 --show added   # Show only added articles
   $ search-hub diff session-v1 session-v2 --show removed # Show only removed articles
   $ search-hub diff session-v1 session-v2 --json         # JSON output for scripting
+  $ search-hub diff session-v1 session-v2 --no-query-diff # Hide query changes
 
 Query Refinement Workflow:
   1. Search with broad query:    search-hub search v1.yaml --max-results 100
@@ -1281,7 +1284,7 @@ Query Refinement Workflow:
       async (
         sessionId1: string,
         sessionId2: string,
-        options?: { show?: string; json?: boolean }
+        options?: { show?: string; json?: boolean; queryDiff?: boolean }
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
@@ -1300,6 +1303,7 @@ Query Refinement Workflow:
           }
 
           const sessionsDir = await getSessionsDir(globalOpts);
+          const noQueryDiff = options?.queryDiff === false;
 
           // Load both sessions
           let session1, session2;
@@ -1335,15 +1339,30 @@ Query Refinement Workflow:
           const dedup1 = deduplicateArticles(articles1);
           const dedup2 = deduplicateArticles(articles2);
 
-          // Compute diff
+          // Compute article diff
           const diff = computeDiff(dedup1.articles, dedup2.articles);
 
+          // Load and compute query diff (unless disabled)
+          let queryDiff;
+          let showQueryDiffPlaceholder = false;
+          if (!noQueryDiff) {
+            const query1 = await loadSessionQuery(sessionId1, sessionsDir);
+            const query2 = await loadSessionQuery(sessionId2, sessionsDir);
+            if (query1 && query2) {
+              queryDiff = computeQueryDiff(query1, query2);
+            } else {
+              // At least one query is missing - show placeholder
+              showQueryDiffPlaceholder = true;
+            }
+          }
+
           // Format and output
+          const formatOptions = { queryDiff, noQueryDiff, showQueryDiffPlaceholder };
           if (options?.json) {
-            console.log(formatDiffJson(diff, sessionId1, sessionId2, showFilter));
+            console.log(formatDiffJson(diff, sessionId1, sessionId2, showFilter, formatOptions));
           } else {
             if (!globalOpts.quiet) {
-              console.log(formatDiff(diff, sessionId1, sessionId2, showFilter));
+              console.log(formatDiff(diff, sessionId1, sessionId2, showFilter, formatOptions));
             }
           }
 

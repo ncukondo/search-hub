@@ -807,3 +807,118 @@ describe('formatQueryDiff', () => {
     expect(output).toContain('(removed block)');
   });
 });
+
+describe('formatDiffWithQuery', () => {
+  const sampleDiff: DiffResult = {
+    session1Count: 5,
+    session2Count: 4,
+    added: [],
+    removed: [],
+    common: [],
+  };
+
+  const sampleQueryDiff: QueryDiff = {
+    blocks: [
+      {
+        index: 0,
+        field: 'title_abstract',
+        added: ['new term'],
+        removed: [],
+        hasChanges: true,
+      },
+    ],
+    filters: {
+      yearFromChanged: false,
+      yearToChanged: false,
+      languagesAdded: [],
+      languagesRemoved: [],
+    },
+  };
+
+  it('should include Query changes section when queryDiff provided', () => {
+    const output = formatDiff(sampleDiff, 'v1', 'v2', undefined, { queryDiff: sampleQueryDiff });
+
+    expect(output).toContain('Query changes:');
+    expect(output).toContain('+ new term');
+    expect(output).toContain('Result changes:');
+  });
+
+  it('should not include Query changes section when queryDiff not provided', () => {
+    const output = formatDiff(sampleDiff, 'v1', 'v2');
+
+    expect(output).not.toContain('Query changes:');
+    expect(output).not.toContain('Result changes:');
+  });
+
+  it('should respect noQueryDiff option', () => {
+    const output = formatDiff(sampleDiff, 'v1', 'v2', undefined, {
+      queryDiff: sampleQueryDiff,
+      noQueryDiff: true,
+    });
+
+    expect(output).not.toContain('Query changes:');
+  });
+
+  it('should show "(query data not available)" when queries are missing', () => {
+    const output = formatDiff(sampleDiff, 'v1', 'v2', undefined, {
+      queryDiff: undefined,
+      showQueryDiffPlaceholder: true,
+    });
+
+    expect(output).toContain('Query changes: (query data not available)');
+  });
+});
+
+describe('formatDiffJson with queryDiff', () => {
+  const sampleDiff: DiffResult = {
+    session1Count: 5,
+    session2Count: 4,
+    added: [],
+    removed: [],
+    common: [],
+  };
+
+  const sampleQueryDiff: QueryDiff = {
+    blocks: [
+      {
+        index: 0,
+        field: 'title_abstract',
+        added: ['new term'],
+        removed: [],
+        hasChanges: true,
+      },
+    ],
+    filters: {
+      yearFromChanged: false,
+      yearToChanged: false,
+      languagesAdded: [],
+      languagesRemoved: [],
+    },
+  };
+
+  it('should include queryDiff in JSON output when provided', () => {
+    const output = formatDiffJson(sampleDiff, 'v1', 'v2', undefined, { queryDiff: sampleQueryDiff });
+    const parsed = JSON.parse(output);
+
+    expect(parsed.queryDiff).toBeDefined();
+    expect(parsed.queryDiff.blocks).toHaveLength(1);
+    expect(parsed.queryDiff.blocks[0].added).toContain('new term');
+  });
+
+  it('should not include queryDiff in JSON output when not provided', () => {
+    const output = formatDiffJson(sampleDiff, 'v1', 'v2');
+    const parsed = JSON.parse(output);
+
+    expect(parsed.queryDiff).toBeUndefined();
+  });
+
+  it('should respect noQueryDiff option in JSON output', () => {
+    const output = formatDiffJson(sampleDiff, 'v1', 'v2', undefined, {
+      queryDiff: sampleQueryDiff,
+      noQueryDiff: true,
+    });
+    const parsed = JSON.parse(output);
+
+    expect(parsed.queryDiff).toBeUndefined();
+  });
+});
