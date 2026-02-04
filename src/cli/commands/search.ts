@@ -12,6 +12,7 @@ export interface SearchCommandOptions {
   maxResults?: number;
   dryRun?: boolean;
   countOnly?: boolean;
+  preview?: boolean;
   noResume?: boolean;
 }
 
@@ -22,6 +23,7 @@ export interface CommandLineOptions {
   maxResults?: string | undefined;
   dryRun?: boolean | undefined;
   countOnly?: boolean | undefined;
+  preview?: boolean | undefined;
   noResume?: boolean | undefined;
 }
 
@@ -78,6 +80,10 @@ export function parseSearchOptions(
     result.countOnly = true;
   }
 
+  if (options.preview) {
+    result.preview = true;
+  }
+
   if (options.noResume) {
     result.noResume = true;
   }
@@ -104,6 +110,13 @@ export function validateSearchInput(options: SearchCommandOptions): ValidationRe
     return {
       valid: false,
       error: 'Direct query (--query) can only be used with a single provider (--db)',
+    };
+  }
+
+  if (options.preview && options.countOnly) {
+    return {
+      valid: false,
+      error: '--preview and --count-only cannot be used together',
     };
   }
 
@@ -220,6 +233,17 @@ export interface CountResult {
   error?: string;
 }
 
+
+/**
+ * Preview result for a single provider
+ */
+export interface PreviewResult {
+  provider: string;
+  count: number;
+  titles: string[];
+  error?: string;
+}
+
 /**
  * Format count-only output for display.
  */
@@ -247,6 +271,53 @@ export function formatCountOnlyOutput(
       lines.push(`  ${(c.provider + ':').padEnd(maxNameLen)} ${countStr} hits`);
       total += c.count;
     }
+  }
+
+  // Separator and total
+  const separatorLen = maxNameLen + 14;
+  lines.push(`  ${'─'.repeat(separatorLen)}`);
+  const totalStr = String(total).padStart(6);
+  lines.push(`  ${('total:').padEnd(maxNameLen)} ${totalStr} hits (before deduplication)`);
+
+  return lines.join('\n');
+}
+
+
+/**
+ * Format preview output showing counts and sample titles.
+ */
+export function formatPreviewOutput(
+  results: PreviewResult[],
+  queryLabel?: string
+): string {
+  const label = queryLabel ?? 'direct-query';
+  const lines: string[] = [];
+
+  lines.push(`Query: ${label} (preview)`);
+  lines.push('');
+
+  // Find the max provider name length for alignment (including colon)
+  const maxNameLen = Math.max(...results.map((r) => r.provider.length + 1), 6);
+
+  // Calculate total (excluding errors)
+  let total = 0;
+
+  for (const r of results) {
+    if (r.error) {
+      lines.push(`  ${(r.provider + ':').padEnd(maxNameLen)}  error: ${r.error}`);
+    } else {
+      const countStr = String(r.count).padStart(6);
+      lines.push(`  ${(r.provider + ':').padEnd(maxNameLen)} ${countStr} hits`);
+      total += r.count;
+
+      // Show sample titles
+      if (r.titles.length > 0) {
+        for (const title of r.titles) {
+          lines.push(`    • ${title}`);
+        }
+      }
+    }
+    lines.push('');
   }
 
   // Separator and total

@@ -47,17 +47,17 @@ arXivでの医学教育検索テスト中に発見された問題を解決する
 
 `--count-only` の代わりに、件数と最初の数件のタイトルを表示する `--preview` オプションを追加。
 
-- [ ] Write test: `src/cli/commands/search.test.ts`
+- [x] Write test: `src/cli/commands/search.test.ts`
   - `--preview` オプションで件数と最初の5件のタイトルが表示されることを確認
-- [ ] Update command options in `src/cli/commands/search.ts`
+- [x] Update command options in `src/cli/commands/search.ts`
   - `--preview` オプション追加（`--count-only` と排他）
-- [ ] Implement preview logic
+- [x] Implement preview logic
   - 各プロバイダーから最大5件取得
   - 件数とタイトル一覧を表示
   - セッションは作成しない（一時的な取得のみ）
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `--preview` で件数とタイトルプレビューが表示される
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `--preview` で件数とタイトルプレビューが表示される
 
 ### Step 3: Add short keyword warning
 

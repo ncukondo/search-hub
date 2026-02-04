@@ -42,11 +42,12 @@ import {
   validateSearchInput,
   formatDryRunOutput,
   formatCountOnlyOutput,
+  formatPreviewOutput,
   formatSearchCompletionTip,
   formatCountOnlyTip,
   formatDirectQueryTip,
 } from './commands/search.js';
-import { executeSearch, executeCountOnly } from './commands/search-executor.js';
+import { executeSearch, executeCountOnly, executePreview } from './commands/search-executor.js';
 import {
   parseResumeOptions,
   validateResumeInput,
@@ -493,6 +494,7 @@ Examples:
     .option('--max-results <n>', 'limit results per database')
     .option('--dry-run', 'show translated queries without executing')
     .option('--count-only', 'get hit counts without downloading results')
+    .option('--preview', 'get hit counts and first 5 titles without creating session')
     .option('--skip-connection-test', 'skip API connection test during dry-run')
     .option('--no-resume', 'start fresh even if session exists')
     .addHelpText('after', `
@@ -519,6 +521,7 @@ Query Refinement:
           maxResults?: string;
           dryRun?: boolean;
           countOnly?: boolean;
+          preview?: boolean;
           skipConnectionTest?: boolean;
           resume?: boolean;
         }
@@ -533,6 +536,7 @@ Query Refinement:
             maxResults: options?.maxResults,
             dryRun: options?.dryRun,
             countOnly: options?.countOnly,
+            preview: options?.preview,
             noResume: options?.resume === false,
           });
 
@@ -598,6 +602,34 @@ Query Refinement:
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;
+            return;
+          }
+
+          // Handle preview mode
+          if (searchOpts.preview) {
+            let previewConfig;
+            try {
+              previewConfig = await loadConfig(globalOpts.config ? { globalConfigPath: globalOpts.config } : {});
+            } catch {
+              previewConfig = getDefaultConfig();
+            }
+
+            const previews = await executePreview(searchOpts, previewConfig);
+
+            if (previews.length === 0) {
+              if (!globalOpts.quiet) {
+                console.error('Error: No providers enabled or selected');
+              }
+              process.exitCode = EXIT_CODES.GENERAL_ERROR;
+              return;
+            }
+
+            if (!globalOpts.quiet) {
+              console.log(formatPreviewOutput(previews, searchOpts.queryFile));
+            }
+
+            const hasErrors = previews.some((p) => p.error);
+            process.exitCode = hasErrors ? EXIT_CODES.NETWORK_ERROR : EXIT_CODES.SUCCESS;
             return;
           }
 
