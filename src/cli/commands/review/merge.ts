@@ -5,28 +5,8 @@
 import { join } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import type { ReviewFile, ArticleEntry, Review, ReviewBasis, ReviewDecision } from './types.js';
+import type { ReviewFile, ArticleEntry, Review, WorkFile } from './types.js';
 
-/**
- * Work file structure for AI agent workflow
- */
-interface WorkFile {
-  sessionId: string;
-  basis: ReviewBasis;
-  reviewer: string;
-  articles: WorkFileArticle[];
-}
-
-/**
- * Work file article entry
- */
-interface WorkFileArticle {
-  id: string;
-  title: string;
-  abstract?: string;
-  decision: ReviewDecision | null;
-  comment: string;
-}
 
 /**
  * Check if a file is a work file (has basis field)

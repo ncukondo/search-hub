@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile, mkdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { stringify as stringifyYaml, parse as parseYaml } from 'yaml';
 import { executeReviewMerge } from './merge.js';
-import type { ReviewFile, ArticleEntry } from './types.js';
+import type { ReviewFile, ArticleEntry, WorkFile } from './types.js';
 
 describe('executeReviewMerge', () => {
   let tempDir: string;
@@ -367,19 +367,6 @@ describe('executeReviewMerge', () => {
   });
 
   describe('work file format (with basis/reviewer)', () => {
-    interface WorkFile {
-      sessionId: string;
-      basis: 'title' | 'abstract' | 'fulltext';
-      reviewer: string;
-      articles: Array<{
-        id: string;
-        title: string;
-        abstract?: string;
-        decision: 'include' | 'exclude' | 'uncertain' | null;
-        comment: string;
-      }>;
-    }
-
     async function writeWorkFile(workFile: WorkFile, filePath: string): Promise<void> {
       const content = stringifyYaml(workFile);
       await mkdir(join(filePath, '..'), { recursive: true });

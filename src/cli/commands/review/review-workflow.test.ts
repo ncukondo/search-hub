@@ -18,23 +18,7 @@ import { executeReviewMerge } from './merge.js';
 import { executeReviewExport } from './export.js';
 import { executeReviewMark } from './mark.js';
 import { getIncludedArticles } from '../register.js';
-import type { ReviewFile, ReviewBasis } from './types.js';
-
-/**
- * Work file structure for AI agent workflow
- */
-interface WorkFile {
-  sessionId: string;
-  basis: ReviewBasis;
-  reviewer: string;
-  articles: Array<{
-    id: string;
-    title: string;
-    abstract?: string;
-    decision: 'include' | 'exclude' | 'uncertain' | null;
-    comment: string;
-  }>;
-}
+import type { ReviewFile, WorkFile } from './types.js';
 
 describe('Review Workflow E2E', () => {
   let tempDir: string;

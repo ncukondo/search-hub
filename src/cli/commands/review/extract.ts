@@ -5,7 +5,7 @@
 import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir, copyFile, access } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { classifyStatus, type ReviewFile, type ArticleEntry, type ReviewStatus, type ReviewBasis } from './types.js';
+import { classifyStatus, type ReviewFile, type ArticleEntry, type ReviewStatus, type ReviewBasis, type WorkFile, type WorkFileArticle } from './types.js';
 
 export type SortOption = 'year' | 'title' | 'random' | 'none';
 
@@ -23,26 +23,6 @@ export interface ReviewExtractOptions {
   output: string;
 }
 
-/**
- * Work file article entry for AI agent workflow
- */
-interface WorkFileArticle {
-  id: string;
-  title: string;
-  abstract?: string;
-  decision: 'include' | 'exclude' | 'uncertain' | null;
-  comment: string;
-}
-
-/**
- * Work file structure for AI agent workflow
- */
-interface WorkFile {
-  sessionId: string;
-  basis: ReviewBasis;
-  reviewer: string;
-  articles: WorkFileArticle[];
-}
 
 export interface ReviewExtractResult {
   outputPath: string;

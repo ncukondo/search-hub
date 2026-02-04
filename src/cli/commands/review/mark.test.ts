@@ -4,23 +4,7 @@ import { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { stringify as stringifyYaml, parse as parseYaml } from 'yaml';
 import { executeReviewMark } from './mark.js';
-import type { ReviewBasis } from './types.js';
-
-/**
- * Work file structure for AI agent workflow
- */
-interface WorkFile {
-  sessionId: string;
-  basis: ReviewBasis;
-  reviewer: string;
-  articles: Array<{
-    id: string;
-    title: string;
-    abstract?: string;
-    decision: 'include' | 'exclude' | 'uncertain' | null;
-    comment: string;
-  }>;
-}
+import type { WorkFile } from './types.js';
 
 describe('executeReviewMark', () => {
   let tempDir: string;

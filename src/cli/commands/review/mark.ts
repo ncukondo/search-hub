@@ -4,28 +4,8 @@
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import type { ReviewBasis, ReviewDecision } from './types.js';
+import type { ReviewDecision, WorkFile } from './types.js';
 
-/**
- * Work file article entry
- */
-interface WorkFileArticle {
-  id: string;
-  title: string;
-  abstract?: string;
-  decision: ReviewDecision | null;
-  comment: string;
-}
-
-/**
- * Work file structure
- */
-interface WorkFile {
-  sessionId: string;
-  basis: ReviewBasis;
-  reviewer: string;
-  articles: WorkFileArticle[];
-}
 
 /**
  * Decision input for batch marking

@@ -73,6 +73,27 @@ export interface ReviewFile {
 }
 
 /**
+ * Work file article entry for AI agent workflow
+ */
+export interface WorkFileArticle {
+  id: string;
+  title: string;
+  abstract?: string;
+  decision: ReviewDecision | null;
+  comment: string;
+}
+
+/**
+ * Work file structure for AI agent workflow
+ */
+export interface WorkFile {
+  sessionId: string;
+  basis: ReviewBasis;
+  reviewer: string;
+  articles: WorkFileArticle[];
+}
+
+/**
  * Review status classification
  */
 export type ReviewStatus = 'pending' | 'conflicting' | 'needs-final' | 'finalized';
