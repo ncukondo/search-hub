@@ -31,16 +31,16 @@ arXivでの医学教育検索テスト中に発見された問題を解決する
 
 `--query` オプション使用時に、YAMLファイルの使用を推奨するヒントを表示する。
 
-- [ ] Write test: `src/cli/commands/search.test.ts`
+- [x] Write test: `src/cli/commands/search.test.ts`
   - `--query` 使用時にヒントメッセージが stderr に出力されることを確認
-- [ ] Implement in `src/cli/commands/search.ts`
+- [x] Implement in `src/cli/commands/search.ts`
   - 検索実行後に以下のヒントを表示:
     ```
     Tip: For reproducible searches, consider using a YAML query file:
          search-hub query init -o my-search.yaml
     ```
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
 - [ ] Acceptance: `--query` 使用時にヒントが表示される
 
 ### Step 2: Add --preview option to search command

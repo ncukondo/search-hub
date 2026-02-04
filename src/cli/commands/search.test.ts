@@ -8,6 +8,7 @@ import {
   formatCountOnlyOutput,
   formatSearchCompletionTip,
   formatCountOnlyTip,
+  formatDirectQueryTip,
   type SearchCommandOptions,
   type TranslationResult,
   type CountResult,
@@ -521,6 +522,22 @@ describe('search command', () => {
       const result = formatCountOnlyTip();
 
       expect(result).toContain('diff');
+    });
+  });
+
+  describe('formatDirectQueryTip', () => {
+    it('should recommend using YAML query file for reproducibility', () => {
+      const result = formatDirectQueryTip();
+
+      expect(result).toContain('Tip:');
+      expect(result).toContain('YAML');
+      expect(result).toContain('reproducible');
+    });
+
+    it('should show query init command', () => {
+      const result = formatDirectQueryTip();
+
+      expect(result).toContain('search-hub query init');
     });
   });
 });

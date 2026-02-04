@@ -309,3 +309,14 @@ export function formatCountOnlyTip(): string {
   return `
 Tip: Run without --count-only to retrieve articles, then use 'diff' to compare query versions.`;
 }
+
+
+/**
+ * Format tip shown when using --query direct option.
+ * Guides users toward YAML query files for reproducible searches.
+ */
+export function formatDirectQueryTip(): string {
+  return `
+Tip: For reproducible searches, consider using a YAML query file:
+     search-hub query init -o my-search.yaml`;
+}
