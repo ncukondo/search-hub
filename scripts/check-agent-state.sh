@@ -69,11 +69,11 @@ fi
 CONTENT=$(tmux capture-pane -t "$PANE" -p -S -50 2>/dev/null | tail -20)
 
 # Trust prompt detection:
-#   - Contains "Yes, I trust" (from the trust folder prompt)
+#   - Contains "folder" (from "trust this folder" prompt)
 #   - Contains "confirm" (from "Enter to confirm")
-#   Note: We use keyword-based detection instead of line patterns because
-#   narrow panes cause line wrapping that breaks pattern matching.
-if echo "$CONTENT" | grep -q 'Yes, I trust' && \
+#   Note: We use short keywords because narrow panes cause line wrapping
+#   that can split longer phrases across lines.
+if echo "$CONTENT" | grep -q 'folder' && \
    echo "$CONTENT" | grep -q 'confirm'; then
   echo "trust"
   exit 0
