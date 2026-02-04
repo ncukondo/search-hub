@@ -44,6 +44,7 @@ import {
   formatCountOnlyOutput,
   formatSearchCompletionTip,
   formatCountOnlyTip,
+  formatDirectQueryTip,
 } from './commands/search.js';
 import { executeSearch, executeCountOnly } from './commands/search-executor.js';
 import {
@@ -660,6 +661,10 @@ Query Refinement:
               // Show tip for query refinement workflow
               if (result.sessionId) {
                 console.log(formatSearchCompletionTip(result.sessionId));
+              }
+              // Show tip about YAML files when using direct query
+              if (searchOpts.directQuery) {
+                console.error(formatDirectQueryTip());
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;

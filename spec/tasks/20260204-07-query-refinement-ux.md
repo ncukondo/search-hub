@@ -41,7 +41,7 @@ arXivでの医学教育検索テスト中に発見された問題を解決する
     ```
 - [x] Verify test passes
 - [x] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `--query` 使用時にヒントが表示される
+- [x] Acceptance: `--query` 使用時にヒントが表示される
 
 ### Step 2: Add --preview option to search command
 
