@@ -27,6 +27,7 @@ export const termBlockSchema = z.object({
   keywords: z.array(z.string()).min(1),
   mesh: z.array(z.string()).optional(),
   emtree: z.array(z.string()).optional(),
+  exclude: z.array(z.string()).optional(),
 });
 
 /**
