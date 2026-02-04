@@ -5,7 +5,7 @@
 import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir, copyFile, access } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { classifyStatus, type ReviewFile, type ArticleEntry, type ReviewStatus } from './types.js';
+import { classifyStatus, type ReviewFile, type ArticleEntry, type ReviewStatus, type ReviewBasis } from './types.js';
 
 export type SortOption = 'year' | 'title' | 'random' | 'none';
 
@@ -16,7 +16,32 @@ export interface ReviewExtractOptions {
   seed?: number;
   limit?: number;
   offset?: number;
+  /** Basis for the review (title, abstract). When specified, outputs work file format. */
+  basis?: ReviewBasis;
+  /** Reviewer identifier (e.g., "ai:claude"). Required when basis is specified. */
+  reviewer?: string;
   output: string;
+}
+
+/**
+ * Work file article entry for AI agent workflow
+ */
+interface WorkFileArticle {
+  id: string;
+  title: string;
+  abstract?: string;
+  decision: 'include' | 'exclude' | 'uncertain' | null;
+  comment: string;
+}
+
+/**
+ * Work file structure for AI agent workflow
+ */
+interface WorkFile {
+  sessionId: string;
+  basis: ReviewBasis;
+  reviewer: string;
+  articles: WorkFileArticle[];
 }
 
 export interface ReviewExtractResult {
@@ -54,6 +79,18 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
   }
 
   return result;
+}
+
+/**
+ * Get the best identifier for an article (doi > pmid > scopusId > arxivId > ericId > title)
+ */
+function getArticleId(article: ArticleEntry): string {
+  if (article.doi) return article.doi;
+  if (article.pmid) return article.pmid;
+  if (article.scopusId) return article.scopusId;
+  if (article.arxivId) return article.arxivId;
+  if (article.ericId) return article.ericId;
+  return article.title;
 }
 
 /**
@@ -112,20 +149,49 @@ export async function executeReviewExtract(
     paginated = paginated.slice(0, options.limit);
   }
 
-  // Build output review file
-  const outputFile: ReviewFile = {
-    sessionId: options.sessionId,
-    articles: paginated,
-  };
+  let finalContent: string;
 
-  // Generate YAML with schema reference
-  const yamlContent = stringifyYaml(outputFile, {
-    lineWidth: 0,
-  });
+  // If basis is specified, output work file format
+  if (options.basis && options.reviewer) {
+    const workFile: WorkFile = {
+      sessionId: options.sessionId,
+      basis: options.basis,
+      reviewer: options.reviewer,
+      articles: paginated.map((article) => {
+        const workArticle: WorkFileArticle = {
+          id: getArticleId(article),
+          title: article.title,
+          decision: null,
+          comment: '',
+        };
+        // Include abstract only for abstract basis
+        if (options.basis === 'abstract' && article.abstract) {
+          workArticle.abstract = article.abstract;
+        }
+        return workArticle;
+      }),
+    };
 
-  // Schema reference pointing to adjacent file
-  const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
-  const finalContent = schemaComment + yamlContent;
+    const yamlContent = stringifyYaml(workFile, {
+      lineWidth: 0,
+    });
+    finalContent = yamlContent;
+  } else {
+    // Build output review file (legacy format)
+    const outputFile: ReviewFile = {
+      sessionId: options.sessionId,
+      articles: paginated,
+    };
+
+    // Generate YAML with schema reference
+    const yamlContent = stringifyYaml(outputFile, {
+      lineWidth: 0,
+    });
+
+    // Schema reference pointing to adjacent file
+    const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
+    finalContent = schemaComment + yamlContent;
+  }
 
   // Ensure output directory exists
   const outputDir = dirname(options.output);
