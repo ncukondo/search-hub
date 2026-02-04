@@ -234,6 +234,29 @@ describe('parseResultsOptions', () => {
     expect(result.offset).toBeUndefined();
     expect(result.json).toBe(false);
     expect(result.fields).toBeUndefined();
+    expect(result.showAbstract).toBe(false);
+  });
+
+  it('parses abstract flag', () => {
+    const result = parseResultsOptions('my-session', { abstract: true });
+
+    expect(result.showAbstract).toBe(true);
+  });
+
+  it('parses abstract-length option', () => {
+    const result = parseResultsOptions('my-session', { abstractLength: '500' });
+
+    expect(result.abstractLength).toBe(500);
+  });
+
+  it('parses abstract and abstract-length together', () => {
+    const result = parseResultsOptions('my-session', {
+      abstract: true,
+      abstractLength: '200',
+    });
+
+    expect(result.showAbstract).toBe(true);
+    expect(result.abstractLength).toBe(200);
   });
 
   it('parses limit and offset options', () => {
@@ -298,6 +321,7 @@ describe('validateResultsInput', () => {
     const options: ResultsCommandOptions = {
       sessionId: 'my-session',
       json: false,
+      showAbstract: false,
     };
 
     const result = validateResultsInput(options);
@@ -309,6 +333,7 @@ describe('validateResultsInput', () => {
     const options: ResultsCommandOptions = {
       sessionId: '',
       json: false,
+      showAbstract: false,
     };
 
     const result = validateResultsInput(options);
@@ -321,6 +346,7 @@ describe('validateResultsInput', () => {
     const options: ResultsCommandOptions = {
       sessionId: '   ',
       json: false,
+      showAbstract: false,
     };
 
     const result = validateResultsInput(options);
@@ -332,6 +358,7 @@ describe('validateResultsInput', () => {
     const options: ResultsCommandOptions = {
       sessionId: 'my-session',
       json: false,
+      showAbstract: false,
       limit: -5,
     };
 
@@ -344,6 +371,7 @@ describe('validateResultsInput', () => {
   it('rejects negative offset', () => {
     const options: ResultsCommandOptions = {
       sessionId: 'my-session',
+      showAbstract: false,
       json: false,
       offset: -10,
     };

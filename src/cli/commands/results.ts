@@ -13,6 +13,8 @@ export interface ResultsCommandOptions {
   fields?: string[];
   providers?: ProviderName[];
   filter?: ExportFilter;
+  showAbstract: boolean;
+  abstractLength?: number;
 }
 
 export interface CommandLineOptions {
@@ -24,6 +26,8 @@ export interface CommandLineOptions {
   filterYear?: string | undefined;
   filterTitle?: string | undefined;
   filterAbstract?: string | undefined;
+  abstract?: boolean | undefined;
+  abstractLength?: string | undefined;
 }
 
 export interface ValidationResult {
@@ -46,7 +50,12 @@ export function parseResultsOptions(
   const result: ResultsCommandOptions = {
     sessionId,
     json: options.json ?? false,
+    showAbstract: options.abstract ?? false,
   };
+
+  if (options.abstractLength) {
+    result.abstractLength = parseInt(options.abstractLength, 10);
+  }
 
   if (options.limit) {
     result.limit = parseInt(options.limit, 10);

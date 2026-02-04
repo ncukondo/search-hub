@@ -18,12 +18,12 @@ When evaluating query quality, users need to see more than just article titles. 
 
 ### Step 1: Add --abstract flag to results command
 
-- [ ] Step 1: Add command-line option for abstract display
-  - [ ] Write test: `src/cli/commands/results.test.ts` - test --abstract flag parsing
-  - [ ] Implement: Add `--abstract` option to results command
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `search-hub results --help` shows --abstract option
+- [x] Step 1: Add command-line option for abstract display
+  - [x] Write test: `src/cli/commands/results.test.ts` - test --abstract flag parsing
+  - [x] Implement: Add `--abstract` option to results command
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `search-hub results --help` shows --abstract option
 
 ### Step 2: Implement abstract display formatting
 
