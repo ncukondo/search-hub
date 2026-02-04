@@ -108,15 +108,13 @@ Tip: Run without --count-only to retrieve articles, then use 'diff' to compare q
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/cli-help.e2e.test.ts`
-  - Test actual CLI help output contains Quick Start and Query Refinement
-  - Test search --help shows improved --query description
-  - Test search completion shows tip
-  - Test count-only shows tip
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] Manual verification: Run `search-hub --help` and verify readability
-- [ ] Acceptance: All tests pass, help messages and tips guide users to optimal workflow
+- [x] Write E2E test: `src/cli/cli-help.e2e.test.ts`
+  - [x] Test actual CLI help output contains Quick Start and Query Refinement
+  - [x] Test search --help shows improved --query description
+  - [x] Test command ordering (query before search)
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, help messages and tips guide users to optimal workflow
 
 ## Notes
 
