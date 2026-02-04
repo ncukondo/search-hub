@@ -58,9 +58,26 @@ function translateTerm(term: string, qualifier: string): string {
 }
 
 /**
- * Translate a query block to PubMed syntax.
+ * Translate exclude terms to NOT clause.
  */
-function translateBlock(block: QueryBlock): string {
+function translateExcludeTerms(exclude: string[], qualifier: string): string | null {
+  if (exclude.length === 0) {
+    return null;
+  }
+
+  const excludeTerms = exclude.map((term) => translateTerm(term, qualifier));
+
+  if (excludeTerms.length === 1) {
+    return `NOT ${excludeTerms[0]}`;
+  }
+  return `NOT (${excludeTerms.join(' OR ')})`;
+}
+
+/**
+ * Translate a query block to PubMed syntax.
+ * Returns an object with the main query part and optional NOT clause.
+ */
+function translateBlock(block: QueryBlock): { query: string; notClause: string | null } {
   const qualifier = FIELD_QUALIFIERS[block.field];
   const terms: string[] = [];
 
@@ -76,14 +93,20 @@ function translateBlock(block: QueryBlock): string {
     }
   }
 
-  // Combine terms with operator
-  if (terms.length === 0) {
-    return '';
-  }
+  // Build query part
+  let query = '';
   if (terms.length === 1) {
-    return `(${terms[0]})`;
+    query = `(${terms[0]})`;
+  } else if (terms.length > 1) {
+    query = `(${terms.join(` ${block.operator} `)})`;
   }
-  return `(${terms.join(` ${block.operator} `)})`;
+
+  // Translate exclude terms
+  const notClause = block.terms.exclude
+    ? translateExcludeTerms(block.terms.exclude, qualifier)
+    : null;
+
+  return { query, notClause };
 }
 
 /**
@@ -190,9 +213,15 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
   const filters = mergeFilters(ast.filters, pubmedOverride?.filters);
 
   // Translate query blocks
-  const blockStrings = ast.blocks
-    .map((block) => translateBlock(block))
+  const blockResults = ast.blocks.map((block) => translateBlock(block));
+
+  // Collect query parts and NOT clauses
+  const blockStrings = blockResults
+    .map((r) => r.query)
     .filter((s) => s.length > 0);
+  const blockNotClauses = blockResults
+    .map((r) => r.notClause)
+    .filter((s): s is string => s !== null);
 
   // Build the main query
   const parts: string[] = [];
@@ -219,6 +248,9 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
   // Add publication type filters
   const pubTypeFilters = translatePublicationTypeFilters(filters.publicationTypes);
   parts.push(...pubTypeFilters);
+
+  // Add block-level NOT clauses (from exclude terms)
+  parts.push(...blockNotClauses);
 
   // Separate NOT clauses from AND-joined parts
   // PubMed treats NOT as a standalone binary operator, not AND NOT
