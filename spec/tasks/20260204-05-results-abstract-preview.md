@@ -27,12 +27,12 @@ When evaluating query quality, users need to see more than just article titles. 
 
 ### Step 2: Implement abstract display formatting
 
-- [ ] Step 2: Format and display abstracts with titles
-  - [ ] Write test: Test output includes abstract text
-  - [ ] Implement: Fetch and display abstract from session data
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Abstracts display below titles when flag is set
+- [x] Step 2: Format and display abstracts with titles
+  - [x] Write test: Test output includes abstract text
+  - [x] Implement: Fetch and display abstract from session data
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Abstracts display below titles when flag is set
 
 Expected output:
 ```

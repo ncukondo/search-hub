@@ -184,6 +184,35 @@ describe('formatResultsList', () => {
 
     expect(output).toContain('filtered from 10');
   });
+
+  it('displays abstract when showAbstract is true', () => {
+    const articles = [createTestArticle({
+      abstract: 'This is a test abstract for the article.',
+    })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+    });
+
+    expect(output).toContain('Abstract: This is a test abstract for the article.');
+  });
+
+  it('does not display abstract when showAbstract is false', () => {
+    const articles = [createTestArticle({
+      abstract: 'This is a test abstract.',
+    })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: false,
+    });
+
+    expect(output).not.toContain('Abstract:');
+    expect(output).not.toContain('This is a test abstract.');
+  });
 });
 
 describe('formatResultsJson', () => {

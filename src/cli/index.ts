@@ -1158,6 +1158,8 @@ Examples:
                 total,
                 offset,
                 filteredFrom,
+                showAbstract: resultsOpts.showAbstract,
+                abstractLength: resultsOpts.abstractLength,
               }));
             }
           }

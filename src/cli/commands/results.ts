@@ -41,6 +41,8 @@ export interface FormatOptions {
   total: number;
   offset?: number | undefined;
   filteredFrom?: number | undefined;
+  showAbstract?: boolean | undefined;
+  abstractLength?: number | undefined;
 }
 
 export function parseResultsOptions(
@@ -193,6 +195,11 @@ export function formatResultsList(
 
     if (article.doi) {
       lines.push(`    DOI: ${article.doi}`);
+    }
+
+    if (options.showAbstract && article.abstract) {
+      lines.push('');
+      lines.push(`    Abstract: ${article.abstract}`);
     }
 
     lines.push('');
