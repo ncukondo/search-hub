@@ -65,12 +65,21 @@ terms:
 
   mesh:               # MeSH terms (PubMed only)
     - "Diabetes Mellitus, Type 2"
+
+  eric:               # ERIC Descriptors (ERIC only)
+    - "Medical Education"
+    - "Clinical Experience"
 ```
 
 Within a term block:
 1. All keywords are OR'd together
-2. All MeSH terms are OR'd together
-3. Results are combined: keywords OR mesh
+2. All controlled vocabulary terms (MeSH, ERIC) are OR'd together
+3. Results are combined: keywords OR controlled vocabulary
+
+**Database-specific controlled vocabularies:**
+- **PubMed**: `mesh` - Medical Subject Headings
+- **ERIC**: `eric` - ERIC Descriptors (from ERIC Thesaurus)
+- **Embase**: `emtree` - Emtree terms
 
 ## Filters
 

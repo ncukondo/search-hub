@@ -279,4 +279,103 @@ describe('ERIC Query Translator', () => {
       expect(result.native).toContain('"');
     });
   });
+
+  describe('ERIC Descriptors Translation', () => {
+    it('should translate single ERIC descriptor to subject: field', () => {
+      const block: QueryBlock = {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['medical education'],
+          eric: ['Medical Education'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      expect(result.native).toContain('subject:"Medical Education"');
+    });
+
+    it('should translate multiple ERIC descriptors with OR', () => {
+      const block: QueryBlock = {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['education'],
+          eric: ['Medical Education', 'Clinical Experience'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      expect(result.native).toContain('subject:"Medical Education"');
+      expect(result.native).toContain('subject:"Clinical Experience"');
+    });
+
+    it('should combine keywords and ERIC descriptors with OR', () => {
+      const block: QueryBlock = {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['medical education'],
+          eric: ['Medical Education'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      // keywords should expand to title/description
+      expect(result.native).toContain('title:"medical education"');
+      expect(result.native).toContain('description:"medical education"');
+      // ERIC descriptor should use subject:
+      expect(result.native).toContain('subject:"Medical Education"');
+      // All should be combined with OR
+      expect(result.native).toContain(' OR ');
+    });
+
+    it('should handle only ERIC descriptors (no keywords)', () => {
+      // This case requires at least one keyword due to schema validation,
+      // but the translator should still handle eric-only scenarios gracefully
+      const block: QueryBlock = {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['placeholder'],
+          eric: ['Medical Education', 'Competency Based Education'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      expect(result.native).toContain('subject:"Medical Education"');
+      expect(result.native).toContain('subject:"Competency Based Education"');
+    });
+
+    it('should combine ERIC descriptors with exclude terms', () => {
+      const block: QueryBlock = {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['education'],
+          eric: ['Medical Education'],
+          exclude: ['veterinary'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      expect(result.native).toContain('subject:"Medical Education"');
+      expect(result.native).toContain('NOT');
+      expect(result.native).toContain('veterinary');
+    });
+
+    it('should handle ERIC descriptor without spaces (no extra quotes)', () => {
+      const block: QueryBlock = {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['learning'],
+          eric: ['Literacy'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      expect(result.native).toContain('subject:Literacy');
+    });
+  });
 });

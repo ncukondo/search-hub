@@ -260,6 +260,82 @@ query:
       expect(result.blocks[0]!.terms.mesh).toEqual(['Diabetes Mellitus']);
       expect(result.blocks[0]!.terms.exclude).toEqual(['animal', 'mice', 'rats']);
     });
+
+    it('should parse query with eric descriptors', () => {
+      const yaml = `
+name: eric_descriptor_test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - medical education
+      eric:
+        - Medical Education
+        - Clinical Experience
+    operator: OR
+`;
+      const result = parseQueryString(yaml);
+      expect(result.blocks[0]!.terms.keywords).toEqual(['medical education']);
+      expect(result.blocks[0]!.terms.eric).toEqual(['Medical Education', 'Clinical Experience']);
+    });
+
+    it('should parse eric descriptors with empty array', () => {
+      const yaml = `
+name: eric_empty_test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - education
+      eric: []
+    operator: OR
+`;
+      const result = parseQueryString(yaml);
+      expect(result.blocks[0]!.terms.eric).toEqual([]);
+    });
+
+    it('should parse eric with single element', () => {
+      const yaml = `
+name: eric_single_test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - learning
+      eric:
+        - Educational Technology
+    operator: OR
+`;
+      const result = parseQueryString(yaml);
+      expect(result.blocks[0]!.terms.eric).toEqual(['Educational Technology']);
+    });
+
+    it('should parse query with all vocabulary types including eric', () => {
+      const yaml = `
+name: all_vocab_test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - medical education
+      mesh:
+        - Education, Medical
+      emtree:
+        - medical education
+      eric:
+        - Medical Education
+        - Competency Based Education
+      exclude:
+        - veterinary
+    operator: OR
+`;
+      const result = parseQueryString(yaml);
+      expect(result.blocks[0]!.terms.keywords).toEqual(['medical education']);
+      expect(result.blocks[0]!.terms.mesh).toEqual(['Education, Medical']);
+      expect(result.blocks[0]!.terms.emtree).toEqual(['medical education']);
+      expect(result.blocks[0]!.terms.eric).toEqual(['Medical Education', 'Competency Based Education']);
+      expect(result.blocks[0]!.terms.exclude).toEqual(['veterinary']);
+    });
   });
 
   describe('parseQueryFile', () => {

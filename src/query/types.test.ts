@@ -67,6 +67,29 @@ describe('Query AST Types', () => {
       expect(terms.mesh).toHaveLength(1);
       expect(terms.exclude).toHaveLength(2);
     });
+
+    it('should accept eric descriptors', () => {
+      const terms: TermBlock = {
+        keywords: ['medical education'],
+        eric: ['Medical Education', 'Clinical Experience'],
+      };
+      expect(terms.eric).toHaveLength(2);
+    });
+
+    it('should accept all vocabulary types including eric', () => {
+      const terms: TermBlock = {
+        keywords: ['education'],
+        mesh: ['Education, Medical'],
+        emtree: ['medical education'],
+        eric: ['Medical Education'],
+        exclude: ['veterinary'],
+      };
+      expect(terms.keywords).toHaveLength(1);
+      expect(terms.mesh).toHaveLength(1);
+      expect(terms.emtree).toHaveLength(1);
+      expect(terms.eric).toHaveLength(1);
+      expect(terms.exclude).toHaveLength(1);
+    });
   });
 
   describe('QueryBlock', () => {

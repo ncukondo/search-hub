@@ -75,35 +75,49 @@ function translateExcludeTerms(
 }
 
 /**
+ * Translate ERIC Descriptors to subject: field syntax.
+ */
+function translateEricDescriptors(descriptors: string[]): string[] {
+  return descriptors.map((term) => formatTerm(term, 'subject:'));
+}
+
+/**
  * Translate a single query block to ERIC syntax.
  * Returns an object with the main query part and optional NOT clause.
  */
 function translateBlock(block: QueryBlock): { query: string; notClause: string | null } {
   const { field, terms, operator } = block;
   const keywords = terms.keywords;
+  const eric = terms.eric ?? [];
 
-  let query = '';
+  const allTerms: string[] = [];
 
+  // Translate keywords
   if (keywords.length > 0) {
     // Handle title_abstract special case
     if (field === 'title_abstract') {
       const expandedTerms = keywords.map(translateTitleAbstractTerm);
-      if (expandedTerms.length === 1) {
-        query = expandedTerms[0]!;
-      } else {
-        query = `(${expandedTerms.join(` ${operator} `)})`;
-      }
+      allTerms.push(...expandedTerms);
     } else {
       // Standard field translation
       const prefix = FIELD_PREFIXES[field] ?? '';
       const translatedTerms = keywords.map((term) => formatTerm(term, prefix));
-
-      if (translatedTerms.length === 1) {
-        query = translatedTerms[0]!;
-      } else {
-        query = `(${translatedTerms.join(` ${operator} `)})`;
-      }
+      allTerms.push(...translatedTerms);
     }
+  }
+
+  // Translate ERIC Descriptors (always use subject: field)
+  if (eric.length > 0) {
+    const ericTerms = translateEricDescriptors(eric);
+    allTerms.push(...ericTerms);
+  }
+
+  // Combine all terms
+  let query = '';
+  if (allTerms.length === 1) {
+    query = allTerms[0]!;
+  } else if (allTerms.length > 1) {
+    query = `(${allTerms.join(` ${operator} `)})`;
   }
 
   // Translate exclude terms
