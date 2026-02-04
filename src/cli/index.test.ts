@@ -145,6 +145,79 @@ describe('CLI Entry Point', () => {
     });
   });
 
+  describe('main help sections', () => {
+    /**
+     * Helper to capture full help output including addHelpText sections.
+     * Commander's helpInformation() only returns base help, not custom text.
+     */
+    function captureHelpOutput(program: Command): string {
+      let output = '';
+      program.configureOutput({
+        writeOut: (str) => { output += str; },
+        writeErr: (str) => { output += str; },
+      });
+      program.outputHelp();
+      return output;
+    }
+
+    it('should include Quick Start section in help output', () => {
+      const program = createProgram();
+      const helpOutput = captureHelpOutput(program);
+      expect(helpOutput).toContain('Quick Start:');
+      expect(helpOutput).toContain('query init');
+      expect(helpOutput).toContain('--count-only');
+    });
+
+    it('should include Query Refinement section in help output', () => {
+      const program = createProgram();
+      const helpOutput = captureHelpOutput(program);
+      expect(helpOutput).toContain('Query Refinement');
+      expect(helpOutput).toContain('diff');
+    });
+  });
+
+  describe('search command', () => {
+    /**
+     * Helper to capture full help output including addHelpText sections.
+     */
+    function captureSubcommandHelp(program: Command, commandName: string): string {
+      const searchCommand = program.commands.find((cmd) => cmd.name() === commandName);
+      if (!searchCommand) throw new Error(`Command ${commandName} not found`);
+      let output = '';
+      searchCommand.configureOutput({
+        writeOut: (str) => { output += str; },
+        writeErr: (str) => { output += str; },
+      });
+      searchCommand.outputHelp();
+      return output;
+    }
+
+    it('should have --query option with improved description', () => {
+      const program = createProgram();
+      const helpOutput = captureSubcommandHelp(program, 'search');
+      // Should mention database-native syntax and advanced usage
+      expect(helpOutput).toContain('--query');
+      expect(helpOutput).toContain('database-native');
+      expect(helpOutput).toContain('prefer YAML');
+    });
+  });
+
+  describe('command ordering', () => {
+    it('should list query command before search command in help output', () => {
+      const program = createProgram();
+      const helpInfo = program.helpInformation();
+      // Match command lines: "  query" and "  search" at the start of a line
+      const commandsSection = helpInfo.split('Commands:')[1] || '';
+      const queryMatch = commandsSection.match(/^\s+query\b/m);
+      const searchMatch = commandsSection.match(/^\s+search\b/m);
+      expect(queryMatch).not.toBeNull();
+      expect(searchMatch).not.toBeNull();
+      const queryIndex = queryMatch?.index ?? 0;
+      const searchIndex = searchMatch?.index ?? 0;
+      expect(queryIndex).toBeLessThan(searchIndex);
+    });
+  });
+
   describe('register command', () => {
     it('should have register command registered', () => {
       const program = createProgram();

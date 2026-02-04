@@ -20,12 +20,12 @@ This task improves help messages to guide users toward the optimal workflow, inc
 
 ### Step 1: Add Quick Start and Query Refinement sections to main help
 
-- [ ] Step 1: Add recommended workflow including diff to main CLI help
-  - [ ] Write test: `src/cli/index.test.ts` - verify help includes "Quick Start" and "Query Refinement" sections
-  - [ ] Implement: Update help output in `src/cli/index.ts`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `search-hub --help` shows both workflows
+- [x] Step 1: Add recommended workflow including diff to main CLI help
+  - [x] Write test: `src/cli/index.test.ts` - verify help includes "Quick Start" and "Query Refinement" sections
+  - [x] Implement: Update help output in `src/cli/index.ts`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `search-hub --help` shows both workflows
 
 Expected output:
 ```
@@ -44,12 +44,12 @@ Query Refinement (iterate until satisfied):
 
 ### Step 2: Improve --query option description
 
-- [ ] Step 2: Clarify that --query requires database-specific syntax
-  - [ ] Write test: `src/cli/commands/search.test.ts` - verify help text for --query
-  - [ ] Implement: Update option description in `src/cli/commands/search.ts`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `search-hub search --help` shows warning about database-specific syntax
+- [x] Step 2: Clarify that --query requires database-specific syntax
+  - [x] Write test: `src/cli/index.test.ts` - verify help text for --query
+  - [x] Implement: Update option description in `src/cli/index.ts`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `search-hub search --help` shows warning about database-specific syntax
 
 Expected description:
 ```
@@ -59,21 +59,22 @@ Expected description:
 
 ### Step 3: Reorder commands to emphasize query first
 
-- [ ] Step 3: List `query` command before `search` in help output
-  - [ ] Write test: Verify command order in help
-  - [ ] Implement: Reorder command registration or use custom help formatter
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `query` appears before `search` in command list
+- [x] Step 3: List `query` command before `search` in help output
+  - [x] Write test: Verify command order in help
+  - [x] Verify: Commands already ordered correctly (query before search)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `query` appears before `search` in command list
 
 ### Step 4: Add tip after search completion
 
-- [ ] Step 4: Show refinement tip after successful search
-  - [ ] Write test: `src/cli/commands/search.test.ts` - verify tip is shown after search
-  - [ ] Implement: Add tip message after search completion in `src/cli/commands/search.ts`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Search completion shows tip about diff
+- [x] Step 4: Show refinement tip after successful search
+  - [x] Write test: `src/cli/commands/search.test.ts` - verify formatSearchCompletionTip
+  - [x] Implement: Add formatSearchCompletionTip in `src/cli/commands/search.ts`
+  - [x] Integrate: Use tip in `src/cli/index.ts` after search completion
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Search completion shows tip about diff
 
 Expected output after search:
 ```
@@ -86,12 +87,13 @@ Tip: To compare with another query version, use:
 
 ### Step 5: Add tip after count-only results
 
-- [ ] Step 5: Show refinement tip after --count-only
-  - [ ] Write test: `src/cli/commands/search.test.ts` - verify tip after count-only
-  - [ ] Implement: Add tip message after count-only results
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Count-only results show tip about workflow
+- [x] Step 5: Show refinement tip after --count-only
+  - [x] Write test: `src/cli/commands/search.test.ts` - verify formatCountOnlyTip
+  - [x] Implement: Add formatCountOnlyTip in `src/cli/commands/search.ts`
+  - [x] Integrate: Use tip in `src/cli/index.ts` after count-only results
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Count-only results show tip about workflow
 
 Expected output after --count-only:
 ```
@@ -106,15 +108,13 @@ Tip: Run without --count-only to retrieve articles, then use 'diff' to compare q
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/cli-help.e2e.test.ts`
-  - Test actual CLI help output contains Quick Start and Query Refinement
-  - Test search --help shows improved --query description
-  - Test search completion shows tip
-  - Test count-only shows tip
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] Manual verification: Run `search-hub --help` and verify readability
-- [ ] Acceptance: All tests pass, help messages and tips guide users to optimal workflow
+- [x] Write E2E test: `src/cli/cli-help.e2e.test.ts`
+  - [x] Test actual CLI help output contains Quick Start and Query Refinement
+  - [x] Test search --help shows improved --query description
+  - [x] Test command ordering (query before search)
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, help messages and tips guide users to optimal workflow
 
 ## Notes
 

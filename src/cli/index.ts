@@ -42,6 +42,8 @@ import {
   validateSearchInput,
   formatDryRunOutput,
   formatCountOnlyOutput,
+  formatSearchCompletionTip,
+  formatCountOnlyTip,
 } from './commands/search.js';
 import { executeSearch, executeCountOnly } from './commands/search-executor.js';
 import {
@@ -181,7 +183,19 @@ export function createProgram(): Command {
     .option('--session-dir <path>', 'path to session directory')
     .option('-v, --verbose', 'enable verbose output', false)
     .option('-q, --quiet', 'suppress all output except errors', false)
-    .option('--no-color', 'disable color output');
+    .option('--no-color', 'disable color output')
+    .addHelpText('after', `
+Quick Start:
+  $ search-hub query init -o search.yaml        # Create query template
+  $ search-hub search search.yaml --count-only  # Check hit counts
+  $ search-hub search search.yaml               # Execute search
+  $ search-hub results <session>                # Review titles
+
+Query Refinement (iterate until satisfied):
+  $ cp search.yaml search-v2.yaml               # Create variant
+  $ (edit search-v2.yaml)                       # Adjust terms
+  $ search-hub search search-v2.yaml            # Search again
+  $ search-hub diff <old> <new> --show removed  # Compare results`);
 
   // Register init command
   program
@@ -473,7 +487,7 @@ Examples:
     .description('Execute search across databases')
     .argument('[query-file]', 'path to query YAML file')
     .option('--db <providers>', 'target specific database(s), comma-separated')
-    .option('--query <string>', 'direct query string (requires --db)')
+    .option('--query <string>', 'direct query in database-native syntax (advanced; requires --db; prefer YAML files)')
     .option('--name <string>', 'session name')
     .option('--max-results <n>', 'limit results per database')
     .option('--dry-run', 'show translated queries without executing')
@@ -601,6 +615,8 @@ Examples:
 
             if (!globalOpts.quiet) {
               console.log(formatCountOnlyOutput(counts, searchOpts.queryFile));
+              // Show tip for workflow guidance
+              console.log(formatCountOnlyTip());
             }
 
             const hasErrors = counts.some((c) => c.error);
@@ -634,6 +650,10 @@ Examples:
                 for (const [provider, stats] of Object.entries(result.results)) {
                   console.log(`  ${provider}: ${stats.retrieved} results`);
                 }
+              }
+              // Show tip for query refinement workflow
+              if (result.sessionId) {
+                console.log(formatSearchCompletionTip(result.sessionId));
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;
