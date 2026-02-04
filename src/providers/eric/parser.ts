@@ -38,15 +38,32 @@ export function validateSearchResponse(response: unknown): asserts response is E
     );
   }
 
-  // Check for error response from ERIC API
+  // Check for ERIC API error response: { error: { msg: "..." } }
   if (typeof response === 'object' && 'error' in response) {
-    const errorObj = (response as { error: { msg?: string } }).error;
-    throw createProviderError(
-      'QUERY_ERROR',
-      `ERIC API error: ${errorObj.msg ?? 'Unknown error'}`,
-      'eric',
-      { retryable: false }
-    );
+    const respObj = response as Record<string, unknown>;
+    if (typeof respObj['error'] === 'object' && respObj['error'] !== null) {
+      const errorObj = respObj['error'] as { msg?: string };
+      const errorMsg = errorObj.msg ?? 'Unknown error';
+
+      // Check for PhraseQuery error and provide helpful message
+      if (errorMsg.includes('PhraseQuery')) {
+        throw createProviderError(
+          'QUERY_ERROR',
+          'ERIC does not support phrase queries without field specification. ' +
+            'Use field-prefixed queries like: title:"your phrase" OR description:"your phrase". ' +
+            'Alternatively, use YAML format which automatically adds field prefixes.',
+          'eric',
+          { retryable: false }
+        );
+      }
+
+      throw createProviderError(
+        'QUERY_ERROR',
+        `ERIC API error: ${errorMsg}`,
+        'eric',
+        { retryable: false }
+      );
+    }
   }
 
   // Check for response.response object

@@ -225,7 +225,7 @@ describe('ERIC Response Parser', () => {
     it('should throw QUERY_ERROR for error response from ERIC API', () => {
       const errorResponse = {
         error: {
-          msg: 'field "text" was indexed without position data; cannot run PhraseQuery',
+          msg: 'Some generic API error message',
         },
       };
 
@@ -236,6 +236,44 @@ describe('ERIC Response Parser', () => {
         const e = error as { code: string; message: string };
         expect(e.code).toBe('QUERY_ERROR');
         expect(e.message).toContain('ERIC API error:');
+        expect(e.message).toContain('Some generic API error message');
+      }
+    });
+
+    it('should provide helpful message for PhraseQuery errors', () => {
+      const errorResponse = {
+        error: {
+          msg: 'field "text" was indexed without position data; cannot run PhraseQuery',
+        },
+      };
+
+      expect(() => parseSearchResponse(errorResponse)).toThrow();
+      try {
+        parseSearchResponse(errorResponse);
+      } catch (error: unknown) {
+        const e = error as { code: string; message: string };
+        expect(e.code).toBe('QUERY_ERROR');
+        expect(e.message).toContain('ERIC does not support phrase queries without field specification');
+        expect(e.message).toContain('title:"your phrase"');
+        expect(e.message).toContain('YAML format');
+      }
+    });
+
+    it('should pass through non-PhraseQuery errors with original message', () => {
+      const errorResponse = {
+        error: {
+          msg: 'Some other API error occurred',
+        },
+      };
+
+      expect(() => parseSearchResponse(errorResponse)).toThrow();
+      try {
+        parseSearchResponse(errorResponse);
+      } catch (error: unknown) {
+        const e = error as { code: string; message: string };
+        expect(e.code).toBe('QUERY_ERROR');
+        expect(e.message).toContain('Some other API error occurred');
+        expect(e.message).not.toContain('phrase queries without field specification');
       }
     });
   });
