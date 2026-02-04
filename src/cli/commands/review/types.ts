@@ -5,13 +5,20 @@
 export type ReviewDecision = 'include' | 'exclude' | 'uncertain';
 
 /**
+ * Basis of the review decision (what information was used)
+ */
+export type ReviewBasis = 'title' | 'abstract' | 'fulltext';
+
+/**
  * Individual assessment of an article by a reviewer
  */
 export interface Review {
-  /** Reviewer identifier: "gpt-4o", "claude-sonnet", "human:tanaka" */
+  /** Reviewer identifier: "human:name" or "ai:name" */
   reviewer: string;
   /** Assessment decision */
   decision?: ReviewDecision;
+  /** Basis of the decision (what information was used) */
+  basis?: ReviewBasis;
   /** Optional comment or reason */
   comment?: string;
   /** ISO 8601 timestamp (optional - auto-assigned on merge if not provided) */
@@ -63,6 +70,27 @@ export interface ReviewFile {
   /** Path to inclusion criteria file */
   criteria?: string;
   articles: ArticleEntry[];
+}
+
+/**
+ * Work file article entry for AI agent workflow
+ */
+export interface WorkFileArticle {
+  id: string;
+  title: string;
+  abstract?: string;
+  decision: ReviewDecision | null;
+  comment: string;
+}
+
+/**
+ * Work file structure for AI agent workflow
+ */
+export interface WorkFile {
+  sessionId: string;
+  basis: ReviewBasis;
+  reviewer: string;
+  articles: WorkFileArticle[];
 }
 
 /**

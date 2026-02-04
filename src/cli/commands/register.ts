@@ -216,7 +216,7 @@ export interface ReviewSummary {
  * Check if a session has a reviews.yaml file.
  */
 export async function hasReviewFile(sessionId: string, sessionsDir: string): Promise<boolean> {
-  const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+  const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
   try {
     await access(reviewsPath, constants.R_OK);
     return true;
@@ -229,7 +229,7 @@ export async function hasReviewFile(sessionId: string, sessionsDir: string): Pro
  * Load and parse the review file for a session.
  */
 async function loadReviewFile(sessionId: string, sessionsDir: string): Promise<ReviewFile> {
-  const reviewsPath = join(sessionsDir, sessionId, 'reviews.yaml');
+  const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
   const content = await readFile(reviewsPath, 'utf-8');
   return parseYaml(content) as ReviewFile;
 }

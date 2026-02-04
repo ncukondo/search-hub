@@ -126,116 +126,116 @@ AI Agent Workflow:
 
 ### Step 1: Move reviews.yaml to .internal/
 
-- [ ] Update `review init` to create `.internal/reviews.yaml`
-  - [ ] Write test: `src/cli/commands/review/init.test.ts`
-  - [ ] Verify test fails (Red)
-  - [ ] Implement: create `.internal/` directory, write reviews.yaml there
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review init` creates `sessions/{id}/.internal/reviews.yaml`
+- [x] Update `review init` to create `.internal/reviews.yaml`
+  - [x] Write test: `src/cli/commands/review/init.test.ts`
+  - [x] Verify test fails (Red)
+  - [x] Implement: create `.internal/` directory, write reviews.yaml there
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review init` creates `sessions/{id}/.internal/reviews.yaml`
 
 ### Step 2: Add basis and timestamp to review schema
 
-- [ ] Update review type definition
-  - [ ] Write test for new fields
-  - [ ] Verify test fails (Red)
-  - [ ] Add `basis: 'title' | 'abstract' | 'fulltext'` field
-  - [ ] Add `timestamp: string` field (ISO 8601)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Review type includes basis and timestamp
+- [x] Update review type definition
+  - [x] Write test for new fields
+  - [x] Verify test fails (Red)
+  - [x] Add `basis: 'title' | 'abstract' | 'fulltext'` field
+  - [x] Add `timestamp: string` field (ISO 8601) - already existed
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Review type includes basis and timestamp
 
 ### Step 3: Implement review extract --basis --reviewer
 
-- [ ] Add `--basis` option (required: title / abstract)
-  - [ ] Write test: extract with --basis title outputs only id, title
-  - [ ] Write test: extract with --basis abstract outputs id, title, abstract
-  - [ ] Verify tests fail (Red)
-  - [ ] Implement basis filtering
-  - [ ] Verify tests pass (Green)
+- [x] Add `--basis` option (required: title / abstract)
+  - [x] Write test: extract with --basis title outputs only id, title
+  - [x] Write test: extract with --basis abstract outputs id, title, abstract
+  - [x] Verify tests fail (Red)
+  - [x] Implement basis filtering
+  - [x] Verify tests pass (Green)
 
-- [ ] Add `--reviewer` option
-  - [ ] Write test: extract includes reviewer in output file
-  - [ ] Verify test fails (Red)
-  - [ ] Implement reviewer option
-  - [ ] Verify test passes (Green)
+- [x] Add `--reviewer` option
+  - [x] Write test: extract includes reviewer in output file
+  - [x] Verify test fails (Red)
+  - [x] Implement reviewer option
+  - [x] Verify test passes (Green)
 
-- [ ] Output format update
-  - [ ] Write test: output includes sessionId, basis, reviewer, articles
-  - [ ] Verify test fails (Red)
-  - [ ] Implement new output format
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review extract --basis title --reviewer "ai:claude" -o phase1.yaml` produces correct format
+- [x] Output format update
+  - [x] Write test: output includes sessionId, basis, reviewer, articles
+  - [x] Verify test fails (Red)
+  - [x] Implement new output format
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review extract --basis title --reviewer "ai:claude" -o phase1.yaml` produces correct format
 
 ### Step 4: Implement review mark command
 
-- [ ] Create new command `review mark`
-  - [ ] Write test: mark single article in work file
-  - [ ] Write test: mark multiple articles via JSON input
-  - [ ] Write test: error if file doesn't have basis field
-  - [ ] Verify tests fail (Red)
-  - [ ] Implement mark command
-  - [ ] Verify tests pass (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review mark --file phase1.yaml --id "..." --decision include` updates file
+- [x] Create new command `review mark`
+  - [x] Write test: mark single article in work file
+  - [x] Write test: mark multiple articles via JSON input
+  - [x] Write test: error if file doesn't have basis field
+  - [x] Verify tests fail (Red)
+  - [x] Implement mark command
+  - [x] Verify tests pass (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review mark --file phase1.yaml --id "..." --decision include` updates file
 
 ### Step 5: Update review merge for basis/timestamp
 
-- [ ] Auto-attach basis from work file
-  - [ ] Write test: merge adds basis from work file to each review
-  - [ ] Verify test fails (Red)
-  - [ ] Implement basis attachment
-  - [ ] Verify test passes (Green)
+- [x] Auto-attach basis from work file
+  - [x] Write test: merge adds basis from work file to each review
+  - [x] Verify test fails (Red)
+  - [x] Implement basis attachment
+  - [x] Verify test passes (Green)
 
-- [ ] Auto-attach timestamp
-  - [ ] Write test: merge adds timestamp to each review
-  - [ ] Verify test fails (Red)
-  - [ ] Implement timestamp attachment
-  - [ ] Verify test passes (Green)
+- [x] Auto-attach timestamp
+  - [x] Write test: merge adds timestamp to each review
+  - [x] Verify test fails (Red)
+  - [x] Implement timestamp attachment
+  - [x] Verify test passes (Green)
 
-- [ ] Auto-attach reviewer from work file
-  - [ ] Write test: merge uses reviewer from work file
-  - [ ] Verify test fails (Red)
-  - [ ] Implement reviewer attachment
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review merge --session ID phase1.yaml` correctly merges with basis/timestamp/reviewer
+- [x] Auto-attach reviewer from work file
+  - [x] Write test: merge uses reviewer from work file
+  - [x] Verify test fails (Red)
+  - [x] Implement reviewer attachment
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review merge --session ID phase1.yaml` correctly merges with basis/timestamp/reviewer
 
 ### Step 6: Add workflow guidance to review status
 
-- [ ] Add AI Agent Workflow section to status output
-  - [ ] Write test: status output includes workflow commands
-  - [ ] Verify test fails (Red)
-  - [ ] Implement workflow output
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review status` shows extract/mark/merge workflow
+- [x] Add AI Agent Workflow section to status output
+  - [x] Write test: status output includes workflow commands
+  - [x] Verify test fails (Red)
+  - [x] Implement workflow output
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review status` shows extract/mark/merge workflow
 
 ### Step 7: Add workflow to review list --json
 
-- [ ] Add workflow field to JSON output
-  - [ ] Write test: list --json includes workflow object
-  - [ ] Verify test fails (Red)
-  - [ ] Implement workflow in JSON output
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review list --json` includes workflow guidance
+- [x] Add workflow field to JSON output
+  - [x] Write test: list --json includes workflow object
+  - [x] Verify test fails (Red)
+  - [x] Implement workflow in JSON output
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review list --json` includes workflow guidance
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: full screening workflow
-  - [ ] Create session with articles
-  - [ ] `review init`
-  - [ ] `review extract --basis title --reviewer "ai:test" -o phase1.yaml`
-  - [ ] `review mark --file phase1.yaml --input decisions.json`
-  - [ ] `review merge --session ID phase1.yaml`
-  - [ ] Verify master has correct reviews with basis/timestamp
-- [ ] Write E2E test: two-phase screening (title then abstract)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test the feature manually
-- [ ] Acceptance: All tests pass, workflow works end-to-end
+- [x] Write E2E test: full screening workflow
+  - [x] Create session with articles
+  - [x] `review init`
+  - [x] `review extract --basis title --reviewer "ai:test" -o phase1.yaml`
+  - [x] `review mark --file phase1.yaml --input decisions.json`
+  - [x] `review merge --session ID phase1.yaml`
+  - [x] Verify master has correct reviews with basis/timestamp
+- [x] Write E2E test: two-phase screening (title then abstract)
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test the feature manually
+- [x] Acceptance: All tests pass, workflow works end-to-end
 
 ## File Layout
 

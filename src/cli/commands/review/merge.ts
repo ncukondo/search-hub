@@ -5,7 +5,22 @@
 import { join } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import type { ReviewFile, ArticleEntry, Review } from './types.js';
+import type { ReviewFile, ArticleEntry, Review, WorkFile } from './types.js';
+
+
+/**
+ * Check if a file is a work file (has basis field)
+ */
+function isWorkFile(file: unknown): file is WorkFile {
+  return (
+    typeof file === 'object' &&
+    file !== null &&
+    'basis' in file &&
+    'reviewer' in file &&
+    'articles' in file &&
+    Array.isArray((file as WorkFile).articles)
+  );
+}
 
 export interface ReviewMergeOptions {
   sessionId: string;
@@ -26,20 +41,6 @@ export interface ReviewMergeResult {
 async function loadReviewFile(path: string): Promise<ReviewFile> {
   const content = await readFile(path, 'utf-8');
   return parseYaml(content) as ReviewFile;
-}
-
-/**
- * Get article key for matching
- */
-function getArticleKey(article: ArticleEntry): string {
-  // Use first available identifier
-  if (article.pmid) return `pmid:${article.pmid}`;
-  if (article.doi) return `doi:${article.doi.toLowerCase()}`;
-  if (article.scopusId) return `scopus:${article.scopusId}`;
-  if (article.arxivId) return `arxiv:${article.arxivId}`;
-  if (article.ericId) return `eric:${article.ericId}`;
-  // Fallback to title
-  return `title:${article.title.toLowerCase()}`;
 }
 
 /**
@@ -80,19 +81,50 @@ function findMatchingArticle(
 }
 
 /**
- * Execute review merge command
+ * Match work file article by id to main file
+ * The id can be a DOI, PMID, ScopusId, ArxivId, EricId, or title
  */
-export async function executeReviewMerge(
-  options: ReviewMergeOptions,
-  sessionsDir: string
-): Promise<ReviewMergeResult> {
-  const sessionDir = join(sessionsDir, options.sessionId);
-  const mainReviewsPath = join(sessionDir, 'reviews.yaml');
+function findMatchingArticleById(
+  id: string,
+  mainArticles: ArticleEntry[]
+): ArticleEntry | undefined {
+  for (const main of mainArticles) {
+    // Match by DOI (case-insensitive)
+    if (main.doi && main.doi.toLowerCase() === id.toLowerCase()) {
+      return main;
+    }
+    // Match by PMID
+    if (main.pmid && main.pmid === id) {
+      return main;
+    }
+    // Match by ScopusId
+    if (main.scopusId && main.scopusId === id) {
+      return main;
+    }
+    // Match by ArxivId
+    if (main.arxivId && main.arxivId === id) {
+      return main;
+    }
+    // Match by EricId
+    if (main.ericId && main.ericId === id) {
+      return main;
+    }
+    // Match by title (fallback, case-insensitive)
+    if (main.title.toLowerCase() === id.toLowerCase()) {
+      return main;
+    }
+  }
+  return undefined;
+}
 
-  // Load both files
-  const mainFile = await loadReviewFile(mainReviewsPath);
-  const extractedFile = await loadReviewFile(options.file);
-
+/**
+ * Process work file format (with basis/reviewer)
+ */
+function processWorkFile(
+  workFile: WorkFile,
+  mainFile: ReviewFile,
+  options: ReviewMergeOptions
+): ReviewMergeResult {
   const result: ReviewMergeResult = {
     reviewsAdded: 0,
     reviewsSkipped: 0,
@@ -100,13 +132,63 @@ export async function executeReviewMerge(
     warnings: [],
   };
 
-  // Build index of main articles by key
-  const mainByKey = new Map<string, ArticleEntry>();
-  for (const article of mainFile.articles) {
-    mainByKey.set(getArticleKey(article), article);
+  const timestamp = new Date().toISOString();
+
+  for (const workArticle of workFile.articles) {
+    // Skip articles with null decision (not yet reviewed)
+    if (workArticle.decision === null) {
+      continue;
+    }
+
+    const mainArticle = findMatchingArticleById(workArticle.id, mainFile.articles);
+
+    if (!mainArticle) {
+      result.warnings.push(`Article not found in main file: id="${workArticle.id}"`);
+      continue;
+    }
+
+    // Ensure mainArticle.reviews is an array
+    if (!mainArticle.reviews) {
+      mainArticle.reviews = [];
+    }
+
+    // Create review from work file article
+    const review: Review = {
+      reviewer: workFile.reviewer,
+      decision: workArticle.decision,
+      basis: workFile.basis,
+      timestamp,
+    };
+
+    // Add comment if provided
+    if (workArticle.comment) {
+      review.comment = workArticle.comment;
+    }
+
+    if (!options.dryRun) {
+      mainArticle.reviews.push(review);
+    }
+    result.reviewsAdded++;
   }
 
-  // Process each extracted article
+  return result;
+}
+
+/**
+ * Process legacy review file format
+ */
+function processReviewFile(
+  extractedFile: ReviewFile,
+  mainFile: ReviewFile,
+  options: ReviewMergeOptions
+): ReviewMergeResult {
+  const result: ReviewMergeResult = {
+    reviewsAdded: 0,
+    reviewsSkipped: 0,
+    decisionsSet: 0,
+    warnings: [],
+  };
+
   for (const extracted of extractedFile.articles) {
     const mainArticle = findMatchingArticle(extracted, mainFile.articles);
 
@@ -153,6 +235,33 @@ export async function executeReviewMerge(
     }
   }
 
+  return result;
+}
+
+/**
+ * Execute review merge command
+ */
+export async function executeReviewMerge(
+  options: ReviewMergeOptions,
+  sessionsDir: string
+): Promise<ReviewMergeResult> {
+  const sessionDir = join(sessionsDir, options.sessionId);
+  const mainReviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
+
+  // Load both files
+  const mainFile = await loadReviewFile(mainReviewsPath);
+  const content = await readFile(options.file, 'utf-8');
+  const inputFile = parseYaml(content);
+
+  let result: ReviewMergeResult;
+
+  // Detect file format and process accordingly
+  if (isWorkFile(inputFile)) {
+    result = processWorkFile(inputFile, mainFile, options);
+  } else {
+    result = processReviewFile(inputFile as ReviewFile, mainFile, options);
+  }
+
   // Write back if not dry-run
   if (!options.dryRun) {
     const yamlContent = stringifyYaml(mainFile, {
@@ -160,7 +269,8 @@ export async function executeReviewMerge(
     });
 
     // Preserve schema reference comment
-    const schemaPath = '../../../.search-hub/schemas/review.schema.json';
+    // Path from sessions/{id}/.internal/ to .search-hub/schemas/
+    const schemaPath = '../../../../.search-hub/schemas/review.schema.json';
     const schemaComment = `# yaml-language-server: $schema=${schemaPath}\n`;
     const finalContent = schemaComment + yamlContent;
 

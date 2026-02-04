@@ -114,8 +114,9 @@ export async function executeReviewInit(
   const sessionContent = await readFile(sessionPath, 'utf-8');
   const session = parseYaml(sessionContent) as SessionFile;
 
-  // Check if reviews.yaml already exists
-  const reviewsPath = join(sessionDir, 'reviews.yaml');
+  // Check if .internal/reviews.yaml already exists
+  const internalDir = join(sessionDir, '.internal');
+  const reviewsPath = join(internalDir, 'reviews.yaml');
   try {
     await access(reviewsPath);
     if (!options.force) {
@@ -126,6 +127,9 @@ export async function executeReviewInit(
       throw err;
     }
   }
+
+  // Create .internal/ directory
+  await mkdir(internalDir, { recursive: true });
 
   // Load all results from session
   const allArticles: Article[] = [];
@@ -156,7 +160,8 @@ export async function executeReviewInit(
   });
 
   // Add schema reference comment at top
-  const schemaPath = '../../../.search-hub/schemas/review.schema.json';
+  // Path from sessions/{id}/.internal/ to .search-hub/schemas/
+  const schemaPath = '../../../../.search-hub/schemas/review.schema.json';
   const schemaComment = `# yaml-language-server: $schema=${schemaPath}\n`;
 
   // Replace empty reviews arrays with commented example

@@ -23,7 +23,8 @@ describe('executeReviewList', () => {
 
   async function writeReviewFile(articles: ArticleEntry[]): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
-    await mkdir(sessionDir, { recursive: true });
+    const internalDir = join(sessionDir, '.internal');
+    await mkdir(internalDir, { recursive: true });
 
     const reviewFile: ReviewFile = {
       sessionId,
@@ -31,7 +32,7 @@ describe('executeReviewList', () => {
     };
 
     const content = stringifyYaml(reviewFile);
-    await writeFile(join(sessionDir, 'reviews.yaml'), content);
+    await writeFile(join(internalDir, 'reviews.yaml'), content);
   }
 
   const sampleArticles: ArticleEntry[] = [
@@ -186,5 +187,41 @@ describe('executeReviewList', () => {
     // Don't create reviews.yaml
 
     await expect(executeReviewList({ sessionId }, sessionsDir)).rejects.toThrow();
+  });
+
+  describe('workflow field in result', () => {
+    it('includes workflow object in result', async () => {
+      await writeReviewFile(sampleArticles);
+
+      const result = await executeReviewList({ sessionId }, sessionsDir);
+
+      expect(result.workflow).toBeDefined();
+    });
+
+    it('workflow includes phase1 title screening commands', async () => {
+      await writeReviewFile(sampleArticles);
+
+      const result = await executeReviewList({ sessionId }, sessionsDir);
+
+      expect(result.workflow!.phase1).toBeDefined();
+      expect(result.workflow!.phase1.basis).toBe('title');
+      expect(result.workflow!.phase1.extract).toContain('--basis title');
+      expect(result.workflow!.phase1.extract).toContain(`--session ${sessionId}`);
+      expect(result.workflow!.phase1.mark).toContain('review mark');
+      expect(result.workflow!.phase1.merge).toContain('review merge');
+    });
+
+    it('workflow includes phase2 abstract screening commands', async () => {
+      await writeReviewFile(sampleArticles);
+
+      const result = await executeReviewList({ sessionId }, sessionsDir);
+
+      expect(result.workflow!.phase2).toBeDefined();
+      expect(result.workflow!.phase2.basis).toBe('abstract');
+      expect(result.workflow!.phase2.extract).toContain('--basis abstract');
+      expect(result.workflow!.phase2.extract).toContain('--filter uncertain');
+      expect(result.workflow!.phase2.mark).toContain('review mark');
+      expect(result.workflow!.phase2.merge).toContain('review merge');
+    });
   });
 });

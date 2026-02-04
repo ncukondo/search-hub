@@ -23,7 +23,8 @@ describe('executeReviewStatus', () => {
 
   async function writeReviewFile(articles: ArticleEntry[]): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
-    await mkdir(sessionDir, { recursive: true });
+    const internalDir = join(sessionDir, '.internal');
+    await mkdir(internalDir, { recursive: true });
 
     const reviewFile: ReviewFile = {
       sessionId,
@@ -31,7 +32,7 @@ describe('executeReviewStatus', () => {
     };
 
     const content = stringifyYaml(reviewFile);
-    await writeFile(join(sessionDir, 'reviews.yaml'), content);
+    await writeFile(join(internalDir, 'reviews.yaml'), content);
   }
 
   it('counts articles by status correctly', async () => {
@@ -113,5 +114,71 @@ describe('executeReviewStatus', () => {
     // Don't create reviews.yaml
 
     await expect(executeReviewStatus({ sessionId }, sessionsDir)).rejects.toThrow();
+  });
+
+  describe('workflow guidance', () => {
+    it('includes workflow guidance in output', async () => {
+      const { formatStatusOutput } = await import('./status.js');
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+      const output = formatStatusOutput(result);
+
+      expect(output).toContain('AI Agent Workflow');
+    });
+
+    it('includes Phase 1 title screening workflow', async () => {
+      const { formatStatusOutput } = await import('./status.js');
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+      const output = formatStatusOutput(result);
+
+      expect(output).toContain('Phase 1');
+      expect(output).toContain('title screening');
+      expect(output).toContain('--basis title');
+      expect(output).toContain('review extract');
+      expect(output).toContain('review mark');
+      expect(output).toContain('review merge');
+    });
+
+    it('includes Phase 2 abstract screening workflow', async () => {
+      const { formatStatusOutput } = await import('./status.js');
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+      const output = formatStatusOutput(result);
+
+      expect(output).toContain('Phase 2');
+      expect(output).toContain('abstract screening');
+      expect(output).toContain('--basis abstract');
+      expect(output).toContain('--filter uncertain');
+    });
+
+    it('includes session ID in workflow commands', async () => {
+      const { formatStatusOutput } = await import('./status.js');
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+      const output = formatStatusOutput(result);
+
+      expect(output).toContain(`--session ${sessionId}`);
+    });
   });
 });

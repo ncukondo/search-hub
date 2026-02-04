@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyStatus, type ArticleEntry } from './types.js';
+import { classifyStatus, type ArticleEntry, type Review, type ReviewBasis } from './types.js';
 
 describe('classifyStatus', () => {
   const baseEntry: Omit<ArticleEntry, 'reviews' | 'finalDecision'> = {
@@ -138,5 +138,37 @@ describe('classifyStatus', () => {
       finalDecision: 'include',
     };
     expect(classifyStatus(entry)).toBe('finalized');
+  });
+});
+
+describe('Review type with basis field', () => {
+  it('accepts review with basis field', () => {
+    const review: Review = {
+      reviewer: 'ai:claude',
+      decision: 'include',
+      basis: 'title',
+      timestamp: '2024-01-15T10:00:00Z',
+    };
+    expect(review.basis).toBe('title');
+  });
+
+  it('accepts all valid basis values', () => {
+    const bases: ReviewBasis[] = ['title', 'abstract', 'fulltext'];
+    bases.forEach((basis) => {
+      const review: Review = {
+        reviewer: 'ai:claude',
+        decision: 'include',
+        basis,
+      };
+      expect(review.basis).toBe(basis);
+    });
+  });
+
+  it('allows review without basis (optional)', () => {
+    const review: Review = {
+      reviewer: 'ai:claude',
+      decision: 'include',
+    };
+    expect(review.basis).toBeUndefined();
   });
 });
