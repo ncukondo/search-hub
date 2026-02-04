@@ -92,5 +92,35 @@ describe('CLI Help Discoverability E2E', () => {
 
       expect(helpOutput).toContain('requires --db');
     });
+
+    it('should include Query Refinement workflow hint', () => {
+      const program = createProgram();
+      const helpOutput = captureSubcommandHelp(program, 'search');
+
+      expect(helpOutput).toContain('Query Refinement');
+      expect(helpOutput).toContain('diff');
+    });
+  });
+
+  describe('diff command help', () => {
+    it('should include Query Refinement Workflow section', () => {
+      const program = createProgram();
+      const helpOutput = captureSubcommandHelp(program, 'diff');
+
+      expect(helpOutput).toContain('Query Refinement Workflow');
+      expect(helpOutput).toContain('broad query');
+      expect(helpOutput).toContain('refined query');
+      expect(helpOutput).toContain('--show removed');
+    });
+
+    it('should include step-by-step workflow instructions', () => {
+      const program = createProgram();
+      const helpOutput = captureSubcommandHelp(program, 'diff');
+
+      // Check that the workflow steps are included
+      expect(helpOutput).toContain('Search with broad query');
+      expect(helpOutput).toContain('refined query');
+      expect(helpOutput).toContain('Compare results');
+    });
   });
 });

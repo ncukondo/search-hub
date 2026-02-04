@@ -501,7 +501,13 @@ Examples:
   $ search-hub search --db pubmed --query "diabetes[tiab]"  # Direct query
   $ search-hub search ./query.yaml --dry-run            # Preview translations
   $ search-hub search ./query.yaml --count-only         # Get hit counts only
-  $ search-hub search ./query.yaml --max-results 100    # Limit results`)
+  $ search-hub search ./query.yaml --max-results 100    # Limit results
+
+Query Refinement:
+  After running a search, use 'diff' to compare query versions:
+    1. Create a refined query file (e.g., query-v2.yaml)
+    2. Run search with the new query
+    3. Compare: search-hub diff <old-session> <new-session> --show removed`)
     .action(
       async (
         queryFile?: string,
@@ -1210,7 +1216,14 @@ Examples:
   $ search-hub diff session-v1 session-v2                # Compare two sessions
   $ search-hub diff session-v1 session-v2 --show added   # Show only added articles
   $ search-hub diff session-v1 session-v2 --show removed # Show only removed articles
-  $ search-hub diff session-v1 session-v2 --json         # JSON output for scripting`)
+  $ search-hub diff session-v1 session-v2 --json         # JSON output for scripting
+
+Query Refinement Workflow:
+  1. Search with broad query:    search-hub search v1.yaml --max-results 100
+  2. Create refined query:       cp v1.yaml v2.yaml && edit v2.yaml
+  3. Search with refined query:  search-hub search v2.yaml --max-results 100
+  4. Compare results:            search-hub diff <session-v1> <session-v2> --show removed
+  5. Review excluded articles to verify refinement quality`)
     .action(
       async (
         sessionId1: string,

@@ -18,21 +18,21 @@ Users need guidance on how to iteratively refine their search queries. The exist
 
 ### Step 1: Add workflow documentation to search --help
 
-- [ ] Step 1: Add "Query Refinement" section to search command help
-  - [ ] Write test: `src/cli/commands/search.test.ts` - verify help includes workflow hint
-  - [ ] Implement: Add epilog or extended help to search command
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `search-hub search --help` mentions diff for query refinement
+- [x] Step 1: Add "Query Refinement" section to search command help
+  - [x] Write test: `src/cli/cli-help.e2e.test.ts` - verify help includes workflow hint
+  - [x] Implement: Add epilog or extended help to search command
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `search-hub search --help` mentions diff for query refinement
 
 ### Step 2: Add workflow documentation to diff --help
 
-- [ ] Step 2: Add practical examples to diff command help
-  - [ ] Write test: `src/cli/commands/diff.test.ts` - verify help includes query refinement example
-  - [ ] Implement: Expand examples section in diff command
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `search-hub diff --help` shows query comparison workflow
+- [x] Step 2: Add practical examples to diff command help
+  - [x] Write test: `src/cli/cli-help.e2e.test.ts` - verify help includes query refinement example
+  - [x] Implement: Expand examples section in diff command
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `search-hub diff --help` shows query comparison workflow
 
 Expected addition to diff help:
 ```
