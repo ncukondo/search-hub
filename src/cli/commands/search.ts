@@ -290,3 +290,13 @@ export async function formatDryRunOutput(
   }
   return sections.join('\n');
 }
+
+/**
+ * Format tip shown after successful search completion.
+ * Guides users toward the diff command for query refinement workflow.
+ */
+export function formatSearchCompletionTip(sessionId: string): string {
+  return `
+Tip: To compare with another query version, use:
+     search-hub diff <other-session> ${sessionId}`;
+}

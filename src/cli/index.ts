@@ -42,6 +42,7 @@ import {
   validateSearchInput,
   formatDryRunOutput,
   formatCountOnlyOutput,
+  formatSearchCompletionTip,
 } from './commands/search.js';
 import { executeSearch, executeCountOnly } from './commands/search-executor.js';
 import {
@@ -646,6 +647,10 @@ Examples:
                 for (const [provider, stats] of Object.entries(result.results)) {
                   console.log(`  ${provider}: ${stats.retrieved} results`);
                 }
+              }
+              // Show tip for query refinement workflow
+              if (result.sessionId) {
+                console.log(formatSearchCompletionTip(result.sessionId));
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;

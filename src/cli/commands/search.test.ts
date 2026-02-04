@@ -6,6 +6,7 @@ import {
   formatProviderReadiness,
   formatQueryDiagnostics,
   formatCountOnlyOutput,
+  formatSearchCompletionTip,
   type SearchCommandOptions,
   type TranslationResult,
   type CountResult,
@@ -487,6 +488,23 @@ describe('search command', () => {
       const result = formatCountOnlyOutput(counts);
 
       expect(result).toContain('direct-query');
+    });
+  });
+
+  describe('formatSearchCompletionTip', () => {
+    it('should include tip text about diff command', () => {
+      const result = formatSearchCompletionTip('20260204_query_abc123');
+
+      expect(result).toContain('Tip:');
+      expect(result).toContain('diff');
+      expect(result).toContain('20260204_query_abc123');
+    });
+
+    it('should suggest comparing with another query version', () => {
+      const result = formatSearchCompletionTip('my-session');
+
+      expect(result).toContain('compare');
+      expect(result).toContain('search-hub diff');
     });
   });
 });

@@ -68,12 +68,13 @@ Expected description:
 
 ### Step 4: Add tip after search completion
 
-- [ ] Step 4: Show refinement tip after successful search
-  - [ ] Write test: `src/cli/commands/search.test.ts` - verify tip is shown after search
-  - [ ] Implement: Add tip message after search completion in `src/cli/commands/search.ts`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Search completion shows tip about diff
+- [x] Step 4: Show refinement tip after successful search
+  - [x] Write test: `src/cli/commands/search.test.ts` - verify formatSearchCompletionTip
+  - [x] Implement: Add formatSearchCompletionTip in `src/cli/commands/search.ts`
+  - [x] Integrate: Use tip in `src/cli/index.ts` after search completion
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Search completion shows tip about diff
 
 Expected output after search:
 ```
