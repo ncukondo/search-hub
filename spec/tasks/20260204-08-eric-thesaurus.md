@@ -49,14 +49,14 @@ PubMedのMeSH用語と同様に、ERICでも統制語彙（ERIC Descriptors）�
 
 ### Step 3: Validate `eric` field
 
-- [ ] Write test: `src/query/validator.test.ts`
+- [x] Write test: `src/query/validator.test.ts`
   - `eric`フィールドが文字列配列であることを検証
   - 空文字列を含む場合のエラーをテスト
-- [ ] Update `src/query/validator.ts`
+- [x] Update `src/query/validator.ts`
   - `eric`フィールドのバリデーション追加
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 不正な`eric`フィールドでバリデーションエラー
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 不正な`eric`フィールドでバリデーションエラー
 
 ### Step 4: Translate ERIC Descriptors to query syntax
 

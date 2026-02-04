@@ -98,6 +98,47 @@ describe('Query Validator Schemas', () => {
         })
       ).toThrow();
     });
+
+    it('should accept eric descriptors', () => {
+      const result = termBlockSchema.parse({
+        keywords: ['medical education'],
+        eric: ['Medical Education', 'Clinical Experience'],
+      });
+      expect(result.eric).toEqual(['Medical Education', 'Clinical Experience']);
+    });
+
+    it('should accept keywords with all vocabulary types including eric', () => {
+      const result = termBlockSchema.parse({
+        keywords: ['education'],
+        mesh: ['Education, Medical'],
+        emtree: ['medical education'],
+        eric: ['Medical Education'],
+        exclude: ['veterinary'],
+      });
+      expect(result.keywords).toEqual(['education']);
+      expect(result.mesh).toEqual(['Education, Medical']);
+      expect(result.emtree).toEqual(['medical education']);
+      expect(result.eric).toEqual(['Medical Education']);
+      expect(result.exclude).toEqual(['veterinary']);
+    });
+
+    it('should reject non-array eric', () => {
+      expect(() =>
+        termBlockSchema.parse({
+          keywords: ['test'],
+          eric: 'not an array',
+        })
+      ).toThrow();
+    });
+
+    it('should reject eric with non-string elements', () => {
+      expect(() =>
+        termBlockSchema.parse({
+          keywords: ['test'],
+          eric: [123, 456],
+        })
+      ).toThrow();
+    });
   });
 
   describe('queryBlockSchema', () => {
