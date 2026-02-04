@@ -214,13 +214,13 @@ AI Agent Workflow:
 
 ### Step 7: Add workflow to review list --json
 
-- [ ] Add workflow field to JSON output
-  - [ ] Write test: list --json includes workflow object
-  - [ ] Verify test fails (Red)
-  - [ ] Implement workflow in JSON output
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review list --json` includes workflow guidance
+- [x] Add workflow field to JSON output
+  - [x] Write test: list --json includes workflow object
+  - [x] Verify test fails (Red)
+  - [x] Implement workflow in JSON output
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review list --json` includes workflow guidance
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
