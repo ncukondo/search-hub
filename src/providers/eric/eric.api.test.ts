@@ -146,6 +146,30 @@ describe('ERIC Provider E2E', () => {
     expect(articles.length).toBeGreaterThan(0);
   });
 
+  it('should return helpful error for unfielded phrase queries', async () => {
+    // ERIC API doesn't support phrase queries without field specification
+    // This test verifies we get a user-friendly error message
+    const directQuery = {
+      native: '"generative AI"',
+      provider: 'eric' as const,
+    };
+
+    try {
+      const articles: unknown[] = [];
+      for await (const article of provider.search(directQuery, { maxResults: 1 })) {
+        articles.push(article);
+      }
+      // If we reach here, the query unexpectedly succeeded
+      // This could happen if ERIC API changes behavior
+      expect.fail('Expected phrase query to fail');
+    } catch (error: unknown) {
+      const e = error as { code?: string; message?: string };
+      expect(e.code).toBe('QUERY_ERROR');
+      expect(e.message).toContain('ERIC does not support phrase queries without field specification');
+      expect(e.message).toContain('title:"your phrase"');
+    }
+  });
+
   it('should support session resume from saved offset', async () => {
     const ast: QueryAST = {
       name: 'e2e-test',
