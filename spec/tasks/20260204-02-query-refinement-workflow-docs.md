@@ -46,11 +46,11 @@ Query Refinement Workflow:
 
 ### Step 3: Update README with workflow guide
 
-- [ ] Step 3: Add "Query Development" section to README
-  - [ ] Review current README structure
-  - [ ] Add comprehensive workflow guide with examples
-  - [ ] Include tips for effective query refinement
-  - [ ] Acceptance: README documents the full query development workflow
+- [x] Step 3: Add "Query Development" section to README
+  - [x] Review current README structure
+  - [x] Add comprehensive workflow guide with examples
+  - [x] Include tips for effective query refinement
+  - [x] Acceptance: README documents the full query development workflow
 
 ### Final Step: Manual Verification
 
