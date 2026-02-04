@@ -216,6 +216,50 @@ query:
 `;
       expect(() => parseQueryString(yaml)).toThrow();
     });
+
+    it('should parse query with exclude terms', () => {
+      const yaml = `
+name: epa_query
+description: Search for EPA (entrustable professional activities)
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - EPA
+        - entrustable professional activities
+      exclude:
+        - environmental protection
+        - pollution
+        - agency
+    operator: OR
+`;
+      const result = parseQueryString(yaml);
+      expect(result.name).toBe('epa_query');
+      expect(result.blocks[0]!.terms.keywords).toEqual(['EPA', 'entrustable professional activities']);
+      expect(result.blocks[0]!.terms.exclude).toEqual(['environmental protection', 'pollution', 'agency']);
+    });
+
+    it('should parse query with exclude and mesh terms', () => {
+      const yaml = `
+name: diabetes_exclude
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes management
+      mesh:
+        - Diabetes Mellitus
+      exclude:
+        - animal
+        - mice
+        - rats
+    operator: OR
+`;
+      const result = parseQueryString(yaml);
+      expect(result.blocks[0]!.terms.keywords).toEqual(['diabetes management']);
+      expect(result.blocks[0]!.terms.mesh).toEqual(['Diabetes Mellitus']);
+      expect(result.blocks[0]!.terms.exclude).toEqual(['animal', 'mice', 'rats']);
+    });
   });
 
   describe('parseQueryFile', () => {
