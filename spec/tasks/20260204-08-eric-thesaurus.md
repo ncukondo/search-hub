@@ -38,14 +38,14 @@ PubMedのMeSH用語と同様に、ERICでも統制語彙（ERIC Descriptors）�
 
 ### Step 2: Parse `eric` field from YAML
 
-- [ ] Write test: `src/query/parser.test.ts`
+- [x] Write test: `src/query/parser.test.ts`
   - `eric`フィールドを含むYAMLが正しくパースされることを確認
   - 空配列、単一要素、複数要素のケースをテスト
-- [ ] Update `src/query/parser.ts`
+- [x] Update `src/query/parser.ts`
   - `eric`フィールドのパース処理を追加
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: YAMLの`eric`フィールドがTermBlockに正しく格納される
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: YAMLの`eric`フィールドがTermBlockに正しく格納される
 
 ### Step 3: Validate `eric` field
 
