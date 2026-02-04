@@ -49,6 +49,13 @@ describe('search-hub query init E2E', () => {
       expect(template).toContain('# overrides:');
       expect(template).toContain('# mesh:');
     });
+
+    it('should include explicit exclude: [] for visibility', () => {
+      const template = generateQueryTemplate();
+      expect(template).toContain('exclude: []');
+      expect(template).toContain('Tip:');
+      expect(template).toContain('acronym');
+    });
   });
 
   describe('writeQueryTemplate creates a file', () => {

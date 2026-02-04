@@ -96,14 +96,14 @@ arXivでの医学教育検索テスト中に発見された問題を解決する
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/search.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/search.e2e.test.ts`
   - `--query` 使用時のヒント表示を確認
   - `--preview` の動作を確認（実APIまたはモック）
   - 短いキーワード警告の表示を確認
-- [ ] Write E2E test: `src/cli/commands/query.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/query/init.e2e.test.ts`
   - `query init` のテンプレート内容を確認
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**:
   - [ ] `search-hub search --db arXiv --query "test"` でヒント表示確認
   - [ ] `search-hub search query.yaml --preview` でプレビュー表示確認
