@@ -81,12 +81,17 @@ fi
 
 # Idle detection:
 #   - Has input prompt "❯" (with or without suggestion text)
-#   - No spinner characters (working indicators)
+#   - The prompt line itself has no spinner characters
 #   Note: In narrow panes, "❯" may not be at line start due to wrapping.
-#   We check for "❯" anywhere, then distinguish idle from working by spinners.
+#   We check for "❯" anywhere, then check if the PROMPT LINE has spinners.
+#   This avoids false positives from MCP server connection spinners that appear
+#   above the prompt line during startup.
 if echo "$CONTENT" | grep -q '❯'; then
-  # Check for spinner characters (working indicators)
-  if echo "$CONTENT" | grep -qE '(⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)'; then
+  # Get the last line containing ❯ (the actual input prompt line)
+  PROMPT_LINE=$(echo "$CONTENT" | grep '❯' | tail -1)
+
+  # Check for spinner characters only on the prompt line itself
+  if echo "$PROMPT_LINE" | grep -qE '(⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏)'; then
     echo "working"
   else
     echo "idle"
