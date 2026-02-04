@@ -84,15 +84,15 @@ PubMedのMeSH用語と同様に、ERICでも統制語彙（ERIC Descriptors）�
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/providers/eric/eric.e2e.test.ts`
+- [x] Write E2E test: `src/providers/eric/eric.e2e.test.ts`
   - `eric`ディスクリプタを含むクエリで実際にERIC APIを呼び出す
   - 結果が返ることを確認（ヒット数 > 0）
-- [ ] Write E2E test: `src/cli/commands/search.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/search.e2e.test.ts`
   - `eric`フィールドを含むYAMLファイルでCLI検索が動作することを確認
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**:
-  - [ ] 以下のYAMLでヒット数を確認:
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**:
+  - [x] 以下のYAMLでヒット数を確認:
     ```yaml
     name: eric_descriptor_test
     query:
@@ -107,8 +107,8 @@ PubMedのMeSH用語と同様に、ERICでも統制語彙（ERIC Descriptors）�
     filters:
       year_from: 2020
     ```
-  - [ ] `--dry-run`で変換結果を確認
-- [ ] Acceptance: All tests pass, ERIC descriptors work in real usage
+  - [x] `--dry-run`で変換結果を確認
+- [x] Acceptance: All tests pass, ERIC descriptors work in real usage
 
 ## Notes
 

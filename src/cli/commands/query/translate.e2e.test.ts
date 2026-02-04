@@ -265,6 +265,97 @@ describe('search-hub query translate E2E', () => {
     });
   });
 
+  describe('ERIC Descriptor handling', () => {
+    it('should include ERIC Descriptors in ERIC translation', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: eric-descriptor-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - medical education
+      eric:
+        - Medical Education
+        - Clinical Experience
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['eric'],
+      });
+
+      expect(result.success).toBe(true);
+      const eric = result.translations!['eric'];
+
+      // Should include ERIC Descriptors with subject: prefix
+      expect(eric!.native).toContain('subject:"Medical Education"');
+      expect(eric!.native).toContain('subject:"Clinical Experience"');
+    });
+
+    it('should combine keywords and ERIC Descriptors with OR', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: eric-combined-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - competency based education
+      eric:
+        - Competency Based Education
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['eric'],
+      });
+
+      expect(result.success).toBe(true);
+      const eric = result.translations!['eric'];
+
+      // Keywords should be in title/description fields
+      expect(eric!.native).toContain('title:"competency based education"');
+      expect(eric!.native).toContain('description:"competency based education"');
+      // ERIC Descriptors should use subject: field
+      expect(eric!.native).toContain('subject:"Competency Based Education"');
+      // All terms should be combined with OR
+      expect(eric!.native).toContain(' OR ');
+    });
+
+    it('should ignore eric field for non-ERIC providers', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: eric-ignored-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - education
+      eric:
+        - Medical Education
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['pubmed'],
+      });
+
+      expect(result.success).toBe(true);
+      const pubmed = result.translations!['pubmed'];
+
+      // PubMed should not include ERIC Descriptors
+      expect(pubmed!.native).not.toContain('subject:');
+      expect(pubmed!.native).not.toContain('Medical Education');
+    });
+  });
+
   describe('query with various fields', () => {
     it('should translate title field correctly', async () => {
       const queryPath = await createRawQueryFile(
