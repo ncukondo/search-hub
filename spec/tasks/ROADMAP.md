@@ -58,7 +58,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 49 | Improve ERIC API Error Handling | 7 | ✅ Completed | [20260204-03](completed/20260204-03-eric-error-handling.md) |
 | 50 | Add Exclude Keywords (NOT Operator) to Query DSL | 3 | ✅ Completed | [20260204-04](completed/20260204-04-exclude-keywords.md) |
 | 51 | Add Abstract Preview to Results Command | 38 | ✅ Completed | [20260204-05](completed/20260204-05-results-abstract-preview.md) |
-| 52 | ERIC Phrase Query Error Handling | 49 | 🔲 Open | [20260204-06](20260204-06-eric-phrase-query-error.md) |
+| 52 | ERIC Phrase Query Error Handling | 49 | ✅ Completed | [20260204-06](completed/20260204-06-eric-phrase-query-error.md) |
 | 53 | Query Refinement UX Improvements | 10, 39 | 🔲 Open | [20260204-07](20260204-07-query-refinement-ux.md) |
 
 ## Development Flow
