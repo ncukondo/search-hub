@@ -6,6 +6,7 @@
  * - JSON output
  * - --show filter
  * - Deduplication before diffing
+ * - Query diff comparison
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -16,10 +17,12 @@ import {
 } from '../e2e-helpers.js';
 import {
   computeDiff,
+  computeQueryDiff,
   formatDiff,
   formatDiffJson,
 } from './diff.js';
 import { deduplicateArticles } from './export.js';
+import { loadSessionQuery } from './session-utils.js';
 import type { Article } from '../../providers/base/types.js';
 
 describe('search-hub diff E2E', () => {
@@ -209,6 +212,22 @@ describe('search-hub diff E2E', () => {
     return id;
   }
 
+  async function createTestSessionWithQuery(
+    id: string,
+    articles: Article[],
+    providers: string[],
+    queryYaml: string,
+  ): Promise<string> {
+    const sessionId = await createTestSession(id, articles, providers);
+    const sessionDir = join(ctx.sessionsDir, sessionId);
+    await writeFile(
+      join(sessionDir, 'query_common.yaml'),
+      queryYaml,
+      'utf-8',
+    );
+    return sessionId;
+  }
+
   async function loadArticlesFromSession(
     sessionId: string,
     providers: string[],
@@ -372,6 +391,177 @@ describe('search-hub diff E2E', () => {
       expect(diff.session1Count).toBe(6);
       expect(diff.session2Count).toBe(4);
       expect(diff.common).toHaveLength(3);
+    });
+  });
+
+  describe('query diff with two sessions', () => {
+    const queryV1 = `
+name: medical-ai-search-v1
+description: Version 1 - broad search
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - "medical education"
+        - "artificial intelligence"
+        - "machine learning"
+    operator: OR
+  - field: title_abstract
+    terms:
+      keywords:
+        - diagnosis
+        - treatment
+    operator: OR
+filters:
+  year_from: 2020
+  year_to: 2025
+  language:
+    - en
+`;
+
+    const queryV2 = `
+name: medical-ai-search-v2
+description: Version 2 - narrower search with OSCE
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - "medical education"
+        - "artificial intelligence"
+    operator: OR
+  - field: title_abstract
+    terms:
+      keywords:
+        - OSCE
+        - "clinical examination"
+    operator: OR
+filters:
+  year_from: 2021
+  year_to: 2025
+  language:
+    - en
+`;
+
+    it('should compute query diff between two sessions', async () => {
+      await createTestSessionWithQuery('query-v1', session1Articles, ['pubmed', 'eric', 'arxiv'], queryV1);
+      await createTestSessionWithQuery('query-v2', session2Articles, ['pubmed'], queryV2);
+
+      const query1 = await loadSessionQuery('query-v1', ctx.sessionsDir);
+      const query2 = await loadSessionQuery('query-v2', ctx.sessionsDir);
+
+      expect(query1).toBeDefined();
+      expect(query2).toBeDefined();
+
+      const queryDiff = computeQueryDiff(query1!, query2!);
+
+      // Block 1: removed "machine learning"
+      expect(queryDiff.blocks[0]!.removed).toContain('machine learning');
+
+      // Block 2: removed "diagnosis", "treatment", added "OSCE", "clinical examination"
+      expect(queryDiff.blocks[1]!.removed).toContain('diagnosis');
+      expect(queryDiff.blocks[1]!.removed).toContain('treatment');
+      expect(queryDiff.blocks[1]!.added).toContain('OSCE');
+      expect(queryDiff.blocks[1]!.added).toContain('clinical examination');
+
+      // Filters: yearFrom changed from 2020 to 2021
+      expect(queryDiff.filters.yearFromChanged).toBe(true);
+      expect(queryDiff.filters.oldYearFrom).toBe(2020);
+      expect(queryDiff.filters.newYearFrom).toBe(2021);
+    });
+
+    it('should include query diff in formatted output', async () => {
+      await createTestSessionWithQuery('query-v1', session1Articles, ['pubmed', 'eric', 'arxiv'], queryV1);
+      await createTestSessionWithQuery('query-v2', session2Articles, ['pubmed'], queryV2);
+
+      const query1 = await loadSessionQuery('query-v1', ctx.sessionsDir);
+      const query2 = await loadSessionQuery('query-v2', ctx.sessionsDir);
+      const queryDiff = computeQueryDiff(query1!, query2!);
+
+      const articles1 = await loadArticlesFromSession('query-v1', ['pubmed', 'eric', 'arxiv']);
+      const articles2 = await loadArticlesFromSession('query-v2', ['pubmed']);
+      const dedup1 = deduplicateArticles(articles1);
+      const dedup2 = deduplicateArticles(articles2);
+      const diff = computeDiff(dedup1.articles, dedup2.articles);
+
+      const output = formatDiff(diff, 'query-v1', 'query-v2', undefined, { queryDiff });
+
+      // Check query changes section
+      expect(output).toContain('Query changes:');
+      expect(output).toContain('Block 1');
+      expect(output).toContain('Block 2');
+      expect(output).toContain('- machine learning');
+      expect(output).toContain('+ OSCE');
+      expect(output).toContain('Result changes:');
+      expect(output).toContain('yearFrom: 2020 → 2021');
+    });
+
+    it('should include query diff in JSON output', async () => {
+      await createTestSessionWithQuery('query-v1', session1Articles, ['pubmed', 'eric', 'arxiv'], queryV1);
+      await createTestSessionWithQuery('query-v2', session2Articles, ['pubmed'], queryV2);
+
+      const query1 = await loadSessionQuery('query-v1', ctx.sessionsDir);
+      const query2 = await loadSessionQuery('query-v2', ctx.sessionsDir);
+      const queryDiff = computeQueryDiff(query1!, query2!);
+
+      const articles1 = await loadArticlesFromSession('query-v1', ['pubmed', 'eric', 'arxiv']);
+      const articles2 = await loadArticlesFromSession('query-v2', ['pubmed']);
+      const dedup1 = deduplicateArticles(articles1);
+      const dedup2 = deduplicateArticles(articles2);
+      const diff = computeDiff(dedup1.articles, dedup2.articles);
+
+      const jsonOutput = formatDiffJson(diff, 'query-v1', 'query-v2', undefined, { queryDiff });
+      const parsed = JSON.parse(jsonOutput);
+
+      expect(parsed.queryDiff).toBeDefined();
+      expect(parsed.queryDiff.blocks).toHaveLength(2);
+      expect(parsed.queryDiff.filters.yearFromChanged).toBe(true);
+    });
+
+    it('should show placeholder when query is missing', async () => {
+      // Create session without query file
+      await createTestSession('no-query-v1', session1Articles, ['pubmed', 'eric', 'arxiv']);
+      await createTestSession('no-query-v2', session2Articles, ['pubmed']);
+
+      const query1 = await loadSessionQuery('no-query-v1', ctx.sessionsDir);
+      const query2 = await loadSessionQuery('no-query-v2', ctx.sessionsDir);
+
+      expect(query1).toBeUndefined();
+      expect(query2).toBeUndefined();
+
+      const articles1 = await loadArticlesFromSession('no-query-v1', ['pubmed', 'eric', 'arxiv']);
+      const articles2 = await loadArticlesFromSession('no-query-v2', ['pubmed']);
+      const dedup1 = deduplicateArticles(articles1);
+      const dedup2 = deduplicateArticles(articles2);
+      const diff = computeDiff(dedup1.articles, dedup2.articles);
+
+      const output = formatDiff(diff, 'no-query-v1', 'no-query-v2', undefined, {
+        showQueryDiffPlaceholder: true,
+      });
+
+      expect(output).toContain('Query changes: (query data not available)');
+    });
+
+    it('should hide query diff with noQueryDiff option', async () => {
+      await createTestSessionWithQuery('query-v1', session1Articles, ['pubmed', 'eric', 'arxiv'], queryV1);
+      await createTestSessionWithQuery('query-v2', session2Articles, ['pubmed'], queryV2);
+
+      const query1 = await loadSessionQuery('query-v1', ctx.sessionsDir);
+      const query2 = await loadSessionQuery('query-v2', ctx.sessionsDir);
+      const queryDiff = computeQueryDiff(query1!, query2!);
+
+      const articles1 = await loadArticlesFromSession('query-v1', ['pubmed', 'eric', 'arxiv']);
+      const articles2 = await loadArticlesFromSession('query-v2', ['pubmed']);
+      const dedup1 = deduplicateArticles(articles1);
+      const dedup2 = deduplicateArticles(articles2);
+      const diff = computeDiff(dedup1.articles, dedup2.articles);
+
+      const output = formatDiff(diff, 'query-v1', 'query-v2', undefined, {
+        queryDiff,
+        noQueryDiff: true,
+      });
+
+      expect(output).not.toContain('Query changes:');
+      expect(output).not.toContain('Result changes:');
     });
   });
 });
