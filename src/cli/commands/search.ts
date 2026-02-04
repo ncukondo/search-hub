@@ -300,3 +300,12 @@ export function formatSearchCompletionTip(sessionId: string): string {
 Tip: To compare with another query version, use:
      search-hub diff <other-session> ${sessionId}`;
 }
+
+/**
+ * Format tip shown after count-only results.
+ * Guides users toward the full workflow with diff for query refinement.
+ */
+export function formatCountOnlyTip(): string {
+  return `
+Tip: Run without --count-only to retrieve articles, then use 'diff' to compare query versions.`;
+}

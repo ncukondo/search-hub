@@ -7,6 +7,7 @@ import {
   formatQueryDiagnostics,
   formatCountOnlyOutput,
   formatSearchCompletionTip,
+  formatCountOnlyTip,
   type SearchCommandOptions,
   type TranslationResult,
   type CountResult,
@@ -505,6 +506,21 @@ describe('search command', () => {
 
       expect(result).toContain('compare');
       expect(result).toContain('search-hub diff');
+    });
+  });
+
+  describe('formatCountOnlyTip', () => {
+    it('should include tip about running without --count-only', () => {
+      const result = formatCountOnlyTip();
+
+      expect(result).toContain('Tip:');
+      expect(result).toContain('--count-only');
+    });
+
+    it('should suggest using diff to compare query versions', () => {
+      const result = formatCountOnlyTip();
+
+      expect(result).toContain('diff');
     });
   });
 });

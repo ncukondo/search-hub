@@ -43,6 +43,7 @@ import {
   formatDryRunOutput,
   formatCountOnlyOutput,
   formatSearchCompletionTip,
+  formatCountOnlyTip,
 } from './commands/search.js';
 import { executeSearch, executeCountOnly } from './commands/search-executor.js';
 import {
@@ -614,6 +615,8 @@ Examples:
 
             if (!globalOpts.quiet) {
               console.log(formatCountOnlyOutput(counts, searchOpts.queryFile));
+              // Show tip for workflow guidance
+              console.log(formatCountOnlyTip());
             }
 
             const hasErrors = counts.some((c) => c.error);

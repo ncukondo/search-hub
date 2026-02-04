@@ -87,12 +87,13 @@ Tip: To compare with another query version, use:
 
 ### Step 5: Add tip after count-only results
 
-- [ ] Step 5: Show refinement tip after --count-only
-  - [ ] Write test: `src/cli/commands/search.test.ts` - verify tip after count-only
-  - [ ] Implement: Add tip message after count-only results
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Count-only results show tip about workflow
+- [x] Step 5: Show refinement tip after --count-only
+  - [x] Write test: `src/cli/commands/search.test.ts` - verify formatCountOnlyTip
+  - [x] Implement: Add formatCountOnlyTip in `src/cli/commands/search.ts`
+  - [x] Integrate: Use tip in `src/cli/index.ts` after count-only results
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Count-only results show tip about workflow
 
 Expected output after --count-only:
 ```
