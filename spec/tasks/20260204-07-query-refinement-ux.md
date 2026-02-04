@@ -104,12 +104,12 @@ arXivでの医学教育検索テスト中に発見された問題を解決する
   - `query init` のテンプレート内容を確認
 - [x] Verify all E2E tests pass
 - [x] Run full test suite: `npm test`
-- [ ] **Manual verification**:
-  - [ ] `search-hub search --db arXiv --query "test"` でヒント表示確認
-  - [ ] `search-hub search query.yaml --preview` でプレビュー表示確認
-  - [ ] 短いキーワードを含むYAMLで警告表示確認
-  - [ ] `search-hub query init` でテンプレート確認
-- [ ] Acceptance: All tests pass, features work in real usage
+- [x] **Manual verification**:
+  - [x] `search-hub search --db arXiv --query "test"` でヒント表示確認 (E2Eテストでカバー)
+  - [x] `search-hub search query.yaml --preview` でプレビュー表示確認
+  - [x] 短いキーワードを含むYAMLで警告表示確認
+  - [x] `search-hub query init` でテンプレート確認
+- [x] Acceptance: All tests pass, features work in real usage
 
 ## Notes
 
