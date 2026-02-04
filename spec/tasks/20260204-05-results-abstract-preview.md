@@ -67,14 +67,14 @@ Expected output:
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/results.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/results.e2e.test.ts`
   - Test with real session data
   - Verify abstract display formatting
   - Test truncation behavior
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] Manual verification: Run with real search session
-- [ ] Acceptance: Abstracts display correctly and help evaluate query quality
+- [x] Acceptance: Abstracts display correctly and help evaluate query quality
 
 ## Notes
 

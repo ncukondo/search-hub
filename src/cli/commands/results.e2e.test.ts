@@ -41,6 +41,7 @@ describe('search-hub results E2E', () => {
       source: 'pubmed',
       publicationDate: '2024-03-15',
       journal: 'BMC medical education',
+      abstract: 'This comprehensive review examines the application of artificial intelligence in medical education, analyzing current implementations and future directions for AI-assisted learning in healthcare training programs.',
       retrievedAt: new Date().toISOString(),
     },
     {
@@ -51,6 +52,7 @@ describe('search-hub results E2E', () => {
       source: 'pubmed',
       publicationDate: '2024-06-01',
       journal: 'BMC medical education',
+      abstract: 'We present a systematic analysis of machine learning applications in healthcare settings, with emphasis on diagnostic accuracy and clinical decision support systems.',
       retrievedAt: new Date().toISOString(),
     },
     {
@@ -61,6 +63,7 @@ describe('search-hub results E2E', () => {
       source: 'pubmed',
       publicationDate: '2025-01-10',
       journal: 'JMIR medical education',
+      // No abstract for this article
       retrievedAt: new Date().toISOString(),
     },
     {
@@ -71,6 +74,7 @@ describe('search-hub results E2E', () => {
       source: 'eric',
       publicationDate: '2023-11-20',
       journal: 'Academic medicine',
+      abstract: 'This study explores the integration of educational technology tools in medical training curricula.',
       retrievedAt: new Date().toISOString(),
     },
     {
@@ -80,6 +84,7 @@ describe('search-hub results E2E', () => {
       source: 'arxiv',
       publicationDate: '2024-05-01',
       journal: 'arXiv preprint',
+      abstract: 'A'.repeat(500), // Long abstract to test truncation
       retrievedAt: new Date().toISOString(),
     },
     {
@@ -369,6 +374,83 @@ describe('search-hub results E2E', () => {
       // Scopus article should have been merged (pubmed version kept because it appeared first)
       const scopusCount = sources.filter((s) => s === 'scopus').length;
       expect(scopusCount).toBe(0);
+    });
+
+    it('should display abstracts when --abstract flag is set', async () => {
+      await createTestSession(
+        'results-e2e-abstract',
+        sampleArticles,
+        ['pubmed', 'eric', 'arxiv', 'scopus'],
+      );
+
+      const allArticles = await loadArticlesFromSession(
+        'results-e2e-abstract',
+        ['pubmed', 'eric', 'arxiv', 'scopus'],
+      );
+      const dedupResult = deduplicateArticles(allArticles);
+      const output = formatResultsList(dedupResult.articles, {
+        sessionId: 'results-e2e-abstract',
+        sessionName: 'results-e2e-test',
+        total: dedupResult.articles.length,
+        showAbstract: true,
+      });
+
+      // Should contain abstracts
+      expect(output).toContain('Abstract:');
+      expect(output).toContain('comprehensive review examines the application of artificial intelligence');
+      expect(output).toContain('systematic analysis of machine learning');
+      // Should show placeholder for missing abstract
+      expect(output).toContain('(No abstract available)');
+    });
+
+    it('should truncate long abstracts with --abstract-length', async () => {
+      await createTestSession(
+        'results-e2e-abstract-length',
+        sampleArticles,
+        ['pubmed', 'eric', 'arxiv', 'scopus'],
+      );
+
+      const allArticles = await loadArticlesFromSession(
+        'results-e2e-abstract-length',
+        ['pubmed', 'eric', 'arxiv', 'scopus'],
+      );
+      const dedupResult = deduplicateArticles(allArticles);
+      const output = formatResultsList(dedupResult.articles, {
+        sessionId: 'results-e2e-abstract-length',
+        sessionName: 'results-e2e-test',
+        total: dedupResult.articles.length,
+        showAbstract: true,
+        abstractLength: 100,
+      });
+
+      // The long abstract (500 As) should be truncated
+      expect(output).toContain('...');
+      // Should not contain the full 500-character abstract
+      expect(output).not.toContain('A'.repeat(500));
+    });
+
+    it('should not display abstracts when --abstract flag is not set', async () => {
+      await createTestSession(
+        'results-e2e-no-abstract',
+        sampleArticles,
+        ['pubmed', 'eric', 'arxiv', 'scopus'],
+      );
+
+      const allArticles = await loadArticlesFromSession(
+        'results-e2e-no-abstract',
+        ['pubmed', 'eric', 'arxiv', 'scopus'],
+      );
+      const dedupResult = deduplicateArticles(allArticles);
+      const output = formatResultsList(dedupResult.articles, {
+        sessionId: 'results-e2e-no-abstract',
+        sessionName: 'results-e2e-test',
+        total: dedupResult.articles.length,
+        showAbstract: false,
+      });
+
+      // Should not contain any abstract content
+      expect(output).not.toContain('Abstract:');
+      expect(output).not.toContain('(No abstract available)');
     });
   });
 });
