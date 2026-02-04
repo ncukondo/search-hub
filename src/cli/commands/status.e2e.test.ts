@@ -20,7 +20,6 @@ import {
   getSessionDetails,
   formatSessionList,
   formatSessionDetails,
-  type SessionListItem,
   type SessionDetails,
 } from './status.js';
 
@@ -91,10 +90,12 @@ describe('search-hub status E2E', () => {
   }
 
   describe('listSessionsForDisplay', () => {
-    it('should return empty list when no sessions exist', async () => {
-      const sessions = await listSessionsForDisplay(ctx.sessionsDir, { all: false });
+    it('should return empty result when no sessions exist', async () => {
+      const result = await listSessionsForDisplay(ctx.sessionsDir, { all: false });
 
-      expect(sessions).toEqual([]);
+      expect(result.sessions).toEqual([]);
+      expect(result.totalCount).toBe(0);
+      expect(result.filteredCount).toBe(0);
     });
 
     it('should list all active sessions', async () => {
@@ -102,21 +103,25 @@ describe('search-hub status E2E', () => {
       await createTestSession('session-001', { name: 'Active Search', status: 'in_progress' });
       await createTestSession('session-002', { name: 'Completed Search', status: 'completed' });
 
-      const sessions = await listSessionsForDisplay(ctx.sessionsDir, { all: false });
+      const result = await listSessionsForDisplay(ctx.sessionsDir, { all: false });
 
       // Should only return the in_progress session
-      expect(sessions.length).toBe(1);
-      expect(sessions[0]!.name).toBe('Active Search');
-      expect(sessions[0]!.status).toBe('in_progress');
+      expect(result.sessions.length).toBe(1);
+      expect(result.sessions[0]!.name).toBe('Active Search');
+      expect(result.sessions[0]!.status).toBe('in_progress');
+      expect(result.totalCount).toBe(2);
+      expect(result.filteredCount).toBe(1);
     });
 
     it('should include completed sessions with --all', async () => {
       await createTestSession('session-001', { name: 'Active Search', status: 'in_progress' });
       await createTestSession('session-002', { name: 'Completed Search', status: 'completed' });
 
-      const sessions = await listSessionsForDisplay(ctx.sessionsDir, { all: true });
+      const result = await listSessionsForDisplay(ctx.sessionsDir, { all: true });
 
-      expect(sessions.length).toBe(2);
+      expect(result.sessions.length).toBe(2);
+      expect(result.totalCount).toBe(2);
+      expect(result.filteredCount).toBe(2);
     });
 
     it('should include session progress', async () => {
@@ -127,9 +132,9 @@ describe('search-hub status E2E', () => {
         totalRetrieved: 50,
       });
 
-      const sessions = await listSessionsForDisplay(ctx.sessionsDir, { all: true });
+      const result = await listSessionsForDisplay(ctx.sessionsDir, { all: true });
 
-      expect(sessions[0]!.progress).toBe('50/100');
+      expect(result.sessions[0]!.progress).toBe('50/100');
     });
 
     it('should sort sessions by creation date', async () => {
@@ -141,10 +146,10 @@ describe('search-hub status E2E', () => {
 
       await createTestSession('session-new', { name: 'New Search', status: 'in_progress' });
 
-      const sessions = await listSessionsForDisplay(ctx.sessionsDir, { all: true });
+      const result = await listSessionsForDisplay(ctx.sessionsDir, { all: true });
 
       // Newer session should be first or last depending on sort order
-      expect(sessions.length).toBe(2);
+      expect(result.sessions.length).toBe(2);
     });
   });
 
@@ -203,24 +208,45 @@ describe('search-hub status E2E', () => {
   });
 
   describe('formatSessionList', () => {
-    it('should format empty list with helpful message', () => {
-      const output = formatSessionList([], { json: false });
+    it('should format empty list with helpful message when no sessions exist', () => {
+      const output = formatSessionList({
+        sessions: [],
+        totalCount: 0,
+        filteredCount: 0,
+        showingAll: true,
+      }, { json: false });
 
       expect(output).toBe('No sessions found.');
     });
 
-    it('should format session list as table', () => {
-      const sessions: SessionListItem[] = [
-        {
-          id: 'session-001',
-          name: 'Test Search',
-          status: 'completed',
-          createdAt: '2024-01-15T10:00:00Z',
-          progress: '100/100',
-        },
-      ];
+    it('should show hint about hidden completed sessions', () => {
+      const output = formatSessionList({
+        sessions: [],
+        totalCount: 3,
+        filteredCount: 0,
+        showingAll: false,
+      }, { json: false });
 
-      const output = formatSessionList(sessions, { json: false });
+      expect(output).toContain('No active sessions');
+      expect(output).toContain('3 completed sessions hidden');
+      expect(output).toContain('--all');
+    });
+
+    it('should format session list as table', () => {
+      const output = formatSessionList({
+        sessions: [
+          {
+            id: 'session-001',
+            name: 'Test Search',
+            status: 'completed',
+            createdAt: '2024-01-15T10:00:00Z',
+            progress: '100/100',
+          },
+        ],
+        totalCount: 1,
+        filteredCount: 1,
+        showingAll: true,
+      }, { json: false });
 
       expect(output).toContain('ID');
       expect(output).toContain('NAME');
@@ -230,17 +256,20 @@ describe('search-hub status E2E', () => {
     });
 
     it('should output valid JSON with --json flag', () => {
-      const sessions: SessionListItem[] = [
-        {
-          id: 'session-001',
-          name: 'Test Search',
-          status: 'completed',
-          createdAt: '2024-01-15T10:00:00Z',
-          progress: '100/100',
-        },
-      ];
-
-      const output = formatSessionList(sessions, { json: true });
+      const output = formatSessionList({
+        sessions: [
+          {
+            id: 'session-001',
+            name: 'Test Search',
+            status: 'completed',
+            createdAt: '2024-01-15T10:00:00Z',
+            progress: '100/100',
+          },
+        ],
+        totalCount: 1,
+        filteredCount: 1,
+        showingAll: true,
+      }, { json: true });
 
       // Should be valid JSON
       const parsed = JSON.parse(output);
@@ -349,8 +378,8 @@ describe('search-hub status E2E', () => {
       });
 
       // List sessions
-      const sessions = await listSessionsForDisplay(ctx.sessionsDir, { all: true });
-      expect(sessions.length).toBe(2);
+      const listResult = await listSessionsForDisplay(ctx.sessionsDir, { all: true });
+      expect(listResult.sessions.length).toBe(2);
 
       // Get details of first session
       const result = await getSessionDetails('session-001', ctx.sessionsDir);

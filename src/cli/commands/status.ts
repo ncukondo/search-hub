@@ -45,23 +45,37 @@ export interface FormatOptions {
   json: boolean;
 }
 
+export interface SessionListResult {
+  sessions: SessionListItem[];
+  totalCount: number;
+  filteredCount: number;
+  showingAll: boolean;
+}
+
 export async function listSessionsForDisplay(
   sessionsDir: string,
   options: ListOptions
-): Promise<SessionListItem[]> {
+): Promise<SessionListResult> {
   const summaries = await listSessions(sessionsDir);
 
   const filtered = options.all
     ? summaries
     : summaries.filter((s) => s.status !== 'completed');
 
-  return filtered.map((s) => ({
+  const sessions = filtered.map((s) => ({
     id: s.id,
     name: s.name,
     status: s.status,
     createdAt: s.createdAt,
     progress: `${s.totalRetrieved}/${s.totalHits}`,
   }));
+
+  return {
+    sessions,
+    totalCount: summaries.length,
+    filteredCount: filtered.length,
+    showingAll: options.all,
+  };
 }
 
 export async function getSessionDetails(
@@ -150,26 +164,40 @@ export async function computeDeduplicationStats(
 }
 
 export function formatSessionList(
-  sessions: SessionListItem[],
+  result: SessionListResult,
   options: FormatOptions
 ): string {
   if (options.json) {
-    return JSON.stringify(sessions, null, 2);
+    return JSON.stringify(result.sessions, null, 2);
   }
 
-  if (sessions.length === 0) {
-    return 'No sessions found.';
+  if (result.sessions.length === 0) {
+    if (result.totalCount === 0) {
+      return 'No sessions found.';
+    }
+    // Sessions exist but are filtered out (all completed)
+    const completedCount = result.totalCount - result.filteredCount;
+    return `No active sessions. ${completedCount} completed session${completedCount === 1 ? '' : 's'} hidden (use --all to show).`;
   }
 
   const header = `${'ID'.padEnd(35)} ${'NAME'.padEnd(20)} ${'STATUS'.padEnd(15)} ${'PROGRESS'.padEnd(12)} CREATED`;
   const separator = '-'.repeat(100);
 
-  const rows = sessions.map((s) => {
+  const rows = result.sessions.map((s) => {
     const date = new Date(s.createdAt).toLocaleDateString();
     return `${s.id.padEnd(35)} ${s.name.padEnd(20)} ${s.status.padEnd(15)} ${s.progress.padEnd(12)} ${date}`;
   });
 
-  return [header, separator, ...rows].join('\n');
+  const lines = [header, separator, ...rows];
+
+  // Show hint about hidden completed sessions if not showing all
+  if (!result.showingAll && result.totalCount > result.filteredCount) {
+    const hiddenCount = result.totalCount - result.filteredCount;
+    lines.push('');
+    lines.push(`(${hiddenCount} completed session${hiddenCount === 1 ? '' : 's'} hidden, use --all to show)`);
+  }
+
+  return lines.join('\n');
 }
 
 export function formatSessionDetails(

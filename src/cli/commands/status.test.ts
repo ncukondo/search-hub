@@ -4,7 +4,6 @@ import {
   getSessionDetails,
   formatSessionList,
   formatSessionDetails,
-  type SessionListItem,
   type SessionDetails,
 } from './status.js';
 import type { SessionFile, SessionSummary, DatabaseStatus } from '../../session/types.js';
@@ -113,8 +112,11 @@ describe('status command', () => {
       const result = await listSessionsForDisplay('/sessions', { all: true });
 
       expect(listSessions).toHaveBeenCalledWith('/sessions');
-      expect(result).toHaveLength(2);
-      expect(result[0]!.id).toBe('20240115_diabetes-ai_a3f2c1');
+      expect(result.sessions).toHaveLength(2);
+      expect(result.sessions[0]!.id).toBe('20240115_diabetes-ai_a3f2c1');
+      expect(result.totalCount).toBe(2);
+      expect(result.filteredCount).toBe(2);
+      expect(result.showingAll).toBe(true);
     });
 
     it('should filter out completed sessions when all is false', async () => {
@@ -122,8 +124,11 @@ describe('status command', () => {
 
       const result = await listSessionsForDisplay('/sessions', { all: false });
 
-      expect(result).toHaveLength(1);
-      expect(result[0]!.status).toBe('running');
+      expect(result.sessions).toHaveLength(1);
+      expect(result.sessions[0]!.status).toBe('running');
+      expect(result.totalCount).toBe(2);
+      expect(result.filteredCount).toBe(1);
+      expect(result.showingAll).toBe(false);
     });
 
     it('should include completed sessions when all is true', async () => {
@@ -131,15 +136,19 @@ describe('status command', () => {
 
       const result = await listSessionsForDisplay('/sessions', { all: true });
 
-      expect(result).toHaveLength(2);
+      expect(result.sessions).toHaveLength(2);
+      expect(result.totalCount).toBe(2);
+      expect(result.filteredCount).toBe(2);
     });
 
-    it('should return empty array when no sessions exist', async () => {
+    it('should return empty result when no sessions exist', async () => {
       vi.mocked(listSessions).mockResolvedValue([]);
 
       const result = await listSessionsForDisplay('/sessions', { all: true });
 
-      expect(result).toEqual([]);
+      expect(result.sessions).toEqual([]);
+      expect(result.totalCount).toBe(0);
+      expect(result.filteredCount).toBe(0);
     });
   });
 
@@ -189,17 +198,20 @@ describe('status command', () => {
 
   describe('formatSessionList', () => {
     it('should format sessions as human-readable table', () => {
-      const sessions: SessionListItem[] = [
-        {
-          id: '20240115_diabetes-ai_a3f2c1',
-          name: 'diabetes-ai',
-          status: 'running',
-          createdAt: '2024-01-15T10:30:00Z',
-          progress: '800/1500',
-        },
-      ];
-
-      const result = formatSessionList(sessions, { json: false });
+      const result = formatSessionList({
+        sessions: [
+          {
+            id: '20240115_diabetes-ai_a3f2c1',
+            name: 'diabetes-ai',
+            status: 'running',
+            createdAt: '2024-01-15T10:30:00Z',
+            progress: '800/1500',
+          },
+        ],
+        totalCount: 1,
+        filteredCount: 1,
+        showingAll: true,
+      }, { json: false });
 
       expect(result).toContain('diabetes-ai');
       expect(result).toContain('running');
@@ -207,31 +219,88 @@ describe('status command', () => {
     });
 
     it('should format sessions as JSON when json option is true', () => {
-      const sessions: SessionListItem[] = [
-        {
-          id: '20240115_diabetes-ai_a3f2c1',
-          name: 'diabetes-ai',
-          status: 'running',
-          createdAt: '2024-01-15T10:30:00Z',
-          progress: '800/1500',
-        },
-      ];
-
-      const result = formatSessionList(sessions, { json: true });
+      const result = formatSessionList({
+        sessions: [
+          {
+            id: '20240115_diabetes-ai_a3f2c1',
+            name: 'diabetes-ai',
+            status: 'running',
+            createdAt: '2024-01-15T10:30:00Z',
+            progress: '800/1500',
+          },
+        ],
+        totalCount: 1,
+        filteredCount: 1,
+        showingAll: true,
+      }, { json: true });
       const parsed = JSON.parse(result);
 
       expect(parsed).toHaveLength(1);
       expect(parsed[0].id).toBe('20240115_diabetes-ai_a3f2c1');
     });
 
-    it('should return "No sessions found" message when empty', () => {
-      const result = formatSessionList([], { json: false });
+    it('should return "No sessions found" message when no sessions exist', () => {
+      const result = formatSessionList({
+        sessions: [],
+        totalCount: 0,
+        filteredCount: 0,
+        showingAll: true,
+      }, { json: false });
 
       expect(result).toContain('No sessions found');
     });
 
+    it('should show hint about hidden completed sessions', () => {
+      const result = formatSessionList({
+        sessions: [],
+        totalCount: 5,
+        filteredCount: 0,
+        showingAll: false,
+      }, { json: false });
+
+      expect(result).toContain('No active sessions');
+      expect(result).toContain('5 completed sessions hidden');
+      expect(result).toContain('--all');
+    });
+
+    it('should show hint about single hidden completed session', () => {
+      const result = formatSessionList({
+        sessions: [],
+        totalCount: 1,
+        filteredCount: 0,
+        showingAll: false,
+      }, { json: false });
+
+      expect(result).toContain('1 completed session hidden');
+    });
+
+    it('should show hint about hidden sessions when some are displayed', () => {
+      const result = formatSessionList({
+        sessions: [
+          {
+            id: '20240115_diabetes-ai_a3f2c1',
+            name: 'diabetes-ai',
+            status: 'running',
+            createdAt: '2024-01-15T10:30:00Z',
+            progress: '800/1500',
+          },
+        ],
+        totalCount: 3,
+        filteredCount: 1,
+        showingAll: false,
+      }, { json: false });
+
+      expect(result).toContain('diabetes-ai');
+      expect(result).toContain('2 completed sessions hidden');
+    });
+
     it('should return empty array JSON when empty and json option is true', () => {
-      const result = formatSessionList([], { json: true });
+      const result = formatSessionList({
+        sessions: [],
+        totalCount: 0,
+        filteredCount: 0,
+        showingAll: true,
+      }, { json: true });
 
       expect(JSON.parse(result)).toEqual([]);
     });
