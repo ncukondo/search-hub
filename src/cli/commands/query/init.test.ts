@@ -29,6 +29,12 @@ describe('query init', () => {
       expect(ast).toBeDefined();
       expect(ast.name).toBe('my_search');
     });
+
+    it('should include commented exclude example', () => {
+      const template = generateQueryTemplate();
+      expect(template).toContain('# exclude:');
+      expect(template).toContain('# Terms to exclude (NOT operator)');
+    });
   });
 
   describe('writeQueryTemplate', () => {
