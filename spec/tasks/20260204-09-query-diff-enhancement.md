@@ -53,20 +53,20 @@ Result changes:
 
 ### Step 1: Extract query from SessionFile
 
-- [ ] Write test: `src/cli/commands/diff.test.ts`
+- [x] Write test: `src/cli/commands/diff.test.ts`
   - SessionFileからクエリ情報を取得できることを確認
-- [ ] Verify that SessionFile contains query information
+- [x] Verify that SessionFile contains query information
   - `query`フィールドにQueryASTが保存されていることを確認
-- [ ] Acceptance: セッションからクエリ情報にアクセスできる
+- [x] Acceptance: セッションからクエリ情報にアクセスできる
 
 ### Step 2: Implement query comparison function
 
-- [ ] Write test: `src/cli/commands/diff.test.ts`
+- [x] Write test: `src/cli/commands/diff.test.ts`
   - `computeQueryDiff(query1, query2)`関数のテスト
   - 各ブロックのキーワード追加・削除を検出
   - mesh, eric等の統制語彙の変更も検出
   - フィルター変更（年、言語）も検出
-- [ ] Implement `computeQueryDiff` in `src/cli/commands/diff.ts`
+- [x] Implement `computeQueryDiff` in `src/cli/commands/diff.ts`
   ```typescript
   interface QueryDiff {
     blocks: BlockDiff[];
@@ -89,20 +89,20 @@ Result changes:
     languagesRemoved: string[];
   }
   ```
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: クエリの差分が正しく計算される
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: クエリの差分が正しく計算される
 
 ### Step 3: Format query diff output
 
-- [ ] Write test: `src/cli/commands/diff.test.ts`
+- [x] Write test: `src/cli/commands/diff.test.ts`
   - `formatQueryDiff(queryDiff)`関数のテスト
   - 変更がないブロックは "no changes" と表示
   - 追加キーワードは `+` プレフィックス、削除は `-` プレフィックス
-- [ ] Implement `formatQueryDiff` in `src/cli/commands/diff.ts`
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: クエリdiffが読みやすくフォーマットされる
+- [x] Implement `formatQueryDiff` in `src/cli/commands/diff.ts`
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: クエリdiffが読みやすくフォーマットされる
 
 ### Step 4: Integrate query diff into diff command
 

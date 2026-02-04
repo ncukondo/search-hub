@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { computeDiff, formatDiff, formatDiffJson, type DiffResult } from './diff.js';
+import { computeDiff, formatDiff, formatDiffJson, computeQueryDiff, formatQueryDiff, type DiffResult, type QueryDiff } from './diff.js';
 import type { Article } from '../../providers/base/types.js';
+import type { QueryAST, QueryBlock } from '../../query/types.js';
 
 const makeArticle = (overrides: Partial<Article> & Pick<Article, 'title' | 'source'>): Article => ({
   authors: [{ family: 'Test', given: 'Author' }],
@@ -415,5 +416,394 @@ describe('formatDiffJson', () => {
     expect(parsed.added).toHaveLength(2);
     expect(parsed.removed).toBeUndefined();
     expect(parsed.common).toBeUndefined();
+  });
+});
+
+// Helper to create minimal QueryAST
+const createQueryAST = (overrides: Partial<QueryAST> & { blocks?: QueryBlock[] } = {}): QueryAST => ({
+  name: 'test-query',
+  blocks: [],
+  filters: {},
+  overrides: {},
+  ...overrides,
+});
+
+// Helper to create QueryBlock
+const createBlock = (
+  field: QueryBlock['field'],
+  keywords: string[],
+  options: { mesh?: string[]; emtree?: string[]; exclude?: string[] } = {}
+): QueryBlock => ({
+  field,
+  terms: {
+    keywords,
+    ...(options.mesh && { mesh: options.mesh }),
+    ...(options.emtree && { emtree: options.emtree }),
+    ...(options.exclude && { exclude: options.exclude }),
+  },
+  operator: 'OR',
+});
+
+describe('computeQueryDiff', () => {
+  it('should detect added keywords in a block', () => {
+    const query1 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes', 'AI'])],
+    });
+    const query2 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes', 'AI', 'machine learning'])],
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]!.added).toContain('machine learning');
+    expect(result.blocks[0]!.removed).toHaveLength(0);
+  });
+
+  it('should detect removed keywords in a block', () => {
+    const query1 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes', 'AI', 'deep learning'])],
+    });
+    const query2 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes', 'AI'])],
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]!.removed).toContain('deep learning');
+    expect(result.blocks[0]!.added).toHaveLength(0);
+  });
+
+  it('should detect no changes in a block', () => {
+    const query1 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes', 'AI'])],
+    });
+    const query2 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes', 'AI'])],
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]!.added).toHaveLength(0);
+    expect(result.blocks[0]!.removed).toHaveLength(0);
+    expect(result.blocks[0]!.hasChanges).toBe(false);
+  });
+
+  it('should detect MeSH term changes', () => {
+    const query1 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes'], { mesh: ['Diabetes Mellitus'] })],
+    });
+    const query2 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes'], { mesh: ['Diabetes Mellitus', 'Insulin'] })],
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]!.meshAdded).toContain('Insulin');
+    expect(result.blocks[0]!.meshRemoved).toHaveLength(0);
+  });
+
+  it('should detect Emtree term changes', () => {
+    const query1 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes'], { emtree: ['diabetes mellitus'] })],
+    });
+    const query2 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes'], { emtree: [] })],
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]!.emtreeRemoved).toContain('diabetes mellitus');
+  });
+
+  it('should handle different number of blocks (added block)', () => {
+    const query1 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes'])],
+    });
+    const query2 = createQueryAST({
+      blocks: [
+        createBlock('title_abstract', ['diabetes']),
+        createBlock('title_abstract', ['AI', 'machine learning']),
+      ],
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.blocks).toHaveLength(2);
+    expect(result.blocks[1]!.isNew).toBe(true);
+    expect(result.blocks[1]!.added).toContain('AI');
+    expect(result.blocks[1]!.added).toContain('machine learning');
+  });
+
+  it('should handle different number of blocks (removed block)', () => {
+    const query1 = createQueryAST({
+      blocks: [
+        createBlock('title_abstract', ['diabetes']),
+        createBlock('title_abstract', ['AI', 'machine learning']),
+      ],
+    });
+    const query2 = createQueryAST({
+      blocks: [createBlock('title_abstract', ['diabetes'])],
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.blocks).toHaveLength(2);
+    expect(result.blocks[1]!.isRemoved).toBe(true);
+    expect(result.blocks[1]!.removed).toContain('AI');
+    expect(result.blocks[1]!.removed).toContain('machine learning');
+  });
+
+  it('should detect year filter changes', () => {
+    const query1 = createQueryAST({
+      blocks: [],
+      filters: { yearFrom: 2020, yearTo: 2024 },
+    });
+    const query2 = createQueryAST({
+      blocks: [],
+      filters: { yearFrom: 2021, yearTo: 2024 },
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.filters.yearFromChanged).toBe(true);
+    expect(result.filters.oldYearFrom).toBe(2020);
+    expect(result.filters.newYearFrom).toBe(2021);
+    expect(result.filters.yearToChanged).toBe(false);
+  });
+
+  it('should detect language filter changes', () => {
+    const query1 = createQueryAST({
+      blocks: [],
+      filters: { languages: ['en'] },
+    });
+    const query2 = createQueryAST({
+      blocks: [],
+      filters: { languages: ['en', 'ja'] },
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.filters.languagesAdded).toContain('ja');
+    expect(result.filters.languagesRemoved).toHaveLength(0);
+  });
+
+  it('should handle multiple blocks with mixed changes', () => {
+    const query1 = createQueryAST({
+      blocks: [
+        createBlock('title_abstract', ['term1', 'term2']),
+        createBlock('title_abstract', ['AI']),
+        createBlock('keyword', ['keyword1']),
+      ],
+    });
+    const query2 = createQueryAST({
+      blocks: [
+        createBlock('title_abstract', ['term1', 'term2']), // no change
+        createBlock('title_abstract', ['AI', 'ML']), // added 'ML'
+        createBlock('keyword', ['keyword2']), // replaced keyword1 with keyword2
+      ],
+    });
+
+    const result = computeQueryDiff(query1, query2);
+
+    expect(result.blocks).toHaveLength(3);
+    expect(result.blocks[0]!.hasChanges).toBe(false);
+    expect(result.blocks[1]!.added).toContain('ML');
+    expect(result.blocks[2]!.added).toContain('keyword2');
+    expect(result.blocks[2]!.removed).toContain('keyword1');
+  });
+});
+
+describe('formatQueryDiff', () => {
+  it('should format block with no changes', () => {
+    const queryDiff: QueryDiff = {
+      blocks: [
+        {
+          index: 0,
+          field: 'title_abstract',
+          added: [],
+          removed: [],
+          hasChanges: false,
+        },
+      ],
+      filters: {
+        yearFromChanged: false,
+        yearToChanged: false,
+        languagesAdded: [],
+        languagesRemoved: [],
+      },
+    };
+
+    const output = formatQueryDiff(queryDiff);
+
+    expect(output).toContain('Block 1');
+    expect(output).toContain('no changes');
+  });
+
+  it('should format added keywords with + prefix', () => {
+    const queryDiff: QueryDiff = {
+      blocks: [
+        {
+          index: 0,
+          field: 'title_abstract',
+          added: ['OSCE', 'clinical examination'],
+          removed: [],
+          hasChanges: true,
+        },
+      ],
+      filters: {
+        yearFromChanged: false,
+        yearToChanged: false,
+        languagesAdded: [],
+        languagesRemoved: [],
+      },
+    };
+
+    const output = formatQueryDiff(queryDiff);
+
+    expect(output).toContain('+ OSCE');
+    expect(output).toContain('+ clinical examination');
+  });
+
+  it('should format removed keywords with - prefix', () => {
+    const queryDiff: QueryDiff = {
+      blocks: [
+        {
+          index: 0,
+          field: 'title_abstract',
+          added: [],
+          removed: ['old term'],
+          hasChanges: true,
+        },
+      ],
+      filters: {
+        yearFromChanged: false,
+        yearToChanged: false,
+        languagesAdded: [],
+        languagesRemoved: [],
+      },
+    };
+
+    const output = formatQueryDiff(queryDiff);
+
+    expect(output).toContain('- old term');
+  });
+
+  it('should format MeSH changes', () => {
+    const queryDiff: QueryDiff = {
+      blocks: [
+        {
+          index: 0,
+          field: 'title_abstract',
+          added: [],
+          removed: [],
+          meshAdded: ['Insulin'],
+          meshRemoved: [],
+          hasChanges: true,
+        },
+      ],
+      filters: {
+        yearFromChanged: false,
+        yearToChanged: false,
+        languagesAdded: [],
+        languagesRemoved: [],
+      },
+    };
+
+    const output = formatQueryDiff(queryDiff);
+
+    expect(output).toContain('+ [MeSH] Insulin');
+  });
+
+  it('should format year filter changes', () => {
+    const queryDiff: QueryDiff = {
+      blocks: [],
+      filters: {
+        yearFromChanged: true,
+        oldYearFrom: 2020,
+        newYearFrom: 2021,
+        yearToChanged: false,
+        languagesAdded: [],
+        languagesRemoved: [],
+      },
+    };
+
+    const output = formatQueryDiff(queryDiff);
+
+    expect(output).toContain('Filters');
+    expect(output).toContain('yearFrom');
+    expect(output).toContain('2020');
+    expect(output).toContain('2021');
+  });
+
+  it('should format language filter changes', () => {
+    const queryDiff: QueryDiff = {
+      blocks: [],
+      filters: {
+        yearFromChanged: false,
+        yearToChanged: false,
+        languagesAdded: ['ja'],
+        languagesRemoved: [],
+      },
+    };
+
+    const output = formatQueryDiff(queryDiff);
+
+    expect(output).toContain('languages');
+    expect(output).toContain('+ ja');
+  });
+
+  it('should format new block', () => {
+    const queryDiff: QueryDiff = {
+      blocks: [
+        {
+          index: 0,
+          field: 'title_abstract',
+          added: ['new term'],
+          removed: [],
+          hasChanges: true,
+          isNew: true,
+        },
+      ],
+      filters: {
+        yearFromChanged: false,
+        yearToChanged: false,
+        languagesAdded: [],
+        languagesRemoved: [],
+      },
+    };
+
+    const output = formatQueryDiff(queryDiff);
+
+    expect(output).toContain('(new block)');
+  });
+
+  it('should format removed block', () => {
+    const queryDiff: QueryDiff = {
+      blocks: [
+        {
+          index: 0,
+          field: 'title_abstract',
+          added: [],
+          removed: ['removed term'],
+          hasChanges: true,
+          isRemoved: true,
+        },
+      ],
+      filters: {
+        yearFromChanged: false,
+        yearToChanged: false,
+        languagesAdded: [],
+        languagesRemoved: [],
+      },
+    };
+
+    const output = formatQueryDiff(queryDiff);
+
+    expect(output).toContain('(removed block)');
   });
 });
