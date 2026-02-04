@@ -60,17 +60,17 @@ PubMedのMeSH用語と同様に、ERICでも統制語彙（ERIC Descriptors）�
 
 ### Step 4: Translate ERIC Descriptors to query syntax
 
-- [ ] Write test: `src/providers/eric/translator.test.ts`
+- [x] Write test: `src/providers/eric/translator.test.ts`
   - `eric`用語が`subject:"term"`形式に変換されることを確認
   - keywordsとericの両方がある場合、ORで結合されることを確認
   - 例: `keywords: ["medical education"], eric: ["Medical Education"]`
     → `(title:"medical education" OR description:"medical education") OR subject:"Medical Education"`
-- [ ] Update `src/providers/eric/translator.ts`
+- [x] Update `src/providers/eric/translator.ts`
   - translateBlock関数で`terms.eric`を処理
   - ディスクリプタは`subject:"term"`形式で出力
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: ERICディスクリプタが正しくクエリに変換される
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: ERICディスクリプタが正しくクエリに変換される
 
 ### Step 5: Update documentation
 
