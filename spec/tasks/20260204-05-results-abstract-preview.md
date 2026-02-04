@@ -58,12 +58,12 @@ Expected output:
 
 ### Step 4: Handle missing abstracts gracefully
 
-- [ ] Step 4: Display placeholder when abstract is unavailable
-  - [ ] Write test: Test output when abstract is null/empty
-  - [ ] Implement: Show "(No abstract available)" for missing abstracts
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Missing abstracts show clear placeholder
+- [x] Step 4: Display placeholder when abstract is unavailable
+  - [x] Write test: Test output when abstract is null/empty
+  - [x] Implement: Show "(No abstract available)" for missing abstracts
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Missing abstracts show clear placeholder
 
 ### Final Step: E2E Integration Tests
 

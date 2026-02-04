@@ -202,11 +202,15 @@ export function formatResultsList(
       lines.push(`    DOI: ${article.doi}`);
     }
 
-    if (options.showAbstract && article.abstract) {
+    if (options.showAbstract) {
       lines.push('');
-      const maxLength = options.abstractLength ?? DEFAULT_ABSTRACT_MAX_LENGTH;
-      const truncatedAbstract = truncateText(article.abstract, maxLength);
-      lines.push(`    Abstract: ${truncatedAbstract}`);
+      if (article.abstract && article.abstract.trim() !== '') {
+        const maxLength = options.abstractLength ?? DEFAULT_ABSTRACT_MAX_LENGTH;
+        const truncatedAbstract = truncateText(article.abstract, maxLength);
+        lines.push(`    Abstract: ${truncatedAbstract}`);
+      } else {
+        lines.push('    (No abstract available)');
+      }
     }
 
     lines.push('');

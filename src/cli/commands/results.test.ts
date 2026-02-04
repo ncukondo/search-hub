@@ -265,6 +265,31 @@ describe('formatResultsList', () => {
     expect(output).toContain(`Abstract: ${shortAbstract}`);
     expect(output).not.toContain('...');
   });
+
+  it('shows placeholder when abstract is missing and showAbstract is true', () => {
+    const articles = [createTestArticle({}, ['journal'])]; // No abstract field
+    delete (articles[0] as Partial<Article>).abstract;
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+    });
+
+    expect(output).toContain('(No abstract available)');
+  });
+
+  it('shows placeholder when abstract is empty string and showAbstract is true', () => {
+    const articles = [createTestArticle({ abstract: '' })];
+    const output = formatResultsList(articles, {
+      sessionId: 'test-session',
+      sessionName: 'test',
+      total: 1,
+      showAbstract: true,
+    });
+
+    expect(output).toContain('(No abstract available)');
+  });
 });
 
 describe('formatResultsJson', () => {
