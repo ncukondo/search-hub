@@ -41,7 +41,7 @@ overrides:                        # Optional: DB-specific customizations
 
 ## Term Block
 
-Terms can include keywords and controlled vocabularies:
+Terms can include keywords, controlled vocabularies, and exclusions:
 
 ```yaml
 terms:
@@ -56,7 +56,39 @@ terms:
 
   emtree:                         # Emtree terms (Embase only)
     - "non insulin dependent diabetes mellitus"
+
+  exclude:                        # Terms to exclude (NOT operator)
+    - "environmental protection"  # Use when terms are ambiguous
+    - "pollution"
 ```
+
+### Exclude Terms
+
+The `exclude` field allows filtering out irrelevant results using NOT operators. This is useful when search terms have multiple meanings:
+
+```yaml
+# Example: Searching for EPA (Entrustable Professional Activities)
+# but excluding results about EPA (Environmental Protection Agency)
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - EPA
+        - "entrustable professional activities"
+      exclude:
+        - "environmental protection"
+        - pollution
+        - agency
+    operator: OR
+```
+
+Provider-specific NOT syntax:
+| Provider | Syntax |
+|----------|--------|
+| PubMed | `NOT term[field]` |
+| Scopus | `AND NOT FIELD(term)` |
+| ERIC | `NOT field:term` |
+| arXiv | `ANDNOT prefix:term` |
 
 ### Term Combination Logic
 
@@ -65,6 +97,7 @@ Within a TermBlock, terms combine as:
 2. All MeSH terms → OR'd together
 3. All Emtree terms → OR'd together
 4. keyword-group OR mesh-group OR emtree-group
+5. Exclude terms → applied as NOT clause to the block
 
 For DBs that don't support a vocabulary, those terms are ignored.
 
