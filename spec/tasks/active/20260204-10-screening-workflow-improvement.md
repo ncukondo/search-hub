@@ -1,0 +1,280 @@
+# Task: Screening Workflow Improvement
+
+## Purpose
+
+AIエージェントと人間が協調してスクリーニングを行うためのワークフロー改善。extract/mark/mergeパターンを使い、AIには必要な情報のみを提供し、判断根拠（basis）を自動記録する。
+
+### 設計原則
+
+1. **AIエージェントはマスターを直接操作しない**
+2. **basisはextract時に確定し、自動で引き継がれる**
+3. **人間はマスターを直接編集可能**
+
+## Related Specs
+
+- [spec/models/review.md](../models/review.md) - reviewフィールド仕様（要更新）
+
+## Related Source Files
+
+- `src/cli/commands/review/init.ts`
+- `src/cli/commands/review/extract.ts`
+- `src/cli/commands/review/merge.ts`
+- `src/cli/commands/review/mark.ts` (new)
+- `src/cli/commands/review/status.ts`
+- `src/cli/commands/review/list.ts`
+
+## Data Structures
+
+### マスターデータ（.internal/reviews.yaml）
+
+```yaml
+sessionId: 20260204_wbagenaiv3_ad647b
+articles:
+  - id: "10.2196/81718"
+    title: "Automated Evaluation of Reflection..."
+    abstract: "Background: Workplace-based..."
+    year: "2025"
+    doi: "10.2196/81718"
+    reviews:
+      - reviewer: ai:claude
+        decision: include
+        basis: title
+        comment: WBA関連
+        timestamp: 2026-02-04T12:34:56Z
+```
+
+### 作業ファイル（extract出力）
+
+```yaml
+# phase1.yaml（タイトルスクリーニング用）
+sessionId: 20260204_wbagenaiv3_ad647b
+basis: title
+reviewer: ai:claude
+articles:
+  - id: "10.2196/81718"
+    title: "Automated Evaluation of Reflection..."
+    decision: null     # include / exclude / uncertain
+    comment: ""
+```
+
+### reviewフィールド仕様
+
+| フィールド | 必須 | 値 |
+|-----------|------|-----|
+| reviewer | Yes | `human:{name}` or `ai:{name}` |
+| decision | Yes | `include` / `exclude` / `uncertain` |
+| basis | Yes | `title` / `abstract` / `fulltext` |
+| comment | No | 自由記述 |
+| timestamp | Auto | ISO 8601形式（merge時に付与） |
+
+## CLI Commands
+
+### review extract
+
+```bash
+search-hub review extract --session ID \
+  --basis title \              # title / abstract（必須）
+  --filter pending \           # pending / uncertain / all
+  --reviewer "ai:claude" \     # 作業ファイルに記録
+  -o phase1.yaml
+```
+
+### review mark
+
+```bash
+# 1件マーク
+search-hub review mark --file phase1.yaml \
+  --id "10.2196/81718" \
+  --decision include \
+  --comment "WBA関連"
+
+# 複数件一括マーク（JSON入力）
+search-hub review mark --file phase1.yaml --input decisions.json
+```
+
+### review merge
+
+```bash
+search-hub review merge --session ID phase1.yaml
+# → basis, reviewer, timestamp を自動付与してマスターに反映
+```
+
+### review status（ワークフロー案内）
+
+```
+Review Progress: 20260204_wbagenaiv3_ad647b
+  Total:        116
+  Pending:      94
+  Reviewed:     22 (title: 22, abstract: 0)
+  Finalized:    0  (include: 0, exclude: 0)
+
+────────────────────────────────────────────────
+AI Agent Workflow:
+  Phase 1 (title screening):
+    extract:  search-hub review extract --session ID --basis title --reviewer "ai:name" -o phase1.yaml
+    mark:     search-hub review mark --file phase1.yaml --input decisions.json
+    merge:    search-hub review merge --session ID phase1.yaml
+
+  Phase 2 (abstract screening):
+    extract:  search-hub review extract --session ID --basis abstract --filter uncertain --reviewer "ai:name" -o phase2.yaml
+    mark:     search-hub review mark --file phase2.yaml --input decisions.json
+    merge:    search-hub review merge --session ID phase2.yaml
+────────────────────────────────────────────────
+```
+
+## Implementation Steps
+
+### Step 1: Move reviews.yaml to .internal/
+
+- [ ] Update `review init` to create `.internal/reviews.yaml`
+  - [ ] Write test: `src/cli/commands/review/init.test.ts`
+  - [ ] Verify test fails (Red)
+  - [ ] Implement: create `.internal/` directory, write reviews.yaml there
+  - [ ] Verify test passes (Green)
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Acceptance: `review init` creates `sessions/{id}/.internal/reviews.yaml`
+
+### Step 2: Add basis and timestamp to review schema
+
+- [ ] Update review type definition
+  - [ ] Write test for new fields
+  - [ ] Verify test fails (Red)
+  - [ ] Add `basis: 'title' | 'abstract' | 'fulltext'` field
+  - [ ] Add `timestamp: string` field (ISO 8601)
+  - [ ] Verify test passes (Green)
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Acceptance: Review type includes basis and timestamp
+
+### Step 3: Implement review extract --basis --reviewer
+
+- [ ] Add `--basis` option (required: title / abstract)
+  - [ ] Write test: extract with --basis title outputs only id, title
+  - [ ] Write test: extract with --basis abstract outputs id, title, abstract
+  - [ ] Verify tests fail (Red)
+  - [ ] Implement basis filtering
+  - [ ] Verify tests pass (Green)
+
+- [ ] Add `--reviewer` option
+  - [ ] Write test: extract includes reviewer in output file
+  - [ ] Verify test fails (Red)
+  - [ ] Implement reviewer option
+  - [ ] Verify test passes (Green)
+
+- [ ] Output format update
+  - [ ] Write test: output includes sessionId, basis, reviewer, articles
+  - [ ] Verify test fails (Red)
+  - [ ] Implement new output format
+  - [ ] Verify test passes (Green)
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Acceptance: `review extract --basis title --reviewer "ai:claude" -o phase1.yaml` produces correct format
+
+### Step 4: Implement review mark command
+
+- [ ] Create new command `review mark`
+  - [ ] Write test: mark single article in work file
+  - [ ] Write test: mark multiple articles via JSON input
+  - [ ] Write test: error if file doesn't have basis field
+  - [ ] Verify tests fail (Red)
+  - [ ] Implement mark command
+  - [ ] Verify tests pass (Green)
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Acceptance: `review mark --file phase1.yaml --id "..." --decision include` updates file
+
+### Step 5: Update review merge for basis/timestamp
+
+- [ ] Auto-attach basis from work file
+  - [ ] Write test: merge adds basis from work file to each review
+  - [ ] Verify test fails (Red)
+  - [ ] Implement basis attachment
+  - [ ] Verify test passes (Green)
+
+- [ ] Auto-attach timestamp
+  - [ ] Write test: merge adds timestamp to each review
+  - [ ] Verify test fails (Red)
+  - [ ] Implement timestamp attachment
+  - [ ] Verify test passes (Green)
+
+- [ ] Auto-attach reviewer from work file
+  - [ ] Write test: merge uses reviewer from work file
+  - [ ] Verify test fails (Red)
+  - [ ] Implement reviewer attachment
+  - [ ] Verify test passes (Green)
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Acceptance: `review merge --session ID phase1.yaml` correctly merges with basis/timestamp/reviewer
+
+### Step 6: Add workflow guidance to review status
+
+- [ ] Add AI Agent Workflow section to status output
+  - [ ] Write test: status output includes workflow commands
+  - [ ] Verify test fails (Red)
+  - [ ] Implement workflow output
+  - [ ] Verify test passes (Green)
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Acceptance: `review status` shows extract/mark/merge workflow
+
+### Step 7: Add workflow to review list --json
+
+- [ ] Add workflow field to JSON output
+  - [ ] Write test: list --json includes workflow object
+  - [ ] Verify test fails (Red)
+  - [ ] Implement workflow in JSON output
+  - [ ] Verify test passes (Green)
+  - [ ] Run `npm run lint && npm run typecheck`
+  - [ ] Acceptance: `review list --json` includes workflow guidance
+
+### Final Step: E2E Integration Tests (MANDATORY)
+
+- [ ] Write E2E test: full screening workflow
+  - [ ] Create session with articles
+  - [ ] `review init`
+  - [ ] `review extract --basis title --reviewer "ai:test" -o phase1.yaml`
+  - [ ] `review mark --file phase1.yaml --input decisions.json`
+  - [ ] `review merge --session ID phase1.yaml`
+  - [ ] Verify master has correct reviews with basis/timestamp
+- [ ] Write E2E test: two-phase screening (title then abstract)
+- [ ] Verify all E2E tests pass
+- [ ] Run full test suite: `npm test`
+- [ ] **Manual verification**: Test the feature manually
+- [ ] Acceptance: All tests pass, workflow works end-to-end
+
+## File Layout
+
+```
+sessions/
+  {session-id}/
+    .internal/
+      reviews.yaml          # Master (hidden from AI)
+    pubmed_results.yaml
+    scopus_results.yaml
+    session.json
+```
+
+## Workflow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    .internal/reviews.yaml                       │
+│                    マスターデータ（人間向け）                      │
+└─────────────────────────────────────────────────────────────────┘
+       │                                              ▲
+       │ extract --basis title                        │ merge
+       ▼                                              │
+┌─────────────────────────────────────────────────────────────────┐
+│  phase1.yaml                                                    │
+│  basis: title / reviewer: ai:claude                             │
+│  articles: [{id, title, decision, comment}, ...]                │
+└─────────────────────────────────────────────────────────────────┘
+       │                                              │
+       │ mark --file phase1.yaml                      │
+       │      --input decisions.json                  │
+       ▼                                              │
+┌─────────────────────────────────────────────────────────────────┐
+│  phase1.yaml (edited)                                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Notes
+
+- Pre-release: 後方互換性は考慮不要
+- 人間はマスター（.internal/reviews.yaml）を直接編集可能
+- AIエージェントはextract/mark/mergeワークフローを使用

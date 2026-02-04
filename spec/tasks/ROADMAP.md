@@ -62,6 +62,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 53 | Query Refinement UX Improvements | 10, 39 | ✅ Completed | [20260204-07](completed/20260204-07-query-refinement-ux.md) |
 | 54 | ERIC Thesaurus (Descriptors) Support | 7 | ✅ Completed | [20260204-08](completed/20260204-08-eric-thesaurus.md) |
 | 55 | Query Diff Enhancement | 40 | ✅ Completed | [20260204-09](completed/20260204-09-query-diff-enhancement.md) |
+| 56 | Screening Workflow Improvement | 44 | 🔲 Active | [20260204-10](active/20260204-10-screening-workflow-improvement.md) |
 
 ## Development Flow
 
