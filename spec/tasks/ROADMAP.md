@@ -60,8 +60,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 51 | Add Abstract Preview to Results Command | 38 | ✅ Completed | [20260204-05](completed/20260204-05-results-abstract-preview.md) |
 | 52 | ERIC Phrase Query Error Handling | 49 | ✅ Completed | [20260204-06](completed/20260204-06-eric-phrase-query-error.md) |
 | 53 | Query Refinement UX Improvements | 10, 39 | ✅ Completed | [20260204-07](completed/20260204-07-query-refinement-ux.md) |
-| 54 | ERIC Thesaurus (Descriptors) Support | 7 | 🔲 Open | [20260204-08](20260204-08-eric-thesaurus.md) |
-| 55 | Query Diff Enhancement | 40 | 🔲 Open | [20260204-09](20260204-09-query-diff-enhancement.md) |
+| 54 | ERIC Thesaurus (Descriptors) Support | 7 | ✅ Completed | [20260204-08](completed/20260204-08-eric-thesaurus.md) |
+| 55 | Query Diff Enhancement | 40 | ✅ Completed | [20260204-09](completed/20260204-09-query-diff-enhancement.md) |
 
 ## Development Flow
 
