@@ -85,13 +85,27 @@ export async function executeReviewStatus(
  * Format status result as human-readable string
  */
 export function formatStatusOutput(result: ReviewStatusResult): string {
+  const id = result.sessionId;
   const lines = [
-    `Review Progress: ${result.sessionId}`,
+    `Review Progress: ${id}`,
     `  Total:        ${result.total}`,
     `  Pending:      ${result.pending}  (no reviews)`,
     `  Conflicting:  ${result.conflicting}  (reviewers disagree)`,
     `  Needs Final:  ${result.needsFinal}  (reviewed but no finalDecision)`,
     `  Finalized:    ${result.finalized}  (include: ${result.included}, exclude: ${result.excluded})`,
+    '',
+    '────────────────────────────────────────────────',
+    'AI Agent Workflow:',
+    '  Phase 1 (title screening):',
+    `    extract:  search-hub review extract --session ${id} --basis title --reviewer "ai:name" -o phase1.yaml`,
+    `    mark:     search-hub review mark --file phase1.yaml --input decisions.json`,
+    `    merge:    search-hub review merge --session ${id} phase1.yaml`,
+    '',
+    '  Phase 2 (abstract screening):',
+    `    extract:  search-hub review extract --session ${id} --basis abstract --filter uncertain --reviewer "ai:name" -o phase2.yaml`,
+    `    mark:     search-hub review mark --file phase2.yaml --input decisions.json`,
+    `    merge:    search-hub review merge --session ${id} phase2.yaml`,
+    '────────────────────────────────────────────────',
   ];
   return lines.join('\n');
 }

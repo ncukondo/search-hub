@@ -115,4 +115,70 @@ describe('executeReviewStatus', () => {
 
     await expect(executeReviewStatus({ sessionId }, sessionsDir)).rejects.toThrow();
   });
+
+  describe('workflow guidance', () => {
+    it('includes workflow guidance in output', async () => {
+      const { formatStatusOutput } = await import('./status.js');
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+      const output = formatStatusOutput(result);
+
+      expect(output).toContain('AI Agent Workflow');
+    });
+
+    it('includes Phase 1 title screening workflow', async () => {
+      const { formatStatusOutput } = await import('./status.js');
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+      const output = formatStatusOutput(result);
+
+      expect(output).toContain('Phase 1');
+      expect(output).toContain('title screening');
+      expect(output).toContain('--basis title');
+      expect(output).toContain('review extract');
+      expect(output).toContain('review mark');
+      expect(output).toContain('review merge');
+    });
+
+    it('includes Phase 2 abstract screening workflow', async () => {
+      const { formatStatusOutput } = await import('./status.js');
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+      const output = formatStatusOutput(result);
+
+      expect(output).toContain('Phase 2');
+      expect(output).toContain('abstract screening');
+      expect(output).toContain('--basis abstract');
+      expect(output).toContain('--filter uncertain');
+    });
+
+    it('includes session ID in workflow commands', async () => {
+      const { formatStatusOutput } = await import('./status.js');
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+      const output = formatStatusOutput(result);
+
+      expect(output).toContain(`--session ${sessionId}`);
+    });
+  });
 });

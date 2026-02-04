@@ -204,13 +204,13 @@ AI Agent Workflow:
 
 ### Step 6: Add workflow guidance to review status
 
-- [ ] Add AI Agent Workflow section to status output
-  - [ ] Write test: status output includes workflow commands
-  - [ ] Verify test fails (Red)
-  - [ ] Implement workflow output
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `review status` shows extract/mark/merge workflow
+- [x] Add AI Agent Workflow section to status output
+  - [x] Write test: status output includes workflow commands
+  - [x] Verify test fails (Red)
+  - [x] Implement workflow output
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `review status` shows extract/mark/merge workflow
 
 ### Step 7: Add workflow to review list --json
 
