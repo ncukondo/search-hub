@@ -61,6 +61,43 @@ describe('Query Validator Schemas', () => {
     it('should reject missing keywords', () => {
       expect(() => termBlockSchema.parse({ mesh: ['term'] })).toThrow();
     });
+
+    it('should accept exclude terms', () => {
+      const result = termBlockSchema.parse({
+        keywords: ['EPA', 'entrustable professional activities'],
+        exclude: ['environmental protection', 'pollution'],
+      });
+      expect(result.exclude).toEqual(['environmental protection', 'pollution']);
+    });
+
+    it('should accept keywords with mesh and exclude', () => {
+      const result = termBlockSchema.parse({
+        keywords: ['diabetes'],
+        mesh: ['Diabetes Mellitus, Type 2'],
+        exclude: ['animal', 'mice'],
+      });
+      expect(result.keywords).toEqual(['diabetes']);
+      expect(result.mesh).toEqual(['Diabetes Mellitus, Type 2']);
+      expect(result.exclude).toEqual(['animal', 'mice']);
+    });
+
+    it('should reject non-array exclude', () => {
+      expect(() =>
+        termBlockSchema.parse({
+          keywords: ['test'],
+          exclude: 'not an array',
+        })
+      ).toThrow();
+    });
+
+    it('should reject exclude with non-string elements', () => {
+      expect(() =>
+        termBlockSchema.parse({
+          keywords: ['test'],
+          exclude: [123, 456],
+        })
+      ).toThrow();
+    });
   });
 
   describe('queryBlockSchema', () => {

@@ -48,6 +48,25 @@ describe('Query AST Types', () => {
       };
       expect(terms.emtree).toHaveLength(1);
     });
+
+    it('should accept exclude terms', () => {
+      const terms: TermBlock = {
+        keywords: ['EPA', 'entrustable professional activities'],
+        exclude: ['environmental protection', 'pollution'],
+      };
+      expect(terms.exclude).toHaveLength(2);
+    });
+
+    it('should accept keywords with both mesh and exclude', () => {
+      const terms: TermBlock = {
+        keywords: ['diabetes'],
+        mesh: ['Diabetes Mellitus, Type 2'],
+        exclude: ['animal', 'mice'],
+      };
+      expect(terms.keywords).toHaveLength(1);
+      expect(terms.mesh).toHaveLength(1);
+      expect(terms.exclude).toHaveLength(2);
+    });
   });
 
   describe('QueryBlock', () => {

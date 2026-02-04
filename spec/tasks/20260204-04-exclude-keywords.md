@@ -21,12 +21,12 @@ Users need to exclude irrelevant results from their searches. For example, when 
 
 ### Step 1: Update Query DSL types
 
-- [ ] Step 1: Add `exclude` field to QueryBlock type
-  - [ ] Write test: `src/query/types.test.ts` - type validation tests
-  - [ ] Implement: Add `exclude?: string[]` to QueryBlock
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: TypeScript types include exclude field
+- [x] Step 1: Add `exclude` field to QueryBlock type
+  - [x] Write test: `src/query/types.test.ts` - type validation tests
+  - [x] Implement: Add `exclude?: string[]` to TermBlock
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: TypeScript types include exclude field
 
 New DSL structure:
 ```yaml
@@ -44,73 +44,73 @@ query:
 
 ### Step 2: Update query parser
 
-- [ ] Step 2: Parse exclude field from YAML
-  - [ ] Write test: `src/query/parser.test.ts` - parse YAML with exclude
-  - [ ] Implement: Update parser to handle exclude field
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Parser correctly extracts exclude terms
+- [x] Step 2: Parse exclude field from YAML
+  - [x] Write test: `src/query/parser.test.ts` - parse YAML with exclude
+  - [x] Implement: Update parser to handle exclude field (via validator schema)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Parser correctly extracts exclude terms
 
 ### Step 3: Update query validator
 
-- [ ] Step 3: Validate exclude field
-  - [ ] Write test: `src/query/validator.test.ts` - validation tests
-  - [ ] Implement: Add validation for exclude (array of strings)
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Invalid exclude values rejected with clear errors
+- [x] Step 3: Validate exclude field
+  - [x] Write test: `src/query/validator.test.ts` - validation tests
+  - [x] Implement: Add validation for exclude (array of strings)
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Invalid exclude values rejected with clear errors
 
 ### Step 4: Update PubMed translator
 
-- [ ] Step 4: Translate exclude to PubMed NOT syntax
-  - [ ] Write test: `src/providers/pubmed/translator.test.ts`
-  - [ ] Implement: Add NOT clauses for exclude terms
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `exclude: ["term"]` → `NOT term[tiab]`
+- [x] Step 4: Translate exclude to PubMed NOT syntax
+  - [x] Write test: `src/providers/pubmed/translator.test.ts`
+  - [x] Implement: Add NOT clauses for exclude terms
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `exclude: ["term"]` → `NOT term[tiab]`
 
 ### Step 5: Update Scopus translator
 
-- [ ] Step 5: Translate exclude to Scopus AND NOT syntax
-  - [ ] Write test: `src/providers/scopus/translator.test.ts`
-  - [ ] Implement: Add AND NOT clauses for exclude terms
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `exclude: ["term"]` → `AND NOT TITLE-ABS-KEY(term)`
+- [x] Step 5: Translate exclude to Scopus AND NOT syntax
+  - [x] Write test: `src/providers/scopus/translator.test.ts`
+  - [x] Implement: Add AND NOT clauses for exclude terms
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `exclude: ["term"]` → `AND NOT TITLE-ABS-KEY(term)`
 
 ### Step 6: Update ERIC translator
 
-- [ ] Step 6: Translate exclude to ERIC NOT syntax
-  - [ ] Write test: `src/providers/eric/translator.test.ts`
-  - [ ] Implement: Add NOT clauses for exclude terms
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Correct ERIC NOT syntax
+- [x] Step 6: Translate exclude to ERIC NOT syntax
+  - [x] Write test: `src/providers/eric/translator.test.ts`
+  - [x] Implement: Add NOT clauses for exclude terms
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Correct ERIC NOT syntax
 
 ### Step 7: Update arXiv translator
 
-- [ ] Step 7: Translate exclude to arXiv ANDNOT syntax
-  - [ ] Write test: `src/providers/arxiv/translator.test.ts`
-  - [ ] Implement: Add ANDNOT clauses for exclude terms
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: Correct arXiv ANDNOT syntax
+- [x] Step 7: Translate exclude to arXiv ANDNOT syntax
+  - [x] Write test: `src/providers/arxiv/translator.test.ts`
+  - [x] Implement: Add ANDNOT clauses for exclude terms
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: Correct arXiv ANDNOT syntax
 
 ### Step 8: Update query init template
 
-- [ ] Step 8: Add commented exclude example to template
-  - [ ] Write test: `src/cli/commands/query.test.ts`
-  - [ ] Implement: Update template in query init command
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `query init` shows exclude field example
+- [x] Step 8: Add commented exclude example to template
+  - [x] Write test: `src/cli/commands/query/init.test.ts`
+  - [x] Implement: Update template in query init command
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `query init` shows exclude field example
 
 ### Step 9: Update spec documentation
 
-- [ ] Step 9: Document exclude field in query-dsl.md
-  - [ ] Update spec/models/query-dsl.md
-  - [ ] Add examples and use cases
-  - [ ] Acceptance: Documentation is complete and accurate
+- [x] Step 9: Document exclude field in query-dsl.md
+  - [x] Update spec/models/query-dsl.md
+  - [x] Add examples and use cases
+  - [x] Acceptance: Documentation is complete and accurate
 
 ### Final Step: E2E Integration Tests
 

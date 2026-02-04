@@ -22,6 +22,9 @@ const QUERY_TEMPLATE =
   "        - \"search term 2\"\n" +
   "      # mesh:                 # PubMed MeSH terms (optional)\n" +
   "      #   - \"MeSH Heading\"\n" +
+  "      # exclude:              # Terms to exclude (NOT operator)\n" +
+  "      #   - \"unwanted term\"\n" +
+  "      #   - \"irrelevant topic\"\n" +
   "    operator: OR             # How to combine terms within this block\n" +
   "\n" +
   "  # Add more blocks — blocks are AND'd together\n" +

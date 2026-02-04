@@ -194,6 +194,71 @@ describe('ERIC Query Translator', () => {
     });
   });
 
+  describe('Exclude Term Translation', () => {
+    it('should translate single exclude term with NOT', () => {
+      const block: QueryBlock = {
+        field: 'title',
+        terms: {
+          keywords: ['EPA', 'entrustable professional activities'],
+          exclude: ['environmental protection'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      expect(result.native).toContain('title:EPA');
+      expect(result.native).toContain('NOT title:"environmental protection"');
+    });
+
+    it('should translate multiple exclude terms with OR in NOT clause', () => {
+      const block: QueryBlock = {
+        field: 'title',
+        terms: {
+          keywords: ['EPA'],
+          exclude: ['pollution', 'agency'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      expect(result.native).toContain('title:EPA');
+      expect(result.native).toContain('NOT (title:pollution OR title:agency)');
+    });
+
+    it('should translate exclude terms with title_abstract field', () => {
+      const block: QueryBlock = {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['diabetes'],
+          exclude: ['animal', 'mice'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      // title_abstract expands to title and description
+      expect(result.native).toContain('title:diabetes');
+      expect(result.native).toContain('description:diabetes');
+      expect(result.native).toContain('NOT ((title:animal OR description:animal) OR (title:mice OR description:mice))');
+    });
+
+    it('should combine exclude with date filters', () => {
+      const block: QueryBlock = {
+        field: 'title',
+        terms: {
+          keywords: ['education'],
+          exclude: ['online'],
+        },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block], { yearFrom: 2020 });
+      const result = translateQueryAST(ast);
+      expect(result.native).toContain('title:education');
+      expect(result.native).toContain('NOT title:online');
+      expect(result.native).toContain('publicationdateyear:[2020 TO *]');
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle empty keywords array', () => {
       const ast = createQueryAST([createBlock('title', [])]);

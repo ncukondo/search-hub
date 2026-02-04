@@ -45,34 +45,73 @@ function translateTitleAbstractTerm(term: string): string {
 }
 
 /**
- * Translate a single query block to ERIC syntax.
+ * Translate exclude terms to NOT clause.
  */
-function translateBlock(block: QueryBlock): string {
-  const { field, terms, operator } = block;
-  const keywords = terms.keywords;
-
-  if (keywords.length === 0) {
-    return '';
+function translateExcludeTerms(
+  exclude: string[],
+  field: QueryBlock['field']
+): string | null {
+  if (exclude.length === 0) {
+    return null;
   }
 
-  // Handle title_abstract special case
+  // Handle title_abstract expansion
   if (field === 'title_abstract') {
-    const expandedTerms = keywords.map(translateTitleAbstractTerm);
+    const expandedTerms = exclude.map(translateTitleAbstractTerm);
     if (expandedTerms.length === 1) {
-      return expandedTerms[0]!;
+      return `NOT ${expandedTerms[0]}`;
     }
-    return `(${expandedTerms.join(` ${operator} `)})`;
+    return `NOT (${expandedTerms.join(' OR ')})`;
   }
 
   // Standard field translation
   const prefix = FIELD_PREFIXES[field] ?? '';
-  const translatedTerms = keywords.map((term) => formatTerm(term, prefix));
+  const translatedTerms = exclude.map((term) => formatTerm(term, prefix));
 
   if (translatedTerms.length === 1) {
-    return translatedTerms[0]!;
+    return `NOT ${translatedTerms[0]}`;
+  }
+  return `NOT (${translatedTerms.join(' OR ')})`;
+}
+
+/**
+ * Translate a single query block to ERIC syntax.
+ * Returns an object with the main query part and optional NOT clause.
+ */
+function translateBlock(block: QueryBlock): { query: string; notClause: string | null } {
+  const { field, terms, operator } = block;
+  const keywords = terms.keywords;
+
+  let query = '';
+
+  if (keywords.length > 0) {
+    // Handle title_abstract special case
+    if (field === 'title_abstract') {
+      const expandedTerms = keywords.map(translateTitleAbstractTerm);
+      if (expandedTerms.length === 1) {
+        query = expandedTerms[0]!;
+      } else {
+        query = `(${expandedTerms.join(` ${operator} `)})`;
+      }
+    } else {
+      // Standard field translation
+      const prefix = FIELD_PREFIXES[field] ?? '';
+      const translatedTerms = keywords.map((term) => formatTerm(term, prefix));
+
+      if (translatedTerms.length === 1) {
+        query = translatedTerms[0]!;
+      } else {
+        query = `(${translatedTerms.join(` ${operator} `)})`;
+      }
+    }
   }
 
-  return `(${translatedTerms.join(` ${operator} `)})`;
+  // Translate exclude terms
+  const notClause = terms.exclude
+    ? translateExcludeTerms(terms.exclude, field)
+    : null;
+
+  return { query, notClause };
 }
 
 /**
@@ -97,17 +136,30 @@ function translateDateFilters(filters: Filters): string | null {
  */
 export function translateQueryAST(ast: QueryAST): TranslatedQuery {
   const blockQueries: string[] = [];
+  const notClauses: string[] = [];
 
   // Translate each block
   for (const block of ast.blocks) {
-    const blockQuery = translateBlock(block);
-    if (blockQuery) {
-      blockQueries.push(blockQuery);
+    const { query, notClause } = translateBlock(block);
+    if (query) {
+      blockQueries.push(query);
+    }
+    if (notClause) {
+      notClauses.push(notClause);
     }
   }
 
   // Combine blocks with AND
   let native = blockQueries.join(' AND ');
+
+  // Append NOT clauses
+  for (const notClause of notClauses) {
+    if (native) {
+      native = `${native} ${notClause}`;
+    } else {
+      native = notClause;
+    }
+  }
 
   // Apply date filters
   const dateFilter = translateDateFilters(ast.filters);

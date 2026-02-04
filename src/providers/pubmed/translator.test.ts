@@ -453,6 +453,77 @@ describe('PubMed Query Translator', () => {
     });
   });
 
+  describe('Exclude Term Translation', () => {
+    it('should translate single exclude term with NOT', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: {
+            keywords: ['EPA', 'entrustable professional activities'],
+            exclude: ['environmental protection'],
+          },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.native).toContain('EPA[tiab] OR "entrustable professional activities"[tiab]');
+      expect(result.native).toContain('NOT "environmental protection"[tiab]');
+    });
+
+    it('should translate multiple exclude terms with OR in NOT clause', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: {
+            keywords: ['EPA'],
+            exclude: ['environmental protection', 'pollution', 'agency'],
+          },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.native).toContain('NOT ("environmental protection"[tiab] OR pollution[tiab] OR agency[tiab])');
+    });
+
+    it('should translate exclude terms with same field qualifier as keywords', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title',
+          terms: {
+            keywords: ['diabetes'],
+            exclude: ['animal model'],
+          },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.native).toContain('diabetes[ti]');
+      expect(result.native).toContain('NOT "animal model"[ti]');
+    });
+
+    it('should combine exclude with mesh terms', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: {
+            keywords: ['diabetes'],
+            mesh: ['Diabetes Mellitus'],
+            exclude: ['mice', 'rats'],
+          },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.native).toContain('diabetes[tiab]');
+      expect(result.native).toContain('"Diabetes Mellitus"[mh]');
+      expect(result.native).toContain('NOT (mice[tiab] OR rats[tiab])');
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle empty keyword list', () => {
       const ast = createQueryAST([
