@@ -11,29 +11,29 @@ import type { ScopusSearchResponse, ScopusDocument, ScopusRawEntry, ScopusAuthor
  * Zod schema for Scopus author in API response.
  */
 const ScopusAuthorSchema = z.object({
-  authname: z.string().optional(),
-  authid: z.string().optional(),
-  afid: z.array(z.object({ $: z.string().optional() })).optional(),
+  authname: z.string().nullish(),
+  authid: z.string().nullish(),
+  afid: z.array(z.object({ $: z.string().nullish() })).nullish(),
 });
 
 /**
  * Zod schema for Scopus entry in API response.
  */
 const ScopusRawEntrySchema = z.object({
-  'dc:identifier': z.string().optional(),
-  'dc:title': z.string().optional(),
-  'dc:creator': z.string().optional(),
-  'dc:description': z.string().optional(),
-  'prism:doi': z.string().optional(),
-  'prism:coverDate': z.string().optional(),
-  'prism:publicationName': z.string().optional(),
-  'prism:volume': z.string().optional(),
-  'prism:issueIdentifier': z.string().optional(),
-  'prism:pageRange': z.string().optional(),
-  'citedby-count': z.string().optional(),
-  eid: z.string().optional(),
-  subtypeDescription: z.string().optional(),
-  author: z.array(ScopusAuthorSchema).optional(),
+  'dc:identifier': z.string().nullish(),
+  'dc:title': z.string().nullish(),
+  'dc:creator': z.string().nullish(),
+  'dc:description': z.string().nullish(),
+  'prism:doi': z.string().nullish(),
+  'prism:coverDate': z.string().nullish(),
+  'prism:publicationName': z.string().nullish(),
+  'prism:volume': z.string().nullish(),
+  'prism:issueIdentifier': z.string().nullish(),
+  'prism:pageRange': z.string().nullish(),
+  'citedby-count': z.string().nullish(),
+  eid: z.string().nullish(),
+  subtypeDescription: z.string().nullish(),
+  author: z.array(ScopusAuthorSchema).nullish(),
 });
 
 /**
