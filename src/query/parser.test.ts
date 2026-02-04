@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { writeFile, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { parseQueryFile, parseQueryString } from './parser.js';
+import { parseQueryFile, parseQueryString, detectShortKeywords } from './parser.js';
 
 describe('Query Parser', () => {
   describe('parseQueryString', () => {
@@ -379,6 +379,101 @@ overrides:
       expect(result.blocks).toHaveLength(3);
       expect(result.filters.yearFrom).toBe(2018);
       expect(result.overrides.arxiv?.categories).toHaveLength(4);
+    });
+  });
+
+  describe('detectShortKeywords', () => {
+    it('should detect short keywords (3 characters or fewer)', () => {
+      const ast = parseQueryString(`
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - EPA
+        - OSCE
+        - AI
+        - machine learning
+    operator: OR
+`);
+      const shortKeywords = detectShortKeywords(ast);
+      expect(shortKeywords).toContain('EPA');
+      expect(shortKeywords).toContain('AI');
+      expect(shortKeywords).not.toContain('OSCE');
+      expect(shortKeywords).not.toContain('machine learning');
+    });
+
+    it('should return empty array when no short keywords', () => {
+      const ast = parseQueryString(`
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+        - artificial intelligence
+    operator: OR
+`);
+      const shortKeywords = detectShortKeywords(ast);
+      expect(shortKeywords).toHaveLength(0);
+    });
+
+    it('should detect short keywords from multiple blocks', () => {
+      const ast = parseQueryString(`
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - EPA
+    operator: OR
+  - field: title_abstract
+    terms:
+      keywords:
+        - CBE
+    operator: OR
+`);
+      const shortKeywords = detectShortKeywords(ast);
+      expect(shortKeywords).toContain('EPA');
+      expect(shortKeywords).toContain('CBE');
+      expect(shortKeywords).toHaveLength(2);
+    });
+
+    it('should not include duplicates', () => {
+      const ast = parseQueryString(`
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - EPA
+    operator: OR
+  - field: title
+    terms:
+      keywords:
+        - EPA
+    operator: OR
+`);
+      const shortKeywords = detectShortKeywords(ast);
+      expect(shortKeywords).toEqual(['EPA']);
+    });
+
+    it('should use custom threshold if provided', () => {
+      const ast = parseQueryString(`
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - OSCE
+        - EPA
+        - test
+    operator: OR
+`);
+      const shortKeywords = detectShortKeywords(ast, 4);
+      expect(shortKeywords).toContain('OSCE');
+      expect(shortKeywords).toContain('EPA');
+      expect(shortKeywords).toContain('test');
     });
   });
 });

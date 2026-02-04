@@ -8,9 +8,13 @@ import {
   formatCountOnlyOutput,
   formatSearchCompletionTip,
   formatCountOnlyTip,
+  formatDirectQueryTip,
+  formatPreviewOutput,
+  formatShortKeywordWarning,
   type SearchCommandOptions,
   type TranslationResult,
   type CountResult,
+  type PreviewResult,
 } from './search.js';
 import { getDefaultConfig } from '../../config/index.js';
 import type { ProviderName } from '../../session/types.js';
@@ -74,6 +78,14 @@ describe('search command', () => {
       expect(result.countOnly).toBe(true);
     });
 
+    it('should parse preview option', () => {
+      const result = parseSearchOptions('query.yaml', {
+        preview: true,
+      });
+
+      expect(result.preview).toBe(true);
+    });
+
     it('should parse session name option', () => {
       const result = parseSearchOptions('query.yaml', {
         name: 'my-search',
@@ -135,6 +147,31 @@ describe('search command', () => {
 
       expect(result.valid).toBe(false);
       expect(result.error).toContain('single');
+    });
+
+    it('should reject --preview with --count-only', () => {
+      const options: SearchCommandOptions = {
+        queryFile: 'query.yaml',
+        preview: true,
+        countOnly: true,
+      };
+
+      const result = validateSearchInput(options);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('--preview');
+      expect(result.error).toContain('--count-only');
+    });
+
+    it('should accept valid preview option', () => {
+      const options: SearchCommandOptions = {
+        queryFile: 'query.yaml',
+        preview: true,
+      };
+
+      const result = validateSearchInput(options);
+
+      expect(result.valid).toBe(true);
     });
   });
 
@@ -521,6 +558,157 @@ describe('search command', () => {
       const result = formatCountOnlyTip();
 
       expect(result).toContain('diff');
+    });
+  });
+
+  describe('formatDirectQueryTip', () => {
+    it('should recommend using YAML query file for reproducibility', () => {
+      const result = formatDirectQueryTip();
+
+      expect(result).toContain('Tip:');
+      expect(result).toContain('YAML');
+      expect(result).toContain('reproducible');
+    });
+
+    it('should show query init command', () => {
+      const result = formatDirectQueryTip();
+
+      expect(result).toContain('search-hub query init');
+    });
+  });
+
+  describe('formatShortKeywordWarning', () => {
+    it('should format warning with list of short keywords', () => {
+      const result = formatShortKeywordWarning(['EPA', 'OSCE', 'AI']);
+
+      expect(result).toContain('⚠');
+      expect(result).toContain('EPA');
+      expect(result).toContain('OSCE');
+      expect(result).toContain('AI');
+      expect(result).toContain('short');
+    });
+
+    it('should include suggestion for full phrases', () => {
+      const result = formatShortKeywordWarning(['EPA']);
+
+      expect(result).toContain('full phrases');
+    });
+
+    it('should include suggestion for exclude terms', () => {
+      const result = formatShortKeywordWarning(['EPA']);
+
+      expect(result).toContain('exclude');
+    });
+
+    it('should return empty string for empty array', () => {
+      const result = formatShortKeywordWarning([]);
+
+      expect(result).toBe('');
+    });
+  });
+
+  describe('formatPreviewOutput', () => {
+    it('should format preview results with count and titles', () => {
+      const results: PreviewResult[] = [
+        {
+          provider: 'pubmed',
+          count: 28,
+          titles: [
+            'First article title',
+            'Second article title',
+            'Third article title',
+          ],
+        },
+      ];
+
+      const result = formatPreviewOutput(results, 'query.yaml');
+
+      expect(result).toContain('query.yaml');
+      expect(result).toContain('preview');
+      expect(result).toContain('pubmed:');
+      expect(result).toContain('28');
+      expect(result).toContain('First article title');
+      expect(result).toContain('Second article title');
+      expect(result).toContain('Third article title');
+    });
+
+    it('should format preview results for multiple providers', () => {
+      const results: PreviewResult[] = [
+        {
+          provider: 'pubmed',
+          count: 28,
+          titles: ['Article A', 'Article B'],
+        },
+        {
+          provider: 'eric',
+          count: 15,
+          titles: ['Article C', 'Article D'],
+        },
+      ];
+
+      const result = formatPreviewOutput(results, 'query.yaml');
+
+      expect(result).toContain('pubmed:');
+      expect(result).toContain('28');
+      expect(result).toContain('Article A');
+      expect(result).toContain('eric:');
+      expect(result).toContain('15');
+      expect(result).toContain('Article C');
+      expect(result).toContain('total:');
+      expect(result).toContain('43');
+    });
+
+    it('should handle provider errors', () => {
+      const results: PreviewResult[] = [
+        {
+          provider: 'pubmed',
+          count: 10,
+          titles: ['Article 1'],
+        },
+        {
+          provider: 'scopus',
+          count: 0,
+          titles: [],
+          error: 'API key invalid',
+        },
+      ];
+
+      const result = formatPreviewOutput(results, 'query.yaml');
+
+      expect(result).toContain('pubmed:');
+      expect(result).toContain('10');
+      expect(result).toContain('scopus:');
+      expect(result).toContain('error');
+      expect(result).toContain('API key invalid');
+    });
+
+    it('should use direct-query label when no query file', () => {
+      const results: PreviewResult[] = [
+        {
+          provider: 'pubmed',
+          count: 5,
+          titles: ['Test article'],
+        },
+      ];
+
+      const result = formatPreviewOutput(results);
+
+      expect(result).toContain('direct-query');
+    });
+
+    it('should show empty preview for zero results', () => {
+      const results: PreviewResult[] = [
+        {
+          provider: 'pubmed',
+          count: 0,
+          titles: [],
+        },
+      ];
+
+      const result = formatPreviewOutput(results, 'query.yaml');
+
+      expect(result).toContain('pubmed:');
+      expect(result).toContain('0');
     });
   });
 });

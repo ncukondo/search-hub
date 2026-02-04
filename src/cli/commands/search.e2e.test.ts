@@ -20,9 +20,15 @@ import {
   validateSearchInput,
   formatDryRunOutput,
   formatQueryDiagnostics,
+  formatDirectQueryTip,
+  formatPreviewOutput,
+  formatShortKeywordWarning,
   type SearchCommandOptions,
   type TranslationResult,
+  type PreviewResult,
 } from './search.js';
+import { executePreview } from './search-executor.js';
+import { detectShortKeywords } from '../../query/parser.js';
 import type { ProviderName } from '../../session/types.js';
 import { translateQueryCommand } from './query/translate.js';
 
@@ -1801,6 +1807,155 @@ describe('search-hub search --count-only E2E', () => {
       // Scopus should be skipped since no API key and no explicit --db
       expect(counts).toHaveLength(1);
       expect(counts[0]!.provider).toBe('pubmed');
+    });
+  });
+});
+
+/**
+ * E2E Tests for Query Refinement UX Improvements (Task #07)
+ *
+ * Tests:
+ * - Direct query tip display
+ * - Preview mode functionality
+ * - Short keyword warning
+ */
+
+describe('search-hub search: Query Refinement UX (Task #07)', () => {
+  let ctx: E2EContext;
+
+  beforeEach(async () => {
+    ctx = await setupE2EContext();
+    vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  describe('Direct query tip (--query)', () => {
+    it('should format tip recommending YAML files', () => {
+      const tip = formatDirectQueryTip();
+
+      expect(tip).toContain('Tip:');
+      expect(tip).toContain('YAML');
+      expect(tip).toContain('reproducible');
+      expect(tip).toContain('search-hub query init');
+    });
+  });
+
+  describe('Preview mode (--preview)', () => {
+    it('should return preview results with counts and titles', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const results = await executePreview(
+        { queryFile: queryPath, preview: true },
+        config
+      );
+
+      expect(results).toHaveLength(1);
+      expect(results[0]!.provider).toBe('pubmed');
+      expect(results[0]!.count).toBe(2);
+      expect(results[0]!.titles.length).toBeGreaterThan(0);
+    });
+
+    it('should return preview results for multiple providers', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const results = await executePreview(
+        { queryFile: queryPath, preview: true },
+        config
+      );
+
+      expect(results).toHaveLength(2);
+      expect(results.find((r) => r.provider === 'pubmed')).toBeDefined();
+      expect(results.find((r) => r.provider === 'eric')).toBeDefined();
+    });
+
+    it('should not create session directory', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      await executePreview(
+        { queryFile: queryPath, preview: true },
+        config
+      );
+
+      const entries = await readdir(ctx.sessionsDir);
+      expect(entries).toHaveLength(0);
+    });
+
+    it('should format preview output correctly', () => {
+      const results: PreviewResult[] = [
+        {
+          provider: 'pubmed',
+          count: 28,
+          titles: ['Article 1', 'Article 2', 'Article 3'],
+        },
+      ];
+
+      const output = formatPreviewOutput(results, 'query.yaml');
+
+      expect(output).toContain('query.yaml');
+      expect(output).toContain('preview');
+      expect(output).toContain('pubmed:');
+      expect(output).toContain('28');
+      expect(output).toContain('Article 1');
+      expect(output).toContain('Article 2');
+    });
+  });
+
+  describe('Short keyword warning', () => {
+    it('should detect short keywords from query AST', async () => {
+      const queryPath = await createRawQueryFile(ctx.tempDir, `
+name: short_keywords_test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - EPA
+        - OSCE
+        - AI
+        - medical education
+    operator: OR
+`);
+      const { parseQueryFile } = await import('../../query/parser.js');
+      const ast = await parseQueryFile(queryPath);
+      const shortKeywords = detectShortKeywords(ast);
+
+      expect(shortKeywords).toContain('EPA');
+      expect(shortKeywords).toContain('AI');
+      expect(shortKeywords).not.toContain('OSCE');
+      expect(shortKeywords).not.toContain('medical education');
+    });
+
+    it('should format warning with suggestions', () => {
+      const warning = formatShortKeywordWarning(['EPA', 'AI']);
+
+      expect(warning).toContain('⚠');
+      expect(warning).toContain('EPA');
+      expect(warning).toContain('AI');
+      expect(warning).toContain('short');
+      expect(warning).toContain('full phrases');
+      expect(warning).toContain('exclude');
+    });
+
+    it('should return empty string when no short keywords', () => {
+      const warning = formatShortKeywordWarning([]);
+      expect(warning).toBe('');
     });
   });
 });

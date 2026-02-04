@@ -7,7 +7,7 @@
 import { readFile, writeFile, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import type { SearchCommandOptions, CountResult } from './search.js';
+import type { SearchCommandOptions, CountResult, PreviewResult } from './search.js';
 import type { Config } from '../../config/index.js';
 import type {
   Article,
@@ -586,6 +586,100 @@ export async function executeCountOnly(
             ? error.message
             : String(error);
         return { provider: providerName, count: 0, error: errorMessage };
+      }
+    })
+  );
+
+  return results;
+}
+
+
+/**
+ * Execute preview mode: get counts and first few titles without creating a session.
+ */
+export async function executePreview(
+  options: SearchCommandOptions,
+  config: Config,
+  maxTitles = 5
+): Promise<PreviewResult[]> {
+  let ast: QueryAST | undefined;
+
+  // Handle direct query mode
+  if (options.directQuery && options.providers && options.providers.length === 1) {
+    ast = {
+      name: options.sessionName ?? 'direct-query',
+      blocks: [
+        {
+          field: 'all',
+          terms: { keywords: [options.directQuery] },
+          operator: 'AND',
+        },
+      ],
+      filters: {},
+      overrides: {},
+    };
+  } else if (options.queryFile) {
+    const queryContent = await readFile(options.queryFile, 'utf-8');
+    ast = parseQueryString(queryContent);
+  } else {
+    return [];
+  }
+
+  // Determine which providers to use
+  let providers = getEnabledProviders(config, options.providers);
+
+  // In default mode (no --db), skip unconfigured providers
+  const isExplicitSelection = options.providers && options.providers.length > 0;
+  if (!isExplicitSelection) {
+    providers = providers.filter((name) => isProviderConfigured(name, config));
+  }
+
+  if (providers.length === 0) {
+    return [];
+  }
+
+  // Execute preview for each provider concurrently
+  const results: PreviewResult[] = await Promise.all(
+    providers.map(async (providerName): Promise<PreviewResult> => {
+      try {
+        const provider = createProviderInstance(providerName, config);
+        if (provider === null) {
+          return { provider: providerName, count: 0, titles: [], error: 'Provider configuration incomplete' };
+        }
+
+        // Translate query
+        let translatedQuery: TranslatedQuery;
+        if (options.directQuery && options.providers?.length === 1) {
+          translatedQuery = {
+            native: options.directQuery,
+            provider: providerName,
+          };
+        } else {
+          translatedQuery = translateQueryForProvider(ast!, providerName);
+        }
+
+        // Get count first
+        const count = await provider.count(translatedQuery);
+
+        // Collect first few articles for titles
+        const titles: string[] = [];
+        const searchOptions = { maxResults: maxTitles };
+
+        for await (const article of provider.search(translatedQuery, searchOptions)) {
+          titles.push(article.title);
+          if (titles.length >= maxTitles) {
+            break;
+          }
+        }
+
+        return { provider: providerName, count, titles };
+      } catch (error) {
+        const errorMessage = error instanceof Error
+          ? error.message
+          : isProviderError(error)
+            ? error.message
+            : String(error);
+        return { provider: providerName, count: 0, titles: [], error: errorMessage };
       }
     })
   );
