@@ -20,7 +20,6 @@ import {
   validateSearchInput,
   formatDryRunOutput,
   formatQueryDiagnostics,
-  formatDirectQueryTip,
   formatPreviewOutput,
   formatShortKeywordWarning,
   type SearchCommandOptions,
@@ -1830,17 +1829,6 @@ describe('search-hub search: Query Refinement UX (Task #07)', () => {
 
   afterEach(async () => {
     await ctx.cleanup();
-  });
-
-  describe('Direct query tip (--query)', () => {
-    it('should format tip recommending YAML files', () => {
-      const tip = formatDirectQueryTip();
-
-      expect(tip).toContain('Tip:');
-      expect(tip).toContain('YAML');
-      expect(tip).toContain('reproducible');
-      expect(tip).toContain('search-hub query init');
-    });
   });
 
   describe('Preview mode (--preview)', () => {

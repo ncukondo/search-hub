@@ -14,7 +14,6 @@ import {
   formatReviewRequiredMessage,
   formatNoIncludedArticlesError,
   formatPendingWarning,
-  formatReviewWorkflowTip,
   formatIgnoringReviewsNote,
   confirmPrompt,
   type ReviewSummary,
@@ -789,25 +788,6 @@ articles:
 
       expect(output).toContain('1 article still pending');
       expect(output).not.toContain('articles still pending');
-    });
-  });
-
-  describe('formatReviewWorkflowTip', () => {
-    it('shows tip about review workflow', () => {
-      const output = formatReviewWorkflowTip('my-session');
-
-      expect(output).toContain('Tip:');
-      expect(output).toContain('systematic review');
-      expect(output).toContain('review init my-session');
-      expect(output).toContain('--reviewed');
-    });
-
-    it('includes session ID in example commands', () => {
-      const output = formatReviewWorkflowTip('test-session');
-
-      expect(output).toContain('test-session');
-      expect(output).toContain('search-hub review init test-session');
-      expect(output).toContain('search-hub register test-session --reviewed');
     });
   });
 

@@ -362,36 +362,6 @@ export async function formatDryRunOutput(
   return sections.join('\n');
 }
 
-/**
- * Format tip shown after successful search completion.
- * Guides users toward the diff command for query refinement workflow.
- */
-export function formatSearchCompletionTip(sessionId: string): string {
-  return `
-Tip: To compare with another query version, use:
-     search-hub diff <other-session> ${sessionId}`;
-}
-
-/**
- * Format tip shown after count-only results.
- * Guides users toward the full workflow with diff for query refinement.
- */
-export function formatCountOnlyTip(): string {
-  return `
-Tip: Run without --count-only to retrieve articles, then use 'diff' to compare query versions.`;
-}
-
-
-/**
- * Format tip shown when using --query direct option.
- * Guides users toward YAML query files for reproducible searches.
- */
-export function formatDirectQueryTip(): string {
-  return `
-Tip: For reproducible searches, consider using a YAML query file:
-     search-hub query init -o my-search.yaml`;
-}
-
 
 /**
  * Format warning for short keywords that may cause noisy results.

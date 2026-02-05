@@ -43,9 +43,6 @@ import {
   formatDryRunOutput,
   formatCountOnlyOutput,
   formatPreviewOutput,
-  formatSearchCompletionTip,
-  formatCountOnlyTip,
-  formatDirectQueryTip,
   formatShortKeywordWarning,
 } from './commands/search.js';
 import { executeSearch, executeCountOnly, executePreview } from './commands/search-executor.js';
@@ -144,10 +141,11 @@ import {
   formatReviewRequiredMessage,
   formatNoIncludedArticlesError,
   formatPendingWarning,
-  formatReviewWorkflowTip,
   formatIgnoringReviewsNote,
   confirmPrompt,
 } from './commands/register.js';
+import { formatSuggestion } from './suggestions/index.js';
+import { getSuggestion } from './suggestions/rules.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
 import { loadSession, sessionExists, listSessions } from '../session/manager.js';
@@ -194,17 +192,20 @@ export function createProgram(): Command {
     .option('-q, --quiet', 'suppress all output except errors', false)
     .option('--no-color', 'disable color output')
     .addHelpText('after', `
+Workflow:
+  1. query init → edit → validate / --dry-run        Query preparation
+  2. search --preview → search                       Preview & execute
+  3. results / summary / diff                        Inspect & compare
+  4. review init → extract → merge → status          Systematic review
+  5. register / export                               Output
+
+  Iterate: search v1 → search v2 → diff             Query refinement
+
 Quick Start:
   $ search-hub query init -o search.yaml        # Create query template
   $ search-hub search search.yaml --count-only  # Check hit counts
   $ search-hub search search.yaml               # Execute search
-  $ search-hub results <session>                # Review titles
-
-Query Refinement (iterate until satisfied):
-  $ cp search.yaml search-v2.yaml               # Create variant
-  $ (edit search-v2.yaml)                       # Adjust terms
-  $ search-hub search search-v2.yaml            # Search again
-  $ search-hub diff <old> <new> --show removed  # Compare results`);
+  $ search-hub results <session>                # Review titles`);
 
   // Register init command
   program
@@ -505,19 +506,16 @@ Examples:
     .option('--skip-connection-test', 'skip API connection test during dry-run')
     .option('--no-resume', 'start fresh even if session exists')
     .addHelpText('after', `
+Workflow position:
+  query validate → [this command: search] → results / summary / diff
+
 Examples:
   $ search-hub search ./diabetes-ai.yaml                # Search all databases
   $ search-hub search ./query.yaml --db pubmed,eric     # Specific databases
   $ search-hub search --db pubmed --query "diabetes[tiab]"  # Direct query
   $ search-hub search ./query.yaml --dry-run            # Preview translations
   $ search-hub search ./query.yaml --count-only         # Get hit counts only
-  $ search-hub search ./query.yaml --max-results 100    # Limit results
-
-Query Refinement:
-  After running a search, use 'diff' to compare query versions:
-    1. Create a refined query file (e.g., query-v2.yaml)
-    2. Run search with the new query
-    3. Compare: search-hub diff <old-session> <new-session> --show removed`)
+  $ search-hub search ./query.yaml --max-results 100    # Limit results`)
     .action(
       async (
         queryFile?: string,
@@ -675,8 +673,11 @@ Query Refinement:
 
             if (!globalOpts.quiet) {
               console.log(formatCountOnlyOutput(counts, searchOpts.queryFile));
-              // Show tip for workflow guidance
-              console.log(formatCountOnlyTip());
+              const suggestion = formatSuggestion(getSuggestion({
+                command: 'search --count-only',
+                queryFile: searchOpts.queryFile,
+              }));
+              if (suggestion) console.log(suggestion);
             }
 
             const hasErrors = counts.some((c) => c.error);
@@ -711,13 +712,17 @@ Query Refinement:
                   console.log(`  ${provider}: ${stats.retrieved} results`);
                 }
               }
-              // Show tip for query refinement workflow
+              // Show next step suggestions
               if (result.sessionId) {
-                console.log(formatSearchCompletionTip(result.sessionId));
-              }
-              // Show tip about YAML files when using direct query
-              if (searchOpts.directQuery) {
-                console.error(formatDirectQueryTip());
+                const sessions = await listSessions(sessionsDir);
+                const suggestionCmd = searchOpts.directQuery ? 'search --query' : 'search';
+                const suggestion = formatSuggestion(getSuggestion({
+                  command: suggestionCmd,
+                  sessionId: result.sessionId,
+                  sessionStatus: result.sessionStatus,
+                  sessionCount: sessions.length,
+                }));
+                if (suggestion) console.log(suggestion);
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;
@@ -1582,10 +1587,13 @@ With review workflow:
             console.log(formatRegistrationSummary(record.summary));
             console.log(`\nResults saved to: ${join(sessionDir, 'registration.json')}`);
 
-            // Show tip about review workflow for users who haven't used it
-            if (!reviewExists && !registerOpts.quiet) {
-              console.log(formatReviewWorkflowTip(sessionId));
-            }
+            // Show next step suggestions
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'register',
+              sessionId,
+              hasReviews: reviewExists,
+            }));
+            if (suggestion) console.log(suggestion);
           }
 
           process.exitCode = EXIT_CODES.SUCCESS;
