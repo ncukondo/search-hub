@@ -42,7 +42,7 @@ Implement `fulltext init` and `fulltext sync` commands for manual fulltext manag
 
 ### Step 2: Fulltext Sync Core Logic
 
-- [ ] Write test: `src/cli/commands/fulltext/sync.test.ts`
+- [x] Write test: `src/cli/commands/fulltext/sync.test.ts`
   - Test: Detects new fulltext.pdf in directory
   - Test: Detects new fulltext.md in directory
   - Test: Detects new fulltext.xml in directory
@@ -50,12 +50,12 @@ Implement `fulltext init` and `fulltext sync` commands for manual fulltext manag
   - Test: Updates reviews.yaml fulltext.hasFiles
   - Test: Ignores already-synced files
   - Test: --dry-run shows what would be synced
-- [ ] Create stub: `src/cli/commands/fulltext/sync.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `executeFulltextSync()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Manual files detected and registered
+- [x] Create stub: `src/cli/commands/fulltext/sync.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `executeFulltextSync()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Manual files detected and registered
 
 ### Step 3: CLI Command Registration
 
