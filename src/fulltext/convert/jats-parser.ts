@@ -6,7 +6,13 @@
  */
 
 import { XMLParser } from 'fast-xml-parser';
-import type { JatsAuthor, JatsMetadata } from './types.js';
+import type {
+  JatsAuthor,
+  JatsMetadata,
+  JatsSection,
+  BlockElement,
+  InlineContent,
+} from './types.js';
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -151,4 +157,163 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   if (pmcid) result.pmcid = pmcid;
   if (abstract) result.abstract = abstract;
   return result;
+}
+
+/**
+ * Parse inline content from a paragraph node.
+ * Handles mixed text and element content (bold, italic, sup, sub, xref).
+ */
+function parseInlineContent(node: unknown): InlineContent[] {
+  if (node == null) return [];
+  if (typeof node === 'string') return [{ type: 'text', text: node }];
+  if (typeof node === 'number') return [{ type: 'text', text: String(node) }];
+
+  if (Array.isArray(node)) {
+    return node.flatMap(parseInlineContent);
+  }
+
+  if (typeof node === 'object') {
+    const obj = node as Record<string, unknown>;
+    const result: InlineContent[] = [];
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (key.startsWith('@_')) continue;
+
+      if (key === '#text') {
+        const text = String(value ?? '');
+        if (text) result.push({ type: 'text', text });
+      } else if (key === 'bold') {
+        const children = parseInlineContent(value);
+        result.push({ type: 'bold', children });
+      } else if (key === 'italic') {
+        const children = parseInlineContent(value);
+        result.push({ type: 'italic', children });
+      } else if (key === 'sup') {
+        result.push({ type: 'superscript', text: extractAllText(value) });
+      } else if (key === 'sub') {
+        result.push({ type: 'subscript', text: extractAllText(value) });
+      } else if (key === 'xref') {
+        const xrefs = Array.isArray(value) ? value : [value];
+        for (const xref of xrefs) {
+          if (typeof xref === 'object' && xref != null) {
+            const xobj = xref as Record<string, unknown>;
+            const refType = xobj['@_ref-type'];
+            if (refType === 'bibr') {
+              result.push({
+                type: 'citation',
+                refId: String(xobj['@_rid'] ?? ''),
+                text: extractAllText(xobj),
+              });
+            } else {
+              result.push({ type: 'text', text: extractAllText(xobj) });
+            }
+          }
+        }
+      } else {
+        // Unknown inline element - extract text
+        const text = extractAllText(value);
+        if (text) result.push({ type: 'text', text });
+      }
+    }
+    return result;
+  }
+  return [];
+}
+
+/**
+ * Parse a <list> element into a BlockElement.
+ */
+function parseList(listNode: Record<string, unknown>): BlockElement {
+  const listType = listNode['@_list-type'];
+  const ordered = listType === 'order';
+  const listItems: Array<Record<string, unknown>> = (listNode['list-item'] as Array<Record<string, unknown>>) ?? [];
+  const items: InlineContent[][] = [];
+
+  for (const item of listItems) {
+    const pNodes = item['p'];
+    const paragraphs: unknown[] = Array.isArray(pNodes) ? pNodes : pNodes != null ? [pNodes] : [];
+    const content = paragraphs.flatMap(parseInlineContent);
+    items.push(content);
+  }
+
+  return { type: 'list', ordered, items };
+}
+
+/**
+ * Parse block-level content from a section.
+ */
+function parseBlockContent(sectionNode: Record<string, unknown>): BlockElement[] {
+  const blocks: BlockElement[] = [];
+
+  // Paragraphs
+  const pNodes = sectionNode['p'];
+  if (pNodes) {
+    const paragraphs: unknown[] = Array.isArray(pNodes) ? pNodes : [pNodes];
+    for (const p of paragraphs) {
+      blocks.push({ type: 'paragraph', content: parseInlineContent(p) });
+    }
+  }
+
+  // Lists
+  const listNode = sectionNode['list'];
+  if (listNode) {
+    const lists = Array.isArray(listNode) ? listNode : [listNode];
+    for (const list of lists) {
+      if (typeof list === 'object' && list != null) {
+        blocks.push(parseList(list as Record<string, unknown>));
+      }
+    }
+  }
+
+  return blocks;
+}
+
+/**
+ * Parse a <sec> element into a JatsSection, recursively handling subsections.
+ */
+function parseSection(secNode: Record<string, unknown>, level: number): JatsSection {
+  const title = extractAllText(secNode['title']);
+  const content = parseBlockContent(secNode);
+
+  // Nested sections
+  const subsections: JatsSection[] = [];
+  const nestedSecs = secNode['sec'];
+  if (nestedSecs) {
+    const secs: Array<Record<string, unknown>> = Array.isArray(nestedSecs)
+      ? (nestedSecs as Array<Record<string, unknown>>)
+      : [nestedSecs as Record<string, unknown>];
+    for (const sub of secs) {
+      subsections.push(parseSection(sub, level + 1));
+    }
+  }
+
+  return { title, level, content, subsections };
+}
+
+/**
+ * Parse JATS XML body to extract sections and content.
+ */
+export function parseJatsBody(xml: string): JatsSection[] {
+  const parsed = parser.parse(xml);
+  const body = parsed.article?.body;
+  if (!body) return [];
+
+  const sections: JatsSection[] = [];
+  const secs = body['sec'];
+
+  if (secs && Array.isArray(secs) && secs.length > 0) {
+    for (const sec of secs) {
+      if (typeof sec === 'object' && sec != null) {
+        sections.push(parseSection(sec as Record<string, unknown>, 2));
+      }
+    }
+  } else {
+    // Body has paragraphs without sections
+    const content = parseBlockContent(body as Record<string, unknown>);
+    if (content.length > 0) {
+      sections.push({ title: '', level: 2, content, subsections: [] });
+    }
+  }
+
+  return sections;
 }

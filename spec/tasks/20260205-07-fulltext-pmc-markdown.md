@@ -41,15 +41,15 @@ Implement conversion of PMC JATS XML to Markdown format:
 
 ### Step 2: JATS XML Parser - Body Sections
 
-- [ ] Write test: `src/fulltext/convert/jats-parser.test.ts` (extend)
+- [x] Write test: `src/fulltext/convert/jats-parser.test.ts` (extend)
   - Test: Extracts sections from `<body><sec>`
   - Test: Handles nested sections (h2, h3, h4)
   - Test: Extracts paragraphs `<p>`
   - Test: Handles lists `<list>` → bullet/numbered lists
   - Test: Handles inline elements (bold, italic, superscript)
-- [ ] Implement `parseJatsBody(xml)`
-- [ ] Verify test passes
-- [ ] Acceptance: Body structure parsed correctly
+- [x] Implement `parseJatsBody(xml)`
+- [x] Verify test passes
+- [x] Acceptance: Body structure parsed correctly
 
 ### Step 3: JATS XML Parser - Tables
 
