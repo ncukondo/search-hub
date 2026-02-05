@@ -104,12 +104,12 @@ Establish the foundation for fulltext management: type definitions, directory st
 
 ### Final Step: Integration Test
 
-- [ ] Write integration test: `src/fulltext/foundation.test.ts`
+- [x] Write integration test: `src/fulltext/foundation.test.ts`
   - Test: Create article directory with meta.json, README.md
   - Test: Add to index, verify lookup works
   - Test: Update meta with file info
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All foundation components work together
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All foundation components work together
 
 ## Notes
 
