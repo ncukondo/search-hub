@@ -51,6 +51,7 @@ export interface SearchExecutionResult {
   results?: Record<string, { hits: number; retrieved: number; error?: string; warnings?: string[] }>;
   error?: string;
   autoRegisterResult?: RegistrationRecord;
+  sessionStatus?: 'completed' | 'partial' | 'failed';
 }
 
 /**
@@ -504,6 +505,7 @@ export async function executeSearch(
     success: true,
     sessionId,
     results,
+    sessionStatus,
   };
 
   if (autoRegisterResult) {

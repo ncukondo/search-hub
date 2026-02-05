@@ -282,7 +282,7 @@ const reviewStatusRule: SuggestionRule = (ctx) => {
     };
   }
 
-  // 5. All finalized
+  // 6. All finalized
   if (rs.finalized === rs.total) {
     return {
       next: [
