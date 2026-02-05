@@ -91,16 +91,16 @@ Establish the foundation for fulltext management: type definitions, directory st
 
 ### Step 6: README Template Generation
 
-- [ ] Write test: `src/fulltext/readme.test.ts`
+- [x] Write test: `src/fulltext/readme.test.ts`
   - Test: `generateReadme()` creates proper Markdown
   - Test: Includes title, identifiers, URLs
   - Test: Includes instructions for manual download
-- [ ] Create stub: `src/fulltext/readme.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement README generation
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: README.md generated with all required sections
+- [x] Create stub: `src/fulltext/readme.ts`
+- [x] Verify test fails (Red)
+- [x] Implement README generation
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: README.md generated with all required sections
 
 ### Final Step: Integration Test
 
