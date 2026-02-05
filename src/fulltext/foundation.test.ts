@@ -261,7 +261,7 @@ describe('Fulltext Foundation Integration', () => {
 
     // Verify citation keys include transliterated names
     expect(existingKeys).toContain('muller2024');
-    expect(existingKeys).toContain('tianzhong2023');
+    expect(existingKeys).toContain('unknown2023');
     expect(existingKeys).toContain('unknown0000');
 
     // Save index and verify
@@ -270,7 +270,7 @@ describe('Fulltext Foundation Integration', () => {
 
     expect(Object.keys(loaded.entries)).toHaveLength(3);
     expect(findByDoi(loaded, '10.1000/a')?.citationKey).toBe('muller2024');
-    expect(findByDoi(loaded, '10.2000/b')?.citationKey).toBe('tianzhong2023');
+    expect(findByDoi(loaded, '10.2000/b')?.citationKey).toBe('unknown2023');
     expect(findByDoi(loaded, '10.3000/c')?.citationKey).toBe('unknown0000');
 
     // Verify files on disk

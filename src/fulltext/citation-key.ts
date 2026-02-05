@@ -18,6 +18,9 @@ function collisionSuffix(index: number): string {
   return result;
 }
 
+/** CJK Unified Ideographs range: U+4E00–U+9FFF */
+const CJK_REGEX = /[\u4e00-\u9fff]/;
+
 /**
  * Extract the family name portion from an author string.
  * Handles formats like "Smith, J." → "Smith", "Smith" → "Smith".
@@ -43,9 +46,12 @@ export function generateCitationKey(
   // Extract and normalize author
   const rawFamily = author?.trim() ? extractFamilyName(author) : 'unknown';
 
-  // Transliterate to ASCII and lowercase
-  const asciiFamily = anyAscii(rawFamily).toLowerCase().replace(/[^a-z]/g, '');
-  const normalizedFamily = asciiFamily || 'unknown';
+  // CJK characters cannot be accurately transliterated to the correct reading
+  // (any-ascii maps them to Chinese pinyin, not Japanese romaji etc.)
+  // Fall back to 'unknown' for names containing CJK ideographs.
+  const normalizedFamily = CJK_REGEX.test(rawFamily)
+    ? 'unknown'
+    : anyAscii(rawFamily).toLowerCase().replace(/[^a-z]/g, '') || 'unknown';
 
   // Normalize year
   const normalizedYear = year?.trim() || '0000';

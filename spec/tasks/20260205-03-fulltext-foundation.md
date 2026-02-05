@@ -33,7 +33,7 @@ Establish the foundation for fulltext management: type definitions, directory st
 - [x] Write test: `src/fulltext/citation-key.test.ts`
   - Test: `smith2024` from author "Smith, J." and year 2024
   - Test: `muller2023` from author "Müller, K." (transliteration)
-  - Test: `tanaka2024` from author "田中" (romaji)
+  - Test: `unknown2024` from author "田中" (CJK fallback)
   - Test: `unknown0000` when no author/year
   - Test: Collision handling: `smith2024`, `smith2024a`, `smith2024b`
   - Test: UUID8 suffix generation

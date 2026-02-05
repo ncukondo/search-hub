@@ -11,8 +11,8 @@ describe('Citation Key Generation', () => {
       expect(generateCitationKey('Müller, K.', '2023')).toBe('muller2023');
     });
 
-    it('should transliterate Japanese characters to romaji', () => {
-      expect(generateCitationKey('田中', '2024')).toBe('tianzhong2024');
+    it('should fallback to unknown for CJK characters', () => {
+      expect(generateCitationKey('田中', '2024')).toBe('unknown2024');
     });
 
     it('should use "unknown" when no author provided', () => {
