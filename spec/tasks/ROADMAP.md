@@ -63,6 +63,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 54 | ERIC Thesaurus (Descriptors) Support | 7 | ✅ Completed | [20260204-08](completed/20260204-08-eric-thesaurus.md) |
 | 55 | Query Diff Enhancement | 40 | ✅ Completed | [20260204-09](completed/20260204-09-query-diff-enhancement.md) |
 | 56 | Screening Workflow Improvement | 44 | ✅ Completed | [20260204-10](completed/20260204-10-screening-workflow-improvement.md) |
+| 57 | Next Step Suggestions | 10, 58 | 🔲 Active | [20260205-01](active/20260205-01-next-step-suggestions.md) |
+| 58 | Review Extract Session-Internal Management | 56 | 🔲 Active | [20260205-02](active/20260205-02-review-extract-session-internal.md) |
 
 ## Development Flow
 
