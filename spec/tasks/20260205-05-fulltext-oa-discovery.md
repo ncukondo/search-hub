@@ -88,17 +88,17 @@ This enables `fulltext check` command and provides URLs for `fulltext fetch` and
 
 ### Step 5: Discovery Aggregator
 
-- [ ] Write test: `src/fulltext/discovery/index.test.ts`
+- [x] Write test: `src/fulltext/discovery/index.test.ts`
   - Test: Checks all configured sources in priority order
   - Test: Aggregates OALocations from multiple sources
   - Test: Determines overall oaStatus (open/closed/unknown)
   - Test: Skips unconfigured sources (no Unpaywall email, no CORE key)
-- [ ] Create stub: `src/fulltext/discovery/index.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `discoverOA(article, config)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Aggregator combines all sources correctly
+- [x] Create stub: `src/fulltext/discovery/index.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `discoverOA(article, config)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Aggregator combines all sources correctly
 
 ### Step 6: Fulltext Check Command
 
