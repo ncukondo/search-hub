@@ -61,17 +61,17 @@ Establish the foundation for fulltext management: type definitions, directory st
 
 ### Step 4: Meta.json Management
 
-- [ ] Write test: `src/fulltext/meta.test.ts`
+- [x] Write test: `src/fulltext/meta.test.ts`
   - Test: `createMeta()` creates valid FulltextMeta
   - Test: `loadMeta()` reads and parses meta.json
   - Test: `saveMeta()` writes meta.json with proper formatting
   - Test: `updateMetaFiles()` updates files section
-- [ ] Create stub: `src/fulltext/meta.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement meta management functions
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: meta.json created, loaded, saved correctly
+- [x] Create stub: `src/fulltext/meta.ts`
+- [x] Verify test fails (Red)
+- [x] Implement meta management functions
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: meta.json created, loaded, saved correctly
 
 ### Step 5: Index Management
 
