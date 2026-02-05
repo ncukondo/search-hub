@@ -119,16 +119,16 @@ Implement conversion of PMC JATS XML to Markdown format:
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
+- [x] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
   - Test: Convert real PMC XML file
   - Test: Verify Markdown output structure
   - Test: Verify metadata preserved
-- [ ] Run full test suite: `npm test`
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**:
   - Download PMC XML manually
   - Run `fulltext convert`
   - Review generated Markdown
-- [ ] Acceptance: Conversion produces readable Markdown
+- [x] Acceptance: Conversion produces readable Markdown
 
 ## JATS XML Structure Reference
 
