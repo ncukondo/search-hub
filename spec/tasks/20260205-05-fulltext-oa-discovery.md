@@ -47,17 +47,17 @@ This enables `fulltext check` command and provides URLs for `fulltext fetch` and
 
 ### Step 2: PMC Lookup
 
-- [ ] Write test: `src/fulltext/discovery/pmc.test.ts`
+- [x] Write test: `src/fulltext/discovery/pmc.test.ts`
   - Test: Returns OALocations (PDF + XML) for PMC article
   - Test: Looks up PMCID from PMID via E-utilities
   - Test: Returns null if not in PMC
   - Test: Generates correct PDF and XML URLs
-- [ ] Create stub: `src/fulltext/discovery/pmc.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `checkPmc(pmid)` and `getPmcUrls(pmcid)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: PMC lookup returns correct URLs
+- [x] Create stub: `src/fulltext/discovery/pmc.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `checkPmc(pmid)` and `getPmcUrls(pmcid)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: PMC lookup returns correct URLs
 
 ### Step 3: arXiv Lookup
 
