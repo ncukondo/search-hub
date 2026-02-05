@@ -61,16 +61,16 @@ This enables `fulltext check` command and provides URLs for `fulltext fetch` and
 
 ### Step 3: arXiv Lookup
 
-- [ ] Write test: `src/fulltext/discovery/arxiv.test.ts`
+- [x] Write test: `src/fulltext/discovery/arxiv.test.ts`
   - Test: Returns PDF URL for arXiv article
   - Test: Handles various arXiv ID formats (old: hep-ph/9901234, new: 2401.12345)
   - Test: Returns null for non-arXiv articles
-- [ ] Create stub: `src/fulltext/discovery/arxiv.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `checkArxiv(arxivId)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: arXiv URL generation works
+- [x] Create stub: `src/fulltext/discovery/arxiv.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `checkArxiv(arxivId)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: arXiv URL generation works
 
 ### Step 4: CORE API Client
 
