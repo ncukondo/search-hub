@@ -1,0 +1,160 @@
+# Task: Fulltext Management Documentation
+
+## Purpose
+
+Update user-facing documentation for the fulltext management feature:
+- README.md features section
+- docs/commands.md with fulltext commands
+- docs/configuration.md with fulltext settings
+- New docs/fulltext.md guide
+
+## Related Specs
+
+- [spec/fulltext/overview.md](../fulltext/overview.md) - Technical specification
+
+## Related Source Files
+
+- `README.md`
+- `docs/commands.md`
+- `docs/configuration.md`
+- `docs/fulltext.md` (new)
+
+## Dependencies
+
+- All fulltext implementation tasks (59-65) should be completed or near completion
+
+## Implementation Steps
+
+### Step 1: Update README.md
+
+- [ ] Add "Fulltext management" to Features section
+  - OA discovery and automatic retrieval
+  - PMC XML to Markdown conversion
+  - Manual PDF management
+  - Auto-attach on register
+- [ ] Add brief example in Quick Start or new section
+- [ ] Acceptance: README reflects fulltext capabilities
+
+### Step 2: Update docs/commands.md
+
+- [ ] Add `fulltext` command group section
+  - `fulltext init` - Create directories for manual download
+  - `fulltext sync` - Detect manually added files
+  - `fulltext check` - Check OA availability
+  - `fulltext fetch` - Download OA fulltexts
+  - `fulltext convert` - Convert PMC XML to Markdown
+  - `fulltext attach` - Attach to reference-manager
+  - `fulltext status` - Show retrieval status
+  - `fulltext pending` - List articles needing manual download
+- [ ] Document options for each command
+- [ ] Add examples
+- [ ] Acceptance: All fulltext commands documented
+
+### Step 3: Update docs/configuration.md
+
+- [ ] Add `[fulltext]` section
+  - `enabled`
+  - `auto_convert_markdown`
+  - `auto_attach_on_register`
+- [ ] Add `[fulltext.sources]` section
+  - `unpaywall_email`
+  - `core_api_key`
+  - `prefer_sources`
+- [ ] Add `[fulltext.download]` section
+  - `concurrent_downloads`
+  - `retry_attempts`
+- [ ] Add environment variable alternatives
+- [ ] Acceptance: All fulltext config options documented
+
+### Step 4: Create docs/fulltext.md Guide
+
+- [ ] Create comprehensive fulltext management guide
+  - Overview and capabilities
+  - Data sources (Unpaywall, PMC, arXiv, CORE)
+  - Directory structure explanation
+  - Workflow examples:
+    - Automated OA retrieval
+    - Manual download workflow
+    - Mixed workflow
+  - Integration with register command
+  - Troubleshooting
+- [ ] Add diagrams if helpful (ASCII or Mermaid)
+- [ ] Acceptance: New users can understand and use fulltext features
+
+### Step 5: Cross-link Documentation
+
+- [ ] Add links from README to docs/fulltext.md
+- [ ] Add links from docs/commands.md to docs/fulltext.md
+- [ ] Update docs index if exists
+- [ ] Acceptance: Documentation is well-connected
+
+### Final Step: Review and Verify
+
+- [ ] Review all documentation for accuracy
+- [ ] Verify command examples work
+- [ ] Check for consistency with implementation
+- [ ] **Manual verification**: Follow guide as new user
+- [ ] Acceptance: Documentation is accurate and helpful
+
+## Documentation Structure
+
+### README.md Addition
+
+```markdown
+## Features
+
+...
+- **Fulltext management**: OA discovery, automatic retrieval, PMC→Markdown conversion
+...
+```
+
+### docs/fulltext.md Outline
+
+```markdown
+# Fulltext Management
+
+## Overview
+## Data Sources
+### Unpaywall
+### PubMed Central
+### arXiv
+### CORE API
+## Directory Structure
+## Workflows
+### Automated Retrieval
+### Manual Download
+### Mixed Approach
+## Configuration
+## Commands Reference
+## Integration with Register
+## Troubleshooting
+```
+
+### docs/commands.md Addition
+
+```markdown
+## fulltext
+
+Manage fulltext retrieval for session articles.
+
+### fulltext init
+
+Create directories for included articles with metadata and README.
+
+### fulltext sync
+
+Detect and register manually added files.
+
+### fulltext check
+
+Check OA availability across configured sources.
+
+...
+```
+
+## Notes
+
+- Documentation should be concise but complete
+- Include practical examples users can copy
+- Explain "why" not just "how" for workflows
+- Keep technical details in spec, user guide in docs

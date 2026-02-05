@@ -49,14 +49,21 @@
 - Direct invocation of `ref` commands
 - Batch update of abstracts/metadata
 
-### 4. Rate Limiting & Reliability
+### 4. Fulltext Management
+- OA discovery via Unpaywall, PMC, arXiv, CORE
+- Automatic retrieval of legally available OA fulltexts
+- PMC XML to Markdown conversion for text analysis
+- Manual PDF management with directory scaffolding
+- Auto-attach fulltexts on `register`
+
+### 5. Rate Limiting & Reliability
 - Automatic rate limiting per database
 - Retry with exponential backoff
 - Graceful error handling (continue other DBs on failure)
 
 ## Non-Goals
 
-- Full-text PDF retrieval
+- Paywall bypass / institutional proxy authentication
 - Citation network analysis
 - Deduplication (handled by reference-manager)
 - GUI interface

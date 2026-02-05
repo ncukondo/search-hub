@@ -33,6 +33,9 @@ spec/
 ├── integration/           # External tool integration
 │   └── reference-manager.md
 │
+├── fulltext/              # Fulltext management
+│   └── overview.md        # OA discovery, retrieval, conversion
+│
 ├── tasks/                 # Implementation tasks
 │   ├── ROADMAP.md         # Progress tracking & task dependencies
 │   ├── _template.md       # Task file template
@@ -85,6 +88,7 @@ spec/
 | CLI changes | `cli/commands.md` |
 | Config changes | `models/config.md` |
 | ref integration | `integration/reference-manager.md` |
+| Fulltext management | `fulltext/overview.md` |
 
 ### File Dependency Graph
 
@@ -102,7 +106,8 @@ overview.md
             │       └── providers/scopus.md
             ├── cli/commands.md
             │       └── cli/output-formats.md
-            └── integration/reference-manager.md
+            ├── integration/reference-manager.md
+            └── fulltext/overview.md
 ```
 
 ## Conventions
