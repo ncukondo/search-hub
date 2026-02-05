@@ -21,95 +21,95 @@ Establish the foundation for fulltext management: type definitions, directory st
 
 ### Step 1: Type Definitions
 
-- [ ] Create `src/fulltext/types.ts`
+- [x] Create `src/fulltext/types.ts`
   - Define `FulltextMeta`, `OALocation`, `FileInfo` interfaces
   - Define `FulltextIndex`, `FulltextIndexEntry` interfaces
   - Define `ArticleFulltextRef` (for reviews.yaml extension)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All types compile without errors
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All types compile without errors
 
 ### Step 2: Citation Key Generation
 
-- [ ] Write test: `src/fulltext/citation-key.test.ts`
+- [x] Write test: `src/fulltext/citation-key.test.ts`
   - Test: `smith2024` from author "Smith, J." and year 2024
   - Test: `muller2023` from author "Müller, K." (transliteration)
-  - Test: `tanaka2024` from author "田中" (romaji)
+  - Test: `unknown2024` from author "田中" (CJK fallback)
   - Test: `unknown0000` when no author/year
   - Test: Collision handling: `smith2024`, `smith2024a`, `smith2024b`
   - Test: UUID8 suffix generation
-- [ ] Create stub: `src/fulltext/citation-key.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `generateCitationKey()` and `generateDirName()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Citation keys generated correctly for all edge cases
+- [x] Create stub: `src/fulltext/citation-key.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `generateCitationKey()` and `generateDirName()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Citation keys generated correctly for all edge cases
 
 ### Step 3: Path Resolution Utilities
 
-- [ ] Write test: `src/fulltext/paths.test.ts`
+- [x] Write test: `src/fulltext/paths.test.ts`
   - Test: `getFulltextDir(sessionDir)` returns `<sessionDir>/fulltext`
   - Test: `getArticleDir(sessionDir, dirName)` returns correct path
   - Test: `getMetaPath(sessionDir, dirName)` returns `<dir>/meta.json`
   - Test: `getReadmePath(sessionDir, dirName)` returns `<dir>/README.md`
   - Test: `getIndexPath(sessionDir)` returns `<sessionDir>/fulltext/fulltext-index.json`
-- [ ] Create stub: `src/fulltext/paths.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement path utilities
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All paths resolve correctly
+- [x] Create stub: `src/fulltext/paths.ts`
+- [x] Verify test fails (Red)
+- [x] Implement path utilities
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All paths resolve correctly
 
 ### Step 4: Meta.json Management
 
-- [ ] Write test: `src/fulltext/meta.test.ts`
+- [x] Write test: `src/fulltext/meta.test.ts`
   - Test: `createMeta()` creates valid FulltextMeta
   - Test: `loadMeta()` reads and parses meta.json
   - Test: `saveMeta()` writes meta.json with proper formatting
   - Test: `updateMetaFiles()` updates files section
-- [ ] Create stub: `src/fulltext/meta.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement meta management functions
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: meta.json created, loaded, saved correctly
+- [x] Create stub: `src/fulltext/meta.ts`
+- [x] Verify test fails (Red)
+- [x] Implement meta management functions
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: meta.json created, loaded, saved correctly
 
 ### Step 5: Index Management
 
-- [ ] Write test: `src/fulltext/index-manager.test.ts`
+- [x] Write test: `src/fulltext/index-manager.test.ts`
   - Test: `createIndex()` creates empty index
   - Test: `loadIndex()` reads existing index
   - Test: `addEntry()` adds new entry to index
   - Test: `updateEntry()` updates existing entry
   - Test: `findByDoi()`, `findByPmid()` lookup functions
   - Test: `saveIndex()` writes index with proper formatting
-- [ ] Create stub: `src/fulltext/index-manager.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement index management functions
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: fulltext-index.json managed correctly
+- [x] Create stub: `src/fulltext/index-manager.ts`
+- [x] Verify test fails (Red)
+- [x] Implement index management functions
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: fulltext-index.json managed correctly
 
 ### Step 6: README Template Generation
 
-- [ ] Write test: `src/fulltext/readme.test.ts`
+- [x] Write test: `src/fulltext/readme.test.ts`
   - Test: `generateReadme()` creates proper Markdown
   - Test: Includes title, identifiers, URLs
   - Test: Includes instructions for manual download
-- [ ] Create stub: `src/fulltext/readme.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement README generation
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: README.md generated with all required sections
+- [x] Create stub: `src/fulltext/readme.ts`
+- [x] Verify test fails (Red)
+- [x] Implement README generation
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: README.md generated with all required sections
 
 ### Final Step: Integration Test
 
-- [ ] Write integration test: `src/fulltext/foundation.test.ts`
+- [x] Write integration test: `src/fulltext/foundation.test.ts`
   - Test: Create article directory with meta.json, README.md
   - Test: Add to index, verify lookup works
   - Test: Update meta with file info
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All foundation components work together
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All foundation components work together
 
 ## Notes
 
