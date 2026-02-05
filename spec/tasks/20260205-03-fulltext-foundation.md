@@ -46,18 +46,18 @@ Establish the foundation for fulltext management: type definitions, directory st
 
 ### Step 3: Path Resolution Utilities
 
-- [ ] Write test: `src/fulltext/paths.test.ts`
+- [x] Write test: `src/fulltext/paths.test.ts`
   - Test: `getFulltextDir(sessionDir)` returns `<sessionDir>/fulltext`
   - Test: `getArticleDir(sessionDir, dirName)` returns correct path
   - Test: `getMetaPath(sessionDir, dirName)` returns `<dir>/meta.json`
   - Test: `getReadmePath(sessionDir, dirName)` returns `<dir>/README.md`
   - Test: `getIndexPath(sessionDir)` returns `<sessionDir>/fulltext/fulltext-index.json`
-- [ ] Create stub: `src/fulltext/paths.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement path utilities
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All paths resolve correctly
+- [x] Create stub: `src/fulltext/paths.ts`
+- [x] Verify test fails (Red)
+- [x] Implement path utilities
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All paths resolve correctly
 
 ### Step 4: Meta.json Management
 
