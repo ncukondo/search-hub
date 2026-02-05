@@ -69,14 +69,14 @@ Implement `fulltext init` and `fulltext sync` commands for manual fulltext manag
 
 ### Step 4: Output Formatting
 
-- [ ] Write test for output formatting
+- [x] Write test for output formatting
   - Test: Init shows created directories with DOI/PMID
   - Test: Init shows "Next steps" guidance
   - Test: Sync shows found files with sizes
   - Test: Sync shows summary (X files synced, Y articles updated)
-- [ ] Implement `formatInitOutput()` and `formatSyncOutput()`
-- [ ] Verify test passes
-- [ ] Acceptance: User-friendly output
+- [x] Implement `formatInitOutput()` and `formatSyncOutput()`
+- [x] Verify test passes
+- [x] Acceptance: User-friendly output
 
 ### Final Step: E2E Integration Tests
 
