@@ -59,13 +59,13 @@ Implement `fulltext init` and `fulltext sync` commands for manual fulltext manag
 
 ### Step 3: CLI Command Registration
 
-- [ ] Create `src/cli/commands/fulltext/index.ts`
+- [x] Create `src/cli/commands/fulltext/index.ts`
   - Register `fulltext` command group
   - Register `fulltext init` subcommand
   - Register `fulltext sync` subcommand
-- [ ] Update `src/cli/index.ts` to include fulltext commands
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Commands available via CLI
+- [x] Update `src/cli/index.ts` to include fulltext commands
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Commands available via CLI
 
 ### Step 4: Output Formatting
 
