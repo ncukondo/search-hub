@@ -96,10 +96,10 @@
 
 ### Step 6: `--help` ワークフローガイドの追加
 
-- [ ] メインコマンドの `--help` に Workflow セクションを追加
-- [ ] 主要サブコマンドの `--help` に Workflow position を追加
-- [ ] Run `npm test`（既存の help テストが壊れていないか確認）
-- [ ] Acceptance: `--help` にワークフロー全体像が表示される
+- [x] メインコマンドの `--help` に Workflow セクションを追加
+- [x] 主要サブコマンドの `--help` に Workflow position を追加
+- [x] Run `npm test`（既存の help テストが壊れていないか確認）
+- [x] Acceptance: `--help` にワークフロー全体像が表示される
 
 ### Step 7: Phase 4 - Review Workflow の suggestion ルール（Task 56 依存）
 

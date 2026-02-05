@@ -51,13 +51,13 @@ describe('CLI Help Discoverability E2E', () => {
       expect(helpOutput).toContain('results <session>');
     });
 
-    it('should include Query Refinement section', () => {
+    it('should include Workflow section', () => {
       const program = createProgram();
       const helpOutput = captureHelpOutput(program);
 
-      expect(helpOutput).toContain('Query Refinement');
-      expect(helpOutput).toContain('diff');
-      expect(helpOutput).toContain('--show removed');
+      expect(helpOutput).toContain('Workflow:');
+      expect(helpOutput).toContain('Query preparation');
+      expect(helpOutput).toContain('Query refinement');
     });
 
     it('should list query command before search command', () => {
@@ -93,12 +93,12 @@ describe('CLI Help Discoverability E2E', () => {
       expect(helpOutput).toContain('requires --db');
     });
 
-    it('should include Query Refinement workflow hint', () => {
+    it('should include Workflow position', () => {
       const program = createProgram();
       const helpOutput = captureSubcommandHelp(program, 'search');
 
-      expect(helpOutput).toContain('Query Refinement');
-      expect(helpOutput).toContain('diff');
+      expect(helpOutput).toContain('Workflow position:');
+      expect(helpOutput).toContain('results');
     });
   });
 

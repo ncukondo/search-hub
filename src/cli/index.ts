@@ -192,17 +192,20 @@ export function createProgram(): Command {
     .option('-q, --quiet', 'suppress all output except errors', false)
     .option('--no-color', 'disable color output')
     .addHelpText('after', `
+Workflow:
+  1. query init → edit → validate / --dry-run        Query preparation
+  2. search --preview → search                       Preview & execute
+  3. results / summary / diff                        Inspect & compare
+  4. review init → extract → merge → status          Systematic review
+  5. register / export                               Output
+
+  Iterate: search v1 → search v2 → diff             Query refinement
+
 Quick Start:
   $ search-hub query init -o search.yaml        # Create query template
   $ search-hub search search.yaml --count-only  # Check hit counts
   $ search-hub search search.yaml               # Execute search
-  $ search-hub results <session>                # Review titles
-
-Query Refinement (iterate until satisfied):
-  $ cp search.yaml search-v2.yaml               # Create variant
-  $ (edit search-v2.yaml)                       # Adjust terms
-  $ search-hub search search-v2.yaml            # Search again
-  $ search-hub diff <old> <new> --show removed  # Compare results`);
+  $ search-hub results <session>                # Review titles`);
 
   // Register init command
   program
@@ -503,19 +506,16 @@ Examples:
     .option('--skip-connection-test', 'skip API connection test during dry-run')
     .option('--no-resume', 'start fresh even if session exists')
     .addHelpText('after', `
+Workflow position:
+  query validate → [this command: search] → results / summary / diff
+
 Examples:
   $ search-hub search ./diabetes-ai.yaml                # Search all databases
   $ search-hub search ./query.yaml --db pubmed,eric     # Specific databases
   $ search-hub search --db pubmed --query "diabetes[tiab]"  # Direct query
   $ search-hub search ./query.yaml --dry-run            # Preview translations
   $ search-hub search ./query.yaml --count-only         # Get hit counts only
-  $ search-hub search ./query.yaml --max-results 100    # Limit results
-
-Query Refinement:
-  After running a search, use 'diff' to compare query versions:
-    1. Create a refined query file (e.g., query-v2.yaml)
-    2. Run search with the new query
-    3. Compare: search-hub diff <old-session> <new-session> --show removed`)
+  $ search-hub search ./query.yaml --max-results 100    # Limit results`)
     .action(
       async (
         queryFile?: string,

@@ -168,11 +168,12 @@ describe('CLI Entry Point', () => {
       expect(helpOutput).toContain('--count-only');
     });
 
-    it('should include Query Refinement section in help output', () => {
+    it('should include Workflow section in help output', () => {
       const program = createProgram();
       const helpOutput = captureHelpOutput(program);
-      expect(helpOutput).toContain('Query Refinement');
-      expect(helpOutput).toContain('diff');
+      expect(helpOutput).toContain('Workflow:');
+      expect(helpOutput).toContain('Query preparation');
+      expect(helpOutput).toContain('Query refinement');
     });
   });
 
