@@ -125,13 +125,13 @@ sessions/<session-id>/
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: `src/cli/commands/review/review-workflow.test.ts` に追加
+- [x] Write E2E test: `src/cli/commands/review/review-workflow.test.ts` に追加
   - extract → mark → merge の一連のフローが `for-review/` 内で完結する
   - merge 後に `for-review/<name>/review.yaml` が正しく読み込まれる
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: extract --name → mark → merge --name の手動実行
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## TDD Cycle Reference
 

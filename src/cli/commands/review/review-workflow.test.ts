@@ -117,16 +117,19 @@ summary:
     const listResult = await executeReviewList({ sessionId, filter: 'pending' }, sessionsDir);
     expect(listResult.articles).toHaveLength(10);
 
-    // Step 4: Extract - Create batch for review
-    const batchPath = join(tempDir, 'work', 'batch1.yaml');
+    // Step 4: Extract - Create batch for review (uses --name)
     const extractResult = await executeReviewExtract(
-      { sessionId, filter: ['pending'], limit: 5, output: batchPath },
+      { sessionId, filter: ['pending'], limit: 5, name: 'batch1' },
       sessionsDir
     );
     expect(extractResult.extractedCount).toBe(5);
 
+    // Verify output is in for-review/ directory
+    const expectedPath = join(sessionsDir, sessionId, 'for-review', 'batch1', 'review.yaml');
+    expect(extractResult.outputPath).toBe(expectedPath);
+
     // Verify extracted file has schema reference
-    const extractedContent = await readFile(batchPath, 'utf-8');
+    const extractedContent = await readFile(extractResult.outputPath, 'utf-8');
     expect(extractedContent).toContain('yaml-language-server');
 
     // Step 5: Simulate manual review by editing extracted file
@@ -170,13 +173,13 @@ summary:
     });
     // Leave as needs-final (review but no finalDecision)
 
-    // Write edited file back
+    // Write edited file back to for-review/ path
     const editedContent = stringifyYaml(extractedFile);
-    await writeFile(batchPath, editedContent);
+    await writeFile(extractResult.outputPath, editedContent);
 
-    // Step 6: Merge - Combine reviewed articles back
+    // Step 6: Merge - Combine reviewed articles back (uses --name)
     const mergeResult = await executeReviewMerge(
-      { sessionId, file: batchPath },
+      { sessionId, name: 'batch1' },
       sessionsDir
     );
     expect(mergeResult.reviewsAdded).toBe(5); // 1+1+2+1+0
@@ -213,19 +216,18 @@ summary:
     // Init
     await executeReviewInit({ sessionId }, sessionsDir);
 
-    // Extract with schema
-    const batchPath = join(tempDir, 'work', 'batch.yaml');
-    await executeReviewExtract(
-      { sessionId, filter: ['pending'], limit: 3, output: batchPath },
+    // Extract with schema (uses --name)
+    const extractResult = await executeReviewExtract(
+      { sessionId, filter: ['pending'], limit: 3, name: 'schema-test' },
       sessionsDir
     );
 
     // Verify schema reference is present and points to adjacent file
-    const content = await readFile(batchPath, 'utf-8');
+    const content = await readFile(extractResult.outputPath, 'utf-8');
     expect(content).toMatch(/^# yaml-language-server: \$schema=\.\/review\.schema\.json/);
 
     // Verify schema file was copied alongside
-    const schemaPath = join(tempDir, 'work', 'review.schema.json');
+    const schemaPath = join(sessionsDir, sessionId, 'for-review', 'schema-test', 'review.schema.json');
     await access(schemaPath);
     const schemaContent = await readFile(schemaPath, 'utf-8');
     expect(schemaContent).toContain('json-schema.org');
@@ -238,13 +240,12 @@ summary:
     await executeReviewInit({ sessionId }, sessionsDir);
 
     // First cycle: Extract → Edit → Merge
-    const batch1Path = join(tempDir, 'work', 'batch1.yaml');
-    await executeReviewExtract(
-      { sessionId, filter: ['pending'], offset: 0, limit: 3, output: batch1Path },
+    const extract1 = await executeReviewExtract(
+      { sessionId, filter: ['pending'], offset: 0, limit: 3, name: 'cycle1' },
       sessionsDir
     );
 
-    const batch1Content = await readFile(batch1Path, 'utf-8');
+    const batch1Content = await readFile(extract1.outputPath, 'utf-8');
     const batch1 = parseYaml(batch1Content) as ReviewFile;
     batch1.articles[0]!.reviews = batch1.articles[0]!.reviews ?? [];
     batch1.articles[0]!.reviews.push({
@@ -253,17 +254,16 @@ summary:
       timestamp: '2024-01-01T00:00:00Z',
     });
     batch1.articles[0]!.finalDecision = 'include';
-    await writeFile(batch1Path, stringifyYaml(batch1));
-    await executeReviewMerge({ sessionId, file: batch1Path }, sessionsDir);
+    await writeFile(extract1.outputPath, stringifyYaml(batch1));
+    await executeReviewMerge({ sessionId, name: 'cycle1' }, sessionsDir);
 
     // Second cycle: Another reviewer
-    const batch2Path = join(tempDir, 'work', 'batch2.yaml');
-    await executeReviewExtract(
-      { sessionId, filter: ['pending'], offset: 0, limit: 3, output: batch2Path },
+    const extract2 = await executeReviewExtract(
+      { sessionId, filter: ['pending'], offset: 0, limit: 3, name: 'cycle2' },
       sessionsDir
     );
 
-    const batch2Content = await readFile(batch2Path, 'utf-8');
+    const batch2Content = await readFile(extract2.outputPath, 'utf-8');
     const batch2 = parseYaml(batch2Content) as ReviewFile;
     batch2.articles[0]!.reviews = batch2.articles[0]!.reviews ?? [];
     batch2.articles[0]!.reviews.push({
@@ -272,8 +272,8 @@ summary:
       timestamp: '2024-01-02T00:00:00Z',
     });
     batch2.articles[0]!.finalDecision = 'include';
-    await writeFile(batch2Path, stringifyYaml(batch2));
-    await executeReviewMerge({ sessionId, file: batch2Path }, sessionsDir);
+    await writeFile(extract2.outputPath, stringifyYaml(batch2));
+    await executeReviewMerge({ sessionId, name: 'cycle2' }, sessionsDir);
 
     // Verify final state
     // Cycle 1: finalized 1 article (Article 1)
@@ -296,14 +296,13 @@ summary:
 
     await executeReviewInit({ sessionId }, sessionsDir);
 
-    const batchPath = join(tempDir, 'work', 'batch.yaml');
-    await executeReviewExtract(
-      { sessionId, filter: ['pending'], limit: 2, output: batchPath },
+    const extractResult = await executeReviewExtract(
+      { sessionId, filter: ['pending'], limit: 2, name: 'dryrun-test' },
       sessionsDir
     );
 
     // Edit batch
-    const batchContent = await readFile(batchPath, 'utf-8');
+    const batchContent = await readFile(extractResult.outputPath, 'utf-8');
     const batch = parseYaml(batchContent) as ReviewFile;
     batch.articles[0]!.reviews = batch.articles[0]!.reviews ?? [];
     batch.articles[0]!.reviews.push({
@@ -312,11 +311,11 @@ summary:
       timestamp: '2024-01-01T00:00:00Z',
     });
     batch.articles[0]!.finalDecision = 'include';
-    await writeFile(batchPath, stringifyYaml(batch));
+    await writeFile(extractResult.outputPath, stringifyYaml(batch));
 
     // Dry-run merge
     const dryRunResult = await executeReviewMerge(
-      { sessionId, file: batchPath, dryRun: true },
+      { sessionId, name: 'dryrun-test', dryRun: true },
       sessionsDir
     );
     expect(dryRunResult.reviewsAdded).toBe(1);
@@ -467,29 +466,32 @@ summary:
     expect(mergedIncluded!.source).toBe('pubmed');
   });
 
-  describe('AI Agent Workflow (extract → mark → merge)', () => {
-    it('completes full title screening workflow with basis/reviewer/timestamp', async () => {
+  describe('AI Agent Workflow (extract → mark → merge) with --name', () => {
+    it('completes full title screening workflow within for-review/', async () => {
       await setupSessionWithResults();
 
       // Step 1: Init
       await executeReviewInit({ sessionId }, sessionsDir);
 
-      // Step 2: Extract with basis and reviewer
-      const workFilePath = join(tempDir, 'work', 'phase1.yaml');
-      await executeReviewExtract(
+      // Step 2: Extract with basis and reviewer (uses --name)
+      const extractResult = await executeReviewExtract(
         {
           sessionId,
           filter: ['pending'],
           basis: 'title',
           reviewer: 'ai:claude',
           limit: 5,
-          output: workFilePath,
+          name: 'title-screening',
         },
         sessionsDir
       );
 
+      // Verify output is in for-review/title-screening/
+      const expectedPath = join(sessionsDir, sessionId, 'for-review', 'title-screening', 'review.yaml');
+      expect(extractResult.outputPath).toBe(expectedPath);
+
       // Verify work file format
-      const workFileContent = await readFile(workFilePath, 'utf-8');
+      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
       const workFile = parseYaml(workFileContent) as WorkFile;
       expect(workFile.sessionId).toBe(sessionId);
       expect(workFile.basis).toBe('title');
@@ -502,34 +504,34 @@ summary:
 
       // Step 3: Mark decisions using review mark command
       await executeReviewMark({
-        file: workFilePath,
+        file: extractResult.outputPath,
         id: workFile.articles[0]!.id,
         decision: 'include',
         comment: 'Relevant to research',
       });
       await executeReviewMark({
-        file: workFilePath,
+        file: extractResult.outputPath,
         id: workFile.articles[1]!.id,
         decision: 'exclude',
         comment: 'Off topic',
       });
       await executeReviewMark({
-        file: workFilePath,
+        file: extractResult.outputPath,
         id: workFile.articles[2]!.id,
         decision: 'uncertain',
         comment: 'Needs abstract review',
       });
 
       // Verify marks were saved
-      const markedContent = await readFile(workFilePath, 'utf-8');
+      const markedContent = await readFile(extractResult.outputPath, 'utf-8');
       const markedFile = parseYaml(markedContent) as WorkFile;
       expect(markedFile.articles[0]!.decision).toBe('include');
       expect(markedFile.articles[1]!.decision).toBe('exclude');
       expect(markedFile.articles[2]!.decision).toBe('uncertain');
 
-      // Step 4: Merge work file back to master
+      // Step 4: Merge work file back to master (uses --name)
       const mergeResult = await executeReviewMerge(
-        { sessionId, file: workFilePath },
+        { sessionId, name: 'title-screening' },
         sessionsDir
       );
       expect(mergeResult.reviewsAdded).toBe(3); // Only marked articles are merged
@@ -557,31 +559,30 @@ summary:
       expect(article3!.reviews[0]!.decision).toBe('uncertain');
     });
 
-    it('completes two-phase screening (title then abstract)', async () => {
+    it('completes two-phase screening (title then abstract) within for-review/', async () => {
       await setupSessionWithResults();
 
       // Step 1: Init
       await executeReviewInit({ sessionId }, sessionsDir);
 
       // Phase 1: Title screening
-      const phase1Path = join(tempDir, 'work', 'phase1.yaml');
-      await executeReviewExtract(
+      const phase1Extract = await executeReviewExtract(
         {
           sessionId,
           filter: ['pending'],
           basis: 'title',
           reviewer: 'ai:gpt-4o',
-          output: phase1Path,
+          name: 'title-screening',
         },
         sessionsDir
       );
 
       // Mark all as uncertain (need abstract review)
-      const phase1Content = await readFile(phase1Path, 'utf-8');
+      const phase1Content = await readFile(phase1Extract.outputPath, 'utf-8');
       const phase1File = parseYaml(phase1Content) as WorkFile;
       for (const article of phase1File.articles) {
         await executeReviewMark({
-          file: phase1Path,
+          file: phase1Extract.outputPath,
           id: article.id,
           decision: 'uncertain',
           comment: 'Need abstract review',
@@ -589,27 +590,26 @@ summary:
       }
 
       // Merge phase 1
-      await executeReviewMerge({ sessionId, file: phase1Path }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'title-screening' }, sessionsDir);
 
       // Verify status shows needs-final (reviewed but uncertain)
       const statusAfterPhase1 = await executeReviewStatus({ sessionId }, sessionsDir);
       expect(statusAfterPhase1.needsFinal).toBe(10); // All marked as uncertain
 
       // Phase 2: Abstract screening for uncertain articles
-      const phase2Path = join(tempDir, 'work', 'phase2.yaml');
-      await executeReviewExtract(
+      const phase2Extract = await executeReviewExtract(
         {
           sessionId,
           filter: ['needs-final'], // Gets articles with reviews but no finalDecision
           basis: 'abstract',
           reviewer: 'ai:claude',
-          output: phase2Path,
+          name: 'abstract-screening',
         },
         sessionsDir
       );
 
       // Verify abstract is included
-      const phase2Content = await readFile(phase2Path, 'utf-8');
+      const phase2Content = await readFile(phase2Extract.outputPath, 'utf-8');
       const phase2File = parseYaml(phase2Content) as WorkFile;
       expect(phase2File.basis).toBe('abstract');
       // Articles should have abstract now
@@ -618,20 +618,20 @@ summary:
 
       // Mark some as include, some as exclude
       await executeReviewMark({
-        file: phase2Path,
+        file: phase2Extract.outputPath,
         id: phase2File.articles[0]!.id,
         decision: 'include',
         comment: 'Confirmed relevant from abstract',
       });
       await executeReviewMark({
-        file: phase2Path,
+        file: phase2Extract.outputPath,
         id: phase2File.articles[1]!.id,
         decision: 'exclude',
         comment: 'Not relevant after reading abstract',
       });
 
       // Merge phase 2
-      await executeReviewMerge({ sessionId, file: phase2Path }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'abstract-screening' }, sessionsDir);
 
       // Verify reviews have different bases
       const finalReviewsContent = await readFile(
@@ -658,25 +658,24 @@ summary:
       expect(abstractReview!.decision).toBe('include');
     });
 
-    it('handles batch marking via JSON input', async () => {
+    it('handles batch marking via JSON input within for-review/', async () => {
       await setupSessionWithResults();
 
       await executeReviewInit({ sessionId }, sessionsDir);
 
-      const workFilePath = join(tempDir, 'work', 'batch.yaml');
-      await executeReviewExtract(
+      const extractResult = await executeReviewExtract(
         {
           sessionId,
           filter: ['pending'],
           basis: 'title',
           reviewer: 'ai:test',
           limit: 5,
-          output: workFilePath,
+          name: 'batch-mark-test',
         },
         sessionsDir
       );
 
-      const workFileContent = await readFile(workFilePath, 'utf-8');
+      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
       const workFile = parseYaml(workFileContent) as WorkFile;
 
       // Create JSON input for batch marking
@@ -690,17 +689,71 @@ summary:
 
       // Batch mark
       const markResult = await executeReviewMark({
-        file: workFilePath,
+        file: extractResult.outputPath,
         input: inputPath,
       });
       expect(markResult.marked).toBe(3);
 
       // Verify
-      const markedContent = await readFile(workFilePath, 'utf-8');
+      const markedContent = await readFile(extractResult.outputPath, 'utf-8');
       const markedFile = parseYaml(markedContent) as WorkFile;
       expect(markedFile.articles[0]!.decision).toBe('include');
       expect(markedFile.articles[1]!.decision).toBe('exclude');
       expect(markedFile.articles[2]!.decision).toBe('uncertain');
+    });
+
+    it('extract → mark → merge flow completes entirely within for-review/', async () => {
+      await setupSessionWithResults();
+
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Extract
+      const extractResult = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 3,
+          name: 'internal-flow',
+        },
+        sessionsDir
+      );
+
+      // Verify the file is inside the session directory
+      expect(extractResult.outputPath).toContain(join(sessionsDir, sessionId, 'for-review'));
+
+      // Read, mark, and verify flow uses internal paths
+      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
+      const workFile = parseYaml(workFileContent) as WorkFile;
+
+      // Mark all articles
+      for (const article of workFile.articles) {
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: article.id,
+          decision: 'include',
+          comment: 'Relevant',
+        });
+      }
+
+      // Merge using name (not file path)
+      const mergeResult = await executeReviewMerge(
+        { sessionId, name: 'internal-flow' },
+        sessionsDir
+      );
+
+      expect(mergeResult.reviewsAdded).toBe(3);
+      expect(mergeResult.warnings).toHaveLength(0);
+
+      // Verify reviews were merged to master
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8'
+      );
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      const reviewedArticles = reviewFile.articles.filter((a) => (a.reviews ?? []).length > 0);
+      expect(reviewedArticles).toHaveLength(3);
     });
   });
 });
