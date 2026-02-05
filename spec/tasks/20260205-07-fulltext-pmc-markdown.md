@@ -64,13 +64,13 @@ Implement conversion of PMC JATS XML to Markdown format:
 
 ### Step 4: JATS XML Parser - Figures and Citations
 
-- [ ] Write test for figures and citations
+- [x] Write test for figures and citations
   - Test: Extracts `<fig>` with caption
   - Test: Converts `<xref ref-type="bibr">` to citation markers [N]
   - Test: Extracts `<ref-list>` references
-- [ ] Implement figure and citation parsing
-- [ ] Verify test passes
-- [ ] Acceptance: Figures and citations parsed
+- [x] Implement figure and citation parsing
+- [x] Verify test passes
+- [x] Acceptance: Figures and citations parsed
 
 ### Step 5: Markdown Writer
 

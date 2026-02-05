@@ -10,6 +10,7 @@ import type {
   JatsAuthor,
   JatsMetadata,
   JatsSection,
+  JatsReference,
   BlockElement,
   InlineContent,
 } from './types.js';
@@ -350,6 +351,28 @@ function parseBlockContent(sectionNode: Record<string, unknown>): BlockElement[]
     }
   }
 
+  // Figures
+  const figNode = sectionNode['fig'];
+  if (figNode) {
+    const figs: unknown[] = Array.isArray(figNode) ? figNode : [figNode];
+    for (const fig of figs) {
+      if (typeof fig === 'object' && fig != null) {
+        const figObj = fig as Record<string, unknown>;
+        const figBlock: BlockElement = { type: 'figure' };
+        const figId = figObj['@_id'];
+        if (typeof figId === 'string') figBlock.id = figId;
+        const label = extractAllText(figObj['label']);
+        if (label) figBlock.label = label;
+        const caption = figObj['caption'];
+        if (caption) {
+          const captionText = extractAllText(caption);
+          if (captionText) figBlock.caption = captionText;
+        }
+        blocks.push(figBlock);
+      }
+    }
+  }
+
   return blocks;
 }
 
@@ -401,4 +424,35 @@ export function parseJatsBody(xml: string): JatsSection[] {
   }
 
   return sections;
+}
+
+/**
+ * Parse JATS XML back matter to extract references.
+ */
+export function parseJatsReferences(xml: string): JatsReference[] {
+  const parsed = parser.parse(xml);
+  const back = parsed.article?.back;
+  if (!back) return [];
+
+  const refList = back['ref-list'];
+  if (!refList) return [];
+
+  const refs: unknown[] = refList['ref'] ?? [];
+  const references: JatsReference[] = [];
+
+  for (const ref of refs) {
+    if (typeof ref === 'object' && ref != null) {
+      const refObj = ref as Record<string, unknown>;
+      const id = String(refObj['@_id'] ?? '');
+      // Try mixed-citation first, then element-citation, then any text
+      const mixedCitation = refObj['mixed-citation'];
+      const elementCitation = refObj['element-citation'];
+      const text = extractAllText(mixedCitation ?? elementCitation ?? refObj);
+      if (id && text) {
+        references.push({ id, text: text.trim() });
+      }
+    }
+  }
+
+  return references;
 }

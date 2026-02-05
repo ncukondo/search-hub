@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseJatsMetadata, parseJatsBody, parseJatsTable } from './jats-parser.js';
+import { parseJatsMetadata, parseJatsBody, parseJatsTable, parseJatsReferences } from './jats-parser.js';
 
 describe('parseJatsMetadata', () => {
   it('extracts title from <article-title>', () => {
@@ -434,5 +434,131 @@ describe('parseJatsTable', () => {
     if (content[1]!.type === 'table') {
       expect(content[1]!.headers).toEqual(['Item', 'Count']);
     }
+  });
+});
+
+describe('parseJatsBody - figures', () => {
+  it('extracts <fig> with caption', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>See Figure 1.</p>
+            <fig id="fig1">
+              <label>Figure 1</label>
+              <caption><p>Distribution of scores</p></caption>
+            </fig>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(2);
+    expect(content[1]!.type).toBe('figure');
+    if (content[1]!.type === 'figure') {
+      expect(content[1]!.label).toBe('Figure 1');
+      expect(content[1]!.caption).toBe('Distribution of scores');
+    }
+  });
+
+  it('handles figure without caption', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <fig id="fig2">
+              <label>Figure 2</label>
+            </fig>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    const fig = content[0]!;
+    expect(fig.type).toBe('figure');
+    if (fig.type === 'figure') {
+      expect(fig.label).toBe('Figure 2');
+      expect(fig.caption).toBeUndefined();
+    }
+  });
+});
+
+describe('parseJatsBody - citations', () => {
+  it('converts <xref ref-type="bibr"> to citation markers', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Introduction</title>
+            <p>As shown previously <xref ref-type="bibr" rid="ref1">[1]</xref>, the method works.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const citation = para.content.find((c) => c.type === 'citation');
+      expect(citation).toBeDefined();
+      if (citation?.type === 'citation') {
+        expect(citation.refId).toBe('ref1');
+        expect(citation.text).toBe('[1]');
+      }
+    }
+  });
+});
+
+describe('parseJatsReferences', () => {
+  it('extracts <ref-list> references', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation>Smith J. Title of paper. Journal. 2024;1:1-10.</mixed-citation>
+            </ref>
+            <ref id="ref2">
+              <mixed-citation>Jones A. Another paper. Nature. 2023;5:20-30.</mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(2);
+    expect(refs[0]!.id).toBe('ref1');
+    expect(refs[0]!.text).toContain('Smith J');
+    expect(refs[1]!.id).toBe('ref2');
+    expect(refs[1]!.text).toContain('Jones A');
+  });
+
+  it('handles empty ref-list', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list></ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toEqual([]);
+  });
+
+  it('handles missing back section', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toEqual([]);
   });
 });
