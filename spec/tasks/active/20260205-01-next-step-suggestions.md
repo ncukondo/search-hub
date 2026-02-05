@@ -81,18 +81,18 @@
 
 ### Step 5: CLI コマンドへの統合と既存 tip の置き換え
 
-- [ ] 各コマンドのアクション末尾に `formatSuggestion()` 呼び出しを追加
+- [x] 各コマンドのアクション末尾に `formatSuggestion()` 呼び出しを追加
   - `--quiet` 時は抑制
-- [ ] 既存の tip 関数を suggestion システムに移行:
+- [x] 既存の tip 関数を suggestion システムに移行:
   - `formatSearchCompletionTip()` → search completed ルール
   - `formatCountOnlyTip()` → search --count-only ルール
   - `formatDirectQueryTip()` → search --query ルール
   - `formatReviewWorkflowTip()` → register ルール
-- [ ] 既存 tip 関数と呼び出し元を削除
-- [ ] 既存の tip テストを新しいテストに移行
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Run `npm test`
-- [ ] Acceptance: 既存 tip と同等以上の suggestion が新システムから出力される
+- [x] 既存 tip 関数と呼び出し元を削除
+- [x] 既存の tip テストを新しいテストに移行
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Run `npm test`
+- [x] Acceptance: 既存 tip と同等以上の suggestion が新システムから出力される
 
 ### Step 6: `--help` ワークフローガイドの追加
 

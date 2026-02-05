@@ -43,9 +43,6 @@ import {
   formatDryRunOutput,
   formatCountOnlyOutput,
   formatPreviewOutput,
-  formatSearchCompletionTip,
-  formatCountOnlyTip,
-  formatDirectQueryTip,
   formatShortKeywordWarning,
 } from './commands/search.js';
 import { executeSearch, executeCountOnly, executePreview } from './commands/search-executor.js';
@@ -144,10 +141,11 @@ import {
   formatReviewRequiredMessage,
   formatNoIncludedArticlesError,
   formatPendingWarning,
-  formatReviewWorkflowTip,
   formatIgnoringReviewsNote,
   confirmPrompt,
 } from './commands/register.js';
+import { formatSuggestion } from './suggestions/index.js';
+import { getSuggestion } from './suggestions/rules.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
 import { loadSession, sessionExists, listSessions } from '../session/manager.js';
@@ -675,8 +673,11 @@ Query Refinement:
 
             if (!globalOpts.quiet) {
               console.log(formatCountOnlyOutput(counts, searchOpts.queryFile));
-              // Show tip for workflow guidance
-              console.log(formatCountOnlyTip());
+              const suggestion = formatSuggestion(getSuggestion({
+                command: 'search --count-only',
+                queryFile: searchOpts.queryFile,
+              }));
+              if (suggestion) console.log(suggestion);
             }
 
             const hasErrors = counts.some((c) => c.error);
@@ -711,13 +712,17 @@ Query Refinement:
                   console.log(`  ${provider}: ${stats.retrieved} results`);
                 }
               }
-              // Show tip for query refinement workflow
+              // Show next step suggestions
               if (result.sessionId) {
-                console.log(formatSearchCompletionTip(result.sessionId));
-              }
-              // Show tip about YAML files when using direct query
-              if (searchOpts.directQuery) {
-                console.error(formatDirectQueryTip());
+                const sessions = await listSessions(sessionsDir);
+                const suggestionCmd = searchOpts.directQuery ? 'search --query' : 'search';
+                const suggestion = formatSuggestion(getSuggestion({
+                  command: suggestionCmd,
+                  sessionId: result.sessionId,
+                  sessionStatus: 'completed',
+                  sessionCount: sessions.length,
+                }));
+                if (suggestion) console.log(suggestion);
               }
             }
             process.exitCode = EXIT_CODES.SUCCESS;
@@ -1582,10 +1587,13 @@ With review workflow:
             console.log(formatRegistrationSummary(record.summary));
             console.log(`\nResults saved to: ${join(sessionDir, 'registration.json')}`);
 
-            // Show tip about review workflow for users who haven't used it
-            if (!reviewExists && !registerOpts.quiet) {
-              console.log(formatReviewWorkflowTip(sessionId));
-            }
+            // Show next step suggestions
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'register',
+              sessionId,
+              hasReviews: reviewExists,
+            }));
+            if (suggestion) console.log(suggestion);
           }
 
           process.exitCode = EXIT_CODES.SUCCESS;

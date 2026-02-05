@@ -28,23 +28,23 @@ export interface SuggestionContext {
   /** The command that was executed */
   command: string;
   /** Session ID (if applicable) */
-  sessionId?: string;
+  sessionId?: string | undefined;
   /** Session status */
-  sessionStatus?: SessionStatus;
+  sessionStatus?: SessionStatus | undefined;
   /** Review status (with basis-level breakdown) */
-  reviewStatus?: ReviewStatusResult;
+  reviewStatus?: ReviewStatusResult | undefined;
   /** Number of existing sessions */
-  sessionCount?: number;
+  sessionCount?: number | undefined;
   /** Whether reviews.yaml exists */
-  hasReviews?: boolean;
+  hasReviews?: boolean | undefined;
   /** Query file path */
-  queryFile?: string;
+  queryFile?: string | undefined;
   /** Extract --name value */
-  extractName?: string;
+  extractName?: string | undefined;
   /** Output file path (for query init) */
-  outputFile?: string;
+  outputFile?: string | undefined;
   /** Whether validation succeeded (for query validate) */
-  validationSuccess?: boolean;
+  validationSuccess?: boolean | undefined;
 }
 
 /**
