@@ -104,18 +104,18 @@ Implement conversion of PMC JATS XML to Markdown format:
 
 ### Step 7: Fulltext Convert Command
 
-- [ ] Write test: `src/cli/commands/fulltext/convert.test.ts`
+- [x] Write test: `src/cli/commands/fulltext/convert.test.ts`
   - Test: Converts all XML files in session
   - Test: --article filters to specific article
   - Test: Skips already-converted files
   - Test: Shows progress and summary
-- [ ] Create stub: `src/cli/commands/fulltext/convert.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `executeFulltextConvert()`
-- [ ] Verify test passes (Green)
-- [ ] Register command in CLI
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Convert command works
+- [x] Create stub: `src/cli/commands/fulltext/convert.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `executeFulltextConvert()`
+- [x] Verify test passes (Green)
+- [x] Register command in CLI
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Convert command works
 
 ### Final Step: E2E Integration Tests
 
