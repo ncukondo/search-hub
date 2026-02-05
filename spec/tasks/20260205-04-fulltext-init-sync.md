@@ -26,19 +26,19 @@ Implement `fulltext init` and `fulltext sync` commands for manual fulltext manag
 
 ### Step 1: Fulltext Init Core Logic
 
-- [ ] Write test: `src/cli/commands/fulltext/init.test.ts`
+- [x] Write test: `src/cli/commands/fulltext/init.test.ts`
   - Test: Creates directories only for `finalDecision=include` articles
   - Test: Creates meta.json with correct identifiers
   - Test: Creates README.md with title, DOI, URLs
   - Test: Skips existing directories (idempotent)
   - Test: Updates reviews.yaml with fulltext references
   - Test: --dry-run shows what would be created
-- [ ] Create stub: `src/cli/commands/fulltext/init.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `executeFulltextInit()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Directories created with correct content
+- [x] Create stub: `src/cli/commands/fulltext/init.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `executeFulltextInit()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Directories created with correct content
 
 ### Step 2: Fulltext Sync Core Logic
 

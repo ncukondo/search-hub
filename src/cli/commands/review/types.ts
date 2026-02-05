@@ -2,6 +2,8 @@
  * Review workflow types for article assessment tracking
  */
 
+import type { ArticleFulltextRef } from '../../../fulltext/types.js';
+
 export type ReviewDecision = 'include' | 'exclude' | 'uncertain';
 
 /**
@@ -60,6 +62,9 @@ export interface ArticleEntry {
   // Review data
   reviews: Review[];
   finalDecision?: 'include' | 'exclude';
+
+  // Fulltext reference (set by fulltext init/sync)
+  fulltext?: ArticleFulltextRef;
 }
 
 /**
