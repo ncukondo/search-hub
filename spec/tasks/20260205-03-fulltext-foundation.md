@@ -75,19 +75,19 @@ Establish the foundation for fulltext management: type definitions, directory st
 
 ### Step 5: Index Management
 
-- [ ] Write test: `src/fulltext/index-manager.test.ts`
+- [x] Write test: `src/fulltext/index-manager.test.ts`
   - Test: `createIndex()` creates empty index
   - Test: `loadIndex()` reads existing index
   - Test: `addEntry()` adds new entry to index
   - Test: `updateEntry()` updates existing entry
   - Test: `findByDoi()`, `findByPmid()` lookup functions
   - Test: `saveIndex()` writes index with proper formatting
-- [ ] Create stub: `src/fulltext/index-manager.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement index management functions
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: fulltext-index.json managed correctly
+- [x] Create stub: `src/fulltext/index-manager.ts`
+- [x] Verify test fails (Red)
+- [x] Implement index management functions
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: fulltext-index.json managed correctly
 
 ### Step 6: README Template Generation
 
