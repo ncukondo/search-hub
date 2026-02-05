@@ -74,17 +74,17 @@ This enables `fulltext check` command and provides URLs for `fulltext fetch` and
 
 ### Step 4: CORE API Client
 
-- [ ] Write test: `src/fulltext/discovery/core.test.ts`
+- [x] Write test: `src/fulltext/discovery/core.test.ts`
   - Test: Returns OALocation for article in CORE
   - Test: Handles missing API key (skip gracefully)
   - Test: Handles 404 (not found)
   - Test: Respects rate limit
-- [ ] Create stub: `src/fulltext/discovery/core.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `checkCore(doi, apiKey)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: CORE lookup works when configured
+- [x] Create stub: `src/fulltext/discovery/core.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `checkCore(doi, apiKey)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: CORE lookup works when configured
 
 ### Step 5: Discovery Aggregator
 
