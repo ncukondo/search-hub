@@ -102,19 +102,19 @@ This enables `fulltext check` command and provides URLs for `fulltext fetch` and
 
 ### Step 6: Fulltext Check Command
 
-- [ ] Write test: `src/cli/commands/fulltext/check.test.ts`
+- [x] Write test: `src/cli/commands/fulltext/check.test.ts`
   - Test: Checks OA for all included articles
   - Test: Updates meta.json with OA results
   - Test: Updates fulltext-index.json
   - Test: Shows summary (X open, Y closed, Z unknown)
   - Test: --format json outputs structured data
-- [ ] Create stub: `src/cli/commands/fulltext/check.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `executeFulltextCheck()`
-- [ ] Verify test passes (Green)
-- [ ] Register command in CLI
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Check command works end-to-end
+- [x] Create stub: `src/cli/commands/fulltext/check.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `executeFulltextCheck()`
+- [x] Verify test passes (Green)
+- [x] Register command in CLI
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Check command works end-to-end
 
 ### Final Step: E2E Integration Tests
 

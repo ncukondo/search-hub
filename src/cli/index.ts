@@ -157,6 +157,7 @@ import { fileURLToPath } from 'node:url';
 import { getSessionsDir } from './utils/sessions-dir.js';
 import { expandPath } from '../utils/path.js';
 import { loadSessionArticles, loadSessionQuery } from './commands/session-utils.js';
+import { executeFulltextCheck } from './commands/fulltext/check.js';
 
 /**
  * Global CLI options available to all commands.
@@ -2124,6 +2125,56 @@ Examples:
             'Error:',
             error instanceof Error ? error.message : error
           );
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  // Register fulltext command group
+  const fulltextCommand = program
+    .command('fulltext')
+    .description('Fulltext management for systematic literature review')
+    .addHelpText('after', `
+Examples:
+  $ search-hub fulltext check --session SESSION_ID           # Check OA availability
+  $ search-hub fulltext check --session SESSION_ID --format json  # JSON output`);
+
+  fulltextCommand
+    .command('check')
+    .description('Check Open Access availability for included articles')
+    .requiredOption('--session <id>', 'session ID')
+    .option('--format <format>', 'output format (table or json)', 'table')
+    .action(async (options: { session: string; format: string }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const sessionDir = join(sessionsDir, options.session);
+        const config = await loadConfig({});
+        const result = await executeFulltextCheck({
+          sessionDir,
+          config: {
+            unpaywallEmail: config.providers?.pubmed?.email ?? '',
+            coreApiKey: '',
+            preferSources: ['pmc', 'arxiv', 'unpaywall', 'core'],
+          },
+        });
+
+        if (options.format === 'json') {
+          console.log(JSON.stringify(result, null, 2));
+        } else if (!globalOpts.quiet) {
+          console.log(`\nOA Status Summary:`);
+          console.log(`  Open Access:    ${result.summary.open}`);
+          console.log(`  Closed Access:  ${result.summary.closed}`);
+          console.log(`  Unknown:        ${result.summary.unknown}`);
+          console.log(`  Total:          ${result.summary.total}`);
+          if (result.summary.open > 0) {
+            console.log(`\nRun \`fulltext fetch\` to download available OA articles.`);
+          }
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.SESSION_ERROR;
       }

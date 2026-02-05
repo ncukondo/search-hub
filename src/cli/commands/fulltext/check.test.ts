@@ -1,0 +1,194 @@
+/**
+ * Tests for fulltext check command.
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { executeFulltextCheck, type FulltextCheckResult } from './check';
+import * as discoveryModule from '../../../fulltext/discovery/index';
+import type { FulltextMeta, FulltextIndex } from '../../../fulltext/types';
+
+// Mock the discovery module
+vi.mock('../../../fulltext/discovery/index');
+const mockDiscoverOA = vi.mocked(discoveryModule.discoverOA);
+
+// Mock fs operations
+vi.mock('node:fs/promises', () => ({
+  readFile: vi.fn(),
+  writeFile: vi.fn(),
+  readdir: vi.fn(),
+  stat: vi.fn(),
+  access: vi.fn(),
+}));
+
+import { readFile, writeFile, readdir, access } from 'node:fs/promises';
+
+const mockReadFile = vi.mocked(readFile);
+const mockWriteFile = vi.mocked(writeFile);
+const mockReaddir = vi.mocked(readdir);
+const mockAccess = vi.mocked(access);
+
+describe('executeFulltextCheck', () => {
+  const sessionDir = '/sessions/test-session';
+
+  // Sample review file with included articles
+  const reviewFileYaml = `
+sessionId: test-session
+criteria:
+  include: []
+  exclude: []
+articles:
+  - doi: "10.1234/open"
+    pmid: "11111111"
+    title: "Open Access Article"
+    authors: "Smith J"
+    year: "2024"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1234/closed"
+    title: "Closed Access Article"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1234/excluded"
+    title: "Excluded Article"
+    reviews: []
+    finalDecision: exclude
+`;
+
+  const sampleMeta: FulltextMeta = {
+    dirName: 'smith2024-abcd1234',
+    citationKey: 'smith2024',
+    uuid: 'abcd1234-5678-9012-3456-789012345678',
+    doi: '10.1234/open',
+    pmid: '11111111',
+    title: 'Open Access Article',
+    authors: 'Smith J',
+    year: '2024',
+    oaStatus: 'unchecked',
+    files: {},
+  };
+
+  const sampleIndex: FulltextIndex = {
+    sessionId: 'test-session',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+    entries: {
+      'smith2024-abcd1234': {
+        dirName: 'smith2024-abcd1234',
+        citationKey: 'smith2024',
+        doi: '10.1234/open',
+        pmid: '11111111',
+        hasFiles: { pdf: false, xml: false, markdown: false },
+      },
+    },
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+
+    // Default: reviews.yaml exists
+    mockReadFile.mockImplementation(async (path) => {
+      const p = String(path);
+      if (p.includes('reviews.yaml')) return reviewFileYaml;
+      if (p.includes('meta.json')) return JSON.stringify(sampleMeta);
+      if (p.includes('fulltext-index.json')) return JSON.stringify(sampleIndex);
+      throw new Error(`File not found: ${p}`);
+    });
+
+    // Default: fulltext directory with one entry
+    mockReaddir.mockResolvedValue(
+      ['smith2024-abcd1234'] as unknown as Awaited<ReturnType<typeof readdir>>
+    );
+
+    // Default: access succeeds
+    mockAccess.mockResolvedValue(undefined);
+
+    // Default: discovery returns open for first article, closed for second
+    mockDiscoverOA.mockImplementation(async (article) => {
+      if (article.doi === '10.1234/open') {
+        return {
+          oaStatus: 'open' as const,
+          locations: [
+            { source: 'unpaywall' as const, url: 'https://example.com/paper.pdf', urlType: 'pdf' as const, version: 'published' as const },
+          ],
+          errors: [],
+        };
+      }
+      return {
+        oaStatus: 'closed' as const,
+        locations: [],
+        errors: [],
+      };
+    });
+  });
+
+  it('checks OA for all included articles', async () => {
+    const result = await executeFulltextCheck({
+      sessionDir,
+      config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+    });
+
+    // Should check 2 included articles (not the excluded one)
+    expect(mockDiscoverOA).toHaveBeenCalledTimes(2);
+    expect(result.summary.total).toBe(2);
+  });
+
+  it('updates meta.json with OA results', async () => {
+    await executeFulltextCheck({
+      sessionDir,
+      config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+    });
+
+    // Should write updated meta
+    const writeCallArgs = mockWriteFile.mock.calls.filter(
+      (call) => String(call[0]).includes('meta.json')
+    );
+    expect(writeCallArgs.length).toBeGreaterThan(0);
+  });
+
+  it('returns correct summary (open, closed, unknown)', async () => {
+    const result = await executeFulltextCheck({
+      sessionDir,
+      config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+    });
+
+    expect(result.summary.open).toBe(1);
+    expect(result.summary.closed).toBe(1);
+    expect(result.summary.unknown).toBe(0);
+  });
+
+  it('returns structured data for --format json', async () => {
+    const result = await executeFulltextCheck({
+      sessionDir,
+      config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+    });
+
+    // Should have articles array with OA info
+    expect(result.articles).toHaveLength(2);
+    const openArticle = result.articles.find((a) => a.doi === '10.1234/open');
+    expect(openArticle).toBeDefined();
+    expect(openArticle?.oaStatus).toBe('open');
+  });
+
+  it('handles missing fulltext directory gracefully', async () => {
+    mockAccess.mockRejectedValue(new Error('ENOENT'));
+    mockReaddir.mockRejectedValue(new Error('ENOENT'));
+
+    const result = await executeFulltextCheck({
+      sessionDir,
+      config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+    });
+
+    // Should still check articles but not update meta
+    expect(result.summary.total).toBe(2);
+  });
+
+  it('handles missing reviews.yaml', async () => {
+    mockReadFile.mockRejectedValue(new Error('ENOENT'));
+
+    await expect(
+      executeFulltextCheck({
+        sessionDir,
+        config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+      })
+    ).rejects.toThrow();
+  });
+});
