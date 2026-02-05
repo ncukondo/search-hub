@@ -3,9 +3,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { executeFulltextCheck, type FulltextCheckResult } from './check';
+import { executeFulltextCheck } from './check';
 import * as discoveryModule from '../../../fulltext/discovery/index';
-import type { FulltextMeta, FulltextIndex } from '../../../fulltext/types';
+import type { FulltextMeta } from '../../../fulltext/types';
 
 // Mock the discovery module
 vi.mock('../../../fulltext/discovery/index');
@@ -67,7 +67,7 @@ articles:
     files: {},
   };
 
-  const sampleIndex: FulltextIndex = {
+  const sampleIndex = {
     sessionId: 'test-session',
     updatedAt: '2024-01-01T00:00:00.000Z',
     entries: {
