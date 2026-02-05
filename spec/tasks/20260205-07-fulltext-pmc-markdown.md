@@ -92,15 +92,15 @@ Implement conversion of PMC JATS XML to Markdown format:
 
 ### Step 6: Conversion Orchestrator
 
-- [ ] Write test: `src/fulltext/convert/index.test.ts`
+- [x] Write test: `src/fulltext/convert/index.test.ts`
   - Test: `convertPmcXmlToMarkdown(xmlPath, mdPath)` end-to-end
   - Test: Handles malformed XML gracefully
   - Test: Updates meta.json with conversion info
-- [ ] Create stub: `src/fulltext/convert/index.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `convertPmcXmlToMarkdown()`
-- [ ] Verify test passes (Green)
-- [ ] Acceptance: Full conversion pipeline works
+- [x] Create stub: `src/fulltext/convert/index.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `convertPmcXmlToMarkdown()`
+- [x] Verify test passes (Green)
+- [x] Acceptance: Full conversion pipeline works
 
 ### Step 7: Fulltext Convert Command
 
