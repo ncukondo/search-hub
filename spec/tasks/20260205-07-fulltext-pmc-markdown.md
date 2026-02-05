@@ -74,7 +74,7 @@ Implement conversion of PMC JATS XML to Markdown format:
 
 ### Step 5: Markdown Writer
 
-- [ ] Write test: `src/fulltext/convert/markdown-writer.test.ts`
+- [x] Write test: `src/fulltext/convert/markdown-writer.test.ts`
   - Test: Generates Markdown header with metadata
   - Test: Converts sections to ## headings
   - Test: Converts nested sections to ### headings
@@ -83,12 +83,12 @@ Implement conversion of PMC JATS XML to Markdown format:
   - Test: Converts figures to `![Figure N](caption)`
   - Test: Converts lists (ordered and unordered)
   - Test: Preserves inline formatting (bold, italic)
-- [ ] Create stub: `src/fulltext/convert/markdown-writer.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `writeMarkdown(parsedDoc)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Markdown output is readable and correct
+- [x] Create stub: `src/fulltext/convert/markdown-writer.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `writeMarkdown(parsedDoc)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Markdown output is readable and correct
 
 ### Step 6: Conversion Orchestrator
 
