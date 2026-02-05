@@ -21,12 +21,12 @@ Establish the foundation for fulltext management: type definitions, directory st
 
 ### Step 1: Type Definitions
 
-- [ ] Create `src/fulltext/types.ts`
+- [x] Create `src/fulltext/types.ts`
   - Define `FulltextMeta`, `OALocation`, `FileInfo` interfaces
   - Define `FulltextIndex`, `FulltextIndexEntry` interfaces
   - Define `ArticleFulltextRef` (for reviews.yaml extension)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All types compile without errors
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All types compile without errors
 
 ### Step 2: Citation Key Generation
 
