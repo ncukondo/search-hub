@@ -135,15 +135,15 @@
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: `src/cli/suggestions/suggestions.e2e.test.ts`
+- [x] Write E2E test: `src/cli/suggestions/suggestions.e2e.test.ts`
   - 実際の CLI 実行で suggestion が出力されるか
   - `--quiet` で抑制されるか
   - セッション状態に応じた動的 suggestion が正しいか
   - 既存 tip が新システムに完全に置き換わっているか
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: 主要ワークフロー（query init → search → results → review）を手動実行し、各ステップで suggestion が表示されることを確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## TDD Cycle Reference
 
