@@ -240,6 +240,77 @@ function parseList(listNode: Record<string, unknown>): BlockElement {
 }
 
 /**
+ * Parse a table row into an array of cell text content.
+ */
+function parseTableRow(tr: Record<string, unknown>): string[] {
+  const cells: string[] = [];
+  // Try both th (headers) and td (data) — th first so headers come in order
+  for (const cellTag of ['th', 'td']) {
+    const cellNodes = tr[cellTag];
+    if (cellNodes) {
+      const cellArray: unknown[] = Array.isArray(cellNodes) ? cellNodes : [cellNodes];
+      for (const cell of cellArray) {
+        cells.push(String(extractAllText(cell)));
+      }
+    }
+  }
+  return cells;
+}
+
+/**
+ * Parse a <table-wrap> element into a table block.
+ * Exported for standalone use and used internally by parseBlockContent.
+ */
+export function parseJatsTable(xml: string): { caption?: string; headers: string[]; rows: string[][] } {
+  const parsed = parser.parse(xml);
+  let tableWrap = parsed['table-wrap'] ?? parsed;
+  // isArray may wrap it in an array
+  if (Array.isArray(tableWrap)) tableWrap = tableWrap[0];
+  return parseTableWrap(tableWrap as Record<string, unknown>);
+}
+
+/**
+ * Parse an already-parsed table-wrap node.
+ */
+function parseTableWrap(tableWrap: Record<string, unknown>): { caption?: string; headers: string[]; rows: string[][] } {
+  // Caption
+  const label = extractAllText(tableWrap['label']);
+  const captionNode = tableWrap['caption'];
+  const captionText = captionNode ? extractAllText(captionNode) : '';
+  const captionStr = [label, captionText].filter(Boolean).join('. ');
+
+  const table = tableWrap['table'] as Record<string, unknown> | undefined;
+  const result: { caption?: string; headers: string[]; rows: string[][] } = { headers: [], rows: [] };
+  if (captionStr) result.caption = captionStr;
+  if (!table) return result;
+
+  // Headers from thead
+  const thead = table['thead'] as Record<string, unknown> | undefined;
+  if (thead) {
+    const headRows = thead['tr'];
+    const headRowArray: unknown[] = Array.isArray(headRows) ? headRows : headRows ? [headRows] : [];
+    if (headRowArray.length > 0) {
+      const firstRow = headRowArray[0] as Record<string, unknown>;
+      result.headers.push(...parseTableRow(firstRow));
+    }
+  }
+
+  // Body rows
+  const tbody = table['tbody'] as Record<string, unknown> | undefined;
+  if (tbody) {
+    const bodyRows = tbody['tr'];
+    const bodyRowArray: unknown[] = Array.isArray(bodyRows) ? bodyRows : bodyRows ? [bodyRows] : [];
+    for (const row of bodyRowArray) {
+      if (typeof row === 'object' && row != null) {
+        result.rows.push(parseTableRow(row as Record<string, unknown>));
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * Parse block-level content from a section.
  */
 function parseBlockContent(sectionNode: Record<string, unknown>): BlockElement[] {
@@ -261,6 +332,20 @@ function parseBlockContent(sectionNode: Record<string, unknown>): BlockElement[]
     for (const list of lists) {
       if (typeof list === 'object' && list != null) {
         blocks.push(parseList(list as Record<string, unknown>));
+      }
+    }
+  }
+
+  // Tables
+  const tableWrapNode = sectionNode['table-wrap'];
+  if (tableWrapNode) {
+    const tableWraps: unknown[] = Array.isArray(tableWrapNode) ? tableWrapNode : [tableWrapNode];
+    for (const tw of tableWraps) {
+      if (typeof tw === 'object' && tw != null) {
+        const tableResult = parseTableWrap(tw as Record<string, unknown>);
+        const tableBlock: BlockElement = { type: 'table', headers: tableResult.headers, rows: tableResult.rows };
+        if (tableResult.caption) (tableBlock as { caption?: string }).caption = tableResult.caption;
+        blocks.push(tableBlock);
       }
     }
   }

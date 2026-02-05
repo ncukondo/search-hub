@@ -53,14 +53,14 @@ Implement conversion of PMC JATS XML to Markdown format:
 
 ### Step 3: JATS XML Parser - Tables
 
-- [ ] Write test for table parsing
+- [x] Write test for table parsing
   - Test: Converts `<table-wrap>` to table structure
   - Test: Handles `<thead>`, `<tbody>`, `<tr>`, `<td>`, `<th>`
   - Test: Extracts table caption
   - Test: Handles colspan/rowspan (simplified)
-- [ ] Implement `parseJatsTable(tableNode)`
-- [ ] Verify test passes
-- [ ] Acceptance: Tables parsed to intermediate format
+- [x] Implement `parseJatsTable(tableNode)`
+- [x] Verify test passes
+- [x] Acceptance: Tables parsed to intermediate format
 
 ### Step 4: JATS XML Parser - Figures and Citations
 

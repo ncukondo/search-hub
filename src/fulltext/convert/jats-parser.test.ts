@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseJatsMetadata, parseJatsBody } from './jats-parser.js';
+import { parseJatsMetadata, parseJatsBody, parseJatsTable } from './jats-parser.js';
 
 describe('parseJatsMetadata', () => {
   it('extracts title from <article-title>', () => {
@@ -333,5 +333,106 @@ describe('parseJatsBody', () => {
     expect(sections).toHaveLength(1);
     expect(sections[0]!.title).toBe('');
     expect(sections[0]!.content).toHaveLength(1);
+  });
+});
+
+describe('parseJatsTable', () => {
+  it('converts <table-wrap> to table structure', () => {
+    const xml = `
+      <table-wrap>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>A</td><td>1</td></tr>
+            <tr><td>B</td><td>2</td></tr>
+          </tbody>
+        </table>
+      </table-wrap>
+    `;
+    const table = parseJatsTable(xml);
+    expect(table.headers).toEqual(['Name', 'Value']);
+    expect(table.rows).toEqual([
+      ['A', '1'],
+      ['B', '2'],
+    ]);
+  });
+
+  it('handles <thead>, <tbody>, <tr>, <td>, <th>', () => {
+    const xml = `
+      <table-wrap>
+        <table>
+          <thead>
+            <tr><th>Col1</th><th>Col2</th><th>Col3</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>a</td><td>b</td><td>c</td></tr>
+          </tbody>
+        </table>
+      </table-wrap>
+    `;
+    const table = parseJatsTable(xml);
+    expect(table.headers).toHaveLength(3);
+    expect(table.rows[0]).toHaveLength(3);
+  });
+
+  it('extracts table caption', () => {
+    const xml = `
+      <table-wrap>
+        <label>Table 1</label>
+        <caption><p>Demographic characteristics</p></caption>
+        <table>
+          <thead><tr><th>Age</th></tr></thead>
+          <tbody><tr><td>25</td></tr></tbody>
+        </table>
+      </table-wrap>
+    `;
+    const table = parseJatsTable(xml);
+    expect(table.caption).toContain('Table 1');
+    expect(table.caption).toContain('Demographic characteristics');
+  });
+
+  it('handles table without thead (all rows)', () => {
+    const xml = `
+      <table-wrap>
+        <table>
+          <tbody>
+            <tr><td>A</td><td>1</td></tr>
+            <tr><td>B</td><td>2</td></tr>
+          </tbody>
+        </table>
+      </table-wrap>
+    `;
+    const table = parseJatsTable(xml);
+    expect(table.headers).toEqual([]);
+    expect(table.rows).toHaveLength(2);
+  });
+
+  it('handles tables in body sections', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>See the table below.</p>
+            <table-wrap>
+              <table>
+                <thead><tr><th>Item</th><th>Count</th></tr></thead>
+                <tbody><tr><td>X</td><td>10</td></tr></tbody>
+              </table>
+            </table-wrap>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(2);
+    expect(content[0]!.type).toBe('paragraph');
+    expect(content[1]!.type).toBe('table');
+    if (content[1]!.type === 'table') {
+      expect(content[1]!.headers).toEqual(['Item', 'Count']);
+    }
   });
 });
