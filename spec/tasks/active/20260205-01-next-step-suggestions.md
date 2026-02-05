@@ -32,16 +32,16 @@
 
 ### Step 1: Suggestion 基盤（型定義とフォーマッタ）
 
-- [ ] Write test: `src/cli/suggestions/index.test.ts`
+- [x] Write test: `src/cli/suggestions/index.test.ts`
   - `formatSuggestion()` が Next / See also を正しくフォーマットする
   - Next のみ、See also のみ、両方あり、空のケースをテスト
-- [ ] Create types: `src/cli/suggestions/types.ts`
+- [x] Create types: `src/cli/suggestions/types.ts`
   - `Suggestion`, `SuggestionResult`, `SuggestionContext` を定義
-- [ ] Create formatter: `src/cli/suggestions/index.ts`
+- [x] Create formatter: `src/cli/suggestions/index.ts`
   - `formatSuggestion(result: SuggestionResult): string` を実装
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `formatSuggestion()` が仕様通りのフォーマットで出力する
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `formatSuggestion()` が仕様通りのフォーマットで出力する
 
 ### Step 2: Phase 1 - Query Preparation の suggestion ルール
 
