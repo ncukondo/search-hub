@@ -30,19 +30,19 @@ Establish the foundation for fulltext management: type definitions, directory st
 
 ### Step 2: Citation Key Generation
 
-- [ ] Write test: `src/fulltext/citation-key.test.ts`
+- [x] Write test: `src/fulltext/citation-key.test.ts`
   - Test: `smith2024` from author "Smith, J." and year 2024
   - Test: `muller2023` from author "Müller, K." (transliteration)
   - Test: `tanaka2024` from author "田中" (romaji)
   - Test: `unknown0000` when no author/year
   - Test: Collision handling: `smith2024`, `smith2024a`, `smith2024b`
   - Test: UUID8 suffix generation
-- [ ] Create stub: `src/fulltext/citation-key.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `generateCitationKey()` and `generateDirName()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Citation keys generated correctly for all edge cases
+- [x] Create stub: `src/fulltext/citation-key.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `generateCitationKey()` and `generateDirName()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Citation keys generated correctly for all edge cases
 
 ### Step 3: Path Resolution Utilities
 
