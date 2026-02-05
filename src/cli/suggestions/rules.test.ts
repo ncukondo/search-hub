@@ -357,6 +357,8 @@ describe('getSuggestion', () => {
             finalized: 0,
             included: 0,
             excluded: 0,
+            titleReviewed: 0,
+            abstractReviewed: 0,
           },
         };
         const result = getSuggestion(ctx);
@@ -378,6 +380,8 @@ describe('getSuggestion', () => {
             finalized: 0,
             included: 0,
             excluded: 0,
+            titleReviewed: 0,
+            abstractReviewed: 0,
           },
         };
         const result = getSuggestion(ctx);
@@ -399,6 +403,8 @@ describe('getSuggestion', () => {
             finalized: 85,
             included: 50,
             excluded: 35,
+            titleReviewed: 0,
+            abstractReviewed: 0,
           },
         };
         const result = getSuggestion(ctx);
@@ -420,6 +426,8 @@ describe('getSuggestion', () => {
             finalized: 90,
             included: 50,
             excluded: 40,
+            titleReviewed: 0,
+            abstractReviewed: 0,
           },
         };
         const result = getSuggestion(ctx);
@@ -441,6 +449,8 @@ describe('getSuggestion', () => {
             finalized: 100,
             included: 60,
             excluded: 40,
+            titleReviewed: 0,
+            abstractReviewed: 0,
           },
         };
         const result = getSuggestion(ctx);

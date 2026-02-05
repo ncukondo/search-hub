@@ -159,6 +159,8 @@ describe('Next Step Suggestions E2E', () => {
           finalized: 0,
           included: 0,
           excluded: 0,
+          titleReviewed: 0,
+          abstractReviewed: 0,
         },
       });
 
@@ -180,6 +182,8 @@ describe('Next Step Suggestions E2E', () => {
           finalized: 85,
           included: 50,
           excluded: 35,
+          titleReviewed: 0,
+          abstractReviewed: 0,
         },
       });
 
@@ -200,6 +204,8 @@ describe('Next Step Suggestions E2E', () => {
           finalized: 85,
           included: 50,
           excluded: 35,
+          titleReviewed: 0,
+          abstractReviewed: 0,
         },
       });
 
@@ -220,6 +226,8 @@ describe('Next Step Suggestions E2E', () => {
           finalized: 100,
           included: 60,
           excluded: 40,
+          titleReviewed: 0,
+          abstractReviewed: 0,
         },
       });
 
@@ -316,7 +324,7 @@ describe('Next Step Suggestions E2E', () => {
         command: 'review status',
         ctx: {
           sessionId: 'sid',
-          reviewStatus: { sessionId: 'sid', total: 10, pending: 5, conflicting: 0, needsFinal: 0, finalized: 0, included: 0, excluded: 0 },
+          reviewStatus: { sessionId: 'sid', total: 10, pending: 5, conflicting: 0, needsFinal: 0, finalized: 0, included: 0, excluded: 0, titleReviewed: 0, abstractReviewed: 0 },
         },
       },
       { command: 'review list', ctx: { sessionId: 'sid' } },
