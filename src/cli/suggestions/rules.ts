@@ -200,6 +200,211 @@ const diffRule: SuggestionRule = (ctx) => {
   };
 };
 
+// Phase 4: Review Workflow rules
+
+const reviewInitRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'review init') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  return {
+    next: [
+      {
+        command: `search-hub review extract --session ${sid} --basis title --name title-screening`,
+        description: 'Start title screening',
+      },
+    ],
+    seeAlso: [],
+  };
+};
+
+const reviewStatusRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'review status') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  const rs = ctx.reviewStatus;
+  if (!rs) return null;
+
+  // 1. pending > 0: title screening incomplete
+  if (rs.pending > 0) {
+    return {
+      next: [
+        {
+          command: `search-hub review extract --session ${sid} --basis title --filter pending --name title-screening`,
+          description: 'Continue title screening',
+        },
+      ],
+      seeAlso: [],
+    };
+  }
+
+  // 2. All reviewed or needs-final, no conflicting, no finalized yet → abstract screening
+  //    (pending=0, conflicting=0, needsFinal > 0, finalized could be partial)
+  //    Simplified: if no pending and no conflicting → suggest abstract screening for uncertain items
+  //    But we need to differentiate "title done, abstract not started" from "abstract in progress"
+  //    Per spec: pending=0, title reviewed > 0, abstract reviewed = 0 → abstract screening
+  //    Since we don't have basis-level breakdown, we use: pending=0, conflicting=0, needsFinal > 0
+  //    as a signal to suggest abstract screening or finalization
+
+  // 3. conflicting > 0: resolve conflicts
+  if (rs.conflicting > 0) {
+    return {
+      next: [
+        {
+          command: `search-hub review list --session ${sid} --filter conflicting`,
+          description: 'Resolve conflicting reviews',
+        },
+      ],
+      seeAlso: [],
+    };
+  }
+
+  // 4. needs-final > 0, some already finalized → finalization phase
+  if (rs.needsFinal > 0 && rs.finalized > 0) {
+    return {
+      next: [
+        {
+          command: `search-hub review list --session ${sid} --filter needs-final`,
+          description: 'Finalize reviewed items',
+        },
+      ],
+      seeAlso: [],
+    };
+  }
+
+  // 5. needs-final > 0, none finalized yet → abstract screening phase
+  if (rs.needsFinal > 0) {
+    return {
+      next: [
+        {
+          command: `search-hub review extract --session ${sid} --basis abstract --filter uncertain --name abstract-screening`,
+          description: 'Start abstract screening for uncertain items',
+        },
+      ],
+      seeAlso: [],
+    };
+  }
+
+  // 5. All finalized
+  if (rs.finalized === rs.total) {
+    return {
+      next: [
+        {
+          command: `search-hub register ${sid} --reviewed`,
+          description: 'Register accepted articles',
+        },
+      ],
+      seeAlso: [],
+    };
+  }
+
+  return null;
+};
+
+const reviewListRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'review list') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  return {
+    next: [],
+    seeAlso: [
+      {
+        command: `search-hub review extract --session ${sid} --name <name>`,
+        description: 'Extract subset for review',
+      },
+    ],
+  };
+};
+
+const reviewExtractRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'review extract') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  const name = ctx.extractName ?? '<name>';
+  return {
+    next: [
+      {
+        command: `search-hub review mark --file <path> ...`,
+        description: 'Record decisions (AI/CLI)',
+      },
+      {
+        command: `search-hub review merge --session ${sid} --name ${name}`,
+        description: 'Merge review results',
+      },
+    ],
+    seeAlso: [],
+  };
+};
+
+const reviewMergeRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'review merge') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  return {
+    next: [
+      {
+        command: `search-hub review status --session ${sid}`,
+        description: 'Check progress',
+      },
+    ],
+    seeAlso: [],
+  };
+};
+
+const reviewExportRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'review export') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  return {
+    next: [],
+    seeAlso: [
+      {
+        command: `search-hub register ${sid} --reviewed`,
+        description: 'Register with reference-manager',
+      },
+    ],
+  };
+};
+
+// Phase 5: Registration & Export rules
+
+const exportRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'export') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  if (ctx.hasReviews === false) {
+    return {
+      next: [],
+      seeAlso: [
+        {
+          command: `search-hub review init --session ${sid}`,
+          description: 'Start review workflow',
+        },
+      ],
+    };
+  }
+  return { next: [], seeAlso: [] };
+};
+
+const registerRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'register') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  if (ctx.hasReviews === false) {
+    return {
+      next: [],
+      seeAlso: [
+        {
+          command: `search-hub review init --session ${sid}`,
+          description: 'Start systematic review',
+        },
+      ],
+    };
+  }
+  // Terminal state: no suggestions
+  return null;
+};
+
+const notesRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'notes add' && ctx.command !== 'notes assess') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  return {
+    next: [],
+    seeAlso: [{ command: `search-hub notes list ${sid}`, description: 'View notes' }],
+  };
+};
+
 /**
  * All suggestion rules in evaluation order.
  */
@@ -220,6 +425,17 @@ const rules: SuggestionRule[] = [
   resultsRule,
   summaryRule,
   diffRule,
+  // Phase 4
+  reviewInitRule,
+  reviewStatusRule,
+  reviewListRule,
+  reviewExtractRule,
+  reviewMergeRule,
+  reviewExportRule,
+  // Phase 5
+  exportRule,
+  registerRule,
+  notesRule,
 ];
 
 /**

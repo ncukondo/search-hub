@@ -326,4 +326,262 @@ describe('getSuggestion', () => {
       });
     });
   });
+
+  describe('Phase 4: Review Workflow', () => {
+    describe('review init', () => {
+      it('should suggest extract with title basis', () => {
+        const ctx: SuggestionContext = {
+          command: 'review init',
+          sessionId: 'my-session',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('review extract');
+        expect(result!.next[0]!.command).toContain('--basis title');
+        expect(result!.next[0]!.command).toContain('--name title-screening');
+      });
+    });
+
+    describe('review status', () => {
+      it('should suggest title screening when pending > 0', () => {
+        const ctx: SuggestionContext = {
+          command: 'review status',
+          sessionId: 'my-session',
+          reviewStatus: {
+            sessionId: 'my-session',
+            total: 100,
+            pending: 50,
+            conflicting: 0,
+            needsFinal: 0,
+            finalized: 0,
+            included: 0,
+            excluded: 0,
+          },
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next[0]!.command).toContain('--basis title');
+        expect(result!.next[0]!.command).toContain('--filter pending');
+      });
+
+      it('should suggest abstract screening when title done, no abstract', () => {
+        const ctx: SuggestionContext = {
+          command: 'review status',
+          sessionId: 'my-session',
+          reviewStatus: {
+            sessionId: 'my-session',
+            total: 100,
+            pending: 0,
+            conflicting: 0,
+            needsFinal: 100,
+            finalized: 0,
+            included: 0,
+            excluded: 0,
+          },
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next[0]!.command).toContain('--basis abstract');
+        expect(result!.next[0]!.command).toContain('--filter uncertain');
+      });
+
+      it('should suggest resolving conflicts when conflicting > 0', () => {
+        const ctx: SuggestionContext = {
+          command: 'review status',
+          sessionId: 'my-session',
+          reviewStatus: {
+            sessionId: 'my-session',
+            total: 100,
+            pending: 0,
+            conflicting: 5,
+            needsFinal: 10,
+            finalized: 85,
+            included: 50,
+            excluded: 35,
+          },
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next[0]!.command).toContain('review list');
+        expect(result!.next[0]!.command).toContain('--filter conflicting');
+      });
+
+      it('should suggest finalizing when needs-final > 0 and no conflicts', () => {
+        const ctx: SuggestionContext = {
+          command: 'review status',
+          sessionId: 'my-session',
+          reviewStatus: {
+            sessionId: 'my-session',
+            total: 100,
+            pending: 0,
+            conflicting: 0,
+            needsFinal: 10,
+            finalized: 90,
+            included: 50,
+            excluded: 40,
+          },
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next[0]!.command).toContain('review list');
+        expect(result!.next[0]!.command).toContain('--filter needs-final');
+      });
+
+      it('should suggest register when all finalized', () => {
+        const ctx: SuggestionContext = {
+          command: 'review status',
+          sessionId: 'my-session',
+          reviewStatus: {
+            sessionId: 'my-session',
+            total: 100,
+            pending: 0,
+            conflicting: 0,
+            needsFinal: 0,
+            finalized: 100,
+            included: 60,
+            excluded: 40,
+          },
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next[0]!.command).toContain('register');
+        expect(result!.next[0]!.command).toContain('--reviewed');
+      });
+    });
+
+    describe('review list', () => {
+      it('should suggest extract as see also', () => {
+        const ctx: SuggestionContext = {
+          command: 'review list',
+          sessionId: 'my-session',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toContain('review extract');
+      });
+    });
+
+    describe('review extract', () => {
+      it('should suggest mark and merge', () => {
+        const ctx: SuggestionContext = {
+          command: 'review extract',
+          sessionId: 'my-session',
+          extractName: 'title-screening',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(2);
+        expect(result!.next[0]!.command).toContain('review mark');
+        expect(result!.next[1]!.command).toContain('review merge');
+        expect(result!.next[1]!.command).toContain('--name title-screening');
+      });
+    });
+
+    describe('review merge', () => {
+      it('should suggest status', () => {
+        const ctx: SuggestionContext = {
+          command: 'review merge',
+          sessionId: 'my-session',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('review status');
+      });
+    });
+
+    describe('review export', () => {
+      it('should suggest register as see also', () => {
+        const ctx: SuggestionContext = {
+          command: 'review export',
+          sessionId: 'my-session',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toContain('register');
+        expect(result!.seeAlso[0]!.command).toContain('--reviewed');
+      });
+    });
+  });
+
+  describe('Phase 5: Registration & Export', () => {
+    describe('export', () => {
+      it('should suggest review init when no reviews', () => {
+        const ctx: SuggestionContext = {
+          command: 'export',
+          sessionId: 'my-session',
+          hasReviews: false,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toContain('review init');
+      });
+
+      it('should return no suggestions when reviews exist', () => {
+        const ctx: SuggestionContext = {
+          command: 'export',
+          sessionId: 'my-session',
+          hasReviews: true,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(0);
+        expect(result!.seeAlso).toHaveLength(0);
+      });
+    });
+
+    describe('register', () => {
+      it('should suggest review init when no reviews', () => {
+        const ctx: SuggestionContext = {
+          command: 'register',
+          sessionId: 'my-session',
+          hasReviews: false,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toContain('review init');
+      });
+
+      it('should return null (terminal state) when reviews exist', () => {
+        const ctx: SuggestionContext = {
+          command: 'register',
+          sessionId: 'my-session',
+          hasReviews: true,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('notes add', () => {
+      it('should suggest notes list as see also', () => {
+        const ctx: SuggestionContext = {
+          command: 'notes add',
+          sessionId: 'my-session',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toContain('notes list');
+      });
+    });
+
+    describe('notes assess', () => {
+      it('should suggest notes list as see also', () => {
+        const ctx: SuggestionContext = {
+          command: 'notes assess',
+          sessionId: 'my-session',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toContain('notes list');
+      });
+    });
+  });
 });

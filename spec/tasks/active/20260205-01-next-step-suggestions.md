@@ -105,7 +105,7 @@
 
 **注意**: このステップは Task 56 完了後に実装する。
 
-- [ ] Write test: suggestion rules for review 系コマンド
+- [x] Write test: suggestion rules for review 系コマンド
   - `review init`: Static → extract --basis title
   - `review status`: basis 別フェーズ判定 (State-dependent)
     - pending > 0 → extract --basis title
@@ -116,22 +116,22 @@
     - 全件 finalized → register --reviewed
   - `review extract`: mark / merge を提案
   - `review merge`: status を提案
-- [ ] Implement rules and conditions
+- [x] Implement rules and conditions
   - `getReviewPhase()`: basis 別の進行状況からフェーズを判定
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: review 系コマンドの suggestion が仕様通り
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: review 系コマンドの suggestion が仕様通り
 
 ### Step 8: Phase 5 - Registration & Export の suggestion ルール
 
-- [ ] Write test: suggestion rules for `export`, `register`, `notes`
+- [x] Write test: suggestion rules for `export`, `register`, `notes`
   - `export`: reviews.yaml 無しの場合のみ review init 提案
   - `register`: Terminal state（suggestion なし）、reviews.yaml 無しの場合のみ提案
   - `notes add/assess`: Static な See also
-- [ ] Implement rules
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: export/register 系コマンドの suggestion が仕様通り
+- [x] Implement rules
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: export/register 系コマンドの suggestion が仕様通り
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
