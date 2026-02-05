@@ -719,7 +719,7 @@ Examples:
                 const suggestion = formatSuggestion(getSuggestion({
                   command: suggestionCmd,
                   sessionId: result.sessionId,
-                  sessionStatus: result.sessionStatus ?? 'completed',
+                  sessionStatus: result.sessionStatus,
                   sessionCount: sessions.length,
                 }));
                 if (suggestion) console.log(suggestion);

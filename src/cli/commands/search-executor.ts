@@ -51,7 +51,7 @@ export interface SearchExecutionResult {
   results?: Record<string, { hits: number; retrieved: number; error?: string; warnings?: string[] }>;
   error?: string;
   autoRegisterResult?: RegistrationRecord;
-  sessionStatus?: 'completed' | 'partial' | 'failed';
+  sessionStatus: 'completed' | 'partial' | 'failed';
 }
 
 /**
@@ -224,12 +224,14 @@ export async function executeSearch(
     } catch (error) {
       return {
         success: false,
+        sessionStatus: 'failed',
         error: `Failed to parse query file: ${error instanceof Error ? error.message : error}`,
       };
     }
   } else {
     return {
       success: false,
+      sessionStatus: 'failed',
       error: 'Either queryFile or directQuery with provider is required',
     };
   }
@@ -258,6 +260,7 @@ export async function executeSearch(
   if (providers.length === 0) {
     return {
       success: false,
+      sessionStatus: 'failed',
       error: 'No providers enabled or selected',
     };
   }
@@ -283,6 +286,7 @@ export async function executeSearch(
   } catch (error) {
     return {
       success: false,
+      sessionStatus: 'failed',
       error: `Failed to create session: ${error instanceof Error ? error.message : error}`,
     };
   }
@@ -472,6 +476,7 @@ export async function executeSearch(
     return {
       success: false,
       sessionId,
+      sessionStatus,
       results,
       error: buildFailureErrorMessage(results),
     };
