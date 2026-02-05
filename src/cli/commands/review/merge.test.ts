@@ -76,6 +76,24 @@ describe('executeReviewMerge', () => {
       expect(merged.articles[0]!.reviews[0]!.reviewer).toBe('gpt-4o');
     });
 
+    it('rejects name with path separators', async () => {
+      await expect(
+        executeReviewMerge({ sessionId, name: 'foo/bar' }, sessionsDir)
+      ).rejects.toThrow('must not contain path separators');
+    });
+
+    it('rejects name with ".."', async () => {
+      await expect(
+        executeReviewMerge({ sessionId, name: 'foo..bar' }, sessionsDir)
+      ).rejects.toThrow('must not contain ".."');
+    });
+
+    it('rejects empty name', async () => {
+      await expect(
+        executeReviewMerge({ sessionId, name: '' }, sessionsDir)
+      ).rejects.toThrow('must not be empty');
+    });
+
     it('throws error when file does not exist for given name', async () => {
       const mainArticles: ArticleEntry[] = [
         { title: 'Article 1', pmid: '1', reviews: [] },

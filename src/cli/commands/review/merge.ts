@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile, ArticleEntry, Review, WorkFile } from './types.js';
+import { validateName } from './extract.js';
 
 
 /**
@@ -246,6 +247,7 @@ export async function executeReviewMerge(
   options: ReviewMergeOptions,
   sessionsDir: string
 ): Promise<ReviewMergeResult> {
+  validateName(options.name);
   const sessionDir = join(sessionsDir, options.sessionId);
   const mainReviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
   const filePath = join(sessionDir, 'for-review', options.name, 'review.yaml');

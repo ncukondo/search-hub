@@ -98,7 +98,7 @@ function sortArticles(articles: ArticleEntry[], sort: SortOption, seed?: number)
 /**
  * Validate the name parameter for extract
  */
-function validateName(name: string): void {
+export function validateName(name: string): void {
   if (!name || name.trim() === '') {
     throw new Error('--name must not be empty');
   }
