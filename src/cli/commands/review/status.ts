@@ -20,6 +20,10 @@ export interface ReviewStatusResult {
   finalized: number;
   included: number;
   excluded: number;
+  /** Number of articles with at least one title-basis review */
+  titleReviewed: number;
+  /** Number of articles with at least one abstract-basis review */
+  abstractReviewed: number;
 }
 
 /**
@@ -48,6 +52,8 @@ export async function executeReviewStatus(
     finalized: 0,
     included: 0,
     excluded: 0,
+    titleReviewed: 0,
+    abstractReviewed: 0,
   };
 
   for (const article of reviewFile.articles) {
@@ -72,6 +78,15 @@ export async function executeReviewStatus(
         }
         break;
     }
+
+    // Count basis-level reviews
+    const reviews = article.reviews ?? [];
+    if (reviews.some((r) => r.basis === 'title')) {
+      counts.titleReviewed++;
+    }
+    if (reviews.some((r) => r.basis === 'abstract')) {
+      counts.abstractReviewed++;
+    }
   }
 
   return {
@@ -86,10 +101,12 @@ export async function executeReviewStatus(
  */
 export function formatStatusOutput(result: ReviewStatusResult): string {
   const id = result.sessionId;
+  const reviewed = result.total - result.pending;
   const lines = [
     `Review Progress: ${id}`,
     `  Total:        ${result.total}`,
     `  Pending:      ${result.pending}  (no reviews)`,
+    `  Reviewed:     ${reviewed}  (title: ${result.titleReviewed}, abstract: ${result.abstractReviewed})`,
     `  Conflicting:  ${result.conflicting}  (reviewers disagree)`,
     `  Needs Final:  ${result.needsFinal}  (reviewed but no finalDecision)`,
     `  Finalized:    ${result.finalized}  (include: ${result.included}, exclude: ${result.excluded})`,
@@ -97,14 +114,14 @@ export function formatStatusOutput(result: ReviewStatusResult): string {
     '────────────────────────────────────────────────',
     'AI Agent Workflow:',
     '  Phase 1 (title screening):',
-    `    extract:  search-hub review extract --session ${id} --basis title --reviewer "ai:name" -o phase1.yaml`,
-    `    mark:     search-hub review mark --file phase1.yaml --input decisions.json`,
-    `    merge:    search-hub review merge --session ${id} phase1.yaml`,
+    `    extract:  search-hub review extract --session ${id} --name title-screening --basis title --reviewer "ai:name"`,
+    `    mark:     search-hub review mark --file <session>/for-review/title-screening/review.yaml --input decisions.json`,
+    `    merge:    search-hub review merge --session ${id} --name title-screening`,
     '',
     '  Phase 2 (abstract screening):',
-    `    extract:  search-hub review extract --session ${id} --basis abstract --filter uncertain --reviewer "ai:name" -o phase2.yaml`,
-    `    mark:     search-hub review mark --file phase2.yaml --input decisions.json`,
-    `    merge:    search-hub review merge --session ${id} phase2.yaml`,
+    `    extract:  search-hub review extract --session ${id} --name abstract-screening --basis abstract --filter uncertain --reviewer "ai:name"`,
+    `    mark:     search-hub review mark --file <session>/for-review/abstract-screening/review.yaml --input decisions.json`,
+    `    merge:    search-hub review merge --session ${id} --name abstract-screening`,
     '────────────────────────────────────────────────',
   ];
   return lines.join('\n');

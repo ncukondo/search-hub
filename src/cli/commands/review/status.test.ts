@@ -79,6 +79,71 @@ describe('executeReviewStatus', () => {
     expect(result.excluded).toBe(1);
   });
 
+  describe('basis breakdown', () => {
+    it('counts title-reviewed and abstract-reviewed articles', async () => {
+      const articles: ArticleEntry[] = [
+        // pending
+        { title: 'Article 1', pmid: '1', reviews: [] },
+        // title-reviewed only
+        {
+          title: 'Article 2', pmid: '2',
+          reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' }],
+        },
+        // abstract-reviewed
+        {
+          title: 'Article 3', pmid: '3',
+          reviews: [
+            { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+            { reviewer: 'ai:claude', decision: 'include', basis: 'abstract', timestamp: '2024-01-02T00:00:00Z' },
+          ],
+        },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+
+      expect(result.titleReviewed).toBe(2); // Articles 2 and 3
+      expect(result.abstractReviewed).toBe(1); // Only Article 3
+    });
+
+    it('returns zero for basis counts when no reviews have basis', async () => {
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+        {
+          title: 'Article 2', pmid: '2',
+          reviews: [{ reviewer: 'human', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
+        },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+
+      expect(result.titleReviewed).toBe(0);
+      expect(result.abstractReviewed).toBe(0);
+    });
+
+    it('displays basis breakdown in formatted output', async () => {
+      const { formatStatusOutput } = await import('./status.js');
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+        {
+          title: 'Article 2', pmid: '2',
+          reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' }],
+        },
+      ];
+
+      await writeReviewFile(articles);
+
+      const result = await executeReviewStatus({ sessionId }, sessionsDir);
+      const output = formatStatusOutput(result);
+
+      expect(output).toContain('title: 1');
+      expect(output).toContain('abstract: 0');
+    });
+  });
+
   it('returns zero counts for empty review file', async () => {
     await writeReviewFile([]);
 
@@ -131,7 +196,7 @@ describe('executeReviewStatus', () => {
       expect(output).toContain('AI Agent Workflow');
     });
 
-    it('includes Phase 1 title screening workflow', async () => {
+    it('includes Phase 1 title screening workflow with --name', async () => {
       const { formatStatusOutput } = await import('./status.js');
       const articles: ArticleEntry[] = [
         { title: 'Article 1', pmid: '1', reviews: [] },
@@ -145,12 +210,13 @@ describe('executeReviewStatus', () => {
       expect(output).toContain('Phase 1');
       expect(output).toContain('title screening');
       expect(output).toContain('--basis title');
+      expect(output).toContain('--name title-screening');
       expect(output).toContain('review extract');
       expect(output).toContain('review mark');
       expect(output).toContain('review merge');
     });
 
-    it('includes Phase 2 abstract screening workflow', async () => {
+    it('includes Phase 2 abstract screening workflow with --name', async () => {
       const { formatStatusOutput } = await import('./status.js');
       const articles: ArticleEntry[] = [
         { title: 'Article 1', pmid: '1', reviews: [] },
@@ -164,6 +230,7 @@ describe('executeReviewStatus', () => {
       expect(output).toContain('Phase 2');
       expect(output).toContain('abstract screening');
       expect(output).toContain('--basis abstract');
+      expect(output).toContain('--name abstract-screening');
       expect(output).toContain('--filter uncertain');
     });
 

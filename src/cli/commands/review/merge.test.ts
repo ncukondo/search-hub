@@ -35,15 +35,16 @@ describe('executeReviewMerge', () => {
     await writeFile(join(internalDir, 'reviews.yaml'), content);
   }
 
-  async function writeExtractedFile(articles: ArticleEntry[], filePath: string): Promise<void> {
+  async function writeExtractedFile(articles: ArticleEntry[], name: string): Promise<void> {
     const reviewFile: ReviewFile = {
       sessionId,
       articles,
     };
 
     const content = stringifyYaml(reviewFile);
-    await mkdir(join(filePath, '..'), { recursive: true });
-    await writeFile(filePath, content);
+    const dir = join(sessionsDir, sessionId, 'for-review', name);
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, 'review.yaml'), content);
   }
 
   async function readMainReviewFile(): Promise<ReviewFile> {
@@ -51,6 +52,59 @@ describe('executeReviewMerge', () => {
     const content = await readFile(reviewsPath, 'utf-8');
     return parseYaml(content) as ReviewFile;
   }
+
+  describe('--name option', () => {
+    it('reads from for-review/<name>/review.yaml when --name is specified', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const extractedArticles: ArticleEntry[] = [
+        {
+          title: 'Article 1',
+          pmid: '1',
+          reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
+        },
+      ];
+      await writeExtractedFile(extractedArticles, 'title-screening');
+
+      await executeReviewMerge({ sessionId, name: 'title-screening' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[0]!.reviews[0]!.reviewer).toBe('gpt-4o');
+    });
+
+    it('rejects name with path separators', async () => {
+      await expect(
+        executeReviewMerge({ sessionId, name: 'foo/bar' }, sessionsDir)
+      ).rejects.toThrow('must not contain path separators');
+    });
+
+    it('rejects name with ".."', async () => {
+      await expect(
+        executeReviewMerge({ sessionId, name: 'foo..bar' }, sessionsDir)
+      ).rejects.toThrow('must not contain ".."');
+    });
+
+    it('rejects empty name', async () => {
+      await expect(
+        executeReviewMerge({ sessionId, name: '' }, sessionsDir)
+      ).rejects.toThrow('must not be empty');
+    });
+
+    it('throws error when file does not exist for given name', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await expect(
+        executeReviewMerge({ sessionId, name: 'nonexistent' }, sessionsDir)
+      ).rejects.toThrow();
+    });
+  });
 
   describe('appending reviews', () => {
     it('appends new reviews to matching articles', async () => {
@@ -66,10 +120,9 @@ describe('executeReviewMerge', () => {
           reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -96,10 +149,9 @@ describe('executeReviewMerge', () => {
           ],
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(3);
@@ -118,10 +170,9 @@ describe('executeReviewMerge', () => {
           reviews: [{ reviewer: 'human:alice', decision: 'include' }], // No timestamp
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -152,10 +203,9 @@ describe('executeReviewMerge', () => {
           ],
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(2);
@@ -181,10 +231,9 @@ describe('executeReviewMerge', () => {
           finalDecision: 'include',
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.finalDecision).toBe('include');
@@ -209,10 +258,9 @@ describe('executeReviewMerge', () => {
           finalDecision: 'exclude',
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.finalDecision).toBe('exclude');
@@ -236,10 +284,9 @@ describe('executeReviewMerge', () => {
           reviews: [{ reviewer: 'claude', decision: 'exclude', timestamp: '2024-01-01T00:00:00Z' }],
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.finalDecision).toBe('include');
@@ -260,10 +307,9 @@ describe('executeReviewMerge', () => {
           reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -282,10 +328,9 @@ describe('executeReviewMerge', () => {
           reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -304,10 +349,9 @@ describe('executeReviewMerge', () => {
           reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      const result = await executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir);
+      const result = await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       expect(result.warnings).toHaveLength(1);
       expect(result.warnings[0]).toContain('Unknown Article');
@@ -329,10 +373,9 @@ describe('executeReviewMerge', () => {
           finalDecision: 'include',
         },
       ];
-      const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-      await writeExtractedFile(extractedArticles, extractedPath);
+      await writeExtractedFile(extractedArticles, 'batch');
 
-      const result = await executeReviewMerge({ sessionId, file: extractedPath, dryRun: true }, sessionsDir);
+      const result = await executeReviewMerge({ sessionId, name: 'batch', dryRun: true }, sessionsDir);
 
       expect(result.reviewsAdded).toBe(1);
       expect(result.decisionsSet).toBe(1);
@@ -347,11 +390,10 @@ describe('executeReviewMerge', () => {
   it('throws error if reviews.yaml does not exist', async () => {
     const sessionDir = join(sessionsDir, sessionId);
     await mkdir(sessionDir, { recursive: true });
-    const extractedPath = join(tempDir, 'extracted', 'batch.yaml');
-    await writeExtractedFile([{ title: 'Article', pmid: '1', reviews: [] }], extractedPath);
+    await writeExtractedFile([{ title: 'Article', pmid: '1', reviews: [] }], 'batch');
 
     await expect(
-      executeReviewMerge({ sessionId, file: extractedPath }, sessionsDir)
+      executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir)
     ).rejects.toThrow();
   });
 
@@ -362,15 +404,16 @@ describe('executeReviewMerge', () => {
     await writeMainReviewFile(mainArticles);
 
     await expect(
-      executeReviewMerge({ sessionId, file: '/nonexistent/file.yaml' }, sessionsDir)
+      executeReviewMerge({ sessionId, name: 'nonexistent' }, sessionsDir)
     ).rejects.toThrow();
   });
 
   describe('work file format (with basis/reviewer)', () => {
-    async function writeWorkFile(workFile: WorkFile, filePath: string): Promise<void> {
+    async function writeWorkFile(workFile: WorkFile, name: string): Promise<void> {
       const content = stringifyYaml(workFile);
-      await mkdir(join(filePath, '..'), { recursive: true });
-      await writeFile(filePath, content);
+      const dir = join(sessionsDir, sessionId, 'for-review', name);
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, 'review.yaml'), content);
     }
 
     it('merges work file with basis attached to each review', async () => {
@@ -387,10 +430,9 @@ describe('executeReviewMerge', () => {
           { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: 'Relevant' },
         ],
       };
-      const workFilePath = join(tempDir, 'phase1.yaml');
-      await writeWorkFile(workFile, workFilePath);
+      await writeWorkFile(workFile, 'phase1');
 
-      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -411,10 +453,9 @@ describe('executeReviewMerge', () => {
           { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: 'Relevant' },
         ],
       };
-      const workFilePath = join(tempDir, 'phase1.yaml');
-      await writeWorkFile(workFile, workFilePath);
+      await writeWorkFile(workFile, 'phase1');
 
-      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -435,10 +476,9 @@ describe('executeReviewMerge', () => {
           { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: 'Relevant' },
         ],
       };
-      const workFilePath = join(tempDir, 'phase1.yaml');
-      await writeWorkFile(workFile, workFilePath);
+      await writeWorkFile(workFile, 'phase1');
 
-      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -463,10 +503,9 @@ describe('executeReviewMerge', () => {
           { id: '10.1234/test', title: 'Article 1', decision: 'exclude', comment: 'Not relevant' },
         ],
       };
-      const workFilePath = join(tempDir, 'phase2.yaml');
-      await writeWorkFile(workFile, workFilePath);
+      await writeWorkFile(workFile, 'phase2');
 
-      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'phase2' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -488,10 +527,9 @@ describe('executeReviewMerge', () => {
           { id: '10.1234/test', title: 'Different Title', decision: 'include', comment: '' },
         ],
       };
-      const workFilePath = join(tempDir, 'phase1.yaml');
-      await writeWorkFile(workFile, workFilePath);
+      await writeWorkFile(workFile, 'phase1');
 
-      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -511,10 +549,9 @@ describe('executeReviewMerge', () => {
           { id: '12345', title: 'Article 1', decision: 'include', comment: '' },
         ],
       };
-      const workFilePath = join(tempDir, 'phase1.yaml');
-      await writeWorkFile(workFile, workFilePath);
+      await writeWorkFile(workFile, 'phase1');
 
-      await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+      await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -536,10 +573,9 @@ describe('executeReviewMerge', () => {
           { id: '10.1234/test2', title: 'Article 2', decision: null, comment: '' },
         ],
       };
-      const workFilePath = join(tempDir, 'phase1.yaml');
-      await writeWorkFile(workFile, workFilePath);
+      await writeWorkFile(workFile, 'phase1');
 
-      const result = await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+      const result = await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
 
       const merged = await readMainReviewFile();
       expect(merged.articles[0]!.reviews).toHaveLength(1);
@@ -561,10 +597,9 @@ describe('executeReviewMerge', () => {
           { id: '10.9999/unknown', title: 'Unknown Article', decision: 'include', comment: '' },
         ],
       };
-      const workFilePath = join(tempDir, 'phase1.yaml');
-      await writeWorkFile(workFile, workFilePath);
+      await writeWorkFile(workFile, 'phase1');
 
-      const result = await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+      const result = await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
 
       expect(result.warnings).toHaveLength(1);
       expect(result.warnings[0]).toContain('10.9999/unknown');
@@ -588,10 +623,9 @@ describe('executeReviewMerge', () => {
           { id: '999', title: 'Article 3', decision: 'uncertain', comment: 'Maybe' },
         ],
       };
-      const workFilePath = join(tempDir, 'phase1.yaml');
-      await writeWorkFile(workFile, workFilePath);
+      await writeWorkFile(workFile, 'phase1');
 
-      const result = await executeReviewMerge({ sessionId, file: workFilePath }, sessionsDir);
+      const result = await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
 
       expect(result.reviewsAdded).toBe(3);
       const merged = await readMainReviewFile();

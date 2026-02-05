@@ -20,7 +20,8 @@ export interface ReviewExtractOptions {
   basis?: ReviewBasis;
   /** Reviewer identifier (e.g., "ai:claude"). Required when basis is specified. */
   reviewer?: string;
-  output: string;
+  /** Name for the review subset (output goes to for-review/<name>/review.yaml) */
+  name: string;
 }
 
 
@@ -95,13 +96,31 @@ function sortArticles(articles: ArticleEntry[], sort: SortOption, seed?: number)
 }
 
 /**
+ * Validate the name parameter for extract
+ */
+export function validateName(name: string): void {
+  if (!name || name.trim() === '') {
+    throw new Error('--name must not be empty');
+  }
+  if (name.includes('/') || name.includes('\\')) {
+    throw new Error(`--name must not contain path separators: "${name}"`);
+  }
+  if (name.includes('..')) {
+    throw new Error(`--name must not contain "..": "${name}"`);
+  }
+}
+
+/**
  * Execute review extract command
  */
 export async function executeReviewExtract(
   options: ReviewExtractOptions,
   sessionsDir: string
 ): Promise<ReviewExtractResult> {
+  validateName(options.name);
+
   const sessionDir = join(sessionsDir, options.sessionId);
+  const outputPath = join(sessionDir, 'for-review', options.name, 'review.yaml');
   const reviewFile = await loadReviewFile(sessionDir);
 
   // Filter articles by status
@@ -174,11 +193,11 @@ export async function executeReviewExtract(
   }
 
   // Ensure output directory exists
-  const outputDir = dirname(options.output);
+  const outputDir = dirname(outputPath);
   await mkdir(outputDir, { recursive: true });
 
   // Write output YAML
-  await writeFile(options.output, finalContent, 'utf-8');
+  await writeFile(outputPath, finalContent, 'utf-8');
 
   // Copy schema file to output directory if it exists
   const schemasDir = join(dirname(sessionsDir), '.search-hub', 'schemas');
@@ -193,7 +212,7 @@ export async function executeReviewExtract(
   }
 
   return {
-    outputPath: options.output,
+    outputPath,
     extractedCount: paginated.length,
     totalMatching,
   };
