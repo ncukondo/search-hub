@@ -45,13 +45,13 @@
 
 ### Step 2: Phase 1 - Query Preparation の suggestion ルール
 
-- [ ] Write test: suggestion rules for `query init`, `query validate`, `query translate`
+- [x] Write test: suggestion rules for `query init`, `query validate`, `query translate`
   - Static な suggestion が正しく返される
   - `query validate` 失敗時にエディタ起動を提案
-- [ ] Implement rules in `src/cli/suggestions/rules.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: query 系コマンドの suggestion が仕様通り
+- [x] Implement rules in `src/cli/suggestions/rules.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: query 系コマンドの suggestion が仕様通り
 
 ### Step 3: Phase 2 - Search Execution の suggestion ルール
 
