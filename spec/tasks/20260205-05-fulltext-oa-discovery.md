@@ -32,18 +32,18 @@ This enables `fulltext check` command and provides URLs for `fulltext fetch` and
 
 ### Step 1: Unpaywall Client
 
-- [ ] Write test: `src/fulltext/discovery/unpaywall.test.ts`
+- [x] Write test: `src/fulltext/discovery/unpaywall.test.ts`
   - Test: Returns OALocation for OA article
   - Test: Returns null for closed access article
   - Test: Handles 404 (DOI not found)
   - Test: Respects rate limit
   - Test: Requires email configuration
-- [ ] Create stub: `src/fulltext/discovery/unpaywall.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `checkUnpaywall(doi, email)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Unpaywall lookup works correctly
+- [x] Create stub: `src/fulltext/discovery/unpaywall.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `checkUnpaywall(doi, email)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Unpaywall lookup works correctly
 
 ### Step 2: PMC Lookup
 
