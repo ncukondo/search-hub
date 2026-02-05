@@ -1610,8 +1610,8 @@ Examples:
   $ search-hub review init --session SESSION_ID           # Initialize reviews.yaml
   $ search-hub review status --session SESSION_ID         # Show review progress
   $ search-hub review list --session SESSION_ID --filter pending  # List articles
-  $ search-hub review extract --session SESSION_ID -o batch.yaml  # Extract for review
-  $ search-hub review merge --session SESSION_ID batch.yaml       # Merge reviews
+  $ search-hub review extract --session SESSION_ID --name title-screening  # Extract for review
+  $ search-hub review merge --session SESSION_ID --name title-screening   # Merge reviews
   $ search-hub review export --session SESSION_ID --only included -o included.yaml`);
 
   reviewCommand
@@ -1716,9 +1716,9 @@ Examples:
 
   reviewCommand
     .command('extract')
-    .description('Extract subset to separate file for distributed review')
+    .description('Extract subset to for-review/<name>/review.yaml for distributed review')
     .requiredOption('--session <id>', 'session ID')
-    .requiredOption('-o, --output <path>', 'output file path')
+    .requiredOption('--name <name>', 'name for the review subset (output: for-review/<name>/review.yaml)')
     .option('--filter <types>', 'filter by status (comma-separated): pending, conflicting, needs-final')
     .option('--sort <method>', 'sort method: year, title, random, none', 'none')
     .option('--limit <n>', 'limit number of articles')
@@ -1728,7 +1728,7 @@ Examples:
     .option('--reviewer <id>', 'reviewer identifier (e.g., "ai:claude")')
     .action(async (options: {
       session: string;
-      output: string;
+      name: string;
       filter?: string;
       sort?: string;
       limit?: string;
@@ -1752,7 +1752,7 @@ Examples:
         const sessionsDir = await getSessionsDir(globalOpts);
         const extractOptions: ReviewExtractOptions = {
           sessionId: options.session,
-          output: options.output,
+          name: options.name,
           sort,
         };
 
@@ -1809,15 +1809,15 @@ Examples:
     .command('merge')
     .description('Merge edited file back into main reviews.yaml')
     .requiredOption('--session <id>', 'session ID')
-    .argument('<file>', 'file to merge')
+    .requiredOption('--name <name>', 'name of the review subset to merge (reads from for-review/<name>/review.yaml)')
     .option('--dry-run', 'show changes without applying', false)
-    .action(async (file: string, options: { session: string; dryRun: boolean }) => {
+    .action(async (options: { session: string; name: string; dryRun: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
         const sessionsDir = await getSessionsDir(globalOpts);
         const mergeOptions: ReviewMergeOptions = {
           sessionId: options.session,
-          file,
+          name: options.name,
           ...(options.dryRun && { dryRun: options.dryRun }),
         };
         const result = await executeReviewMerge(mergeOptions, sessionsDir);

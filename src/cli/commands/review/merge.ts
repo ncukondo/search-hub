@@ -24,7 +24,8 @@ function isWorkFile(file: unknown): file is WorkFile {
 
 export interface ReviewMergeOptions {
   sessionId: string;
-  file: string;
+  /** Name of the review subset (reads from for-review/<name>/review.yaml) */
+  name: string;
   dryRun?: boolean;
 }
 
@@ -247,10 +248,11 @@ export async function executeReviewMerge(
 ): Promise<ReviewMergeResult> {
   const sessionDir = join(sessionsDir, options.sessionId);
   const mainReviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
+  const filePath = join(sessionDir, 'for-review', options.name, 'review.yaml');
 
   // Load both files
   const mainFile = await loadReviewFile(mainReviewsPath);
-  const content = await readFile(options.file, 'utf-8');
+  const content = await readFile(filePath, 'utf-8');
   const inputFile = parseYaml(content);
 
   let result: ReviewMergeResult;

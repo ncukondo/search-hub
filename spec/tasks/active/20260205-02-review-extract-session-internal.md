@@ -72,56 +72,56 @@ sessions/<session-id>/
 
 ### Step 1: extract コマンドの `--name` 対応
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - `--name` 指定時に `for-review/<name>/review.yaml` に出力される
   - `--name` が必須であること
   - name に使えない文字（`/`, `..` 等）のバリデーション
-- [ ] Verify test fails (Red)
-- [ ] `ReviewExtractOptions` の `output: string` を `name: string` に変更
-- [ ] `executeReviewExtract` で出力パスを `join(sessionDir, 'for-review', name, 'review.yaml')` に解決
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: extract が `for-review/<name>/review.yaml` に出力する
+- [x] Verify test fails (Red)
+- [x] `ReviewExtractOptions` の `output: string` を `name: string` に変更
+- [x] `executeReviewExtract` で出力パスを `join(sessionDir, 'for-review', name, 'review.yaml')` に解決
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: extract が `for-review/<name>/review.yaml` に出力する
 
 ### Step 2: merge コマンドの `--name` 対応
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts`
+- [x] Write test: `src/cli/commands/review/merge.test.ts`
   - `--name` 指定時に `for-review/<name>/review.yaml` から読み込む
   - ファイルが存在しない場合のエラー
-- [ ] Verify test fails (Red)
-- [ ] `ReviewMergeOptions` の `file: string` を `name: string` に変更
-- [ ] `executeReviewMerge` で入力パスを `join(sessionDir, 'for-review', name, 'review.yaml')` に解決
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: merge が `for-review/<name>/review.yaml` から読み込む
+- [x] Verify test fails (Red)
+- [x] `ReviewMergeOptions` の `file: string` を `name: string` に変更
+- [x] `executeReviewMerge` で入力パスを `join(sessionDir, 'for-review', name, 'review.yaml')` に解決
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: merge が `for-review/<name>/review.yaml` から読み込む
 
 ### Step 3: CLI 定義の更新（index.ts）
 
-- [ ] `review extract`: `-o, --output <path>` → `--name <name>` に変更
-- [ ] `review merge`: `<file>` positional → `--name <name>` required option に変更
-- [ ] ヘルプテキスト・examples を更新
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: CLI ヘルプが新しいインターフェースを表示する
+- [x] `review extract`: `-o, --output <path>` → `--name <name>` に変更
+- [x] `review merge`: `<file>` positional → `--name <name>` required option に変更
+- [x] ヘルプテキスト・examples を更新
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: CLI ヘルプが新しいインターフェースを表示する
 
 ### Step 4: review status の basis 別内訳追加
 
-- [ ] Write test: `src/cli/commands/review/status.test.ts`
+- [x] Write test: `src/cli/commands/review/status.test.ts`
   - `ReviewStatusResult` に `titleReviewed`, `abstractReviewed` が含まれる
   - `formatStatusOutput` が basis 別内訳を表示する
-- [ ] Verify test fails (Red)
-- [ ] `ReviewStatusResult` に `titleReviewed: number`, `abstractReviewed: number` を追加
-- [ ] `executeReviewStatus` で basis 別のカウントロジックを実装
-- [ ] `formatStatusOutput` の表示を更新
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: status 出力に `Reviewed: 22 (title: 22, abstract: 0)` が表示される
+- [x] Verify test fails (Red)
+- [x] `ReviewStatusResult` に `titleReviewed: number`, `abstractReviewed: number` を追加
+- [x] `executeReviewStatus` で basis 別のカウントロジックを実装
+- [x] `formatStatusOutput` の表示を更新
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: status 出力に `Reviewed: 22 (title: 22, abstract: 0)` が表示される
 
 ### Step 5: review status の AI Workflow ガイド更新
 
-- [ ] `formatStatusOutput` の AI Agent Workflow セクションを `--name` ベースに更新
-- [ ] テスト更新
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: status の Workflow ガイドが `--name` を使用
+- [x] `formatStatusOutput` の AI Agent Workflow セクションを `--name` ベースに更新
+- [x] テスト更新
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: status の Workflow ガイドが `--name` を使用
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 

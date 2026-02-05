@@ -67,28 +67,76 @@ describe('executeReviewExtract', () => {
     },
   ];
 
+  describe('--name option', () => {
+    it('outputs to for-review/<name>/review.yaml when --name is specified', async () => {
+      await writeReviewFile(sampleArticles);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'title-screening' },
+        sessionsDir
+      );
+
+      const expectedPath = join(sessionsDir, sessionId, 'for-review', 'title-screening', 'review.yaml');
+      expect(result.outputPath).toBe(expectedPath);
+
+      const content = await readFile(expectedPath, 'utf-8');
+      expect(content).toContain('sessionId');
+    });
+
+    it('rejects names containing /', async () => {
+      await writeReviewFile(sampleArticles);
+
+      await expect(
+        executeReviewExtract(
+          { sessionId, name: 'invalid/name' },
+          sessionsDir
+        )
+      ).rejects.toThrow();
+    });
+
+    it('rejects names containing ..', async () => {
+      await writeReviewFile(sampleArticles);
+
+      await expect(
+        executeReviewExtract(
+          { sessionId, name: '..' },
+          sessionsDir
+        )
+      ).rejects.toThrow();
+    });
+
+    it('rejects empty name', async () => {
+      await writeReviewFile(sampleArticles);
+
+      await expect(
+        executeReviewExtract(
+          { sessionId, name: '' },
+          sessionsDir
+        )
+      ).rejects.toThrow();
+    });
+  });
+
   describe('filtering', () => {
     it('extracts filtered subset by single filter', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], output: outputPath },
+        { sessionId, filter: ['pending'], name: 'batch' },
         sessionsDir
       );
 
       expect(result.extractedCount).toBe(3);
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const extracted = parseYaml(content) as ReviewFile;
       expect(extracted.articles).toHaveLength(3);
     });
 
     it('extracts filtered subset by multiple filters', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending', 'conflicting'], output: outputPath },
+        { sessionId, filter: ['pending', 'conflicting'], name: 'batch' },
         sessionsDir
       );
 
@@ -97,10 +145,9 @@ describe('executeReviewExtract', () => {
 
     it('extracts all when no filter specified', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
       const result = await executeReviewExtract(
-        { sessionId, output: outputPath },
+        { sessionId, name: 'batch' },
         sessionsDir
       );
 
@@ -111,14 +158,13 @@ describe('executeReviewExtract', () => {
   describe('sorting', () => {
     it('sorts by year ascending', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
-      await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'year', output: outputPath },
+      const result = await executeReviewExtract(
+        { sessionId, filter: ['pending'], sort: 'year', name: 'batch' },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const extracted = parseYaml(content) as ReviewFile;
       const years = extracted.articles.map((a) => a.year);
       expect(years).toEqual(['2021', '2022', '2023']);
@@ -126,14 +172,13 @@ describe('executeReviewExtract', () => {
 
     it('sorts by title ascending', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
-      await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'title', output: outputPath },
+      const result = await executeReviewExtract(
+        { sessionId, filter: ['pending'], sort: 'title', name: 'batch' },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const extracted = parseYaml(content) as ReviewFile;
       const titles = extracted.articles.map((a) => a.title);
       expect(titles).toEqual(['Pending Article A', 'Pending Article B', 'Pending Article C']);
@@ -141,20 +186,18 @@ describe('executeReviewExtract', () => {
 
     it('sorts randomly with seed for reproducibility', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath1 = join(tempDir, 'output1', 'batch.yaml');
-      const outputPath2 = join(tempDir, 'output2', 'batch.yaml');
 
-      await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'random', seed: 42, output: outputPath1 },
+      const result1 = await executeReviewExtract(
+        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch1' },
         sessionsDir
       );
-      await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'random', seed: 42, output: outputPath2 },
+      const result2 = await executeReviewExtract(
+        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch2' },
         sessionsDir
       );
 
-      const content1 = await readFile(outputPath1, 'utf-8');
-      const content2 = await readFile(outputPath2, 'utf-8');
+      const content1 = await readFile(result1.outputPath, 'utf-8');
+      const content2 = await readFile(result2.outputPath, 'utf-8');
       const extracted1 = parseYaml(content1) as ReviewFile;
       const extracted2 = parseYaml(content2) as ReviewFile;
 
@@ -165,14 +208,13 @@ describe('executeReviewExtract', () => {
 
     it('preserves original order when sort is "none"', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
-      await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'none', output: outputPath },
+      const result = await executeReviewExtract(
+        { sessionId, filter: ['pending'], sort: 'none', name: 'batch' },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const extracted = parseYaml(content) as ReviewFile;
       const titles = extracted.articles.map((a) => a.title);
       expect(titles).toEqual(['Pending Article A', 'Pending Article B', 'Pending Article C']);
@@ -182,10 +224,9 @@ describe('executeReviewExtract', () => {
   describe('pagination', () => {
     it('respects limit option', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], limit: 2, output: outputPath },
+        { sessionId, filter: ['pending'], limit: 2, name: 'batch' },
         sessionsDir
       );
 
@@ -194,14 +235,13 @@ describe('executeReviewExtract', () => {
 
     it('respects offset option', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
-      await executeReviewExtract(
-        { sessionId, filter: ['pending'], offset: 1, output: outputPath },
+      const result = await executeReviewExtract(
+        { sessionId, filter: ['pending'], offset: 1, name: 'batch' },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const extracted = parseYaml(content) as ReviewFile;
       expect(extracted.articles).toHaveLength(2);
       expect(extracted.articles[0]!.title).toBe('Pending Article B');
@@ -209,14 +249,13 @@ describe('executeReviewExtract', () => {
 
     it('combines limit and offset', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
-      await executeReviewExtract(
-        { sessionId, filter: ['pending'], offset: 1, limit: 1, output: outputPath },
+      const result = await executeReviewExtract(
+        { sessionId, filter: ['pending'], offset: 1, limit: 1, name: 'batch' },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const extracted = parseYaml(content) as ReviewFile;
       expect(extracted.articles).toHaveLength(1);
       expect(extracted.articles[0]!.title).toBe('Pending Article B');
@@ -224,36 +263,33 @@ describe('executeReviewExtract', () => {
   });
 
   describe('output file', () => {
-    it('creates output directory if it does not exist', async () => {
+    it('creates for-review directory if it does not exist', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'nested', 'deep', 'batch.yaml');
 
-      await executeReviewExtract(
-        { sessionId, output: outputPath },
+      const result = await executeReviewExtract(
+        { sessionId, name: 'new-review' },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       expect(content).toContain('sessionId');
     });
 
     it('includes schema reference comment in output', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
-      await executeReviewExtract(
-        { sessionId, output: outputPath },
+      const result = await executeReviewExtract(
+        { sessionId, name: 'batch' },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       expect(content).toContain('yaml-language-server');
       expect(content).toContain('review.schema.json');
     });
 
     it('copies schema file alongside YAML output', async () => {
       await writeReviewFile(sampleArticles);
-      const outputPath = join(tempDir, 'output', 'batch.yaml');
 
       // First, ensure we have a schema file to copy
       const schemasDir = join(dirname(sessionsDir), '.search-hub', 'schemas');
@@ -263,12 +299,12 @@ describe('executeReviewExtract', () => {
         JSON.stringify({ $schema: 'http://json-schema.org/draft-07/schema#', title: 'Review File' })
       );
 
-      await executeReviewExtract(
-        { sessionId, output: outputPath },
+      const result = await executeReviewExtract(
+        { sessionId, name: 'batch' },
         sessionsDir
       );
 
-      const schemaPath = join(tempDir, 'output', 'review.schema.json');
+      const schemaPath = join(dirname(result.outputPath), 'review.schema.json');
       await access(schemaPath); // Should not throw
       const schemaContent = await readFile(schemaPath, 'utf-8');
       expect(schemaContent).toContain('json-schema.org');
@@ -278,10 +314,9 @@ describe('executeReviewExtract', () => {
   it('throws error if reviews.yaml does not exist', async () => {
     const sessionDir = join(sessionsDir, sessionId);
     await mkdir(sessionDir, { recursive: true });
-    const outputPath = join(tempDir, 'output', 'batch.yaml');
 
     await expect(
-      executeReviewExtract({ sessionId, output: outputPath }, sessionsDir)
+      executeReviewExtract({ sessionId, name: 'batch' }, sessionsDir)
     ).rejects.toThrow();
   });
 
@@ -303,19 +338,18 @@ describe('executeReviewExtract', () => {
 
     it('extracts with --basis title outputs only id and title', async () => {
       await writeReviewFile(articlesWithAbstracts);
-      const outputPath = join(tempDir, 'output', 'phase1.yaml');
 
-      await executeReviewExtract(
+      const result = await executeReviewExtract(
         {
           sessionId,
           basis: 'title',
           reviewer: 'ai:claude',
-          output: outputPath,
+          name: 'phase1',
         },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const workFile = parseYaml(content) as WorkFile;
 
       expect(workFile.sessionId).toBe(sessionId);
@@ -331,19 +365,18 @@ describe('executeReviewExtract', () => {
 
     it('extracts with --basis abstract outputs id, title, and abstract', async () => {
       await writeReviewFile(articlesWithAbstracts);
-      const outputPath = join(tempDir, 'output', 'phase2.yaml');
 
-      await executeReviewExtract(
+      const result = await executeReviewExtract(
         {
           sessionId,
           basis: 'abstract',
           reviewer: 'ai:claude',
-          output: outputPath,
+          name: 'phase2',
         },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const workFile = parseYaml(content) as WorkFile;
 
       expect(workFile.basis).toBe('abstract');
@@ -359,14 +392,13 @@ describe('executeReviewExtract', () => {
         { title: 'Scopus Article', scopusId: 'S3', reviews: [] },
       ];
       await writeReviewFile(articles);
-      const outputPath = join(tempDir, 'output', 'ids.yaml');
 
-      await executeReviewExtract(
-        { sessionId, basis: 'title', reviewer: 'ai:test', output: outputPath },
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'title', reviewer: 'ai:test', name: 'ids' },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const workFile = parseYaml(content) as WorkFile;
 
       expect(workFile.articles[0]!.id).toBe('10.1234/doi');
@@ -380,20 +412,19 @@ describe('executeReviewExtract', () => {
         { title: 'Reviewed 1', pmid: '11', reviews: [{ reviewer: 'human', decision: 'include' }] },
       ];
       await writeReviewFile(mixedArticles);
-      const outputPath = join(tempDir, 'output', 'filtered.yaml');
 
-      await executeReviewExtract(
+      const result = await executeReviewExtract(
         {
           sessionId,
           filter: ['pending'],
           basis: 'title',
           reviewer: 'ai:claude',
-          output: outputPath,
+          name: 'filtered',
         },
         sessionsDir
       );
 
-      const content = await readFile(outputPath, 'utf-8');
+      const content = await readFile(result.outputPath, 'utf-8');
       const workFile = parseYaml(content) as WorkFile;
 
       expect(workFile.articles).toHaveLength(1);
