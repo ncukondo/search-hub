@@ -55,17 +55,17 @@
 
 ### Step 3: Phase 2 - Search Execution の suggestion ルール
 
-- [ ] Write test: suggestion rules for `search` (各モード)
+- [x] Write test: suggestion rules for `search` (各モード)
   - `--dry-run`, `--preview`, `--count-only`: Static な suggestion
   - 全文検索: completed → `results`, partial → `resume`, failed → `resume --retry-failed`
   - `--query` 直接モード: YAML化推奨の追加
   - 他セッション存在時の `diff` 提案 (Conditional)
-- [ ] Implement rules
-- [ ] Implement conditions: `src/cli/suggestions/conditions.ts`
+- [x] Implement rules
+- [x] Implement conditions: `src/cli/suggestions/conditions.ts`
   - `hasOtherSessions()`: 他セッションの存在チェック
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: search 系コマンドの suggestion が仕様通り
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: search 系コマンドの suggestion が仕様通り
 
 ### Step 4: Phase 3 - Result Analysis の suggestion ルール
 

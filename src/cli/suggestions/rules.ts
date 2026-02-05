@@ -43,6 +43,100 @@ const queryTranslateRule: SuggestionRule = (ctx) => {
   };
 };
 
+// Phase 2: Search Execution rules
+
+/**
+ * Build search completion suggestions based on session status.
+ * Shared by search, search --query, and resume commands.
+ */
+function searchCompletionSuggestion(ctx: SuggestionContext): SuggestionResult | null {
+  const sid = ctx.sessionId ?? '<session-id>';
+
+  switch (ctx.sessionStatus) {
+    case 'completed': {
+      const seeAlso: SuggestionResult['seeAlso'] = [];
+      if (ctx.sessionCount !== undefined && ctx.sessionCount > 1) {
+        seeAlso.push({
+          command: `search-hub diff <other-session> ${sid}`,
+          description: 'Compare with another query version',
+        });
+      }
+      return {
+        next: [{ command: `search-hub results ${sid}`, description: 'View results' }],
+        seeAlso,
+      };
+    }
+    case 'partial':
+      return {
+        next: [{ command: `search-hub resume ${sid}`, description: 'Retry failed databases' }],
+        seeAlso: [],
+      };
+    case 'failed':
+      return {
+        next: [
+          { command: `search-hub resume ${sid} --retry-failed`, description: 'Retry all databases' },
+          { command: `search-hub status ${sid}`, description: 'View error details' },
+        ],
+        seeAlso: [],
+      };
+    default:
+      return null;
+  }
+}
+
+const searchDryRunRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'search --dry-run') return null;
+  const file = ctx.queryFile ?? '<query-file>';
+  return {
+    next: [
+      { command: `search-hub search ${file} --preview`, description: 'Preview hit counts + sample titles' },
+      { command: `search-hub search ${file}`, description: 'Execute search' },
+    ],
+    seeAlso: [],
+  };
+};
+
+const searchPreviewRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'search --preview') return null;
+  const file = ctx.queryFile ?? '<query-file>';
+  return {
+    next: [{ command: `search-hub search ${file}`, description: 'Execute full search' }],
+    seeAlso: [],
+  };
+};
+
+const searchCountOnlyRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'search --count-only') return null;
+  const file = ctx.queryFile ?? '<query-file>';
+  return {
+    next: [{ command: `search-hub search ${file}`, description: 'Execute full search' }],
+    seeAlso: [],
+  };
+};
+
+const searchDirectQueryRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'search --query') return null;
+  const base = searchCompletionSuggestion(ctx);
+  if (base === null) return null;
+  return {
+    next: base.next,
+    seeAlso: [
+      ...base.seeAlso,
+      { command: 'search-hub query init -o my-search.yaml', description: 'Save as YAML for reproducibility' },
+    ],
+  };
+};
+
+const searchRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'search') return null;
+  return searchCompletionSuggestion(ctx);
+};
+
+const resumeRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'resume') return null;
+  return searchCompletionSuggestion(ctx);
+};
+
 /**
  * All suggestion rules in evaluation order.
  */
@@ -51,6 +145,13 @@ const rules: SuggestionRule[] = [
   queryInitRule,
   queryValidateRule,
   queryTranslateRule,
+  // Phase 2
+  searchDryRunRule,
+  searchPreviewRule,
+  searchCountOnlyRule,
+  searchDirectQueryRule,
+  searchRule,
+  resumeRule,
 ];
 
 /**
