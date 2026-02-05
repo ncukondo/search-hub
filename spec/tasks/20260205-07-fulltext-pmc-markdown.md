@@ -26,18 +26,18 @@ Implement conversion of PMC JATS XML to Markdown format:
 
 ### Step 1: JATS XML Parser - Metadata
 
-- [ ] Write test: `src/fulltext/convert/jats-parser.test.ts`
+- [x] Write test: `src/fulltext/convert/jats-parser.test.ts`
   - Test: Extracts title from `<article-title>`
   - Test: Extracts authors from `<contrib-group>`
   - Test: Extracts DOI from `<article-id pub-id-type="doi">`
   - Test: Extracts PMCID from `<article-id pub-id-type="pmc">`
   - Test: Extracts abstract from `<abstract>`
-- [ ] Create stub: `src/fulltext/convert/jats-parser.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `parseJatsMetadata(xml)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Metadata extraction works
+- [x] Create stub: `src/fulltext/convert/jats-parser.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `parseJatsMetadata(xml)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Metadata extraction works
 
 ### Step 2: JATS XML Parser - Body Sections
 
