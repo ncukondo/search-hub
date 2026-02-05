@@ -69,15 +69,15 @@
 
 ### Step 4: Phase 3 - Result Analysis の suggestion ルール
 
-- [ ] Write test: suggestion rules for `status`, `results`, `summary`, `diff`
+- [x] Write test: suggestion rules for `status`, `results`, `summary`, `diff`
   - `results` / `summary`: reviews.yaml 有無で分岐 (Conditional)
   - `status`: セッション状態で分岐 (State-dependent)
   - `diff`: Static な See also
-- [ ] Implement rules and conditions
+- [x] Implement rules and conditions
   - `hasReviewFile()`: reviews.yaml の存在チェック
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: result analysis 系コマンドの suggestion が仕様通り
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: result analysis 系コマンドの suggestion が仕様通り
 
 ### Step 5: CLI コマンドへの統合と既存 tip の置き換え
 

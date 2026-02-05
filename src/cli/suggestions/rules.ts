@@ -137,6 +137,69 @@ const resumeRule: SuggestionRule = (ctx) => {
   return searchCompletionSuggestion(ctx);
 };
 
+// Phase 3: Result Analysis rules
+
+const statusRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'status') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+
+  switch (ctx.sessionStatus) {
+    case 'completed':
+      return {
+        next: [{ command: `search-hub results ${sid}`, description: 'View results' }],
+        seeAlso: [],
+      };
+    case 'partial':
+      return {
+        next: [{ command: `search-hub resume ${sid}`, description: 'Resume search' }],
+        seeAlso: [],
+      };
+    case 'failed':
+      return {
+        next: [{ command: `search-hub resume ${sid} --retry-failed`, description: 'Retry all databases' }],
+        seeAlso: [],
+      };
+    default:
+      return null;
+  }
+};
+
+/**
+ * Suggestion for results/summary commands - conditional based on reviews.yaml existence.
+ */
+function resultReviewSuggestion(ctx: SuggestionContext): SuggestionResult {
+  const sid = ctx.sessionId ?? '<session-id>';
+  if (ctx.hasReviews === true) {
+    return {
+      next: [{ command: `search-hub review status --session ${sid}`, description: 'Check review progress' }],
+      seeAlso: [],
+    };
+  }
+  return {
+    next: [{ command: `search-hub review init --session ${sid}`, description: 'Start systematic review' }],
+    seeAlso: [],
+  };
+}
+
+const resultsRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'results') return null;
+  return resultReviewSuggestion(ctx);
+};
+
+const summaryRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'summary') return null;
+  return resultReviewSuggestion(ctx);
+};
+
+const diffRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'diff') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  return {
+    next: [],
+    seeAlso: [{ command: `search-hub results ${sid}`, description: 'View detailed results' }],
+  };
+};
+
 /**
  * All suggestion rules in evaluation order.
  */
@@ -152,6 +215,11 @@ const rules: SuggestionRule[] = [
   searchDirectQueryRule,
   searchRule,
   resumeRule,
+  // Phase 3
+  statusRule,
+  resultsRule,
+  summaryRule,
+  diffRule,
 ];
 
 /**

@@ -214,4 +214,116 @@ describe('getSuggestion', () => {
       });
     });
   });
+
+  describe('Phase 3: Result Analysis', () => {
+    describe('status (completed)', () => {
+      it('should suggest results', () => {
+        const ctx: SuggestionContext = {
+          command: 'status',
+          sessionId: 'my-session',
+          sessionStatus: 'completed',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('results');
+        expect(result!.next[0]!.command).toContain('my-session');
+      });
+    });
+
+    describe('status (partial)', () => {
+      it('should suggest resume', () => {
+        const ctx: SuggestionContext = {
+          command: 'status',
+          sessionId: 'my-session',
+          sessionStatus: 'partial',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('resume');
+      });
+    });
+
+    describe('status (failed)', () => {
+      it('should suggest resume --retry-failed', () => {
+        const ctx: SuggestionContext = {
+          command: 'status',
+          sessionId: 'my-session',
+          sessionStatus: 'failed',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('resume');
+        expect(result!.next[0]!.command).toContain('--retry-failed');
+      });
+    });
+
+    describe('results', () => {
+      it('should suggest review init when no reviews', () => {
+        const ctx: SuggestionContext = {
+          command: 'results',
+          sessionId: 'my-session',
+          hasReviews: false,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('review init');
+      });
+
+      it('should suggest review status when reviews exist', () => {
+        const ctx: SuggestionContext = {
+          command: 'results',
+          sessionId: 'my-session',
+          hasReviews: true,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('review status');
+      });
+    });
+
+    describe('summary', () => {
+      it('should suggest review init when no reviews', () => {
+        const ctx: SuggestionContext = {
+          command: 'summary',
+          sessionId: 'my-session',
+          hasReviews: false,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('review init');
+      });
+
+      it('should suggest review status when reviews exist', () => {
+        const ctx: SuggestionContext = {
+          command: 'summary',
+          sessionId: 'my-session',
+          hasReviews: true,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('review status');
+      });
+    });
+
+    describe('diff', () => {
+      it('should suggest results as see also', () => {
+        const ctx: SuggestionContext = {
+          command: 'diff',
+          sessionId: 'my-session',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(0);
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toContain('results');
+      });
+    });
+  });
 });
