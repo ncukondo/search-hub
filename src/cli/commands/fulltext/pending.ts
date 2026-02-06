@@ -14,7 +14,7 @@ import type { ReviewFile, ArticleEntry } from '../review/types.js';
 export interface FulltextPendingOptions {
   sessionDir: string;
   format?: 'table' | 'json';
-  exportPath?: string;
+  exportPath?: string | undefined;
 }
 
 export interface PendingArticle {
