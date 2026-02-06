@@ -170,6 +170,62 @@ describe('discoverOA', () => {
     );
   });
 
+  it('checks sources in preferSources order', async () => {
+    const callOrder: string[] = [];
+    mockCheckPmc.mockImplementation(async () => {
+      callOrder.push('pmc');
+      return null;
+    });
+    mockCheckArxiv.mockImplementation(() => {
+      callOrder.push('arxiv');
+      return null;
+    });
+    mockCheckUnpaywall.mockImplementation(async () => {
+      callOrder.push('unpaywall');
+      return null;
+    });
+    mockCheckCore.mockImplementation(async () => {
+      callOrder.push('core');
+      return null;
+    });
+
+    // Reverse order: core, unpaywall, arxiv, pmc
+    await discoverOA(
+      { ...baseArticle, arxivId: '2401.12345' },
+      { ...baseConfig, coreApiKey: 'test-key', preferSources: ['core', 'unpaywall', 'arxiv', 'pmc'] }
+    );
+
+    expect(callOrder).toEqual(['core', 'unpaywall', 'arxiv', 'pmc']);
+  });
+
+  it('uses default order when preferSources is empty', async () => {
+    const callOrder: string[] = [];
+    mockCheckPmc.mockImplementation(async () => {
+      callOrder.push('pmc');
+      return null;
+    });
+    mockCheckArxiv.mockImplementation(() => {
+      callOrder.push('arxiv');
+      return null;
+    });
+    mockCheckUnpaywall.mockImplementation(async () => {
+      callOrder.push('unpaywall');
+      return null;
+    });
+    mockCheckCore.mockImplementation(async () => {
+      callOrder.push('core');
+      return null;
+    });
+
+    await discoverOA(
+      { ...baseArticle, arxivId: '2401.12345' },
+      { ...baseConfig, coreApiKey: 'test-key', preferSources: [] }
+    );
+
+    // Default order: pmc, arxiv, unpaywall, core
+    expect(callOrder).toEqual(['pmc', 'arxiv', 'unpaywall', 'core']);
+  });
+
   it('returns unknown status when all sources error', async () => {
     mockCheckPmc.mockRejectedValue(new Error('PMC error'));
     mockCheckArxiv.mockReturnValue(null);

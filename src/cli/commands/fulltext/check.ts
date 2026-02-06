@@ -20,7 +20,7 @@ export interface FulltextCheckArticleResult {
   doi?: string;
   pmid?: string;
   title: string;
-  oaStatus: string;
+  oaStatus: OAStatus;
   locationCount: number;
 }
 
@@ -114,7 +114,7 @@ export async function executeFulltextCheck(
     results.push(articleResult);
 
     // Update summary
-    switch (discoveryResult.oaStatus as OAStatus) {
+    switch (discoveryResult.oaStatus) {
       case 'open':
         summary.open++;
         break;
