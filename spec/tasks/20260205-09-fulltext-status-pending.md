@@ -13,7 +13,7 @@ Implement utility commands for fulltext management:
 ## Related Source Files
 
 - `src/fulltext/types.ts` - From Task 59
-- `src/fulltext/index-manager.ts` - From Task 59
+- `src/fulltext/meta.ts` - From Task 59
 - `src/cli/commands/fulltext/status.ts` (new)
 - `src/cli/commands/fulltext/pending.ts` (new)
 
@@ -133,6 +133,6 @@ https://repository.edu/paper.pdf
 
 ## Notes
 
-- Status counts based on fulltext-index.json and reviews.yaml
+- Status counts based on meta.json scanning and reviews.yaml
 - Pending shows DOI link as fallback when no OA URL available
 - Export format designed for easy manual batch download
