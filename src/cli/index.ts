@@ -93,9 +93,6 @@ import {
 } from './commands/diff.js';
 
 import {
-  executeFulltextConvert,
-} from './commands/fulltext/convert.js';
-import {
   executeReviewInit,
   type ReviewInitOptions,
 } from './commands/review/init.js';
@@ -132,6 +129,7 @@ import {
   type ExportFilter as ReviewExportFilter,
 } from './commands/review/export.js';
 import { type ReviewStatus } from './commands/review/types.js';
+import { registerFulltextCommands } from './commands/fulltext/index.js';
 
 import {
   parseRegisterOptions,
@@ -2132,49 +2130,8 @@ Examples:
       }
     });
 
-  // === Fulltext Commands ===
-  const fulltextCommand = program
-    .command('fulltext')
-    .description('Fulltext management: retrieval, conversion, attachment');
-
-  fulltextCommand
-    .command('convert')
-    .description('Convert PMC XML files to Markdown')
-    .argument('<session-id>', 'session ID')
-    .option('--article <dir>', 'convert specific article directory')
-    .action(async (sessionId: string, options?: { article?: string }) => {
-      const globalOpts = program.opts() as GlobalOptions;
-      try {
-        const sessionsDir = await getSessionsDir(globalOpts);
-
-        if (!(await sessionExists(sessionId, sessionsDir))) {
-          if (!globalOpts.quiet) {
-            console.error(`Error: session '${sessionId}' not found`);
-          }
-          process.exitCode = EXIT_CODES.SESSION_ERROR;
-          return;
-        }
-
-        const convertOpts: Parameters<typeof executeFulltextConvert>[0] = { sessionId };
-        if (options?.article) convertOpts.article = options.article;
-        const result = await executeFulltextConvert(convertOpts, sessionsDir);
-
-        if (!globalOpts.quiet) {
-          console.log(`Converted: ${result.converted}  Skipped: ${result.skipped}  Failed: ${result.failed}`);
-          for (const article of result.articles) {
-            const icon = article.status === 'converted' ? '+' : article.status === 'skipped' ? '-' : '!';
-            console.log(`  [${icon}] ${article.dirName}: ${article.title}`);
-          }
-        }
-
-        process.exitCode = result.success ? EXIT_CODES.SUCCESS : EXIT_CODES.SESSION_ERROR;
-      } catch (error) {
-        if (!globalOpts.quiet) {
-          console.error('Error:', error instanceof Error ? error.message : error);
-        }
-        process.exitCode = EXIT_CODES.SESSION_ERROR;
-      }
-    });
+  // Register fulltext command group (init, sync, convert)
+  registerFulltextCommands(program, getSessionsDir);
 
   return program;
 }
