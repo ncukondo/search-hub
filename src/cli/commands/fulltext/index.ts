@@ -7,6 +7,7 @@ import { executeFulltextInit } from './init.js';
 import { executeFulltextSync } from './sync.js';
 import { executeFulltextConvert } from './convert.js';
 import { executeFulltextCheck } from './check.js';
+import { executeFulltextAttach } from './attach.js';
 import { formatInitOutput, formatSyncOutput } from './format.js';
 import type { GlobalOptions } from '../../index.js';
 import { EXIT_CODES } from '../../exit-codes.js';
@@ -28,7 +29,9 @@ Examples:
   $ search-hub fulltext sync SESSION_ID               # Detect and register added files
   $ search-hub fulltext sync SESSION_ID --dry-run     # Preview what would be synced
   $ search-hub fulltext convert SESSION_ID            # Convert PMC XML to Markdown
-  $ search-hub fulltext check --session SESSION_ID   # Check OA availability`);
+  $ search-hub fulltext check --session SESSION_ID   # Check OA availability
+  $ search-hub fulltext attach SESSION_ID             # Attach fulltexts to ref entries
+  $ search-hub fulltext attach SESSION_ID --dry-run   # Preview what would be attached`);
 
   fulltextCommand
     .command('init')
@@ -128,6 +131,58 @@ Examples:
       } catch (error) {
         if (!globalOpts.quiet) {
           console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  fulltextCommand
+    .command('attach')
+    .description('Attach fulltext files to reference-manager entries')
+    .argument('<session-id>', 'session ID')
+    .option('--dry-run', 'show what would be attached without attaching', false)
+    .action(async (sessionId: string, options: { dryRun: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const sessionDir = join(sessionsDir, sessionId);
+
+        const result = await executeFulltextAttach({
+          sessionDir,
+          dryRun: options.dryRun,
+        });
+
+        if (!globalOpts.quiet) {
+          const prefix = options.dryRun ? 'Would attach' : 'Attached';
+          console.log(`\nFulltext ${prefix.toLowerCase()}:`);
+          if (result.summary.attached > 0) {
+            const totalFiles = result.attached.reduce((sum, a) => sum + a.files.length, 0);
+            console.log(`  ✓ ${result.summary.attached} articles (${totalFiles} files)`);
+            for (const item of result.attached) {
+              console.log(`    ${item.refId}: ${item.files.join(', ')}`);
+            }
+          }
+          if (result.summary.skipped > 0) {
+            console.log(`  ⚠ ${result.summary.skipped} skipped`);
+          }
+          if (result.summary.failed > 0) {
+            console.log(`  ✗ ${result.summary.failed} failed`);
+            for (const item of result.failed) {
+              console.log(`    ${item.dirName}: ${item.reason}`);
+            }
+          }
+          if (result.summary.total === 0) {
+            console.log('  No fulltext directories found.');
+          }
+        }
+
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error(
+            'Error:',
+            error instanceof Error ? error.message : error,
+          );
         }
         process.exitCode = EXIT_CODES.SESSION_ERROR;
       }
