@@ -8,6 +8,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFile } from 'node:fs/promises';
+import { parse as parseYaml } from 'yaml';
 import { join } from 'node:path';
 import {
   setupE2EContext,
@@ -303,10 +304,10 @@ describe('Scopus authentication diagnostics E2E', () => {
       expect(result.error).toContain('401');
       expect(result.error).toContain('dev.elsevier.com');
 
-      // Verify session.json reflects the failure
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      // Verify session.yaml reflects the failure
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.databases.scopus.status).toBe('failed');
       expect(session.databases.scopus.error).toBeDefined();
@@ -371,10 +372,10 @@ describe('Scopus authentication diagnostics E2E', () => {
       expect(result.error).toContain('403');
       expect(result.error).toContain('access denied');
 
-      // Verify session.json reflects the failure
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      // Verify session.yaml reflects the failure
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.databases.scopus.status).toBe('failed');
       expect(session.databases.scopus.error).toBeDefined();
@@ -433,9 +434,9 @@ describe('Scopus authentication diagnostics E2E', () => {
       expect(result.results?.['scopus']?.error).toContain('401');
 
       // Verify session reflects partial success
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.databases.pubmed.status).toBe('completed');
       expect(session.databases.scopus.status).toBe('failed');

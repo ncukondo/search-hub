@@ -23,7 +23,7 @@ Use directory-based storage with JSON Lines format:
 ```
 <data-dir>/sessions/  # Platform-specific, e.g., ~/.local/share/search-hub/sessions on Linux
 └── {session-id}/
-    ├── session.json      # Metadata and status
+    ├── session.yaml      # Metadata and status
     ├── query_*.txt       # Translated queries
     ├── results_*.jsonl   # Results (append-only)
     └── log.jsonl         # Event log

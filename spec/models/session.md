@@ -11,7 +11,7 @@ Default location is `<data-dir>/sessions/` (platform-specific, see [config.md](c
 ```
 <data-dir>/sessions/
 └── {session-id}/
-    ├── session.json              # Session metadata & status
+    ├── session.yaml              # Session metadata & status
     ├── query_common.yaml         # Original query file (copy)
     ├── query_pubmed.txt          # Translated PubMed query
     ├── query_eric.txt            # Translated ERIC query
@@ -34,7 +34,7 @@ Default location is `<data-dir>/sessions/` (platform-specific, see [config.md](c
 
 Example: `20240115_diabetes-ai-scoping_a3f2c1`
 
-## session.json Schema
+## session.yaml Schema
 
 The session file contains:
 
@@ -106,7 +106,7 @@ Event log for debugging and audit (JSON Lines):
 
 ## Resume Logic
 
-1. Load `session.json`
+1. Load `session.yaml`
 2. Find DBs with `status != 'completed'`
 3. For each:
    - If `status == 'failed'` and `error.retryable`: retry from start

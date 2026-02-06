@@ -30,6 +30,7 @@ import { executePreview } from './search-executor.js';
 import { detectShortKeywords } from '../../query/parser.js';
 import type { ProviderName } from '../../session/types.js';
 import { translateQueryCommand } from './query/translate.js';
+import { parse as parseYaml } from 'yaml';
 
 describe('search-hub search --dry-run E2E', () => {
   let ctx: E2EContext;
@@ -646,10 +647,10 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       const dirStat = await stat(sessionDir);
       expect(dirStat.isDirectory()).toBe(true);
 
-      // Verify session.json exists
-      const sessionPath = join(sessionDir, 'session.json');
+      // Verify session.yaml exists
+      const sessionPath = join(sessionDir, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
       expect(session.id).toBe(result.sessionId);
     });
 
@@ -707,7 +708,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       expect(article2.pmid).toBe('12345679');
     });
 
-    it('should update database status in session.json', async () => {
+    it('should update database status in session.yaml', async () => {
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
       const config = getDefaultConfig();
       config.providers.pubmed.enabled = true;
@@ -724,9 +725,9 @@ describe('search-hub search (Live with Mock API) E2E', () => {
 
       expect(result.success).toBe(true);
 
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.databases.pubmed.status).toBe('completed');
       expect(session.databases.pubmed.retrievedCount).toBe(2);
@@ -774,9 +775,9 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('All providers failed');
 
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.databases.eric.status).toBe('failed');
       expect(session.databases.eric.error).toBeDefined();
@@ -890,9 +891,9 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
       expect(result.results?.['eric']?.retrieved).toBe(0);
 
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.databases.pubmed.status).toBe('completed');
       expect(session.databases.eric.status).toBe('failed');
@@ -1242,10 +1243,10 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       expect(result.success).toBe(true);
       expect(result.sessionId).toBeDefined();
 
-      // Read session.json and verify status is 'completed', not 'failed'
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      // Read session.yaml and verify status is 'completed', not 'failed'
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.summary.status).toBe('completed');
       // The individual database status should also be 'completed'
@@ -1300,9 +1301,9 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
 
       expect(result.success).toBe(true);
 
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       // Session overall status should be 'completed' (not 'failed' or 'partial')
       expect(session.summary.status).toBe('completed');
@@ -1370,9 +1371,9 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       // This confirms that zero-result WITHOUT error is different from failure WITH error.
       expect(result.sessionId).toBeDefined();
 
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       // PubMed completed successfully (zero results, no error)
       expect(session.databases.pubmed.status).toBe('completed');
@@ -1595,9 +1596,9 @@ describe('search-hub search: skip unconfigured providers E2E', () => {
       expect(result.results?.['scopus']).toBeUndefined();
 
       // Session should be completed (not partial)
-      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(ctx.sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
       expect(session.summary.status).toBe('completed');
 
       // Verify skip warning

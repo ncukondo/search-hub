@@ -3,6 +3,7 @@ import { mkdir, rm, readFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
+import { parse as parseYaml } from 'yaml';
 import {
   generateSessionId,
   sanitizeName,
@@ -134,13 +135,13 @@ describe('Session Manager', () => {
       await expect(access(sessionDir)).resolves.toBeUndefined();
     });
 
-    it('should create session.json with correct initial state', async () => {
+    it('should create session.yaml with correct initial state', async () => {
       const options = createTestOptions();
       const session = await createSession(options);
 
-      const sessionJsonPath = join(testDir, session.id, 'session.json');
+      const sessionJsonPath = join(testDir, session.id, 'session.yaml');
       const content = await readFile(sessionJsonPath, 'utf-8');
-      const sessionFile: SessionFile = JSON.parse(content);
+      const sessionFile: SessionFile = parseYaml(content);
 
       expect(sessionFile.version).toBe(1);
       expect(sessionFile.id).toBe(session.id);
@@ -169,9 +170,9 @@ describe('Session Manager', () => {
       });
       const session = await createSession(options);
 
-      const sessionJsonPath = join(testDir, session.id, 'session.json');
+      const sessionJsonPath = join(testDir, session.id, 'session.yaml');
       const content = await readFile(sessionJsonPath, 'utf-8');
-      const sessionFile: SessionFile = JSON.parse(content);
+      const sessionFile: SessionFile = parseYaml(content);
 
       expect(sessionFile.databases.pubmed?.status).toBe('pending');
       expect(sessionFile.databases.eric?.status).toBe('pending');
@@ -187,9 +188,9 @@ describe('Session Manager', () => {
       const options = createTestOptions();
       const session = await createSession(options);
 
-      const sessionJsonPath = join(testDir, session.id, 'session.json');
+      const sessionJsonPath = join(testDir, session.id, 'session.yaml');
       const content = await readFile(sessionJsonPath, 'utf-8');
-      const sessionFile: SessionFile = JSON.parse(content);
+      const sessionFile: SessionFile = parseYaml(content);
 
       const isoPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
       expect(sessionFile.createdAt).toMatch(isoPattern);
@@ -202,9 +203,9 @@ describe('Session Manager', () => {
       });
       const session = await createSession(options);
 
-      const sessionJsonPath = join(testDir, session.id, 'session.json');
+      const sessionJsonPath = join(testDir, session.id, 'session.yaml');
       const content = await readFile(sessionJsonPath, 'utf-8');
-      const sessionFile: SessionFile = JSON.parse(content);
+      const sessionFile: SessionFile = parseYaml(content);
 
       expect(sessionFile.description).toBe('A test session for testing');
     });

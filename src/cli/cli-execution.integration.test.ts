@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtemp, rm, writeFile, readFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { stringify as stringifyYaml } from 'yaml';
 import type { SessionFile } from '../session/types.js';
 
 // Note: Search and resume execution tests are covered in:
@@ -235,7 +236,7 @@ filters: {}
           status: 'completed',
         },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       const program = createProgram();
       program.exitOverride();
@@ -283,7 +284,7 @@ filters: {}
           status: 'completed',
         },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       const program = createProgram();
       program.exitOverride();
@@ -388,7 +389,7 @@ filters: {}
           status: 'completed',
         },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       // Create results file
       const article1 = { title: 'Article 1', authors: [], pmid: '12345', doi: '10.1234/test1', source: 'pubmed', retrievedAt: new Date().toISOString() };
@@ -445,7 +446,7 @@ filters: {}
           status: 'completed',
         },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       // Create results file
       const article = { title: 'Article', authors: [], pmid: '12345', doi: '10.1234/test', source: 'pubmed', retrievedAt: new Date().toISOString() };

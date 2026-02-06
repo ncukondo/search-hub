@@ -9,6 +9,7 @@ import type { ResumeCommandOptions } from './resume.js';
 import type { Config } from '../../config/index.js';
 import { getDefaultConfig } from '../../config/index.js';
 import type { Article } from '../../providers/base/types.js';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { SessionFile } from '../../session/types.js';
 
 // Mock provider module
@@ -180,7 +181,7 @@ describe('resume-executor', () => {
         status: 'running',
       },
     };
-    await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+    await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
     // Create query file
     await writeFile(join(sessionDir, 'pubmed_query.txt'), 'diabetes[tiab]', 'utf-8');
@@ -257,7 +258,7 @@ describe('resume-executor', () => {
           status: 'completed',
         },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       const options: ResumeCommandOptions = {
         sessionId,
@@ -308,7 +309,7 @@ describe('resume-executor', () => {
           status: 'failed',
         },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       const options: ResumeCommandOptions = {
         sessionId,
@@ -363,7 +364,7 @@ describe('resume-executor', () => {
           status: 'running',
         },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
       await writeFile(join(sessionDir, 'eric_query.txt'), 'diabetes', 'utf-8');
       await writeFile(join(sessionDir, 'eric_results.jsonl'), '', 'utf-8');
 
@@ -392,9 +393,9 @@ describe('resume-executor', () => {
       expect(result.success).toBe(true);
 
       // Check session file was updated
-      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionPath = join(sessionsDir, sessionId, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.databases.pubmed.status).toBe('completed');
     });
@@ -469,7 +470,7 @@ describe('resume-executor', () => {
           status: 'failed',
         },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       const options: ResumeCommandOptions = {
         sessionId,
@@ -484,9 +485,9 @@ describe('resume-executor', () => {
       }
 
       // Check that the session file records the actual error message, not [object Object]
-      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionPath = join(sessionsDir, sessionId, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const updatedSession = JSON.parse(sessionContent);
+      const updatedSession = parseYaml(sessionContent);
 
       expect(updatedSession.databases.pubmed.status).toBe('failed');
       expect(updatedSession.databases.pubmed.error.message).not.toBe('[object Object]');
@@ -537,7 +538,7 @@ describe('resume-executor', () => {
         },
         summary: { totalHits: 0, totalRetrieved: 0, status: 'failed' },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       const options: ResumeCommandOptions = { sessionId, retryFailed: true };
       await executeResume(options, sessionsDir, config, false);
@@ -548,9 +549,9 @@ describe('resume-executor', () => {
       }
 
       // Verify session file shows failed status
-      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionPath = join(sessionsDir, sessionId, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const updatedSession = JSON.parse(sessionContent);
+      const updatedSession = parseYaml(sessionContent);
       expect(updatedSession.databases.pubmed.status).toBe('failed');
       expect(updatedSession.summary.status).toBe('failed');
       expect(updatedSession.databases.pubmed.error.message).toBe('API rate limit exceeded');
@@ -594,7 +595,7 @@ describe('resume-executor', () => {
         },
         summary: { totalHits: 0, totalRetrieved: 0, status: 'failed' },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       const options: ResumeCommandOptions = { sessionId, retryFailed: true };
       const result = await executeResume(options, sessionsDir, config, false);
@@ -604,9 +605,9 @@ describe('resume-executor', () => {
       expect(result.results?.['pubmed']?.retrieved).toBe(0);
       expect(result.results?.['pubmed']?.error).toBeUndefined();
 
-      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionPath = join(sessionsDir, sessionId, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const updatedSession = JSON.parse(sessionContent);
+      const updatedSession = parseYaml(sessionContent);
       expect(updatedSession.summary.status).toBe('completed');
     });
 
@@ -637,7 +638,7 @@ describe('resume-executor', () => {
         },
         summary: { totalHits: 0, totalRetrieved: 0, status: 'failed' },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
       await writeFile(join(sessionDir, 'scopus_query.txt'), 'diabetes', 'utf-8');
       await writeFile(join(sessionDir, 'scopus_results.jsonl'), '', 'utf-8');
 
@@ -649,9 +650,9 @@ describe('resume-executor', () => {
       warnSpy.mockRestore();
 
       // Verify database status was updated with CONFIG_ERROR
-      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      const sessionPath = join(sessionsDir, sessionId, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const updatedSession = JSON.parse(sessionContent);
+      const updatedSession = parseYaml(sessionContent);
 
       expect(updatedSession.databases.scopus.status).toBe('failed');
       expect(updatedSession.databases.scopus.error.code).toBe('CONFIG_ERROR');
@@ -697,10 +698,10 @@ describe('resume-executor', () => {
       const yamlContent = await readFile(yamlPath, 'utf-8');
       expect(yamlContent).toMatch(/^# Results: pubmed/);
 
-      // Check session.json has resultsYaml
-      const sessionPath = join(sessionsDir, sessionId, 'session.json');
+      // Check session.yaml has resultsYaml
+      const sessionPath = join(sessionsDir, sessionId, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
       expect(session.databases.pubmed.files.resultsYaml).toBe('pubmed_results.yaml');
     });
 
@@ -775,7 +776,7 @@ describe('resume-executor', () => {
         },
         summary: { totalHits: 0, totalRetrieved: 0, status: 'failed' },
       };
-      await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+      await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
       await writeFile(join(sessionDir, 'eric_query.txt'), 'diabetes', 'utf-8');
       await writeFile(join(sessionDir, 'eric_results.jsonl'), '', 'utf-8');
 

@@ -261,7 +261,7 @@ See also:
 
 ```
 sessions/<session-id>/
-├── session.json
+├── session.yaml
 ├── .internal/reviews.yaml            ← マスター
 └── for-review/
     ├── title-screening/

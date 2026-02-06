@@ -124,7 +124,7 @@ search-hub/
 5. Session Persistence
    ├── Save translated queries
    ├── Save results per DB
-   └── Update session.json status
+   └── Update session.yaml status
 
 6. Output
    └── Display summary / progress
@@ -153,7 +153,7 @@ search-hub/
 | Parse error | Log error, skip record, continue |
 | Query validation | Fail fast, show error |
 
-Failed DBs are recorded in session.json and can be retried with `resume`.
+Failed DBs are recorded in session.yaml and can be retried with `resume`.
 
 ## Configuration Priority
 

@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { stringify as stringifyYaml } from 'yaml';
 import {
   setupE2EContext,
   type E2EContext,
@@ -81,8 +82,8 @@ describe('search-hub status E2E', () => {
     };
 
     await writeFile(
-      join(sessionDir, 'session.json'),
-      JSON.stringify(session, null, 2),
+      join(sessionDir, 'session.yaml'),
+      stringifyYaml(session),
       'utf-8'
     );
 

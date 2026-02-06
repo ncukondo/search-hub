@@ -30,7 +30,7 @@ Updated session directory structure (extends ADR-002):
 
 ```
 {session-id}/
-├── session.json           # Metadata and status (unchanged)
+├── session.yaml           # Metadata and status
 ├── query_common.yaml      # Original query (unchanged)
 ├── pubmed_query.txt       # Translated query (unchanged)
 ├── pubmed_results.jsonl   # Raw results archive (rawResponse included)

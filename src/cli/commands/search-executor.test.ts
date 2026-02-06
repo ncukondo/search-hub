@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtemp, rm, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { parse as parseYaml } from 'yaml';
 import type { SearchCommandOptions } from './search.js';
 import type { Config } from '../../config/index.js';
 import { getDefaultConfig } from '../../config/index.js';
@@ -269,10 +270,10 @@ filters:
       expect(yamlContent).toMatch(/^# Results: pubmed/);
       expect(yamlContent).toContain('2 articles');
 
-      // Check session.json has resultsYaml in files
-      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      // Check session.yaml has resultsYaml in files
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
       expect(session.databases.pubmed.files.resultsYaml).toBe('pubmed_results.yaml');
     });
 
@@ -286,9 +287,9 @@ filters:
       expect(result.success).toBe(true);
 
       // Check session file
-      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.databases.pubmed.status).toBe('completed');
       expect(session.summary.status).toBe('completed');
@@ -355,9 +356,9 @@ filters:
 
       expect(result.sessionId).toBeDefined();
 
-      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
 
       expect(session.databases.pubmed.status).toBe('failed');
       expect(session.databases.pubmed.error.message).not.toBe('[object Object]');
@@ -384,9 +385,9 @@ filters:
       expect(result.results?.['pubmed']).toBeDefined();
       expect(result.results?.['pubmed']?.hits).toBe(0);
       expect(result.results?.['pubmed']?.retrieved).toBe(0);
-      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
       expect(session.summary.status).toBe('completed');
     });
 
@@ -410,9 +411,9 @@ filters:
       expect(result.error).toContain('All providers failed');
       expect(result.error).toContain('pubmed');
       expect(result.error).toContain('API rate limit exceeded');
-      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
       expect(session.summary.status).toBe('failed');
       expect(result.results?.['pubmed']?.error).toBe('API rate limit exceeded');
     });
@@ -482,9 +483,9 @@ filters:
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
       expect(result.results?.['eric']?.retrieved).toBe(0);
       expect(result.results?.['eric']?.error).toBeUndefined();
-      const sessionPath = join(sessionsDir, result.sessionId!, 'session.json');
+      const sessionPath = join(sessionsDir, result.sessionId!, 'session.yaml');
       const sessionContent = await readFile(sessionPath, 'utf-8');
-      const session = JSON.parse(sessionContent);
+      const session = parseYaml(sessionContent);
       expect(session.summary.status).toBe('completed');
     });
   });

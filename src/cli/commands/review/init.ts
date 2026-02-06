@@ -3,11 +3,10 @@
  */
 
 import { join, dirname } from 'node:path';
-import { readFile, writeFile, mkdir, access, copyFile } from 'node:fs/promises';
+import { writeFile, mkdir, access, copyFile } from 'node:fs/promises';
 import { stringify as stringifyYaml } from 'yaml';
-import { parse as parseYaml } from 'yaml';
-import type { SessionFile } from '../../../session/types.js';
 import type { Article, Author, ProviderName } from '../../../providers/base/types.js';
+import { loadSession } from '../../../session/manager.js';
 import { loadResults } from '../../../session/results-io.js';
 import { deduplicateForReview } from './dedup.js';
 import type { ArticleEntry, ReviewFile, MergedSource } from './types.js';
@@ -110,9 +109,7 @@ export async function executeReviewInit(
   const sessionDir = join(sessionsDir, options.sessionId);
 
   // Load session file
-  const sessionPath = join(sessionDir, 'session.yaml');
-  const sessionContent = await readFile(sessionPath, 'utf-8');
-  const session = parseYaml(sessionContent) as SessionFile;
+  const session = await loadSession(options.sessionId, sessionsDir);
 
   // Check if .internal/reviews.yaml already exists
   const internalDir = join(sessionDir, '.internal');

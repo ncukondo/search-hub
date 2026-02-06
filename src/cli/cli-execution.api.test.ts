@@ -11,6 +11,7 @@ import { rm, writeFile, mkdir, readdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { config as loadDotenv } from 'dotenv';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { SessionFile, DatabaseStatus } from '../session/types.js';
 
 // Load environment variables
@@ -151,15 +152,15 @@ filters:
       vi.spyOn(console, 'error').mockImplementation(() => {});
       process.exitCode = undefined;
 
-      const sessionPath = join(sessionsDir, searchSessionId!, 'session.json');
-      const session = JSON.parse(await readFile(sessionPath, 'utf-8')) as SessionFile;
+      const sessionPath = join(sessionsDir, searchSessionId!, 'session.yaml');
+      const session = parseYaml(await readFile(sessionPath, 'utf-8')) as SessionFile;
       const pubmedDb = session.databases['pubmed'];
 
       if (pubmedDb && pubmedDb.totalHits && pubmedDb.retrievedCount !== undefined &&
           pubmedDb.totalHits > pubmedDb.retrievedCount) {
         (pubmedDb as DatabaseStatus).status = 'in_progress';
         session.summary.status = 'running';
-        await writeFile(sessionPath, JSON.stringify(session, null, 2), 'utf-8');
+        await writeFile(sessionPath, stringifyYaml(session), 'utf-8');
 
         const program = createProgram();
         program.exitOverride();
@@ -176,7 +177,7 @@ filters:
 
         expect(process.exitCode).toBe(EXIT_CODES.SUCCESS);
 
-        const updatedSession = JSON.parse(await readFile(sessionPath, 'utf-8')) as SessionFile;
+        const updatedSession = parseYaml(await readFile(sessionPath, 'utf-8')) as SessionFile;
         const updatedPubmedDb = updatedSession.databases['pubmed'];
         expect(updatedPubmedDb?.retrievedCount).toBeGreaterThanOrEqual(
           pubmedDb.retrievedCount ?? 0

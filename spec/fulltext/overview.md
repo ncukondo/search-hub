@@ -80,7 +80,7 @@ Each article has its own directory named `{citation-key}-{uuid8}`:
 
 ```
 sessions/<session-id>/
-├── session.json
+├── session.yaml
 ├── .internal/
 │   └── reviews.yaml          # Contains fulltext references
 └── fulltext/

@@ -69,7 +69,7 @@ export interface DatabaseStatus {
 }
 
 /**
- * Session file structure (session.json).
+ * Session file structure (session.yaml).
  */
 export interface SessionFile {
   version: 1;

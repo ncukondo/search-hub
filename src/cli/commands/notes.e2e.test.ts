@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { stringify as stringifyYaml } from 'yaml';
 import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
 import { loadNotes, addNote, addAssessment, formatAllSessionNotes, type SessionNotes } from './notes.js';
 import { getSessionDetails, formatSessionDetails } from './status.js';
@@ -46,7 +47,7 @@ describe('search-hub notes E2E', () => {
       summary: { status: options.status ?? 'completed', totalHits: 100, totalRetrieved: 50 },
     };
 
-    await writeFile(join(sessionDir, 'session.json'), JSON.stringify(session, null, 2), 'utf-8');
+    await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
     return id;
   }
 

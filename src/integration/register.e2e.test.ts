@@ -11,6 +11,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import { stringify as stringifyYaml } from 'yaml';
 import type { Article } from '../providers/base/types.js';
 import type { SessionFile } from '../session/types.js';
 import { checkRefAvailable } from './ref-cli.js';
@@ -18,7 +19,7 @@ import { checkRefAvailable } from './ref-cli.js';
 const execAsync = promisify(exec);
 
 /**
- * Helper to create a test session directory with session.json and result files.
+ * Helper to create a test session directory with session.yaml and result files.
  */
 async function createTestSession(
   baseDir: string,
@@ -28,7 +29,7 @@ async function createTestSession(
   const sessionDir = path.join(baseDir, sessionId);
   await fs.mkdir(sessionDir, { recursive: true });
 
-  // Create session.json
+  // Create session.yaml
   const session: SessionFile = {
     version: 1,
     id: sessionId,
@@ -59,8 +60,8 @@ async function createTestSession(
   };
 
   await fs.writeFile(
-    path.join(sessionDir, 'session.json'),
-    JSON.stringify(session, null, 2)
+    path.join(sessionDir, 'session.yaml'),
+    stringifyYaml(session)
   );
 
   // Create results file as JSONL
@@ -238,8 +239,8 @@ describe('register command e2e', () => {
     };
 
     await fs.writeFile(
-      path.join(sessionDir, 'session.json'),
-      JSON.stringify(session, null, 2)
+      path.join(sessionDir, 'session.yaml'),
+      stringifyYaml(session)
     );
 
     // Create result files

@@ -10,6 +10,7 @@
 
 import { mkdir, writeFile, readFile, readdir, access } from 'node:fs/promises';
 import { join } from 'node:path';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type {
   SessionFile,
   DatabaseStatus,
@@ -118,10 +119,10 @@ export async function createSession(
     },
   };
 
-  // Write session.json
+  // Write session.yaml
   await writeFile(
-    join(sessionDir, 'session.json'),
-    JSON.stringify(sessionFile, null, 2),
+    join(sessionDir, 'session.yaml'),
+    stringifyYaml(sessionFile),
     'utf-8'
   );
 
@@ -139,7 +140,7 @@ export async function sessionExists(
   sessionsDir: string
 ): Promise<boolean> {
   try {
-    await access(join(sessionsDir, sessionId, 'session.json'));
+    await access(join(sessionsDir, sessionId, 'session.yaml'));
     return true;
   } catch {
     return false;
@@ -153,11 +154,11 @@ export async function loadSession(
   sessionId: string,
   sessionsDir: string
 ): Promise<SessionFile> {
-  const sessionPath = join(sessionsDir, sessionId, 'session.json');
+  const sessionPath = join(sessionsDir, sessionId, 'session.yaml');
 
   try {
     const content = await readFile(sessionPath, 'utf-8');
-    return JSON.parse(content) as SessionFile;
+    return parseYaml(content) as SessionFile;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       throw new Error(`Session not found: ${sessionId}`);
@@ -229,8 +230,8 @@ export async function saveSession(
   session: SessionFile,
   sessionsDir: string
 ): Promise<void> {
-  const sessionPath = join(sessionsDir, session.id, 'session.json');
-  await writeFile(sessionPath, JSON.stringify(session, null, 2), 'utf-8');
+  const sessionPath = join(sessionsDir, session.id, 'session.yaml');
+  await writeFile(sessionPath, stringifyYaml(session), 'utf-8');
 }
 
 /**
