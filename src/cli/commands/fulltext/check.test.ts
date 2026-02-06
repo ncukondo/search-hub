@@ -181,6 +181,67 @@ articles:
     expect(result.summary.total).toBe(2);
   });
 
+  it('processes articles concurrently with limited parallelism', async () => {
+    // Create a review file with 5 included articles
+    const manyArticlesYaml = `
+sessionId: test-session
+criteria:
+  include: []
+  exclude: []
+articles:
+  - doi: "10.1234/a1"
+    title: "Article 1"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1234/a2"
+    title: "Article 2"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1234/a3"
+    title: "Article 3"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1234/a4"
+    title: "Article 4"
+    reviews: []
+    finalDecision: include
+  - doi: "10.1234/a5"
+    title: "Article 5"
+    reviews: []
+    finalDecision: include
+`;
+    mockReadFile.mockImplementation(async (path) => {
+      const p = String(path);
+      if (p.includes('reviews.yaml')) return manyArticlesYaml;
+      throw new Error(`File not found: ${p}`);
+    });
+    mockAccess.mockRejectedValue(new Error('ENOENT'));
+
+    let maxConcurrent = 0;
+    let currentConcurrent = 0;
+
+    mockDiscoverOA.mockImplementation(async () => {
+      currentConcurrent++;
+      if (currentConcurrent > maxConcurrent) maxConcurrent = currentConcurrent;
+      // Simulate async work
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      currentConcurrent--;
+      return { oaStatus: 'closed' as const, locations: [], errors: [] };
+    });
+
+    const result = await executeFulltextCheck({
+      sessionDir,
+      config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+      concurrency: 2,
+    });
+
+    expect(result.summary.total).toBe(5);
+    // Verify concurrency was limited to 2
+    expect(maxConcurrent).toBeLessThanOrEqual(2);
+    // Verify concurrency was actually used (> 1 concurrent)
+    expect(maxConcurrent).toBeGreaterThan(1);
+  });
+
   it('handles missing reviews.yaml', async () => {
     mockReadFile.mockRejectedValue(new Error('ENOENT'));
 
