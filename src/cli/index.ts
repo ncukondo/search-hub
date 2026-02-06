@@ -2130,7 +2130,7 @@ Examples:
       }
     });
 
-  // Register fulltext command group (init, sync, convert)
+  // Register fulltext command group (init, sync, convert, check)
   registerFulltextCommands(program, getSessionsDir);
 
   return program;

@@ -32,88 +32,88 @@ This enables `fulltext check` command and provides URLs for `fulltext fetch` and
 
 ### Step 1: Unpaywall Client
 
-- [ ] Write test: `src/fulltext/discovery/unpaywall.test.ts`
+- [x] Write test: `src/fulltext/discovery/unpaywall.test.ts`
   - Test: Returns OALocation for OA article
   - Test: Returns null for closed access article
   - Test: Handles 404 (DOI not found)
   - Test: Respects rate limit
   - Test: Requires email configuration
-- [ ] Create stub: `src/fulltext/discovery/unpaywall.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `checkUnpaywall(doi, email)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Unpaywall lookup works correctly
+- [x] Create stub: `src/fulltext/discovery/unpaywall.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `checkUnpaywall(doi, email)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Unpaywall lookup works correctly
 
 ### Step 2: PMC Lookup
 
-- [ ] Write test: `src/fulltext/discovery/pmc.test.ts`
+- [x] Write test: `src/fulltext/discovery/pmc.test.ts`
   - Test: Returns OALocations (PDF + XML) for PMC article
   - Test: Looks up PMCID from PMID via E-utilities
   - Test: Returns null if not in PMC
   - Test: Generates correct PDF and XML URLs
-- [ ] Create stub: `src/fulltext/discovery/pmc.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `checkPmc(pmid)` and `getPmcUrls(pmcid)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: PMC lookup returns correct URLs
+- [x] Create stub: `src/fulltext/discovery/pmc.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `checkPmc(pmid)` and `getPmcUrls(pmcid)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: PMC lookup returns correct URLs
 
 ### Step 3: arXiv Lookup
 
-- [ ] Write test: `src/fulltext/discovery/arxiv.test.ts`
+- [x] Write test: `src/fulltext/discovery/arxiv.test.ts`
   - Test: Returns PDF URL for arXiv article
   - Test: Handles various arXiv ID formats (old: hep-ph/9901234, new: 2401.12345)
   - Test: Returns null for non-arXiv articles
-- [ ] Create stub: `src/fulltext/discovery/arxiv.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `checkArxiv(arxivId)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: arXiv URL generation works
+- [x] Create stub: `src/fulltext/discovery/arxiv.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `checkArxiv(arxivId)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: arXiv URL generation works
 
 ### Step 4: CORE API Client
 
-- [ ] Write test: `src/fulltext/discovery/core.test.ts`
+- [x] Write test: `src/fulltext/discovery/core.test.ts`
   - Test: Returns OALocation for article in CORE
   - Test: Handles missing API key (skip gracefully)
   - Test: Handles 404 (not found)
   - Test: Respects rate limit
-- [ ] Create stub: `src/fulltext/discovery/core.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `checkCore(doi, apiKey)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: CORE lookup works when configured
+- [x] Create stub: `src/fulltext/discovery/core.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `checkCore(doi, apiKey)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: CORE lookup works when configured
 
 ### Step 5: Discovery Aggregator
 
-- [ ] Write test: `src/fulltext/discovery/index.test.ts`
+- [x] Write test: `src/fulltext/discovery/index.test.ts`
   - Test: Checks all configured sources in priority order
   - Test: Aggregates OALocations from multiple sources
   - Test: Determines overall oaStatus (open/closed/unknown)
   - Test: Skips unconfigured sources (no Unpaywall email, no CORE key)
-- [ ] Create stub: `src/fulltext/discovery/index.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `discoverOA(article, config)`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Aggregator combines all sources correctly
+- [x] Create stub: `src/fulltext/discovery/index.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `discoverOA(article, config)`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Aggregator combines all sources correctly
 
 ### Step 6: Fulltext Check Command
 
-- [ ] Write test: `src/cli/commands/fulltext/check.test.ts`
+- [x] Write test: `src/cli/commands/fulltext/check.test.ts`
   - Test: Checks OA for all included articles
   - Test: Updates meta.json with OA results
   - Test: Shows summary (X open, Y closed, Z unknown)
   - Test: --format json outputs structured data
-- [ ] Create stub: `src/cli/commands/fulltext/check.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `executeFulltextCheck()`
-- [ ] Verify test passes (Green)
-- [ ] Register command in CLI
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Check command works end-to-end
+- [x] Create stub: `src/cli/commands/fulltext/check.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `executeFulltextCheck()`
+- [x] Verify test passes (Green)
+- [x] Register command in CLI
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Check command works end-to-end
 
 ### Final Step: E2E Integration Tests
 

@@ -271,7 +271,7 @@ describe('search-hub config E2E', () => {
       const result = viewConfigKey(obj as never, 'test.arr');
 
       expect(result.success).toBe(true);
-      expect(result.value).toBe('[\n  1,\n  2,\n  3\n]');
+      expect(result.value).toBe('[1,2,3]');
     });
 
     it('should format null values correctly', () => {
