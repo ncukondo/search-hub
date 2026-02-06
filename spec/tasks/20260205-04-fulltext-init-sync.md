@@ -14,7 +14,6 @@ Implement `fulltext init` and `fulltext sync` commands for manual fulltext manag
 
 - `src/fulltext/types.ts` - From Task 59
 - `src/fulltext/meta.ts` - From Task 59
-- `src/fulltext/index-manager.ts` - From Task 59
 - `src/cli/commands/fulltext/init.ts` (new)
 - `src/cli/commands/fulltext/sync.ts` (new)
 - `src/cli/commands/fulltext/index.ts` (new) - Command registration
@@ -32,7 +31,6 @@ Implement `fulltext init` and `fulltext sync` commands for manual fulltext manag
   - Test: Creates meta.json with correct identifiers
   - Test: Creates README.md with title, DOI, URLs
   - Test: Skips existing directories (idempotent)
-  - Test: Updates fulltext-index.json
   - Test: Updates reviews.yaml with fulltext references
   - Test: --dry-run shows what would be created
 - [ ] Create stub: `src/cli/commands/fulltext/init.ts`
@@ -49,7 +47,6 @@ Implement `fulltext init` and `fulltext sync` commands for manual fulltext manag
   - Test: Detects new fulltext.md in directory
   - Test: Detects new fulltext.xml in directory
   - Test: Updates meta.json with file info (source: "manual")
-  - Test: Updates fulltext-index.json hasFiles
   - Test: Updates reviews.yaml fulltext.hasFiles
   - Test: Ignores already-synced files
   - Test: --dry-run shows what would be synced

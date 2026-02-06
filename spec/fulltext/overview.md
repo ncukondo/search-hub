@@ -84,7 +84,6 @@ sessions/<session-id>/
 ├── .internal/
 │   └── reviews.yaml          # Contains fulltext references
 └── fulltext/
-    ├── fulltext-index.json   # Central index for lookup
     ├── smith2024-a1b2c3d4/
     │   ├── meta.json         # Article metadata & retrieval info
     │   ├── README.md         # Human-readable info with URLs
@@ -199,32 +198,6 @@ search-hub fulltext sync <session-id>
 ```
 ```
 
-### fulltext-index.json Schema
-
-Central index for fast lookup by identifier:
-
-```typescript
-interface FulltextIndex {
-  sessionId: string;
-  updatedAt: string;
-  entries: Record<string, FulltextIndexEntry>;  // key: dirName
-}
-
-interface FulltextIndexEntry {
-  dirName: string;
-  citationKey: string;
-  doi?: string;
-  pmid?: string;
-  pmcid?: string;
-  arxivId?: string;
-  hasFiles: {
-    pdf: boolean;
-    xml: boolean;
-    markdown: boolean;
-  };
-}
-```
-
 ### ArticleEntry Extension (reviews.yaml)
 
 Add fulltext reference to existing `ArticleEntry`:
@@ -327,8 +300,7 @@ search-hub fulltext sync <session-id> --dry-run
 1. Scan all directories in `fulltext/`
 2. Detect new files: `fulltext.pdf`, `fulltext.md`, `fulltext.xml`
 3. Update `meta.json` with file info
-4. Update `fulltext-index.json`
-5. Update `reviews.yaml` fulltext references
+4. Update `reviews.yaml` fulltext references
 
 **Output Example**:
 ```
