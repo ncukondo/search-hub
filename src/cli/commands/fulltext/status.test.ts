@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { executeFulltextStatus, type FulltextStatusResult } from './status';
+import { executeFulltextStatus } from './status';
 import type { FulltextMeta } from '../../../fulltext/types';
 
 // Mock fs operations
