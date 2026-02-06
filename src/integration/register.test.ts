@@ -14,7 +14,13 @@ vi.mock('./ref-cli.js', () => ({
   refAddBulk: vi.fn(),
 }));
 
+// Mock fulltext-attach module
+vi.mock('./fulltext-attach.js', () => ({
+  attachFulltexts: vi.fn(),
+}));
+
 import { refAddBulk } from './ref-cli.js';
+import { attachFulltexts } from './fulltext-attach.js';
 import {
   registerArticles,
   saveRegistrationRecord,
@@ -344,6 +350,129 @@ describe('registerArticles (bulk import)', () => {
       });
 
       await registerArticles(articles, createOptions());
+    });
+  });
+
+  describe('fulltext attach integration', () => {
+    const mockAttachFulltexts = vi.mocked(attachFulltexts);
+
+    it('should call attachFulltexts after successful bulk import', async () => {
+      const articles = [
+        createArticle({ pmid: '12345678', title: 'Article 1', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+      ];
+
+      mockRefAddBulk.mockResolvedValueOnce(
+        createBulkOutput([{ source: 'pmid:12345678', id: 'smith-2024', title: 'Article 1' }])
+      );
+
+      mockAttachFulltexts.mockResolvedValueOnce({
+        summary: { total: 1, attached: 1, skipped: 0, failed: 0 },
+        attached: [{ refId: 'smith-2024', files: ['fulltext.pdf'] }],
+        skipped: [],
+        failed: [],
+      });
+
+      const result = await registerArticles(articles, createOptions());
+
+      expect(mockAttachFulltexts).toHaveBeenCalledWith({
+        sessionDir: tempDir,
+        libraryPath: path.join(tempDir, 'references.json'),
+        addedRefs: expect.arrayContaining([
+          { id: 'smith-2024', source: 'pmid:12345678' },
+        ]),
+        onProgress: undefined,
+      });
+      expect(result.fulltext).toBeDefined();
+      expect(result.fulltext!.summary.attached).toBe(1);
+    });
+
+    it('should skip attachFulltexts when noAttachFulltext is true', async () => {
+      const articles = [
+        createArticle({ pmid: '12345678', title: 'Article 1', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+      ];
+
+      mockRefAddBulk.mockResolvedValueOnce(
+        createBulkOutput([{ source: 'pmid:12345678', id: 'smith-2024', title: 'Article 1' }])
+      );
+
+      const result = await registerArticles(articles, {
+        ...createOptions(),
+        noAttachFulltext: true,
+      });
+
+      expect(mockAttachFulltexts).not.toHaveBeenCalled();
+      expect(result.fulltext).toBeUndefined();
+    });
+
+    it('should include fulltext results in registration record', async () => {
+      const articles = [
+        createArticle({ pmid: '11111111', title: 'A1', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({ doi: '10.1234/test', title: 'A2', authors: [{ family: 'Jones' }], publicationDate: '2024' }),
+      ];
+
+      mockRefAddBulk.mockResolvedValueOnce(
+        createBulkOutput([
+          { source: 'pmid:11111111', id: 'smith-2024', title: 'A1' },
+          { source: '10.1234/test', id: 'jones-2024', title: 'A2' },
+        ])
+      );
+
+      mockAttachFulltexts.mockResolvedValueOnce({
+        summary: { total: 2, attached: 1, skipped: 1, failed: 0 },
+        attached: [{ refId: 'smith-2024', files: ['fulltext.pdf', 'fulltext.md'] }],
+        skipped: [{ dirName: 'jones2024-aabbccdd', reason: 'no_files' }],
+        failed: [],
+      });
+
+      const result = await registerArticles(articles, createOptions());
+
+      expect(result.fulltext).toBeDefined();
+      expect(result.fulltext!.summary.total).toBe(2);
+      expect(result.fulltext!.attached).toHaveLength(1);
+      expect(result.fulltext!.skipped).toHaveLength(1);
+    });
+
+    it('should include duplicates in addedRefs for fulltext attach', async () => {
+      const articles = [
+        createArticle({ pmid: '11111111', title: 'New', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({ pmid: '22222222', title: 'Dup', authors: [{ family: 'Jones' }], publicationDate: '2024' }),
+      ];
+
+      mockRefAddBulk.mockResolvedValueOnce(
+        createBulkOutput(
+          [{ source: 'pmid:11111111', id: 'smith-2024', title: 'New' }],
+          [{ source: 'pmid:22222222', existingId: 'jones-2024', duplicateType: 'pmid' }],
+        )
+      );
+
+      mockAttachFulltexts.mockResolvedValueOnce({
+        summary: { total: 0, attached: 0, skipped: 0, failed: 0 },
+        attached: [],
+        skipped: [],
+        failed: [],
+      });
+
+      await registerArticles(articles, createOptions());
+
+      expect(mockAttachFulltexts).toHaveBeenCalledWith(
+        expect.objectContaining({
+          addedRefs: expect.arrayContaining([
+            { id: 'smith-2024', source: 'pmid:11111111' },
+            { id: 'jones-2024', source: 'pmid:22222222' },
+          ]),
+        }),
+      );
+    });
+
+    it('should not call attachFulltexts when no articles were added', async () => {
+      const articles = [
+        createArticle({ title: 'No ID' }),
+      ];
+
+      const result = await registerArticles(articles, createOptions());
+
+      expect(mockAttachFulltexts).not.toHaveBeenCalled();
+      expect(result.fulltext).toBeUndefined();
     });
   });
 });

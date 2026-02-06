@@ -1400,11 +1400,13 @@ Query Refinement Workflow:
     .option('--reviewed', 'register only articles with finalDecision=include', false)
     .option('--all', 'register all articles (ignore reviews)', false)
     .option('--force', 'skip confirmation prompts', false)
+    .option('--no-attach-fulltext', 'skip automatic fulltext attachment', false)
     .addHelpText('after', `
 Examples:
   $ search-hub register SESSION_ID                # Register all results
   $ search-hub register SESSION_ID --with-abstracts
   $ search-hub register SESSION_ID --dry-run      # Preview only
+  $ search-hub register SESSION_ID --no-attach-fulltext  # Skip fulltext attachment
 
 With review workflow:
   $ search-hub register SESSION_ID --reviewed     # Register only included articles
@@ -1419,6 +1421,7 @@ With review workflow:
           reviewed?: boolean;
           all?: boolean;
           force?: boolean;
+          noAttachFulltext?: boolean;
         }
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
@@ -1572,6 +1575,7 @@ With review workflow:
             sessionId,
             sessionDir,
             withAbstracts: registerOpts.withAbstracts,
+            ...(options?.noAttachFulltext ? { noAttachFulltext: true } : {}),
           };
           if (!globalOpts.quiet) {
             registerOptions.onProgress = (current, total) => {
@@ -1586,6 +1590,23 @@ With review workflow:
           if (!globalOpts.quiet) {
             console.log('\n');
             console.log(formatRegistrationSummary(record.summary));
+
+            // Show fulltext attach summary
+            if (record.fulltext) {
+              const ft = record.fulltext.summary;
+              console.log('\nAttaching fulltexts...');
+              if (ft.attached > 0) {
+                const totalFiles = record.fulltext.attached.reduce((sum, a) => sum + a.files.length, 0);
+                console.log(`  ✓ ${ft.attached} articles attached (${totalFiles} files)`);
+              }
+              if (ft.skipped > 0) {
+                console.log(`  ⚠ ${ft.skipped} skipped`);
+              }
+              if (ft.failed > 0) {
+                console.log(`  ✗ ${ft.failed} failed`);
+              }
+            }
+
             console.log(`\nResults saved to: ${join(sessionDir, 'registration.json')}`);
 
             // Show next step suggestions
