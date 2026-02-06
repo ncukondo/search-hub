@@ -8,13 +8,13 @@ description: Responds to PR comments and review feedback. Use when addressing sp
 PR #$ARGUMENTS のコメントに対応します。
 
 ## PR Info
-!`gh pr view $ARGUMENTS --json title,author,state 2>/dev/null | jq -r '"Title: \(.title)\nAuthor: \(.author.login)\nState: \(.state)"' || echo "PR not found"`
+!`gh pr view $ARGUMENTS --json title,author,state --jq '"Title: \(.title)\nAuthor: \(.author.login)\nState: \(.state)"' 2>/dev/null`
 
 ## Review Comments
-!`gh api repos/{owner}/{repo}/pulls/$ARGUMENTS/comments --jq '.[] | "[\(.user.login)] \(.path):\(.line // .original_line)\n\(.body)\n---"' 2>/dev/null | head -50 || echo "No comments"`
+!`gh api repos/{owner}/{repo}/pulls/$ARGUMENTS/comments --jq '.[] | "[\(.user.login)] \(.path):\(.line // .original_line)\n\(.body)\n---"' 2>/dev/null`
 
 ## Review Requests
-!`gh pr view $ARGUMENTS --json reviews --jq '.reviews[] | select(.state == "CHANGES_REQUESTED") | "[\(.author.login)] \(.state)\n\(.body)\n---"' 2>/dev/null | head -30 || echo "No change requests"`
+!`gh pr view $ARGUMENTS --json reviews --jq '.reviews[] | select(.state == "CHANGES_REQUESTED") | "[\(.author.login)] \(.state)\n\(.body)\n---"' 2>/dev/null`
 
 ## Steps
 

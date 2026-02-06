@@ -8,13 +8,13 @@ description: Merges a PR with automatic cleanup of worktree and branch. Handles 
 PR #$ARGUMENTS のマージ処理を行います。
 
 ## PR Status
-!`gh pr view $ARGUMENTS --json headRefName,state,mergeable,reviewDecision 2>/dev/null | jq -r '"Branch: \(.headRefName)\nState: \(.state)\nMergeable: \(.mergeable)\nReview: \(.reviewDecision)"' || echo "PR not found"`
+!`gh pr view $ARGUMENTS --json headRefName,state,mergeable,reviewDecision --jq '"Branch: \(.headRefName)\nState: \(.state)\nMergeable: \(.mergeable)\nReview: \(.reviewDecision)"' 2>/dev/null`
 
 ## CI Status
-!`gh pr checks $ARGUMENTS --json name,state,bucket 2>/dev/null | jq -r '.[] | "\(.state): \(.name)"' | head -5 || echo "No checks"`
+!`gh pr checks $ARGUMENTS 2>/dev/null`
 
 ## Worktree Status
-!`branch=$(gh pr view $ARGUMENTS --json headRefName --jq '.headRefName' 2>/dev/null); dir=$(echo "$branch" | tr '/' '-'); path="/workspaces/search-hub--worktrees/$dir"; if [ -d "$path" ]; then echo "Worktree exists: $path"; else echo "No worktree"; fi`
+!`git worktree list`
 
 ## One-Command Merge
 

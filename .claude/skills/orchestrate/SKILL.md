@@ -10,16 +10,16 @@ description: Monitors all worker agents and automatically transitions them throu
 ## Current Status
 
 ### Orchestrator
-!`./scripts/orchestrate.sh --status 2>/dev/null || echo "not installed"`
+!`./scripts/orchestrate.sh --status 2>/dev/null`
 
 ### Active Agents
-!`./scripts/monitor-agents.sh 2>/dev/null || echo "No agents running"`
+!`./scripts/monitor-agents.sh 2>/dev/null`
 
 ### Active Worktrees
-!`git worktree list --porcelain 2>/dev/null | grep -A1 "^worktree" | paste - - | grep -v "/search-hub$" | awk '{gsub(/.*\//, "", $2); print $2}' || echo "None"`
+!`git worktree list`
 
 ### Recent Notifications
-!`tail -5 /tmp/claude-orchestrator/notifications 2>/dev/null || echo "No notifications yet"`
+!`tail -5 /tmp/claude-orchestrator/notifications 2>/dev/null`
 
 ## Commands
 

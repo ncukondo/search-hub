@@ -10,16 +10,17 @@ description: Shows current project status including tasks, tests, and worktrees.
 ## Quick Status
 
 ### Git
-!`echo "Branch: $(git branch --show-current)" && git status --short | head -5 || echo "Clean"`
+!`git branch --show-current`
+!`git status --short`
 
 ### Worktrees
-!`git worktree list --porcelain 2>/dev/null | grep -c "^worktree" | xargs -I{} echo "Active worktrees: {}"`
+!`git worktree list`
 
 ### Active Agents
-!`./scripts/monitor-agents.sh 2>/dev/null | grep -c "idle\|working" | xargs -I{} echo "Running agents: {}" || echo "Running agents: 0"`
+!`./scripts/monitor-agents.sh 2>/dev/null`
 
 ### Orchestrator
-!`./scripts/orchestrate.sh --status 2>/dev/null || echo "Not running"`
+!`./scripts/orchestrate.sh --status 2>/dev/null`
 
 ## Full Status Check
 

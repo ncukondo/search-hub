@@ -7,17 +7,33 @@ description: Analyzes ROADMAP and implements tasks in parallel with automatic or
 
 spec/tasks/ROADMAP.md を確認し、並列実装可能なタスクを分析して実装を進めます。
 
-## Current Status
-!`grep -E "^\| [0-9]+" spec/tasks/ROADMAP.md 2>/dev/null | head -10 || echo "ROADMAP not found"`
+## CRITICAL: Main Agent Role
+
+**メインエージェントは管理・指揮のみを行い、直接作業は一切行いません。**
+
+以下は全てサブエージェント（ワーカー）に委譲すること：
+- **実装**: コードの作成・編集
+- **テスト**: テストの実行・確認
+- **レビュー**: PRのレビュー
+- **調査**: コードベースの調査・分析
+
+メインエージェントが行うのは：
+- タスク分析と優先順位付け
+- ワーカーのスポーン・監視
+- オーケストレーション管理
+- マージとROADMAP更新
+
+## Planned Tasks
+!`grep "Planned" spec/tasks/ROADMAP.md`
 
 ## Active Worktrees
-!`git worktree list --porcelain 2>/dev/null | grep -A1 "^worktree" | paste - - | grep -v "/search-hub$" | awk '{print $2}' || echo "None"`
+!`git worktree list`
 
 ## Steps
 
 ### 1. Task Analysis
 
-- Check spec/tasks/ROADMAP.md for "Pending" tasks
+- Check spec/tasks/ROADMAP.md for "Planned" tasks
 - Identify tasks with satisfied dependencies (parallel candidates)
 - Select tasks to implement
   - Multiple parallelizable tasks → use spawn-worker.sh
@@ -85,6 +101,7 @@ git branch -D <branch>
 
 ## Notes
 
+- **メインエージェントは直接コードを書かない・テストを実行しない・レビューしない・調査しない**
 - All agents run in panes within the same tmux window
 - Use `git worktree list` to see all worktrees
 - Use `./scripts/monitor-agents.sh` to see agent states

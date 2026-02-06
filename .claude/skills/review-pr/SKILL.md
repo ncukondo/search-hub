@@ -10,10 +10,10 @@ PR #$ARGUMENTS をレビューします。
 **重要**: 発見した全ての問題点（minor含む）を必ずユーザーに報告してください。
 
 ## PR Context
-!`gh pr view $ARGUMENTS --json title,author,body,additions,deletions,changedFiles 2>/dev/null | jq -r '"Title: \(.title)\nAuthor: \(.author.login)\nChanges: +\(.additions)/-\(.deletions) in \(.changedFiles) files\n\nDescription:\n\(.body)"' || echo "PR not found"`
+!`gh pr view $ARGUMENTS --json title,author,body,additions,deletions,changedFiles --jq '"Title: \(.title)\nAuthor: \(.author.login)\nChanges: +\(.additions)/-\(.deletions) in \(.changedFiles) files\n\nDescription:\n\(.body)"' 2>/dev/null`
 
 ## CI Status
-!`gh pr checks $ARGUMENTS --json name,state,bucket 2>/dev/null | jq -r '.[] | "\(.state): \(.name)"' || echo "No checks yet"`
+!`gh pr checks $ARGUMENTS 2>/dev/null`
 
 ## 手順
 

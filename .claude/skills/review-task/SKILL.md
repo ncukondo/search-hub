@@ -8,7 +8,7 @@ description: Reviews a task file for completeness and test coverage. Use when ch
 spec/tasks/$ARGUMENTS のタスクをレビューします。
 
 ## Task File
-!`find spec/tasks -name "*$ARGUMENTS*" -type f 2>/dev/null | head -1 || echo "Task file not found"`
+!`find spec/tasks -name "*$ARGUMENTS*" -type f 2>/dev/null | head -1`
 
 ## Review Criteria
 

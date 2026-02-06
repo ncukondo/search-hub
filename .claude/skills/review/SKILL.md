@@ -8,10 +8,10 @@ description: Detects all open PRs and spawns reviewer agents for each. Use when 
 全てのオープンPRを検出し、レビューエージェントを一括起動します。
 
 ## Open PRs
-!`gh pr list --state open --json number,headRefName,title --jq '.[] | "PR #\(.number): \(.title) (\(.headRefName))"' 2>/dev/null || echo "No open PRs"`
+!`gh pr list --state open --json number,headRefName,title --jq '.[] | "PR #\(.number): \(.title) (\(.headRefName))"' 2>/dev/null`
 
 ## Active Reviewers
-!`./scripts/monitor-agents.sh 2>/dev/null | grep -v "^$" || echo "No agents running"`
+!`./scripts/monitor-agents.sh 2>/dev/null`
 
 ## Steps
 

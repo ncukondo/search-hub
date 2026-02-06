@@ -8,7 +8,7 @@ description: Detects PRs with changes requested and spawns fixer agents. Use whe
 レビューで修正要求（changes requested）のあるPRを検出し、修正エージェントを起動します。
 
 ## Current PRs Needing Fixes
-!`gh pr list --state open --json number,headRefName,title,reviewDecision --jq '.[] | select(.reviewDecision == "CHANGES_REQUESTED") | "PR #\(.number): \(.title) (\(.headRefName))"' 2>/dev/null || echo "None found"`
+!`gh pr list --state open --json number,headRefName,title,reviewDecision --jq '.[] | select(.reviewDecision == "CHANGES_REQUESTED") | "PR #\(.number): \(.title) (\(.headRefName))"' 2>/dev/null`
 
 ## Steps
 

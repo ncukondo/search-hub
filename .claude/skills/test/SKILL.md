@@ -8,7 +8,7 @@ description: Runs tests, typecheck, and lint, then reports results. Use when che
 テストを実行し、結果を報告します。
 
 ## Quick Check
-!`npm run test:all 2>&1 | tail -5 || echo "Tests not run"`
+!`npm run test:all 2>&1 | tail -5`
 
 ## Commands
 
