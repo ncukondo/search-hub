@@ -7,7 +7,6 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import type { FulltextMeta } from '../fulltext/types.js';
-import type { FulltextAttachResult } from './types.js';
 
 // Mock ref-cli module
 vi.mock('./ref-cli.js', () => ({
