@@ -21,22 +21,18 @@ description: Detects all open PRs and spawns reviewer agents for each. Use when 
 gh pr list --state open --json number,headRefName,title
 ```
 
-### 2. Create Worktrees
+### 2. Spawn Reviewers
 
-For each PR (if not exists):
+For each PR (parallel). Worktrees are auto-created:
 ```bash
-git worktree add /workspaces/search-hub--worktrees/<branch-dir> <branch-name>
-```
-
-Path convention: Replace `/` with `-` in branch names.
-
-### 3. Spawn Reviewers
-
-For each PR (parallel):
-```bash
-./scripts/spawn-reviewer.sh <branch-name> <pr-number> &
+./scripts/spawn-reviewer.sh --pr <pr-number> &
 # ... more PRs ...
 wait
+```
+
+Or with explicit branch names:
+```bash
+./scripts/spawn-reviewer.sh <branch-name> <pr-number> --create &
 ```
 
 ### 4. Apply Layout
