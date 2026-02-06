@@ -18,6 +18,11 @@ export interface LoadConfigOptions {
   globalConfigPath?: string;
   /** Path to local config file (default: ./search-hub.config.toml) */
   localConfigPath?: string;
+  /**
+   * Explicit config file path specified via CLI --config option.
+   * Takes priority over global and local config files (applied after env vars).
+   */
+  explicitConfigPath?: string;
   /** CLI options to apply (highest priority) */
   cliOptions?: DeepPartial<Config>;
 }
@@ -63,43 +68,52 @@ const DEFAULT_LOCAL_CONFIG_PATH = './search-hub.config.toml';
  * Load configuration from all sources and merge them.
  *
  * Priority (highest to lowest):
- * 1. CLI options
- * 2. Environment variables
- * 3. Local config (./search-hub.config.toml)
- * 4. Global config (platform-specific, e.g. ~/.config/search-hub/config.toml on Linux)
- * 5. Default values
+ * 1. CLI options (cliOptions)
+ * 2. Explicit --config file (explicitConfigPath)
+ * 3. Environment variables
+ * 4. Local config (./search-hub.config.toml)
+ * 5. Global config (platform-specific, e.g. ~/.config/search-hub/config.toml on Linux)
+ * 6. Default values
  */
 export async function loadConfig(options: LoadConfigOptions = {}): Promise<Config> {
   const {
     globalConfigPath = getDefaultConfigPath(),
     localConfigPath = DEFAULT_LOCAL_CONFIG_PATH,
+    explicitConfigPath,
     cliOptions,
   } = options;
 
   // 1. Start with defaults
   let config = getDefaultConfig();
 
-  // 2. Load and merge global config
+  // 2. Load and merge global config (lowest file priority)
   const expandedGlobalPath = expandPath(globalConfigPath);
   const globalConfig = await loadTomlFile(expandedGlobalPath);
   config = deepMerge(config, globalConfig as DeepPartial<Config>);
 
-  // 3. Load and merge local config
+  // 3. Load and merge local config (overrides global)
   const localConfig = await loadTomlFile(localConfigPath);
   config = deepMerge(config, localConfig as DeepPartial<Config>);
 
-  // 4. Apply environment variables
+  // 4. Apply environment variables (overrides local)
   config = applyEnvVars(config);
 
-  // 5. Apply CLI options (if provided)
+  // 5. Apply explicit --config file (overrides env vars, local, and global)
+  if (explicitConfigPath) {
+    const expandedExplicitPath = expandPath(explicitConfigPath);
+    const explicitConfig = await loadTomlFile(expandedExplicitPath);
+    config = deepMerge(config, explicitConfig as DeepPartial<Config>);
+  }
+
+  // 6. Apply CLI options (highest priority)
   if (cliOptions) {
     config = deepMerge(config, cliOptions);
   }
 
-  // 6. Validate
+  // 7. Validate
   config = ConfigSchema.parse(config);
 
-  // 7. Resolve empty session.directory to platform default
+  // 8. Resolve empty session.directory to platform default
   if (!config.session.directory) {
     config.session.directory = getDefaultSessionsDir();
   }

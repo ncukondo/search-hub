@@ -22,7 +22,7 @@ export async function getSessionsDir(globalOpts: GlobalOptions): Promise<string>
   }
   try {
     const config = await loadConfig(
-      globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
+      globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
     );
     return config.session.directory;
   } catch {

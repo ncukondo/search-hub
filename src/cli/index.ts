@@ -258,7 +258,7 @@ Examples:
         let config;
         try {
           config = await loadConfig(
-            globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
+            globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
           );
         } catch {
           config = getDefaultConfig();
@@ -574,7 +574,7 @@ Examples:
             // Try to load config for provider readiness display
             let dryRunConfig: Config | undefined;
             try {
-              dryRunConfig = await loadConfig(globalOpts.config ? { globalConfigPath: globalOpts.config } : {});
+              dryRunConfig = await loadConfig(globalOpts.config ? { explicitConfigPath: globalOpts.config } : {});
             } catch {
               // Config unavailable, readiness section will be omitted
             }
@@ -629,7 +629,7 @@ Examples:
           if (searchOpts.preview) {
             let previewConfig;
             try {
-              previewConfig = await loadConfig(globalOpts.config ? { globalConfigPath: globalOpts.config } : {});
+              previewConfig = await loadConfig(globalOpts.config ? { explicitConfigPath: globalOpts.config } : {});
             } catch {
               previewConfig = getDefaultConfig();
             }
@@ -657,7 +657,7 @@ Examples:
           if (searchOpts.countOnly) {
             let countConfig;
             try {
-              countConfig = await loadConfig(globalOpts.config ? { globalConfigPath: globalOpts.config } : {});
+              countConfig = await loadConfig(globalOpts.config ? { explicitConfigPath: globalOpts.config } : {});
             } catch {
               countConfig = getDefaultConfig();
             }
@@ -691,7 +691,7 @@ Examples:
           let config;
           try {
             config = await loadConfig(
-              globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
+              globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
             );
           } catch {
             config = getDefaultConfig();
@@ -828,7 +828,7 @@ Examples:
           let config;
           try {
             config = await loadConfig(
-              globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
+              globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
             );
           } catch {
             config = getDefaultConfig();

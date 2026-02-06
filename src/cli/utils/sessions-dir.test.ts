@@ -61,7 +61,7 @@ describe('getSessionsDir', () => {
     expect(mockLoadConfig).toHaveBeenCalledWith({});
   });
 
-  it('should pass globalConfigPath when config option is provided', async () => {
+  it('should pass explicitConfigPath when config option is provided', async () => {
     mockLoadConfig.mockResolvedValue({
       session: { directory: '/config/sessions' },
       providers: {},
@@ -77,7 +77,7 @@ describe('getSessionsDir', () => {
     const result = await getSessionsDir(options);
     expect(result).toBe('/config/sessions');
     expect(mockLoadConfig).toHaveBeenCalledWith({
-      globalConfigPath: '/custom/config.toml',
+      explicitConfigPath: '/custom/config.toml',
     });
   });
 
