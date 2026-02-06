@@ -145,6 +145,15 @@ Examples:
       const globalOpts = program.opts() as GlobalOptions;
       try {
         const sessionsDir = await getSessionsDir(globalOpts);
+
+        if (!(await sessionExists(sessionId, sessionsDir))) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: session '${sessionId}' not found`);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
         const sessionDir = join(sessionsDir, sessionId);
 
         const result = await executeFulltextAttach({

@@ -1400,7 +1400,7 @@ Query Refinement Workflow:
     .option('--reviewed', 'register only articles with finalDecision=include', false)
     .option('--all', 'register all articles (ignore reviews)', false)
     .option('--force', 'skip confirmation prompts', false)
-    .option('--no-attach-fulltext', 'skip automatic fulltext attachment', false)
+    .option('--no-attach-fulltext', 'skip automatic fulltext attachment')
     .addHelpText('after', `
 Examples:
   $ search-hub register SESSION_ID                # Register all results
@@ -1421,7 +1421,7 @@ With review workflow:
           reviewed?: boolean;
           all?: boolean;
           force?: boolean;
-          noAttachFulltext?: boolean;
+          attachFulltext?: boolean;
         }
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
@@ -1575,7 +1575,7 @@ With review workflow:
             sessionId,
             sessionDir,
             withAbstracts: registerOpts.withAbstracts,
-            ...(options?.noAttachFulltext ? { noAttachFulltext: true } : {}),
+            ...(options?.attachFulltext === false ? { noAttachFulltext: true } : {}),
           };
           if (!globalOpts.quiet) {
             registerOptions.onProgress = (current, total) => {
@@ -1594,7 +1594,7 @@ With review workflow:
             // Show fulltext attach summary
             if (record.fulltext) {
               const ft = record.fulltext.summary;
-              console.log('\nAttaching fulltexts...');
+              console.log('\nFulltext attachment results:');
               if (ft.attached > 0) {
                 const totalFiles = record.fulltext.attached.reduce((sum, a) => sum + a.files.length, 0);
                 console.log(`  ✓ ${ft.attached} articles attached (${totalFiles} files)`);

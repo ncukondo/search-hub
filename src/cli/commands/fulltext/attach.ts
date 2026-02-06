@@ -3,21 +3,17 @@
  * Attaches fulltext files to existing reference-manager entries.
  */
 
-import { readdir, readFile, access } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { constants } from 'node:fs';
-import type { FulltextMeta } from '../../../fulltext/types.js';
 import type { FulltextAttachResult } from '../../../integration/types.js';
 import { refFulltextAttach, refExport, type RefCliOptions } from '../../../integration/ref-cli.js';
+import { findRefId, loadFulltextEntries, resolveAttachableFiles } from '../../../fulltext/attach-shared.js';
 
 export interface FulltextAttachCommandOptions {
   sessionDir: string;
   dryRun: boolean;
   onProgress?: (current: number, total: number) => void;
 }
-
-/** Files we try to attach, in order. */
-const ATTACHABLE_FILES = ['fulltext.pdf', 'fulltext.md'] as const;
 
 /**
  * Load the reference library and build a lookup map from identifiers to ref IDs.
@@ -74,21 +70,6 @@ async function buildRefLookupFromLibrary(
 }
 
 /**
- * Find the ref ID matching a fulltext meta entry.
- */
-function findRefId(meta: FulltextMeta, refLookup: Map<string, string>): string | undefined {
-  if (meta.doi) {
-    const byDoi = refLookup.get(`doi:${meta.doi}`);
-    if (byDoi) return byDoi;
-  }
-  if (meta.pmid) {
-    const byPmid = refLookup.get(`pmid:${meta.pmid}`);
-    if (byPmid) return byPmid;
-  }
-  return undefined;
-}
-
-/**
  * Execute the standalone fulltext attach command.
  * Reads the session's fulltext directories and attaches files to ref entries.
  */
@@ -110,33 +91,20 @@ export async function executeFulltextAttach(
   // Build ref lookup from library
   const refLookup = await buildRefLookupFromLibrary(libraryPath, refCliOptions);
 
-  // Read fulltext directory entries
-  let entries: string[];
-  try {
-    const dirEntries = await readdir(fulltextDir, { withFileTypes: true });
-    entries = dirEntries
-      .filter((e) => e.isDirectory())
-      .map((e) => e.name);
-  } catch {
-    return result;
-  }
-
+  // Load all fulltext entries
+  const entries = await loadFulltextEntries(fulltextDir);
   result.summary.total = entries.length;
 
   for (let i = 0; i < entries.length; i++) {
-    const dirName = entries[i]!;
-    const articleDir = join(fulltextDir, dirName);
+    const entry = entries[i]!;
+    const { dirName, articleDir, meta } = entry;
 
     if (onProgress) {
       onProgress(i + 1, entries.length);
     }
 
-    // Load meta.json
-    let meta: FulltextMeta;
-    try {
-      const raw = await readFile(join(articleDir, 'meta.json'), 'utf-8');
-      meta = JSON.parse(raw) as FulltextMeta;
-    } catch {
+    // Handle meta load failure
+    if (!meta) {
       result.summary.failed++;
       result.failed.push({
         dirName,
@@ -154,20 +122,8 @@ export async function executeFulltextAttach(
       continue;
     }
 
-    // Determine which files to attach
-    const filesToAttach: string[] = [];
-    for (const filename of ATTACHABLE_FILES) {
-      const fileKey = filename === 'fulltext.pdf' ? 'pdf' : 'markdown';
-      if (meta.files[fileKey]) {
-        // Verify file actually exists on disk
-        try {
-          await access(join(articleDir, filename), constants.R_OK);
-          filesToAttach.push(filename);
-        } catch {
-          // File recorded in meta but not on disk — skip
-        }
-      }
-    }
+    // Determine which files to attach (with disk verification)
+    const filesToAttach = await resolveAttachableFiles(articleDir, meta);
 
     if (filesToAttach.length === 0) {
       result.summary.skipped++;

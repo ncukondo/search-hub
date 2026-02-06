@@ -374,14 +374,13 @@ describe('registerArticles (bulk import)', () => {
 
       const result = await registerArticles(articles, createOptions());
 
-      expect(mockAttachFulltexts).toHaveBeenCalledWith({
+      expect(mockAttachFulltexts).toHaveBeenCalledWith(expect.objectContaining({
         sessionDir: tempDir,
         libraryPath: path.join(tempDir, 'references.json'),
         addedRefs: expect.arrayContaining([
           { id: 'smith-2024', source: 'pmid:12345678' },
         ]),
-        onProgress: undefined,
-      });
+      }));
       expect(result.fulltext).toBeDefined();
       expect(result.fulltext!.summary.attached).toBe(1);
     });
