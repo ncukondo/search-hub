@@ -29,7 +29,7 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   textNodeName: '#text',
-  trimValues: true,
+  trimValues: false,
   preserveOrder: true,
 });
 
@@ -59,14 +59,14 @@ function getAttr(node: OrderedNode, attrName: string): string | undefined {
   return val != null ? String(val) : undefined;
 }
 
-/** Get all attributes of an element node. */
+/** Get all attributes of an element node (strips @_ prefix for consistency with getAttr). */
 function getAttrs(node: OrderedNode): Record<string, string> {
   const attrs = node[':@'] as Record<string, unknown> | undefined;
   if (!attrs) return {};
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(attrs)) {
     if (key.startsWith('@_')) {
-      result[key] = String(value);
+      result[key.slice(2)] = String(value);
     }
   }
   return result;
@@ -180,7 +180,7 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   let doi: string | undefined;
   let pmcid: string | undefined;
   for (const idEntry of articleIds) {
-    const idType = idEntry.attrs['@_pub-id-type'];
+    const idType = idEntry.attrs['pub-id-type'];
     const idText = extractAllText(idEntry.children);
     if (idType === 'doi') doi = idText;
     if (idType === 'pmc') pmcid = idText;
@@ -192,7 +192,7 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   if (contribGroup) {
     const contribs = findChildren(contribGroup.children, 'contrib');
     for (const contrib of contribs) {
-      if (contrib.attrs['@_contrib-type'] !== 'author') continue;
+      if (contrib.attrs['contrib-type'] !== 'author') continue;
       const nameNode = findChild(contrib.children, 'name');
       if (!nameNode) continue;
       const surnameNode = findChild(nameNode.children, 'surname');
@@ -517,7 +517,7 @@ export function parseJatsReferences(xml: string): JatsReference[] {
   const references: JatsReference[] = [];
 
   for (const ref of refs) {
-    const id = ref.attrs['@_id'] ?? '';
+    const id = ref.attrs['id'] ?? '';
     // Try mixed-citation first, then element-citation, then any text
     const mixedCitation = findChild(ref.children, 'mixed-citation');
     const elementCitation = findChild(ref.children, 'element-citation');

@@ -394,10 +394,9 @@ describe('PMC XML to Markdown E2E conversion', () => {
     const md = await readFile(mdPath, 'utf-8');
 
     // Citations should appear inline at their correct positions
-    // (trimValues: true removes spaces around inline elements)
     expect(md).toContain('The adage [1]. Several studies [2,3].');
 
-    // Italic text should appear at correct positions (both occurrences preserved in order)
-    expect(md).toMatch(/this is the\s*\*yanegawara\*\s*system\. Under the\s*\*yanegawara\*\s*system/);
+    // Italic text should appear at correct positions with proper spacing
+    expect(md).toContain('this is the *yanegawara* system. Under the *yanegawara* system');
   });
 });

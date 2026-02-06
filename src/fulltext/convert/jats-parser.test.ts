@@ -560,11 +560,11 @@ describe('parseJatsBody - preserveOrder inline interleaving', () => {
     expect(para.type).toBe('paragraph');
     if (para.type === 'paragraph') {
       expect(para.content).toEqual([
-        { type: 'text', text: 'this is the' },
+        { type: 'text', text: 'this is the ' },
         { type: 'italic', children: [{ type: 'text', text: 'yanegawara' }] },
-        { type: 'text', text: 'system. Under the' },
+        { type: 'text', text: ' system. Under the ' },
         { type: 'italic', children: [{ type: 'text', text: 'yanegawara' }] },
-        { type: 'text', text: 'system' },
+        { type: 'text', text: ' system' },
       ]);
     }
   });
