@@ -24,20 +24,20 @@ conflict/coverage classification.
 
 ### Step 1: Add `ReviewerRecord` Interface and Update `ReviewFile`
 
-- [ ] Write test: `src/cli/commands/review/types.test.ts`
+- [x] Write test: `src/cli/commands/review/types.test.ts`
   - Verify a `ReviewFile` with `reviewers` array passes type checks
   - Verify `ReviewerRecord` has `name` and `basis` fields
-- [ ] Add `ReviewerRecord` interface to `src/cli/commands/review/types.ts`
+- [x] Add `ReviewerRecord` interface to `src/cli/commands/review/types.ts`
   ```ts
   export interface ReviewerRecord {
     name: string;
-    basis: number;
+    basis: ReviewBasis;  // adapted from number to match codebase
   }
   ```
-- [ ] Add optional `reviewers?: ReviewerRecord[]` property to `ReviewFile`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `ReviewFile` accepts a `reviewers` array; existing code unaffected
+- [x] Add optional `reviewers?: ReviewerRecord[]` property to `ReviewFile`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `ReviewFile` accepts a `reviewers` array; existing code unaffected
 
 ### Step 2: Add `registerReviewer` Helper in `merge.ts`
 
