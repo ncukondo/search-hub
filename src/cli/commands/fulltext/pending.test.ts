@@ -9,13 +9,15 @@ import type { FulltextMeta } from '../../../fulltext/types';
 // Mock fs operations
 vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(),
+  writeFile: vi.fn(),
   readdir: vi.fn(),
   access: vi.fn(),
 }));
 
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 
 const mockReadFile = vi.mocked(readFile);
+const mockWriteFile = vi.mocked(writeFile);
 
 // Review YAML with articles in various fulltext states
 const reviewFileYaml = `
@@ -190,5 +192,61 @@ articles:
     await expect(
       executeFulltextPending({ sessionDir }),
     ).rejects.toThrow();
+  });
+
+  describe('--export', () => {
+    it('--export writes URLs to file', async () => {
+      await executeFulltextPending({
+        sessionDir,
+        exportPath: '/tmp/urls.txt',
+      });
+
+      expect(mockWriteFile).toHaveBeenCalledTimes(1);
+      const [path, content] = mockWriteFile.mock.calls[0]!;
+      expect(String(path)).toBe('/tmp/urls.txt');
+      expect(String(content)).toContain('https://doi.org/');
+    });
+
+    it('format: one URL per line with article identifier', async () => {
+      await executeFulltextPending({
+        sessionDir,
+        exportPath: '/tmp/urls.txt',
+      });
+
+      const content = String(mockWriteFile.mock.calls[0]![1]);
+      const lines = content.split('\n');
+
+      // Should have comment lines with article identifiers
+      const commentLines = lines.filter((l) => l.startsWith('# '));
+      expect(commentLines.length).toBeGreaterThanOrEqual(3);
+
+      // Should have URL lines
+      const urlLines = lines.filter((l) => l.startsWith('https://'));
+      expect(urlLines.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('includes DOI link for all articles with DOI', async () => {
+      await executeFulltextPending({
+        sessionDir,
+        exportPath: '/tmp/urls.txt',
+      });
+
+      const content = String(mockWriteFile.mock.calls[0]![1]);
+      // All 3 pending articles have DOIs
+      expect(content).toContain('https://doi.org/10.1234/no-fulltext');
+      expect(content).toContain('https://doi.org/10.9999/no-dir');
+      expect(content).toContain('https://doi.org/10.1111/with-oa');
+    });
+
+    it('includes OA repository URLs when available', async () => {
+      await executeFulltextPending({
+        sessionDir,
+        exportPath: '/tmp/urls.txt',
+      });
+
+      const content = String(mockWriteFile.mock.calls[0]![1]);
+      expect(content).toContain('https://repository.edu/paper.pdf');
+      expect(content).toContain('https://pmc.ncbi.nlm.nih.gov/articles/PMC12345/');
+    });
   });
 });

@@ -3,7 +3,7 @@
  * Lists articles needing manual download with URLs.
  */
 
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { loadMeta } from '../../../fulltext/meta.js';
@@ -89,13 +89,42 @@ async function buildPendingArticle(
 }
 
 /**
+ * Format the export file content for batch download.
+ * Format: comment line with article identifier, followed by URL lines.
+ */
+export function formatExportFile(articles: PendingArticle[]): string {
+  const blocks: string[] = [];
+
+  for (const article of articles) {
+    const identifier = article.dirName ?? article.title;
+    const lines: string[] = [`# ${identifier} - ${article.title}`];
+
+    // Publisher URL (DOI link) first
+    if (article.publisherUrl) {
+      lines.push(article.publisherUrl);
+    }
+
+    // OA location URLs
+    if (article.oaLocations) {
+      for (const loc of article.oaLocations) {
+        lines.push(loc.url);
+      }
+    }
+
+    blocks.push(lines.join('\n'));
+  }
+
+  return blocks.join('\n\n') + '\n';
+}
+
+/**
  * Execute the fulltext pending command.
  * Lists included articles that don't yet have fulltext files.
  */
 export async function executeFulltextPending(
   options: FulltextPendingOptions,
 ): Promise<FulltextPendingResult> {
-  const { sessionDir } = options;
+  const { sessionDir, exportPath } = options;
 
   // Load reviews.yaml
   const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
@@ -121,6 +150,12 @@ export async function executeFulltextPending(
     if (!hasFiles) {
       articles.push(await buildPendingArticle(article, sessionDir));
     }
+  }
+
+  // Write export file if requested
+  if (exportPath && articles.length > 0) {
+    const exportContent = formatExportFile(articles);
+    await writeFile(exportPath, exportContent, 'utf-8');
   }
 
   return {
