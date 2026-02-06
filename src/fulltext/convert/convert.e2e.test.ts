@@ -357,4 +357,47 @@ describe('PMC XML to Markdown E2E conversion', () => {
     // Should not have References section since there are none
     expect(md).not.toContain('## References');
   });
+
+  it('preserves interleaved citations and italic text in correct positions', async () => {
+    const interleavedXml = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>Interleaving Test</article-title>
+      </title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Introduction</title>
+      <p>The adage [<xref ref-type="bibr" rid="CR1">1</xref>]. Several studies [<xref ref-type="bibr" rid="CR2">2</xref>,<xref ref-type="bibr" rid="CR3">3</xref>].</p>
+      <p>this is the <italic>yanegawara</italic> system. Under the <italic>yanegawara</italic> system</p>
+    </sec>
+  </body>
+  <back>
+    <ref-list>
+      <ref id="CR1"><mixed-citation>Author A. Title 1. 2020.</mixed-citation></ref>
+      <ref id="CR2"><mixed-citation>Author B. Title 2. 2021.</mixed-citation></ref>
+      <ref id="CR3"><mixed-citation>Author C. Title 3. 2022.</mixed-citation></ref>
+    </ref-list>
+  </back>
+</article>`;
+
+    const xmlPath = join(tmpDir, 'interleaved.xml');
+    const mdPath = join(tmpDir, 'interleaved.md');
+    await writeFile(xmlPath, interleavedXml, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+    expect(result.success).toBe(true);
+
+    const md = await readFile(mdPath, 'utf-8');
+
+    // Citations should appear inline at their correct positions
+    // (trimValues: true removes spaces around inline elements)
+    expect(md).toContain('The adage [1]. Several studies [2,3].');
+
+    // Italic text should appear at correct positions (both occurrences preserved in order)
+    expect(md).toMatch(/this is the\s*\*yanegawara\*\s*system\. Under the\s*\*yanegawara\*\s*system/);
+  });
 });
