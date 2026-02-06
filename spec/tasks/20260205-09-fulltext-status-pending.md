@@ -26,56 +26,56 @@ Implement utility commands for fulltext management:
 
 ### Step 1: Fulltext Status Command
 
-- [ ] Write test: `src/cli/commands/fulltext/status.test.ts`
+- [x] Write test: `src/cli/commands/fulltext/status.test.ts`
   - Test: Shows total included articles count
   - Test: Shows articles with fulltext (PDF only, MD only, both)
   - Test: Shows pending count (directory exists, no files)
   - Test: Shows not initialized count (no directory)
   - Test: --format json outputs structured data
-- [ ] Create stub: `src/cli/commands/fulltext/status.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `executeFulltextStatus()`
-- [ ] Verify test passes (Green)
-- [ ] Register command in CLI
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Status command shows accurate counts
+- [x] Create stub: `src/cli/commands/fulltext/status.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `executeFulltextStatus()`
+- [x] Verify test passes (Green)
+- [x] Register command in CLI
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Status command shows accurate counts
 
 ### Step 2: Fulltext Pending Command
 
-- [ ] Write test: `src/cli/commands/fulltext/pending.test.ts`
+- [x] Write test: `src/cli/commands/fulltext/pending.test.ts`
   - Test: Lists articles without fulltext
   - Test: Shows DOI and suggested URLs (from OA check)
   - Test: Shows publisher URL (doi.org link)
   - Test: --export writes URLs to file
   - Test: --format json outputs structured data
-- [ ] Create stub: `src/cli/commands/fulltext/pending.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `executeFulltextPending()`
-- [ ] Verify test passes (Green)
-- [ ] Register command in CLI
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Pending command lists articles with URLs
+- [x] Create stub: `src/cli/commands/fulltext/pending.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `executeFulltextPending()`
+- [x] Verify test passes (Green)
+- [x] Register command in CLI
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Pending command lists articles with URLs
 
 ### Step 3: URL Export Formatting
 
-- [ ] Write test for URL export
+- [x] Write test for URL export
   - Test: --export urls.txt creates file with URLs
   - Test: Format: one URL per line with article identifier
   - Test: Includes DOI link for all articles
-- [ ] Implement URL export
-- [ ] Verify test passes
-- [ ] Acceptance: Export file usable for batch download
+- [x] Implement URL export
+- [x] Verify test passes
+- [x] Acceptance: Export file usable for batch download
 
 ### Final Step: Integration Tests
 
-- [ ] Write integration test
+- [x] Write integration test
   - Test: Status reflects actual fulltext state
   - Test: Pending excludes articles with fulltext
-- [ ] Run full test suite: `npm test`
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**:
   - Run status on session with mixed fulltext state
   - Run pending and verify URLs work
-- [ ] Acceptance: Commands work in real usage
+- [x] Acceptance: Commands work in real usage
 
 ## CLI Interface
 
