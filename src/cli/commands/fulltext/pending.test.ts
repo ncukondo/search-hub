@@ -9,15 +9,13 @@ import type { FulltextMeta } from '../../../fulltext/types';
 // Mock fs operations
 vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(),
-  writeFile: vi.fn(),
   readdir: vi.fn(),
   access: vi.fn(),
 }));
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 
 const mockReadFile = vi.mocked(readFile);
-const mockWriteFile = vi.mocked(writeFile);
 
 // Review YAML with articles in various fulltext states
 const reviewFileYaml = `
