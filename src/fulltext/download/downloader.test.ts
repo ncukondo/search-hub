@@ -3,10 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { downloadPdf, type DownloadOptions } from './downloader';
+import { downloadPdf } from './downloader';
 import { writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 
 // Mock fetch globally
 const mockFetch = vi.fn();

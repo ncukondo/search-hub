@@ -26,7 +26,7 @@ const VALID_CONTENT_TYPES = ['application/pdf', 'application/octet-stream'];
 
 function isValidPdfContentType(contentType: string | null): boolean {
   if (!contentType) return false;
-  const base = contentType.split(';')[0]!.trim().toLowerCase();
+  const base = (contentType.split(';')[0] ?? '').trim().toLowerCase();
   return VALID_CONTENT_TYPES.includes(base);
 }
 
