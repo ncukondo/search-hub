@@ -13,7 +13,7 @@ PR #$ARGUMENTS をレビューします。
 !`gh pr view $ARGUMENTS --json title,author,body,additions,deletions,changedFiles 2>/dev/null | jq -r '"Title: \(.title)\nAuthor: \(.author.login)\nChanges: +\(.additions)/-\(.deletions) in \(.changedFiles) files\n\nDescription:\n\(.body)"' || echo "PR not found"`
 
 ## CI Status
-!`gh pr checks $ARGUMENTS --json name,conclusion 2>/dev/null | jq -r '.[] | "\(.conclusion // "pending"): \(.name)"' || echo "No checks yet"`
+!`gh pr checks $ARGUMENTS --json name,state,bucket 2>/dev/null | jq -r '.[] | "\(.state): \(.name)"' || echo "No checks yet"`
 
 ## 手順
 
@@ -22,7 +22,7 @@ PR #$ARGUMENTS をレビューします。
 CIが未完了の場合は完了まで待機：
 ```bash
 while true; do
-  status=$(gh pr checks $ARGUMENTS --json conclusion --jq 'all(.conclusion == "SUCCESS" or .conclusion == "SKIPPED")' 2>/dev/null)
+  status=$(gh pr checks $ARGUMENTS --json state --jq 'all(.state == "SUCCESS" or .state == "SKIPPED")' 2>/dev/null)
   if [ "$status" = "true" ]; then break; fi
   echo "Waiting for CI..."
   sleep 30

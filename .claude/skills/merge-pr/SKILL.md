@@ -11,7 +11,7 @@ PR #$ARGUMENTS のマージ処理を行います。
 !`gh pr view $ARGUMENTS --json headRefName,state,mergeable,reviewDecision 2>/dev/null | jq -r '"Branch: \(.headRefName)\nState: \(.state)\nMergeable: \(.mergeable)\nReview: \(.reviewDecision)"' || echo "PR not found"`
 
 ## CI Status
-!`gh pr checks $ARGUMENTS --json name,conclusion 2>/dev/null | jq -r '.[] | "\(.conclusion // "pending"): \(.name)"' | head -5 || echo "No checks"`
+!`gh pr checks $ARGUMENTS --json name,state,bucket 2>/dev/null | jq -r '.[] | "\(.state): \(.name)"' | head -5 || echo "No checks"`
 
 ## Worktree Status
 !`branch=$(gh pr view $ARGUMENTS --json headRefName --jq '.headRefName' 2>/dev/null); dir=$(echo "$branch" | tr '/' '-'); path="/workspaces/search-hub--worktrees/$dir"; if [ -d "$path" ]; then echo "Worktree exists: $path"; else echo "No worktree"; fi`

@@ -76,13 +76,13 @@ elif [ "$STATE" = "CLOSED" ]; then
 elif [ "$STATE" = "OPEN" ]; then
   # Check CI status
   log "Checking CI status..."
-  CI_STATUS=$(gh pr checks "$PR_NUM" --json conclusion --jq 'all(.conclusion == "SUCCESS" or .conclusion == "SKIPPED" or .conclusion == null)' 2>/dev/null || echo "false")
+  CI_STATUS=$(gh pr checks "$PR_NUM" --json state --jq 'all(.state == "SUCCESS" or .state == "SKIPPED")' 2>/dev/null || echo "false")
 
   if [ "$CI_STATUS" != "true" ]; then
     log "Waiting for CI to complete..."
     for i in {1..60}; do
       sleep 10
-      CI_STATUS=$(gh pr checks "$PR_NUM" --json conclusion --jq 'all(.conclusion == "SUCCESS" or .conclusion == "SKIPPED")' 2>/dev/null || echo "false")
+      CI_STATUS=$(gh pr checks "$PR_NUM" --json state --jq 'all(.state == "SUCCESS" or .state == "SKIPPED")' 2>/dev/null || echo "false")
       if [ "$CI_STATUS" = "true" ]; then
         log "CI passed!"
         break

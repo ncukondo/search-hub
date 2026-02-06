@@ -39,12 +39,12 @@ case "$TASK_TYPE" in
 
     # Check CI status
     # Get all check conclusions, filter out SUCCESS/SKIPPED
-    FAILED_CHECKS=$(gh pr checks "$PR_NUM" --json name,state,conclusion \
-      --jq '.[] | select(.conclusion != "SUCCESS" and .conclusion != "SKIPPED" and .conclusion != "") | .name' \
+    FAILED_CHECKS=$(gh pr checks "$PR_NUM" --json name,state \
+      --jq '.[] | select(.state != "SUCCESS" and .state != "SKIPPED" and .state != "PENDING" and .state != "") | .name' \
       2>/dev/null || true)
 
-    PENDING_CHECKS=$(gh pr checks "$PR_NUM" --json name,state,conclusion \
-      --jq '.[] | select(.conclusion == "" or .state == "PENDING" or .state == "IN_PROGRESS") | .name' \
+    PENDING_CHECKS=$(gh pr checks "$PR_NUM" --json name,state \
+      --jq '.[] | select(.state == "PENDING" or .state == "") | .name' \
       2>/dev/null || true)
 
     if [ -n "$PENDING_CHECKS" ]; then
