@@ -83,6 +83,47 @@ export const ConfigSchema = z.object({
       embase: getDefaultProviderConfig(),
     })),
 
+  fulltext: z
+    .object({
+      enabled: z.boolean().default(true),
+      auto_convert_markdown: z.boolean().default(true),
+      auto_attach_on_register: z.boolean().default(true),
+      sources: z
+        .object({
+          unpaywall_email: z.string().default(''),
+          core_api_key: z.string().default(''),
+          prefer_sources: z.array(z.string()).default(['pmc', 'arxiv', 'unpaywall', 'core']),
+        })
+        .default(() => ({
+          unpaywall_email: '',
+          core_api_key: '',
+          prefer_sources: ['pmc', 'arxiv', 'unpaywall', 'core'],
+        })),
+      download: z
+        .object({
+          concurrent_downloads: z.number().int().positive().default(3),
+          retry_attempts: z.number().int().min(0).default(3),
+        })
+        .default(() => ({
+          concurrent_downloads: 3,
+          retry_attempts: 3,
+        })),
+    })
+    .default(() => ({
+      enabled: true,
+      auto_convert_markdown: true,
+      auto_attach_on_register: true,
+      sources: {
+        unpaywall_email: '',
+        core_api_key: '',
+        prefer_sources: ['pmc', 'arxiv', 'unpaywall', 'core'],
+      },
+      download: {
+        concurrent_downloads: 3,
+        retry_attempts: 3,
+      },
+    })),
+
   integration: z
     .object({
       reference_manager: z

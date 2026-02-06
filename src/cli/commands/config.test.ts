@@ -81,6 +81,20 @@ const mockConfig: Config = {
       max_results: 10000,
     },
   },
+  fulltext: {
+    enabled: true,
+    auto_convert_markdown: true,
+    auto_attach_on_register: true,
+    sources: {
+      unpaywall_email: '',
+      core_api_key: '',
+      prefer_sources: ['pmc', 'arxiv', 'unpaywall', 'core'],
+    },
+    download: {
+      concurrent_downloads: 3,
+      retry_attempts: 3,
+    },
+  },
   integration: {
     reference_manager: {
       enabled: false,

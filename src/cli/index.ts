@@ -2149,13 +2149,15 @@ Examples:
       try {
         const sessionsDir = await getSessionsDir(globalOpts);
         const sessionDir = join(sessionsDir, options.session);
-        const config = await loadConfig({});
+        const config = await loadConfig(
+          globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
+        );
         const result = await executeFulltextCheck({
           sessionDir,
           config: {
-            unpaywallEmail: config.providers?.pubmed?.email ?? '',
-            coreApiKey: '',
-            preferSources: ['pmc', 'arxiv', 'unpaywall', 'core'],
+            unpaywallEmail: config.fulltext?.sources?.unpaywall_email ?? '',
+            coreApiKey: config.fulltext?.sources?.core_api_key ?? '',
+            preferSources: config.fulltext?.sources?.prefer_sources ?? ['pmc', 'arxiv', 'unpaywall', 'core'],
           },
         });
 
