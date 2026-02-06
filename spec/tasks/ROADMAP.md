@@ -69,7 +69,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 60 | Fulltext Init and Sync Commands | 59 | 🔲 Planned | [20260205-04](20260205-04-fulltext-init-sync.md) |
 | 61 | Fulltext OA Discovery | 59 | 🔲 Planned | [20260205-05](20260205-05-fulltext-oa-discovery.md) |
 | 62 | Fulltext Fetch Command | 59, 61 | 🔲 Planned | [20260205-06](20260205-06-fulltext-fetch.md) |
-| 63 | PMC XML to Markdown Conversion | 59 | 🔲 Planned | [20260205-07](20260205-07-fulltext-pmc-markdown.md) |
+| 63 | PMC XML to Markdown Conversion | 59 | ✅ Completed | [20260205-07](completed/20260205-07-fulltext-pmc-markdown.md) |
 | 64 | Fulltext Register Integration | 59, 11 | 🔲 Planned | [20260205-08](20260205-08-fulltext-register-integration.md) |
 | 65 | Fulltext Status and Pending Commands | 59, 61 | 🔲 Planned | [20260205-09](20260205-09-fulltext-status-pending.md) |
 | 66 | Fulltext Documentation | 59-65 | 🔲 Planned | [20260205-10](20260205-10-fulltext-documentation.md) |
