@@ -7,10 +7,8 @@ import {
   fetchFulltext,
   fetchAllFulltexts,
   type FetchArticle,
-  type FetchOptions,
-  type FetchResult,
 } from './orchestrator';
-import type { FulltextMeta, OALocation } from '../types';
+import type { FulltextMeta } from '../types';
 
 // Mock downloader and pmc-xml
 vi.mock('./downloader', () => ({
