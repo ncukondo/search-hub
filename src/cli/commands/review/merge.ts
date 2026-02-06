@@ -150,6 +150,11 @@ function processWorkFile(
 
   const timestamp = new Date().toISOString();
 
+  // Register the reviewer for this work file's basis
+  if (!options.dryRun) {
+    registerReviewer(mainFile, workFile.reviewer, workFile.basis);
+  }
+
   for (const workArticle of workFile.articles) {
     // Skip articles with null decision (not yet reviewed)
     if (workArticle.decision === null) {
@@ -237,6 +242,11 @@ function processReviewFile(
             timestamp: review.timestamp ?? new Date().toISOString(),
           };
           mainArticle.reviews.push(reviewWithTimestamp);
+
+          // Register reviewer if basis is present
+          if (review.basis) {
+            registerReviewer(mainFile, review.reviewer, review.basis);
+          }
         }
         result.reviewsAdded++;
       }

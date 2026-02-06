@@ -443,6 +443,85 @@ describe('executeReviewMerge', () => {
     });
   });
 
+  describe('reviewer registration during merge', () => {
+    async function writeWorkFile(workFile: WorkFile, name: string): Promise<void> {
+      const content = stringifyYaml(workFile);
+      const dir = join(sessionsDir, sessionId, 'for-review', name);
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, 'review.yaml'), content);
+    }
+
+    it('registers reviewer from work file after merge', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: '' },
+        ],
+      };
+      await writeWorkFile(workFile, 'phase1');
+
+      await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.reviewers).toEqual([{ name: 'ai:claude', basis: 'title' }]);
+    });
+
+    it('registers reviewers from review file after merge', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const extractedArticles: ArticleEntry[] = [
+        {
+          title: 'Article 1',
+          pmid: '1',
+          reviews: [
+            { reviewer: 'gpt-4o', decision: 'include', basis: 'abstract', timestamp: '2024-01-01T00:00:00Z' },
+          ],
+        },
+      ];
+      await writeExtractedFile(extractedArticles, 'batch1');
+
+      await executeReviewMerge({ sessionId, name: 'batch1' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.reviewers).toEqual([{ name: 'gpt-4o', basis: 'abstract' }]);
+    });
+
+    it('does not duplicate reviewer on same name+basis merge', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test1', reviews: [] },
+        { title: 'Article 2', doi: '10.1234/test2', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1234/test1', title: 'Article 1', decision: 'include', comment: '' },
+          { id: '10.1234/test2', title: 'Article 2', decision: 'exclude', comment: '' },
+        ],
+      };
+      await writeWorkFile(workFile, 'phase1');
+
+      await executeReviewMerge({ sessionId, name: 'phase1' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      // Same reviewer+basis should appear only once
+      expect(merged.reviewers).toHaveLength(1);
+    });
+  });
+
   describe('work file format (with basis/reviewer)', () => {
     async function writeWorkFile(workFile: WorkFile, name: string): Promise<void> {
       const content = stringifyYaml(workFile);

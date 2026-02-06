@@ -55,14 +55,14 @@ conflict/coverage classification.
 
 ### Step 3: Integrate into `processWorkFile` and `processReviewFile`
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts`
+- [x] Write test: `src/cli/commands/review/merge.test.ts`
   - After `processWorkFile`, the reviewer name+basis is registered in the review file
   - After `processReviewFile`, each source reviewer name+basis is registered
-- [ ] Update `processWorkFile` to call `registerReviewer` with the reviewer name and current basis
-- [ ] Update `processReviewFile` to call `registerReviewer` for each reviewer found in the source
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: merge operations automatically register reviewers
+- [x] Update `processWorkFile` to call `registerReviewer` with the reviewer name and current basis
+- [x] Update `processReviewFile` to call `registerReviewer` for each reviewer found in the source
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: merge operations automatically register reviewers
 
 ### Step 4: Update JSON Schemas
 
