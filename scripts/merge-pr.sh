@@ -179,7 +179,7 @@ if [ "$SKIP_TASK" = false ]; then
   log "Looking for task file..."
 
   # Try to find task file matching the branch name
-  TASK_FILE=$(find spec/tasks/active -name "*${BRANCH_DIR}*" -o -name "*$(echo "$BRANCH" | sed 's/feat\///' | sed 's/fix\///')*" 2>/dev/null | head -1 || true)
+  TASK_FILE=$(find spec/tasks -maxdepth 1 \( -name "*${BRANCH_DIR}*" -o -name "*$(echo "$BRANCH" | sed 's/feat\///' | sed 's/fix\///')*" \) 2>/dev/null | head -1 || true)
 
   if [ -n "$TASK_FILE" ] && [ -f "$TASK_FILE" ]; then
     TASK_BASENAME=$(basename "$TASK_FILE")
@@ -193,7 +193,7 @@ if [ "$SKIP_TASK" = false ]; then
     # This is a hint for the agent to update ROADMAP manually if needed
     echo "[merge-pr] Task file moved. Please update ROADMAP.md status to 'Done' if needed."
   else
-    log "No matching task file found in spec/tasks/active/"
+    log "No matching task file found in spec/tasks/"
   fi
 fi
 

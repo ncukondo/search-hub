@@ -65,7 +65,7 @@ git worktree list
 - Done: X
 - In Progress: X
 - Pending: X
-- Next priority: [task name](spec/tasks/active/xxx.md)
+- Next priority: [task name](spec/tasks/xxx.md)
 
 ### Tests
 - passed: X / failed: X / skipped: X
