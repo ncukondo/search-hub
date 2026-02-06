@@ -74,6 +74,9 @@ This file tracks high-level progress. For implementation details, see individual
 | 65 | Fulltext Status and Pending Commands | 59, 61 | 🔲 Planned | [20260205-09](20260205-09-fulltext-status-pending.md) |
 | 66 | Fulltext Documentation | 59-65 | 🔲 Planned | [20260205-10](20260205-10-fulltext-documentation.md) |
 | 67 | Remove fulltext-index.json | 60, 61 | 🔲 Planned | [20260206-01](20260206-01-remove-fulltext-index-json.md) |
+| 68 | JATS Parser `preserveOrder` Refactor | 63 | 🔲 Planned | [20260206-02](20260206-02-jats-preserve-order.md) |
+| 69 | JATS `<disp-quote>` & Nested Block Elements | 68 | 🔲 Planned | [20260206-03](20260206-03-jats-block-elements.md) |
+| 70 | JATS Minor Fixes (Entities, Refs, PMCID) | 68 | 🔲 Planned | [20260206-04](20260206-04-jats-minor-fixes.md) |
 
 ## Development Flow
 
