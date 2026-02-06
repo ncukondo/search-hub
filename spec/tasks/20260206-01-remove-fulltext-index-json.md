@@ -34,29 +34,29 @@ The new architecture is:
 
 ### Step 1: Remove index-manager module
 
-- [ ] Delete `src/fulltext/index-manager.ts`
-- [ ] Delete `src/fulltext/index-manager.test.ts`
-- [ ] Run `npm run typecheck` — identify remaining references
-- [ ] Fix all import errors
+- [x] Delete `src/fulltext/index-manager.ts`
+- [x] Delete `src/fulltext/index-manager.test.ts`
+- [x] Run `npm run typecheck` — identify remaining references
+- [x] Fix all import errors
 
 ### Step 2: Remove types and paths
 
-- [ ] Remove `FulltextIndex` and `FulltextIndexEntry` from `src/fulltext/types.ts`
-- [ ] Remove `getIndexPath()` from `src/fulltext/paths.ts`
-- [ ] Update `src/fulltext/paths.test.ts` to remove `getIndexPath` test
-- [ ] Run `npm run lint && npm run typecheck`
+- [x] Remove `FulltextIndex` and `FulltextIndexEntry` from `src/fulltext/types.ts`
+- [x] Remove `getIndexPath()` from `src/fulltext/paths.ts`
+- [x] Update `src/fulltext/paths.test.ts` to remove `getIndexPath` test
+- [x] Run `npm run lint && npm run typecheck`
 
 ### Step 3: Update foundation test
 
-- [ ] Remove index-manager imports and tests from `src/fulltext/foundation.test.ts`
-- [ ] Run `npm test`
-- [ ] Acceptance: All tests pass with no references to fulltext-index.json
+- [x] Remove index-manager imports and tests from `src/fulltext/foundation.test.ts`
+- [x] Run `npm test`
+- [x] Acceptance: All tests pass with no references to fulltext-index.json
 
 ### Final Step: Verify clean removal
 
-- [ ] `grep -r "fulltext-index\|FulltextIndex\|FulltextIndexEntry\|index-manager" src/` returns no matches
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: No traces of fulltext-index.json in source code
+- [x] `grep -r "fulltext-index\|FulltextIndex\|FulltextIndexEntry\|index-manager" src/` returns no matches
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: No traces of fulltext-index.json in source code
 
 ## Dependencies
 

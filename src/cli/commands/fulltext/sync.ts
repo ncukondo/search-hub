@@ -6,10 +6,9 @@ import { join } from 'node:path';
 import { readFile, writeFile, readdir, stat } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { FulltextMeta, FulltextIndex, FileInfo } from '../../../fulltext/types.js';
+import type { FulltextMeta, FileInfo } from '../../../fulltext/types.js';
 import { loadMeta, saveMeta, updateMetaFiles } from '../../../fulltext/meta.js';
-import { loadIndex, saveIndex, updateEntry } from '../../../fulltext/index-manager.js';
-import { getFulltextDir, getIndexPath } from '../../../fulltext/paths.js';
+import { getFulltextDir } from '../../../fulltext/paths.js';
 
 /** Known fulltext filenames and their type keys. */
 const FULLTEXT_FILES: Record<string, 'pdf' | 'xml' | 'markdown'> = {
@@ -46,16 +45,6 @@ export async function executeFulltextSync(
   const sessionDir = join(sessionsDir, sessionId);
   const fulltextDir = getFulltextDir(sessionDir);
 
-  // Load fulltext index
-  const indexPath = getIndexPath(sessionDir);
-  let index: FulltextIndex;
-  try {
-    index = await loadIndex(indexPath);
-  } catch {
-    // No index means no directories to sync
-    return { synced: 0, articlesUpdated: 0, entries: [] };
-  }
-
   // Scan all directories in fulltext/
   let dirEntries: string[];
   try {
@@ -69,8 +58,8 @@ export async function executeFulltextSync(
   let totalSynced = 0;
   const articlesWithChanges = new Set<string>();
 
-  // Track updates for index and reviews
-  const indexUpdates = new Map<string, { pdf: boolean; xml: boolean; markdown: boolean }>();
+  // Track updates for meta and reviews
+  const hasFilesUpdates = new Map<string, { pdf: boolean; xml: boolean; markdown: boolean }>();
   const metaUpdates = new Map<string, { meta: FulltextMeta; path: string }>();
 
   for (const dirName of dirEntries) {
@@ -135,32 +124,22 @@ export async function executeFulltextSync(
         const updatedMeta = updateMetaFiles(meta, fileInfoUpdates);
         metaUpdates.set(dirName, { meta: updatedMeta, path: metaPath });
 
-        // Compute updated hasFiles for index
+        // Compute updated hasFiles for reviews
         const hasFiles = {
           pdf: !!(updatedMeta.files.pdf),
           xml: !!(updatedMeta.files.xml),
           markdown: !!(updatedMeta.files.markdown),
         };
-        indexUpdates.set(dirName, hasFiles);
+        hasFilesUpdates.set(dirName, hasFiles);
       }
     }
   }
 
-  if (!dryRun && (metaUpdates.size > 0 || indexUpdates.size > 0)) {
+  if (!dryRun && metaUpdates.size > 0) {
     // Save all meta.json updates
     for (const [, { meta, path }] of metaUpdates) {
       await saveMeta(path, meta);
     }
-
-    // Update fulltext-index.json
-    for (const [dirName, hasFiles] of indexUpdates) {
-      try {
-        index = updateEntry(index, dirName, { hasFiles });
-      } catch {
-        // Entry not found in index - skip
-      }
-    }
-    await saveIndex(indexPath, index);
 
     // Update reviews.yaml if it exists
     const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
@@ -170,8 +149,8 @@ export async function executeFulltextSync(
       let reviewsChanged = false;
 
       for (const article of reviewFile.articles) {
-        if (article.fulltext?.dirName && indexUpdates.has(article.fulltext.dirName)) {
-          const hasFiles = indexUpdates.get(article.fulltext.dirName);
+        if (article.fulltext?.dirName && hasFilesUpdates.has(article.fulltext.dirName)) {
+          const hasFiles = hasFilesUpdates.get(article.fulltext.dirName);
           if (hasFiles) {
             article.fulltext.hasFiles = hasFiles;
             reviewsChanged = true;
