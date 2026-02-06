@@ -40,6 +40,25 @@ Spawn a reviewer agent for reviewing a PR.
 ./scripts/spawn-reviewer.sh <branch-name> <pr-number> --create
 ```
 
+### spawn-agent.sh
+Spawn a generic agent for research, PR comments, or custom tasks.
+```bash
+# Research task
+./scripts/spawn-agent.sh feat/my-feature -- "調査プロンプト"
+
+# PR comment response
+./scripts/spawn-agent.sh --pr 123 -- "/pr-comments 123"
+
+# Create worktree + custom task
+./scripts/spawn-agent.sh feat/new --create -- "カスタムタスク"
+
+# Interactive mode (no prompt)
+./scripts/spawn-agent.sh feat/my-feature
+
+# Main repo (no worktree)
+./scripts/spawn-agent.sh --main -- "プロンプト"
+```
+
 ### kill-agent.sh
 Gracefully terminate an agent in a tmux pane.
 ```bash
@@ -188,6 +207,7 @@ Session hook to verify proper worker launch method.
 |:-------|:--------|
 | `spawn-worker.sh` | Start implementation worker |
 | `spawn-reviewer.sh` | Start PR reviewer |
+| `spawn-agent.sh` | Start generic agent (research, PR comments, etc.) |
 | `kill-agent.sh` | Terminate agent |
 | `launch-agent.sh` | Low-level agent launcher |
 | `orchestrate.sh` | Auto-transition controller |
