@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { classifyStatus, type ArticleEntry, type Review, type ReviewBasis } from './types.js';
+import {
+  classifyStatus,
+  type ArticleEntry,
+  type Review,
+  type ReviewBasis,
+  type ReviewFile,
+  type ReviewerRecord,
+} from './types.js';
 
 describe('classifyStatus', () => {
   const baseEntry: Omit<ArticleEntry, 'reviews' | 'finalDecision'> = {
@@ -138,6 +145,38 @@ describe('classifyStatus', () => {
       finalDecision: 'include',
     };
     expect(classifyStatus(entry)).toBe('finalized');
+  });
+});
+
+describe('ReviewerRecord and ReviewFile.reviewers', () => {
+  it('ReviewerRecord has name and basis fields', () => {
+    const record: ReviewerRecord = {
+      name: 'alice',
+      basis: 'title',
+    };
+    expect(record.name).toBe('alice');
+    expect(record.basis).toBe('title');
+  });
+
+  it('ReviewFile accepts a reviewers array', () => {
+    const file: ReviewFile = {
+      sessionId: 'test-session',
+      articles: [],
+      reviewers: [
+        { name: 'alice', basis: 'title' },
+        { name: 'bob', basis: 'abstract' },
+      ],
+    };
+    expect(file.reviewers).toHaveLength(2);
+    expect(file.reviewers![0]).toEqual({ name: 'alice', basis: 'title' });
+  });
+
+  it('ReviewFile works without reviewers (optional)', () => {
+    const file: ReviewFile = {
+      sessionId: 'test-session',
+      articles: [],
+    };
+    expect(file.reviewers).toBeUndefined();
   });
 });
 

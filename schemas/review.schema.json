@@ -20,9 +20,33 @@
       "items": {
         "$ref": "#/definitions/ArticleEntry"
       }
+    },
+    "reviewers": {
+      "type": "array",
+      "description": "Registry of reviewers who participated at each basis level",
+      "items": {
+        "$ref": "#/definitions/ReviewerRecord"
+      }
     }
   },
   "definitions": {
+    "ReviewerRecord": {
+      "type": "object",
+      "description": "Record of a reviewer's participation at a specific basis level",
+      "required": ["name", "basis"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Reviewer identifier"
+        },
+        "basis": {
+          "type": "string",
+          "enum": ["title", "abstract", "fulltext"],
+          "description": "Basis level at which the reviewer participated"
+        }
+      },
+      "additionalProperties": false
+    },
     "Review": {
       "type": "object",
       "description": "Individual assessment of an article",

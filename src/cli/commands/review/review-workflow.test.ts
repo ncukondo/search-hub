@@ -702,6 +702,157 @@ summary:
       expect(markedFile.articles[2]!.decision).toBe('uncertain');
     });
 
+    it('registers reviewer in reviewers array after work file merge', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      const extractResult = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 3,
+          name: 'reviewer-reg-test',
+        },
+        sessionsDir
+      );
+
+      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
+      const workFile = parseYaml(workFileContent) as WorkFile;
+
+      await executeReviewMark({
+        file: extractResult.outputPath,
+        id: workFile.articles[0]!.id,
+        decision: 'include',
+        comment: 'Yes',
+      });
+
+      await executeReviewMerge({ sessionId, name: 'reviewer-reg-test' }, sessionsDir);
+
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8'
+      );
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      expect(reviewFile.reviewers).toEqual([{ name: 'ai:claude', basis: 'title' }]);
+    });
+
+    it('registers multiple reviewers from different merges', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Phase 1: Title screening by gpt-4o
+      const phase1Extract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:gpt-4o',
+          limit: 5,
+          name: 'phase1-reg',
+        },
+        sessionsDir
+      );
+      const phase1Content = await readFile(phase1Extract.outputPath, 'utf-8');
+      const phase1File = parseYaml(phase1Content) as WorkFile;
+      await executeReviewMark({
+        file: phase1Extract.outputPath,
+        id: phase1File.articles[0]!.id,
+        decision: 'uncertain',
+        comment: 'Needs more review',
+      });
+      await executeReviewMerge({ sessionId, name: 'phase1-reg' }, sessionsDir);
+
+      // Phase 2: Abstract screening by claude
+      const phase2Extract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['needs-final'],
+          basis: 'abstract',
+          reviewer: 'ai:claude',
+          name: 'phase2-reg',
+        },
+        sessionsDir
+      );
+      const phase2Content = await readFile(phase2Extract.outputPath, 'utf-8');
+      const phase2File = parseYaml(phase2Content) as WorkFile;
+      await executeReviewMark({
+        file: phase2Extract.outputPath,
+        id: phase2File.articles[0]!.id,
+        decision: 'include',
+        comment: 'Confirmed',
+      });
+      await executeReviewMerge({ sessionId, name: 'phase2-reg' }, sessionsDir);
+
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8'
+      );
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      expect(reviewFile.reviewers).toHaveLength(2);
+      expect(reviewFile.reviewers).toEqual([
+        { name: 'ai:gpt-4o', basis: 'title' },
+        { name: 'ai:claude', basis: 'abstract' },
+      ]);
+    });
+
+    it('does not duplicate reviewer registration on same name+basis', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // First merge with ai:claude at title basis
+      const extract1 = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 3,
+          name: 'no-dup-1',
+        },
+        sessionsDir
+      );
+      const wf1 = parseYaml(await readFile(extract1.outputPath, 'utf-8')) as WorkFile;
+      await executeReviewMark({
+        file: extract1.outputPath,
+        id: wf1.articles[0]!.id,
+        decision: 'include',
+        comment: '',
+      });
+      await executeReviewMerge({ sessionId, name: 'no-dup-1' }, sessionsDir);
+
+      // Second merge with same reviewer+basis
+      const extract2 = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 3,
+          name: 'no-dup-2',
+        },
+        sessionsDir
+      );
+      const wf2 = parseYaml(await readFile(extract2.outputPath, 'utf-8')) as WorkFile;
+      await executeReviewMark({
+        file: extract2.outputPath,
+        id: wf2.articles[0]!.id,
+        decision: 'exclude',
+        comment: '',
+      });
+      await executeReviewMerge({ sessionId, name: 'no-dup-2' }, sessionsDir);
+
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8'
+      );
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      // Same reviewer+basis should appear only once
+      expect(reviewFile.reviewers).toHaveLength(1);
+      expect(reviewFile.reviewers).toEqual([{ name: 'ai:claude', basis: 'title' }]);
+    });
+
     it('extract → mark → merge flow completes entirely within for-review/', async () => {
       await setupSessionWithResults();
 
