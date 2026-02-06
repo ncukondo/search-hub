@@ -238,13 +238,13 @@ interface ArticleEntry {
 | Smith, J. | 2024 | smith2024 | smith2024-a1b2c3d4 |
 | Smith, J. (2nd) | 2024 | smith2024a | smith2024a-e5f6g7h8 |
 | Müller, K. | 2023 | muller2023 | muller2023-i9j0k1l2 |
-| 田中, 太郎 | 2024 | tanaka2024 | tanaka2024-m3n4o5p6 |
+| 田中, 太郎 | 2024 | unknown2024 | unknown2024-m3n4o5p6 |
 
 ### Edge Cases
 
 - No author: Use "unknown"
 - No year: Use "0000"
-- Non-ASCII: Transliterate to ASCII (romaji for Japanese)
+- Non-ASCII: Transliterate to ASCII via `any-ascii` (CJK characters fall back to "unknown")
 
 ## CLI Commands
 
