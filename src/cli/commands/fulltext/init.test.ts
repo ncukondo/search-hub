@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile, mkdir, readFile, readdir } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { FulltextMeta, FulltextIndex } from '../../../fulltext/types.js';
+import type { FulltextMeta } from '../../../fulltext/types.js';
 import { executeFulltextInit } from './init.js';
 
 describe('executeFulltextInit', () => {
@@ -133,41 +133,6 @@ describe('executeFulltextInit', () => {
     const result2 = await executeFulltextInit({ sessionId, sessionsDir });
     expect(result2.created).toBe(0);
     expect(result2.skipped).toBe(1);
-  });
-
-  it('updates fulltext-index.json', async () => {
-    await setupReviews([
-      {
-        title: 'Article One',
-        doi: '10.1234/one',
-        reviews: [],
-        finalDecision: 'include',
-      },
-      {
-        title: 'Article Two',
-        doi: '10.5678/two',
-        pmid: '99999999',
-        reviews: [],
-        finalDecision: 'include',
-      },
-    ]);
-
-    await executeFulltextInit({ sessionId, sessionsDir });
-
-    const sessionDir = join(sessionsDir, sessionId);
-    const indexPath = join(sessionDir, 'fulltext', 'fulltext-index.json');
-    const index = JSON.parse(await readFile(indexPath, 'utf-8')) as FulltextIndex;
-
-    expect(index.sessionId).toBe(sessionId);
-    expect(Object.keys(index.entries)).toHaveLength(2);
-
-    const entries = Object.values(index.entries);
-    const doiEntry = entries.find(e => e.doi === '10.1234/one');
-    expect(doiEntry).toBeDefined();
-    expect(doiEntry!.hasFiles).toEqual({ pdf: false, xml: false, markdown: false });
-
-    const pmidEntry = entries.find(e => e.pmid === '99999999');
-    expect(pmidEntry).toBeDefined();
   });
 
   it('updates reviews.yaml with fulltext references', async () => {

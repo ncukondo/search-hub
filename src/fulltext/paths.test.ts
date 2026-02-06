@@ -5,7 +5,6 @@ import {
   getArticleDir,
   getMetaPath,
   getReadmePath,
-  getIndexPath,
 } from './paths.js';
 
 describe('Path Resolution Utilities', () => {
@@ -43,11 +42,4 @@ describe('Path Resolution Utilities', () => {
     });
   });
 
-  describe('getIndexPath', () => {
-    it('should return fulltext-index.json under fulltext directory', () => {
-      expect(getIndexPath(sessionDir)).toBe(
-        join(sessionDir, 'fulltext', 'fulltext-index.json'),
-      );
-    });
-  });
 });

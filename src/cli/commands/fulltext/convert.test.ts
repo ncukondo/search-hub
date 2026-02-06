@@ -63,28 +63,6 @@ async function setupSession(sessionsDir: string, sessionId: string) {
     'utf-8',
   );
 
-  // Create index
-  await writeFile(
-    join(fulltextDir, 'fulltext-index.json'),
-    JSON.stringify(
-      {
-        sessionId,
-        updatedAt: new Date().toISOString(),
-        entries: {
-          'smith2024-a1b2c3d4': {
-            dirName: 'smith2024-a1b2c3d4',
-            citationKey: 'smith2024',
-            doi: '10.1234/example',
-            hasFiles: { pdf: false, xml: true, markdown: false },
-          },
-        },
-      },
-      null,
-      2,
-    ),
-    'utf-8',
-  );
-
   return { sessionDir, fulltextDir, articleDir };
 }
 

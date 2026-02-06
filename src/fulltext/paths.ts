@@ -23,8 +23,3 @@ export function getMetaPath(sessionDir: string, dirName: string): string {
 export function getReadmePath(sessionDir: string, dirName: string): string {
   return join(sessionDir, 'fulltext', dirName, 'README.md');
 }
-
-/** Get the fulltext-index.json path for a session. */
-export function getIndexPath(sessionDir: string): string {
-  return join(sessionDir, 'fulltext', 'fulltext-index.json');
-}

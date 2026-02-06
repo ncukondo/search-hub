@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile, mkdir, readFile, readdir } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { FulltextMeta, FulltextIndex } from '../../../fulltext/types.js';
+import type { FulltextMeta } from '../../../fulltext/types.js';
 import { executeFulltextInit } from './init.js';
 import { executeFulltextSync } from './sync.js';
 
@@ -69,14 +69,8 @@ describe('Fulltext Init + Sync E2E', () => {
     // Verify directories were created
     const sessionDir = join(sessionsDir, sessionId);
     const fulltextDir = join(sessionDir, 'fulltext');
-    const dirs = await readdir(fulltextDir);
-    // 2 directories + fulltext-index.json
-    expect(dirs.filter(d => !d.endsWith('.json'))).toHaveLength(2);
-
-    // Verify fulltext-index.json
-    const indexPath = join(fulltextDir, 'fulltext-index.json');
-    const index = JSON.parse(await readFile(indexPath, 'utf-8')) as FulltextIndex;
-    expect(Object.keys(index.entries)).toHaveLength(2);
+    const dirs = await readdir(fulltextDir, { withFileTypes: true });
+    expect(dirs.filter(d => d.isDirectory())).toHaveLength(2);
 
     // Verify reviews.yaml updated
     const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
@@ -114,12 +108,6 @@ describe('Fulltext Init + Sync E2E', () => {
     expect(meta2.files.pdf).toBeDefined();
     expect(meta2.files.markdown).toBeDefined();
     expect(meta2.files.markdown!.filename).toBe('fulltext.md');
-
-    // Verify fulltext-index.json updated
-    const updatedIndex = JSON.parse(await readFile(indexPath, 'utf-8')) as FulltextIndex;
-    expect(updatedIndex.entries[dir1]!.hasFiles.pdf).toBe(true);
-    expect(updatedIndex.entries[dir2]!.hasFiles.pdf).toBe(true);
-    expect(updatedIndex.entries[dir2]!.hasFiles.markdown).toBe(true);
 
     // Verify reviews.yaml updated with hasFiles
     const updatedReview = parseYaml(await readFile(reviewsPath, 'utf-8')) as ReviewFile;
