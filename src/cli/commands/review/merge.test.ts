@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { mkdtemp, rm, writeFile, mkdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { stringify as stringifyYaml, parse as parseYaml } from 'yaml';
-import { executeReviewMerge } from './merge.js';
+import { executeReviewMerge, registerReviewer } from './merge.js';
 import type { ReviewFile, ArticleEntry, WorkFile } from './types.js';
 
 describe('executeReviewMerge', () => {
@@ -406,6 +406,41 @@ describe('executeReviewMerge', () => {
     await expect(
       executeReviewMerge({ sessionId, name: 'nonexistent' }, sessionsDir)
     ).rejects.toThrow();
+  });
+
+  describe('registerReviewer', () => {
+    it('adds a reviewer record to the reviewers array', () => {
+      const reviewFile: ReviewFile = { sessionId, articles: [] };
+      registerReviewer(reviewFile, 'alice', 'title');
+      expect(reviewFile.reviewers).toEqual([{ name: 'alice', basis: 'title' }]);
+    });
+
+    it('does not create a duplicate for the same name+basis', () => {
+      const reviewFile: ReviewFile = { sessionId, articles: [] };
+      registerReviewer(reviewFile, 'alice', 'title');
+      registerReviewer(reviewFile, 'alice', 'title');
+      expect(reviewFile.reviewers).toHaveLength(1);
+    });
+
+    it('records multiple distinct name+basis pairs', () => {
+      const reviewFile: ReviewFile = { sessionId, articles: [] };
+      registerReviewer(reviewFile, 'alice', 'title');
+      registerReviewer(reviewFile, 'bob', 'title');
+      registerReviewer(reviewFile, 'alice', 'abstract');
+      expect(reviewFile.reviewers).toHaveLength(3);
+      expect(reviewFile.reviewers).toEqual([
+        { name: 'alice', basis: 'title' },
+        { name: 'bob', basis: 'title' },
+        { name: 'alice', basis: 'abstract' },
+      ]);
+    });
+
+    it('initializes reviewers array if undefined', () => {
+      const reviewFile: ReviewFile = { sessionId, articles: [] };
+      expect(reviewFile.reviewers).toBeUndefined();
+      registerReviewer(reviewFile, 'alice', 'title');
+      expect(reviewFile.reviewers).toBeDefined();
+    });
   });
 
   describe('work file format (with basis/reviewer)', () => {

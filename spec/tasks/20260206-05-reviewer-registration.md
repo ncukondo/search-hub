@@ -41,17 +41,17 @@ conflict/coverage classification.
 
 ### Step 2: Add `registerReviewer` Helper in `merge.ts`
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts`
+- [x] Write test: `src/cli/commands/review/merge.test.ts`
   - Calling `registerReviewer(reviewFile, "alice", 1)` adds `{ name: "alice", basis: 1 }` to `reviewers`
   - Calling with same name+basis twice does not create a duplicate
   - Multiple distinct name+basis pairs are all recorded
-- [ ] Create stub: `registerReviewer` in `src/cli/commands/review/merge.ts` (empty implementation)
-- [ ] Verify test fails (Red)
-- [ ] Implement `registerReviewer`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: `registerReviewer` correctly manages the `reviewers` array with dedup
+- [x] Create stub: `registerReviewer` in `src/cli/commands/review/merge.ts` (empty implementation)
+- [x] Verify test fails (Red)
+- [x] Implement `registerReviewer`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: `registerReviewer` correctly manages the `reviewers` array with dedup
 
 ### Step 3: Integrate into `processWorkFile` and `processReviewFile`
 

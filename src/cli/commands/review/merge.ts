@@ -5,7 +5,7 @@
 import { join } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import type { ReviewFile, ArticleEntry, Review, WorkFile } from './types.js';
+import type { ReviewFile, ArticleEntry, Review, WorkFile, ReviewBasis } from './types.js';
 import { validateName } from './extract.js';
 
 
@@ -52,6 +52,20 @@ async function loadReviewFile(path: string): Promise<ReviewFile> {
 function isDuplicateReview(existing: Review, incoming: Review): boolean {
   if (!incoming.timestamp) return false;
   return existing.reviewer === incoming.reviewer && existing.timestamp === incoming.timestamp;
+}
+
+/**
+ * Register a reviewer in the review file's reviewers registry.
+ * Deduplicates by name+basis pair.
+ */
+export function registerReviewer(reviewFile: ReviewFile, name: string, basis: ReviewBasis): void {
+  if (!reviewFile.reviewers) {
+    reviewFile.reviewers = [];
+  }
+  const exists = reviewFile.reviewers.some((r) => r.name === name && r.basis === basis);
+  if (!exists) {
+    reviewFile.reviewers.push({ name, basis });
+  }
 }
 
 /**
