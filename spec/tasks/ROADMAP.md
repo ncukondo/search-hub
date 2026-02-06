@@ -73,6 +73,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 64 | Fulltext Register Integration | 59, 11 | 🔲 Planned | [20260205-08](20260205-08-fulltext-register-integration.md) |
 | 65 | Fulltext Status and Pending Commands | 59, 61 | 🔲 Planned | [20260205-09](20260205-09-fulltext-status-pending.md) |
 | 66 | Fulltext Documentation | 59-65 | 🔲 Planned | [20260205-10](20260205-10-fulltext-documentation.md) |
+| 67 | Remove fulltext-index.json | 60, 61 | 🔲 Planned | [20260206-01](20260206-01-remove-fulltext-index-json.md) |
 
 ## Development Flow
 

@@ -116,3 +116,9 @@ Establish the foundation for fulltext management: type definitions, directory st
 - Use `any-ascii` or similar library for transliteration (or implement simple mapping)
 - UUID generation: use `crypto.randomUUID()`
 - JSON formatting: 2-space indentation for readability
+
+## Deprecation Notice
+
+Step 5 (Index Management) and related types (`FulltextIndex`, `FulltextIndexEntry`) are deprecated.
+`fulltext-index.json` has been replaced by `meta.json` (per-directory) + `reviews.yaml` fulltext ref (per-article).
+See Task 67 for removal of index-manager code.

@@ -62,7 +62,7 @@ Implement `fulltext fetch` command to automatically download OA fulltexts:
   - Test: Fetches from best available source (by priority)
   - Test: Creates directory if not exists
   - Test: Updates meta.json after download
-  - Test: Updates fulltext-index.json
+  - Test: Updates reviews.yaml fulltext.hasFiles
   - Test: Concurrent downloads with limit (default 3)
   - Test: Progress callback for UI
 - [ ] Create stub: `src/fulltext/download/orchestrator.ts`

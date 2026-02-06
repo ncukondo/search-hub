@@ -105,7 +105,6 @@ This enables `fulltext check` command and provides URLs for `fulltext fetch` and
 - [x] Write test: `src/cli/commands/fulltext/check.test.ts`
   - Test: Checks OA for all included articles
   - Test: Updates meta.json with OA results
-  - Test: Updates fulltext-index.json
   - Test: Shows summary (X open, Y closed, Z unknown)
   - Test: --format json outputs structured data
 - [x] Create stub: `src/cli/commands/fulltext/check.ts`
