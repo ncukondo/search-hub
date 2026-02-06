@@ -23,7 +23,14 @@ gh pr list --state open --json number,headRefName,title
 
 ### 2. Spawn Reviewers
 
-For each PR (parallel). Worktrees are auto-created:
+**Pane limit: max 4 reviewers** (main + 4 reviewers = 5 panes).
+Before spawning, check current pane count:
+```bash
+tmux list-panes | wc -l  # Must be < 5
+```
+If more PRs than available slots, review sequentially — wait for one to finish before spawning the next.
+
+For each PR (parallel, up to pane limit). Worktrees are auto-created:
 ```bash
 ./scripts/spawn-reviewer.sh --pr <pr-number> &
 # ... more PRs ...

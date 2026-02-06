@@ -37,6 +37,13 @@ git worktree add /workspaces/search-hub--worktrees/<branch-dir> <branch-name>
 
 ### 4. Spawn Fixer Agents
 
+**Pane limit: max 4 fixers** (main + 4 fixers = 5 panes).
+Before spawning, check current pane count:
+```bash
+tmux list-panes | wc -l  # Must be < 5
+```
+If more PRs than available slots, fix sequentially — wait for one to finish before spawning the next.
+
 For each PR:
 ```bash
 ./scripts/spawn-worker.sh <branch-name> <task-keyword> &
