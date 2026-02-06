@@ -9,15 +9,11 @@ import type { FulltextMeta } from '../../../fulltext/types';
 // Mock fs operations
 vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(),
-  readdir: vi.fn(),
-  access: vi.fn(),
 }));
 
-import { readFile, readdir, access } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 
 const mockReadFile = vi.mocked(readFile);
-const mockReaddir = vi.mocked(readdir);
-const mockAccess = vi.mocked(access);
 
 /** Helper: create a FulltextMeta object for testing */
 function makeMeta(
@@ -120,12 +116,6 @@ describe('executeFulltextStatus', () => {
       throw new Error(`File not found: ${p}`);
     });
 
-    // Fulltext directories exist
-    mockReaddir.mockResolvedValue(
-      ['smith2024-aaaa1111', 'jones2024-bbbb2222', 'lee2024-cccc3333', 'chen2024-dddd4444'] as unknown as Awaited<ReturnType<typeof readdir>>,
-    );
-
-    mockAccess.mockResolvedValue(undefined);
   });
 
   it('shows total included articles count', async () => {
@@ -188,8 +178,12 @@ articles:
   });
 
   it('handles missing fulltext directory gracefully', async () => {
-    mockAccess.mockRejectedValue(new Error('ENOENT'));
-    mockReaddir.mockRejectedValue(new Error('ENOENT'));
+    // Override readFile to fail for all meta.json reads
+    mockReadFile.mockImplementation(async (path) => {
+      const p = String(path);
+      if (p.includes('reviews.yaml')) return reviewFileYaml;
+      throw new Error('ENOENT');
+    });
 
     const result = await executeFulltextStatus({ sessionDir });
     // All articles with fulltext refs become "pending" since we can't read their meta

@@ -44,7 +44,6 @@ async function hasFulltextFiles(
     const meta = await loadMeta(metaPath);
     return (
       meta.files.pdf !== undefined ||
-      meta.files.xml !== undefined ||
       meta.files.markdown !== undefined
     );
   } catch {
@@ -97,7 +96,10 @@ export function formatExportFile(articles: PendingArticle[]): string {
 
   for (const article of articles) {
     const identifier = article.dirName ?? article.title;
-    const lines: string[] = [`# ${identifier} - ${article.title}`];
+    const header = identifier === article.title
+      ? `# ${article.title}`
+      : `# ${identifier} - ${article.title}`;
+    const lines: string[] = [header];
 
     // Publisher URL (DOI link) first
     if (article.publisherUrl) {
