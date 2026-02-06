@@ -66,7 +66,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 57 | Next Step Suggestions | 10, 58 | ✅ Completed | [20260205-01](completed/20260205-01-next-step-suggestions.md) |
 | 58 | Review Extract Session-Internal Management | 56 | ✅ Completed | [20260205-02](completed/20260205-02-review-extract-session-internal.md) |
 | 59 | Fulltext Management Foundation | 4 | ✅ Completed | [20260205-03](completed/20260205-03-fulltext-foundation.md) |
-| 60 | Fulltext Init and Sync Commands | 59 | 🔲 Planned | [20260205-04](20260205-04-fulltext-init-sync.md) |
+| 60 | Fulltext Init and Sync Commands | 59 | ✅ Completed | [20260205-04](completed/20260205-04-fulltext-init-sync.md) |
 | 61 | Fulltext OA Discovery | 59 | 🔲 Planned | [20260205-05](20260205-05-fulltext-oa-discovery.md) |
 | 62 | Fulltext Fetch Command | 59, 61 | 🔲 Planned | [20260205-06](20260205-06-fulltext-fetch.md) |
 | 63 | PMC XML to Markdown Conversion | 59 | ✅ Completed | [20260205-07](completed/20260205-07-fulltext-pmc-markdown.md) |
