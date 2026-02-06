@@ -125,33 +125,6 @@ function getTextContent(child: OrderedNode): string | undefined {
 // ─── Text Extraction ─────────────────────────────────────────────────
 
 /**
- * Extract text content from a parsed XML node.
- * Handles both string values and #text nodes in preserveOrder format.
- */
-function textContent(node: unknown): string {
-  if (node == null) return '';
-  if (typeof node === 'string') return node;
-  if (typeof node === 'number') return String(node);
-  if (Array.isArray(node)) {
-    return node.map(textContent).join('');
-  }
-  if (typeof node === 'object') {
-    const obj = node as OrderedNode;
-    const text = getTextContent(obj);
-    if (text != null) return text;
-    // Element node — get children and recurse
-    const tag = getTagName(obj);
-    if (tag) {
-      const children = obj[tag];
-      if (Array.isArray(children)) {
-        return (children as OrderedNode[]).map((c) => textContent(c)).join('');
-      }
-    }
-  }
-  return '';
-}
-
-/**
  * Extract plain text from a node that may contain nested elements.
  * Recursively collects all text content from preserveOrder nodes.
  */
