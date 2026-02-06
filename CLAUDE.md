@@ -39,3 +39,10 @@ This prevents input race conditions where tmux processes the Enter before the te
 
 Use `scripts/send-to-agent.sh` when possible, as it handles this correctly.
 <!-- role: implement -->
+
+## Review Agent Instructions
+
+You are a review agent for a PR in this worktree.
+
+### Responsibilities
+- **All PR comments and review bodies MUST be in English**
