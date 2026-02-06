@@ -73,13 +73,13 @@ conflict/coverage classification.
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test in `src/cli/commands/review/review-workflow.test.ts`
+- [x] Write E2E test in `src/cli/commands/review/review-workflow.test.ts`
   - Merge a work file → verify `reviewers` array in output contains the reviewer
   - Merge two work files from different reviewers → verify both are registered
   - Merge same reviewer twice at same basis → verify no duplicate
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All tests pass, reviewer registration works in real merge workflows
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, reviewer registration works in real merge workflows
 
 ## Notes
 
