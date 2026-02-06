@@ -36,18 +36,22 @@ vi.mock('../../../fulltext/index-manager', () => ({
   updateEntry: vi.fn(),
 }));
 
-import { readFile, readdir } from 'node:fs/promises';
-import { parse as parseYaml } from 'yaml';
+import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { loadMeta } from '../../../fulltext/meta';
 import { fetchAllFulltexts } from '../../../fulltext/download/orchestrator';
-import { loadIndex } from '../../../fulltext/index-manager';
+import { loadIndex, saveIndex, updateEntry } from '../../../fulltext/index-manager';
 
 const mockReadFile = vi.mocked(readFile);
+const mockWriteFile = vi.mocked(writeFile);
 const mockReaddir = vi.mocked(readdir);
 const mockParseYaml = vi.mocked(parseYaml);
+const mockStringifyYaml = vi.mocked(stringifyYaml);
 const mockLoadMeta = vi.mocked(loadMeta);
 const mockFetchAll = vi.mocked(fetchAllFulltexts);
 const mockLoadIndex = vi.mocked(loadIndex);
+const mockSaveIndex = vi.mocked(saveIndex);
+const mockUpdateEntry = vi.mocked(updateEntry);
 
 function createReviewFile(articles: Partial<ReviewFile['articles'][0]>[] = []): ReviewFile {
   return {
@@ -224,5 +228,134 @@ describe('executeFulltextFetch', () => {
 
     expect(result.summary.skipped).toBe(1);
     expect(mockFetchAll).toHaveBeenCalledWith([], expect.anything(), expect.anything());
+  });
+
+  describe('reviews.yaml integration', () => {
+    it('updates reviews.yaml hasFiles after successful fetch', async () => {
+      // The updateReviewsAndIndex re-reads reviews.yaml, so mock second read
+      const reviewFile = createReviewFile([{
+        title: 'Test Article',
+        doi: '10.1234/test',
+        fulltext: {
+          dirName: 'smith2024-a1b2c3d4',
+          hasFiles: { pdf: false, xml: false, markdown: false },
+        },
+      }]);
+      // Both reads return the same review file
+      mockParseYaml.mockReturnValue(reviewFile);
+
+      mockFetchAll.mockResolvedValue([
+        { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf', 'fulltext.xml'] },
+      ]);
+
+      await executeFulltextFetch({
+        sessionId: 'test-session',
+        sessionsDir: '/sessions',
+      });
+
+      // Verify writeFile was called for reviews.yaml
+      expect(mockWriteFile).toHaveBeenCalled();
+      // Verify stringify was called with updated review file
+      expect(mockStringifyYaml).toHaveBeenCalled();
+      const writtenReview = mockStringifyYaml.mock.calls[0]![0] as ReviewFile;
+      const updatedArticle = writtenReview.articles[0];
+      expect(updatedArticle?.fulltext?.hasFiles).toEqual({
+        pdf: true,
+        xml: true,
+        markdown: false,
+      });
+    });
+
+    it('only updates articles that were fetched, not failed ones', async () => {
+      const reviewFile = createReviewFile([
+        { title: 'Art1', doi: '10.1/a', fulltext: { dirName: 'art1-aaaa', hasFiles: { pdf: false, xml: false, markdown: false } } },
+        { title: 'Art2', doi: '10.1/b', fulltext: { dirName: 'art2-bbbb', hasFiles: { pdf: false, xml: false, markdown: false } } },
+      ]);
+      mockParseYaml.mockReturnValue(reviewFile);
+
+      mockLoadMeta
+        .mockResolvedValueOnce(createMeta({ dirName: 'art1-aaaa', oaStatus: 'open', oaLocations: [
+          { source: 'pmc', url: 'https://pmc/a', urlType: 'pdf', version: 'published' },
+        ] }))
+        .mockResolvedValueOnce(createMeta({ dirName: 'art2-bbbb', oaStatus: 'open', oaLocations: [
+          { source: 'unpaywall', url: 'https://oa/b', urlType: 'pdf', version: 'published' },
+        ] }));
+
+      mockFetchAll.mockResolvedValue([
+        { dirName: 'art1-aaaa', status: 'downloaded', filesDownloaded: ['fulltext.pdf'] },
+        { dirName: 'art2-bbbb', status: 'failed', error: 'HTTP 403' },
+      ]);
+
+      await executeFulltextFetch({
+        sessionId: 'test-session',
+        sessionsDir: '/sessions',
+      });
+
+      expect(mockStringifyYaml).toHaveBeenCalled();
+      const writtenReview = mockStringifyYaml.mock.calls[0]![0] as ReviewFile;
+
+      // art1 was downloaded → hasFiles updated
+      const art1 = writtenReview.articles.find((a) => a.fulltext?.dirName === 'art1-aaaa');
+      expect(art1?.fulltext?.hasFiles.pdf).toBe(true);
+
+      // art2 failed → hasFiles NOT updated
+      const art2 = writtenReview.articles.find((a) => a.fulltext?.dirName === 'art2-bbbb');
+      expect(art2?.fulltext?.hasFiles.pdf).toBe(false);
+    });
+
+    it('updates fulltext-index.json after successful fetch', async () => {
+      const updatedIndex = {
+        sessionId: 'test-session',
+        updatedAt: new Date().toISOString(),
+        entries: {
+          'smith2024-a1b2c3d4': {
+            dirName: 'smith2024-a1b2c3d4',
+            citationKey: 'smith2024',
+            doi: '10.1234/test',
+            hasFiles: { pdf: true, xml: true, markdown: false },
+          },
+        },
+      };
+      mockUpdateEntry.mockReturnValue(updatedIndex);
+
+      mockFetchAll.mockResolvedValue([
+        { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf', 'fulltext.xml'] },
+      ]);
+
+      await executeFulltextFetch({
+        sessionId: 'test-session',
+        sessionsDir: '/sessions',
+      });
+
+      expect(mockUpdateEntry).toHaveBeenCalledWith(
+        expect.anything(),
+        'smith2024-a1b2c3d4',
+        {
+          hasFiles: {
+            pdf: true,
+            xml: true,
+            markdown: false,
+          },
+        },
+      );
+      expect(mockSaveIndex).toHaveBeenCalled();
+    });
+
+    it('does not update reviews.yaml when no articles were downloaded', async () => {
+      mockLoadMeta.mockResolvedValue(createMeta({
+        oaStatus: 'closed',
+        oaLocations: [],
+      }));
+
+      mockFetchAll.mockResolvedValue([]);
+
+      await executeFulltextFetch({
+        sessionId: 'test-session',
+        sessionsDir: '/sessions',
+      });
+
+      // writeFile should not be called (only readFile for the initial reviews.yaml read)
+      expect(mockStringifyYaml).not.toHaveBeenCalled();
+    });
   });
 });
