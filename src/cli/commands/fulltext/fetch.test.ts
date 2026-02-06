@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { executeFulltextFetch, type FulltextFetchOptions, type FulltextFetchResult } from './fetch';
-import type { FulltextMeta, OALocation } from '../../../fulltext/types';
+import { executeFulltextFetch } from './fetch';
+import type { FulltextMeta } from '../../../fulltext/types';
 import type { ReviewFile } from '../review/types';
 
 // Mock dependencies
@@ -36,7 +36,7 @@ vi.mock('../../../fulltext/index-manager', () => ({
   updateEntry: vi.fn(),
 }));
 
-import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { parse as parseYaml } from 'yaml';
 import { loadMeta } from '../../../fulltext/meta';
 import { fetchAllFulltexts } from '../../../fulltext/download/orchestrator';
