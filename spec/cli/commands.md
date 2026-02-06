@@ -385,6 +385,25 @@ search-hub query translate ./diabetes-ai.yaml --db pubmed
 
 ---
 
+## review
+
+Systematic review workflow commands. See [review.md](review.md) for full specification.
+
+### Subcommands
+
+| Subcommand | Description |
+|---|---|
+| `review init` | Initialize review file from search results |
+| `review status` | Show review progress with dynamic next steps |
+| `review list` | List articles filtered by status |
+| `review extract` | Extract articles for review (work file or review file) |
+| `review mark` | Mark a single article's decision |
+| `review merge` | Merge reviewed file back into master |
+| `review finalize` | Auto-set finalDecision for consensus articles |
+| `review export` | Export finalized articles |
+
+---
+
 ## Exit Codes
 
 | Code | Meaning |

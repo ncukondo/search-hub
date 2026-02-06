@@ -28,7 +28,9 @@ spec/
 │
 ├── cli/                   # CLI specifications
 │   ├── commands.md        # Command definitions
-│   └── output-formats.md  # Export formats
+│   ├── output-formats.md  # Export formats
+│   ├── review.md          # Review workflow specification
+│   └── suggestions.md     # Next step suggestions
 │
 ├── integration/           # External tool integration
 │   └── reference-manager.md
@@ -86,6 +88,7 @@ spec/
 | New provider | `providers/_interface.md` → `providers/{example}.md` |
 | Query DSL changes | `models/query-dsl.md` |
 | CLI changes | `cli/commands.md` |
+| Review workflow | `cli/review.md` |
 | Config changes | `models/config.md` |
 | ref integration | `integration/reference-manager.md` |
 | Fulltext management | `fulltext/overview.md` |
