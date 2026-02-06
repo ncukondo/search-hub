@@ -66,10 +66,10 @@ conflict/coverage classification.
 
 ### Step 4: Update JSON Schemas
 
-- [ ] Add `reviewers` property and `ReviewerRecord` definition to `schemas/review.schema.json`
-- [ ] Copy the same changes to `.search-hub/schemas/review.schema.json`
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: schema validates review files with `reviewers` array
+- [x] Add `reviewers` property and `ReviewerRecord` definition to `schemas/review.schema.json`
+- [x] Copy the same changes to `.search-hub/schemas/review.schema.json`
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: schema validates review files with `reviewers` array
 
 ### Final Step: E2E Integration Tests
 
