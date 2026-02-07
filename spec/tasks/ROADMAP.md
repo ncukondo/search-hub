@@ -92,7 +92,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 83 | Fix JATS Reference pub-id Formatting | 76 | ✅ Completed | [20260207-08](completed/20260207-08-jats-reference-pubid-formatting.md) |
 | 84 | Fix JATS Headerless Table Rendering | 78 | ✅ Completed | [20260207-09](completed/20260207-09-jats-headerless-table-rendering.md) |
 | 85 | Extract JATS Back Matter Notes Sections | 81 | ✅ Completed | [20260207-10](completed/20260207-10-jats-back-matter-notes.md) |
-| 86 | Fix JATS Nested `<notes>` in Declarations | 85 | 🔲 Pending | [20260207-11](20260207-11-jats-nested-notes-in-declarations.md) |
+| 86 | Fix JATS Nested `<notes>` in Declarations | 85 | ✅ Completed | [20260207-11](completed/20260207-11-jats-nested-notes-in-declarations.md) |
 | 87 | Support JATS `<glossary>` (Abbreviations) | 85 | 🔲 Pending | [20260207-12](20260207-12-jats-glossary-support.md) |
 
 ## Development Flow
