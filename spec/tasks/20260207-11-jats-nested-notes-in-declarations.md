@@ -39,20 +39,20 @@ For systematic reviews, ethics approval and competing interests information can 
 
 ### Step 1: Add nested `<notes>` handling in `parseJatsBackMatter()`
 
-- [ ] Write test: XML with `<back><notes><title>Declarations</title><notes><title>Ethics approval</title><p>Approved by committee.</p></notes><notes><title>Competing interests</title><p>None.</p></notes></notes></back>` should extract two `BackMatterNote` items with correct titles and text
-- [ ] Verify test fails (Red)
-- [ ] Extend the `<notes>` processing loop to also check for nested `<notes>` children (in addition to existing `<sec>` check)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: Nested `<notes>` elements within wrapper notes are extracted as individual `BackMatterNote` items
+- [x] Write test: XML with `<back><notes><title>Declarations</title><notes><title>Ethics approval</title><p>Approved by committee.</p></notes><notes><title>Competing interests</title><p>None.</p></notes></notes></back>` should extract two `BackMatterNote` items with correct titles and text
+- [x] Verify test fails (Red)
+- [x] Extend the `<notes>` processing loop to also check for nested `<notes>` children (in addition to existing `<sec>` check)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: Nested `<notes>` elements within wrapper notes are extracted as individual `BackMatterNote` items
 
 ### Step 2: Verify with real PMC XML
 
-- [ ] Write E2E test or manual verification using PMC11293181 XML
-- [ ] Confirm "Ethics approval and consent to participate", "Consent for publication", and "Competing interests" appear under "Declarations" in Markdown output
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All tests pass, Declarations sub-sections render correctly
+- [x] Write E2E test or manual verification using PMC11293181 XML
+- [x] Confirm "Ethics approval and consent to participate", "Consent for publication", and "Competing interests" appear under "Declarations" in Markdown output
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, Declarations sub-sections render correctly
 
 ## Notes
 

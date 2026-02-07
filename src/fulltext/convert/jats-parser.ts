@@ -1191,18 +1191,20 @@ export function parseJatsBackMatter(xml: string): BackMatterResult {
     if (notesElements.length > 0) {
       const notes: BackMatterNote[] = [];
       for (const note of notesElements) {
-        // Check if this <notes> contains <sec> children (e.g. Declarations wrapper)
+        // Check if this <notes> contains <sec> or nested <notes> children (e.g. Declarations wrapper)
         const secs = findChildren(note.children, 'sec');
-        if (secs.length > 0) {
-          for (const sec of secs) {
-            const secTitleNode = findChild(sec.children, 'title');
-            const secTitle = secTitleNode ? extractAllText(secTitleNode.children) : '';
-            const secParagraphs = findChildren(sec.children, 'p');
-            const secText = secParagraphs
+        const nestedNotes = findChildren(note.children, 'notes');
+        const subItems = secs.length > 0 ? secs : nestedNotes;
+        if (subItems.length > 0) {
+          for (const sub of subItems) {
+            const subTitleNode = findChild(sub.children, 'title');
+            const subTitle = subTitleNode ? extractAllText(subTitleNode.children) : '';
+            const subParagraphs = findChildren(sub.children, 'p');
+            const subText = subParagraphs
               .map((p) => extractAllText(p.children))
               .join('\n\n');
-            if (secTitle || secText) {
-              notes.push({ title: secTitle, text: secText });
+            if (subTitle || subText) {
+              notes.push({ title: subTitle, text: subText });
             }
           }
         } else {
