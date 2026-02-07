@@ -644,3 +644,258 @@ describe('parseJatsReferences', () => {
     expect(refs).toEqual([]);
   });
 });
+
+describe('pmc-articleset wrapper handling', () => {
+  it('extracts metadata from efetch-wrapped XML (pmc-articleset)', () => {
+    const xml = `
+      <pmc-articleset>
+        <article>
+          <front>
+            <article-meta>
+              <article-id pub-id-type="pmc">9876543</article-id>
+              <article-id pub-id-type="doi">10.1234/test</article-id>
+              <title-group>
+                <article-title>Wrapped Article</article-title>
+              </title-group>
+            </article-meta>
+          </front>
+        </article>
+      </pmc-articleset>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.title).toBe('Wrapped Article');
+    expect(metadata.pmcid).toBe('9876543');
+    expect(metadata.doi).toBe('10.1234/test');
+  });
+
+  it('extracts body sections from efetch-wrapped XML', () => {
+    const xml = `
+      <pmc-articleset>
+        <article>
+          <body>
+            <sec>
+              <title>Introduction</title>
+              <p>Some text.</p>
+            </sec>
+          </body>
+        </article>
+      </pmc-articleset>
+    `;
+    const sections = parseJatsBody(xml);
+    expect(sections).toHaveLength(1);
+    expect(sections[0]!.title).toBe('Introduction');
+  });
+
+  it('extracts references from efetch-wrapped XML', () => {
+    const xml = `
+      <pmc-articleset>
+        <article>
+          <back>
+            <ref-list>
+              <ref id="ref1">
+                <mixed-citation>Smith J. A study. Nature. 2024.</mixed-citation>
+              </ref>
+            </ref-list>
+          </back>
+        </article>
+      </pmc-articleset>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.id).toBe('ref1');
+  });
+
+  it('still works with direct article XML (no wrapper)', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <article-id pub-id-type="pmc">1234567</article-id>
+            <title-group>
+              <article-title>Direct Article</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.title).toBe('Direct Article');
+    expect(metadata.pmcid).toBe('1234567');
+  });
+});
+
+describe('parseJatsReferences - element-citation formatting', () => {
+  it('formats element-citation with structured children and proper spacing', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <label>1</label>
+              <element-citation publication-type="journal-article">
+                <person-group><name><surname>Bowyer</surname><given-names>ER</given-names></name></person-group>
+                <article-title>Informal near-peer teaching</article-title>
+                <source>Educ Health</source>
+                <year>2021</year>
+                <volume>34</volume>
+                <fpage>29</fpage>
+              </element-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.id).toBe('CR1');
+    // Should have proper spacing between elements
+    expect(refs[0]!.text).toBe('Bowyer ER. Informal near-peer teaching. Educ Health. 2021;34:29.');
+  });
+
+  it('formats element-citation with multiple authors', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR2">
+              <label>2</label>
+              <element-citation publication-type="journal-article">
+                <person-group>
+                  <name><surname>Smith</surname><given-names>J</given-names></name>
+                  <name><surname>Jones</surname><given-names>AB</given-names></name>
+                </person-group>
+                <article-title>Some title</article-title>
+                <source>Nature</source>
+                <year>2023</year>
+                <volume>10</volume>
+                <fpage>100</fpage>
+                <lpage>110</lpage>
+              </element-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toBe('Smith J, Jones AB. Some title. Nature. 2023;10:100-110.');
+  });
+
+  it('does not duplicate label numbers in reference text', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <label>1</label>
+              <element-citation publication-type="journal-article">
+                <person-group><name><surname>Test</surname><given-names>A</given-names></name></person-group>
+                <article-title>Title</article-title>
+                <source>J Test</source>
+                <year>2020</year>
+              </element-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    // Label "1" should not appear in the text
+    expect(refs[0]!.text).not.toMatch(/^1/);
+    expect(refs[0]!.text).toBe('Test A. Title. J Test. 2020.');
+  });
+
+  it('falls back to extractAllText when ref has no mixed-citation or element-citation, skipping label', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <label>1.</label>
+              <nlm-citation>Smith J. Some paper. Journal. 2024;1:1-10.</nlm-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.id).toBe('ref1');
+    // Label "1." should not appear in the extracted text
+    expect(refs[0]!.text).not.toMatch(/^1\./);
+    expect(refs[0]!.text).toBe('Smith J. Some paper. Journal. 2024;1:1-10.');
+  });
+
+  it('falls back to extractAllText for mixed-citation', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation>Smith J. Title of paper. Journal. 2024;1:1-10.</mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toBe('Smith J. Title of paper. Journal. 2024;1:1-10.');
+  });
+});
+
+describe('HTML numeric character reference decoding', () => {
+  it('decodes numeric entities in title text', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group>
+              <article-title>The &#8216;smart&#8217; approach &#8211; a new &#8212; method</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.title).toBe('The \u2018smart\u2019 approach \u2013 a new \u2014 method');
+  });
+
+  it('decodes numeric entities in body text', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Introduction</title>
+            <p>The patient&#8217;s condition improved &#8212; significantly.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const text = para.content.map(c => c.type === 'text' ? c.text : '').join('');
+      expect(text).toContain('\u2019');
+      expect(text).toContain('\u2014');
+      expect(text).not.toContain('&#8217;');
+      expect(text).not.toContain('&#8212;');
+    }
+  });
+
+  it('decodes numeric entities in reference text', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation>Smith J. The patient&#8217;s guide. 2024.</mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toContain('\u2019');
+    expect(refs[0]!.text).not.toContain('&#8217;');
+  });
+});

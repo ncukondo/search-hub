@@ -4,6 +4,53 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { convertPmcXmlToMarkdown } from './index.js';
 
+/** efetch-wrapped XML with entities and element-citation */
+const EFETCH_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<pmc-articleset>
+  <article>
+    <front>
+      <article-meta>
+        <article-id pub-id-type="doi">10.5678/efetch-test</article-id>
+        <article-id pub-id-type="pmc">9876543</article-id>
+        <title-group>
+          <article-title>The patient&#8217;s &#8216;smart&#8217; approach &#8212; revisited</article-title>
+        </title-group>
+        <contrib-group>
+          <contrib contrib-type="author">
+            <name><surname>O&#8217;Brien</surname><given-names>Jane</given-names></name>
+          </contrib>
+        </contrib-group>
+        <abstract><p>This study&#8217;s findings &#8211; significant.</p></abstract>
+      </article-meta>
+    </front>
+    <body>
+      <sec>
+        <title>Introduction</title>
+        <p>The patient&#8217;s recovery was &#8212; remarkable.</p>
+      </sec>
+    </body>
+    <back>
+      <ref-list>
+        <ref id="CR1">
+          <label>1</label>
+          <element-citation publication-type="journal-article">
+            <person-group>
+              <name><surname>Smith</surname><given-names>J</given-names></name>
+              <name><surname>Jones</surname><given-names>AB</given-names></name>
+            </person-group>
+            <article-title>Near-peer teaching</article-title>
+            <source>Educ Health</source>
+            <year>2021</year>
+            <volume>34</volume>
+            <fpage>29</fpage>
+            <lpage>35</lpage>
+          </element-citation>
+        </ref>
+      </ref-list>
+    </back>
+  </article>
+</pmc-articleset>`;
+
 const SAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <article>
   <front>
@@ -130,5 +177,42 @@ describe('convertPmcXmlToMarkdown', () => {
       expect(result.sections).toBe(2);
       expect(result.references).toBe(1);
     }
+  });
+
+  it('E2E: handles efetch XML with entities, element-citation, and pmc-articleset wrapper', async () => {
+    const xmlPath = join(tmpDir, 'article', 'fulltext.xml');
+    const mdPath = join(tmpDir, 'article', 'fulltext.md');
+    await writeFile(xmlPath, EFETCH_XML, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.sections).toBe(1);
+      expect(result.references).toBe(1);
+    }
+
+    const md = await readFile(mdPath, 'utf-8');
+
+    // Verify pmc-articleset wrapper handled: metadata extracted
+    expect(md).toContain('**PMC**: PMC9876543');
+    expect(md).toContain('**DOI**: 10.5678/efetch-test');
+
+    // Verify HTML entities decoded (no raw &#NNNN; sequences)
+    expect(md).not.toMatch(/&#\d+;/);
+    expect(md).toContain('\u2019'); // right single quote (from &#8217;)
+    expect(md).toContain('\u2014'); // em dash (from &#8212;)
+
+    // Verify title has decoded entities
+    expect(md).toContain('# The patient\u2019s \u2018smart\u2019 approach \u2014 revisited');
+
+    // Verify body text has decoded entities
+    expect(md).toContain('The patient\u2019s recovery was \u2014 remarkable.');
+
+    // Verify element-citation formatted with proper spacing
+    expect(md).toContain('Smith J, Jones AB. Near-peer teaching. Educ Health. 2021;34:29-35.');
+
+    // Verify label number not duplicated in reference
+    expect(md).not.toMatch(/^\d+\.\s+1\b/m);
   });
 });
