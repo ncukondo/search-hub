@@ -17,6 +17,11 @@ import { convertPmcXmlToMarkdown } from './index.js';
 const REALISTIC_PMC_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
   <front>
+    <journal-meta>
+      <journal-title-group>
+        <journal-title>Nature Medicine</journal-title>
+      </journal-title-group>
+    </journal-meta>
     <article-meta>
       <article-id pub-id-type="doi">10.1038/s41591-024-02890-7</article-id>
       <article-id pub-id-type="pmc">9876543</article-id>
@@ -52,6 +57,22 @@ const REALISTIC_PMC_XML = `<?xml version="1.0" encoding="UTF-8"?>
           <p>Deep learning models achieved a pooled sensitivity of 0.91 (95% CI: 0.88-0.94).</p>
         </sec>
       </abstract>
+      <pub-date pub-type="epub"><year>2024</year><month>03</month><day>15</day></pub-date>
+      <pub-date pub-type="ppub"><year>2024</year><month>06</month></pub-date>
+      <volume>30</volume>
+      <issue>3</issue>
+      <fpage>890</fpage>
+      <lpage>905</lpage>
+      <kwd-group kwd-group-type="author">
+        <kwd>deep learning</kwd>
+        <kwd>Alzheimer's disease</kwd>
+        <kwd>neuroimaging</kwd>
+      </kwd-group>
+      <permissions>
+        <license xlink:href="https://creativecommons.org/licenses/by/4.0/">
+          <license-p>This is an open access article distributed under the CC-BY 4.0 license.</license-p>
+        </license>
+      </permissions>
     </article-meta>
   </front>
   <body>
@@ -190,6 +211,13 @@ describe('PMC XML to Markdown E2E conversion', () => {
     expect(md).toContain('**Authors**: Chen W, Müller H, Tanaka Y');
     expect(md).toContain('**DOI**: 10.1038/s41591-024-02890-7');
     expect(md).toContain('**PMC**: PMC9876543');
+    expect(md).toContain('**PMID**: 38654321');
+    expect(md).toContain('**Journal**: Nature Medicine');
+    expect(md).toContain('**Published**: 2024-03-15');
+    expect(md).toContain('**Citation**: Vol. 30(3), pp. 890-905');
+    expect(md).toContain('**Article Type**: research-article');
+    expect(md).toContain("**Keywords**: deep learning, Alzheimer's disease, neuroimaging");
+    expect(md).toContain('**License**: https://creativecommons.org/licenses/by/4.0/');
 
     // Structured abstract
     expect(md).toContain('## Abstract');

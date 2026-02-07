@@ -37,76 +37,76 @@ The most impactful omissions:
 
 ### Step 1: Add PMID extraction
 
-- [ ] Add `pmid?: string` to `JatsMetadata` interface
-- [ ] Write test: XML with `<article-id pub-id-type="pmid">12345678</article-id>` extracts pmid
-- [ ] Verify test fails (Red)
-- [ ] Add `idType === 'pmid'` case in `parseJatsMetadata()` article-id loop
-- [ ] Add `writeMarkdown()` rendering: `**PMID**: 12345678` line after PMC line
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: PMID appears in Markdown metadata block
+- [x] Add `pmid?: string` to `JatsMetadata` interface
+- [x] Write test: XML with `<article-id pub-id-type="pmid">12345678</article-id>` extracts pmid
+- [x] Verify test fails (Red)
+- [x] Add `idType === 'pmid'` case in `parseJatsMetadata()` article-id loop
+- [x] Add `writeMarkdown()` rendering: `**PMID**: 12345678` line after PMC line
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: PMID appears in Markdown metadata block
 
 ### Step 2: Add journal name extraction
 
-- [ ] Add `journal?: string` to `JatsMetadata` interface
-- [ ] Write test: XML with `<journal-meta><journal-title-group><journal-title>BMJ Open</journal-title></journal-title-group></journal-meta>` extracts journal name
-- [ ] Write test: fallback to `<journal-title>` directly under `<journal-meta>` (older format)
-- [ ] Verify test fails (Red)
-- [ ] Update `parseJatsMetadata()` to navigate `<front>/<journal-meta>/<journal-title-group>/<journal-title>` or `<front>/<journal-meta>/<journal-title>`
-- [ ] Add `writeMarkdown()` rendering: `**Journal**: BMJ Open`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: journal name appears in metadata
+- [x] Add `journal?: string` to `JatsMetadata` interface
+- [x] Write test: XML with `<journal-meta><journal-title-group><journal-title>BMJ Open</journal-title></journal-title-group></journal-meta>` extracts journal name
+- [x] Write test: fallback to `<journal-title>` directly under `<journal-meta>` (older format)
+- [x] Verify test fails (Red)
+- [x] Update `parseJatsMetadata()` to navigate `<front>/<journal-meta>/<journal-title-group>/<journal-title>` or `<front>/<journal-meta>/<journal-title>`
+- [x] Add `writeMarkdown()` rendering: `**Journal**: BMJ Open`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: journal name appears in metadata
 
 ### Step 3: Add publication date extraction
 
-- [ ] Add `publicationDate?: { year: string; month?: string; day?: string }` to `JatsMetadata`
-- [ ] Write test: XML with `<pub-date pub-type="epub"><year>2024</year><month>03</month><day>15</day></pub-date>`
-- [ ] Write test: XML with multiple `<pub-date>` elements — prefer `epub` over `ppub` over `collection`
-- [ ] Write test: JATS 1.2+ `date-type` attribute variant
-- [ ] Verify test fails (Red)
-- [ ] Add pub-date extraction with priority logic for date type selection
-- [ ] Add `writeMarkdown()` rendering: `**Published**: 2024-03-15` or `**Published**: 2024-03`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: publication date appears in metadata
+- [x] Add `publicationDate?: { year: string; month?: string; day?: string }` to `JatsMetadata`
+- [x] Write test: XML with `<pub-date pub-type="epub"><year>2024</year><month>03</month><day>15</day></pub-date>`
+- [x] Write test: XML with multiple `<pub-date>` elements — prefer `epub` over `ppub` over `collection`
+- [x] Write test: JATS 1.2+ `date-type` attribute variant
+- [x] Verify test fails (Red)
+- [x] Add pub-date extraction with priority logic for date type selection
+- [x] Add `writeMarkdown()` rendering: `**Published**: 2024-03-15` or `**Published**: 2024-03`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: publication date appears in metadata
 
 ### Step 4: Add volume/issue/pages extraction
 
-- [ ] Add `volume?: string`, `issue?: string`, `pages?: string` to `JatsMetadata`
-- [ ] Write test: XML with `<volume>10</volume><issue>2</issue><fpage>100</fpage><lpage>110</lpage>`
-- [ ] Write test: `<elocation-id>` as alternative to fpage/lpage
-- [ ] Verify test fails (Red)
-- [ ] Extract from `<article-meta>` children
-- [ ] Add `writeMarkdown()` rendering: `**Citation**: Vol. 10(2), pp. 100-110` or similar compact format
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: volume/issue/pages appear in metadata
+- [x] Add `volume?: string`, `issue?: string`, `pages?: string` to `JatsMetadata`
+- [x] Write test: XML with `<volume>10</volume><issue>2</issue><fpage>100</fpage><lpage>110</lpage>`
+- [x] Write test: `<elocation-id>` as alternative to fpage/lpage
+- [x] Verify test fails (Red)
+- [x] Extract from `<article-meta>` children
+- [x] Add `writeMarkdown()` rendering: `**Citation**: Vol. 10(2), pp. 100-110` or similar compact format
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: volume/issue/pages appear in metadata
 
 ### Step 5: Add keywords extraction
 
-- [ ] Add `keywords?: string[]` to `JatsMetadata`
-- [ ] Write test: XML with `<kwd-group><kwd>systematic review</kwd><kwd>meta-analysis</kwd></kwd-group>`
-- [ ] Write test: multiple `<kwd-group>` elements (different types) — merge all keywords
-- [ ] Verify test fails (Red)
-- [ ] Extract keywords from all `<kwd-group>` elements in `<article-meta>`
-- [ ] Add `writeMarkdown()` rendering: `**Keywords**: systematic review, meta-analysis`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: keywords appear in metadata
+- [x] Add `keywords?: string[]` to `JatsMetadata`
+- [x] Write test: XML with `<kwd-group><kwd>systematic review</kwd><kwd>meta-analysis</kwd></kwd-group>`
+- [x] Write test: multiple `<kwd-group>` elements (different types) — merge all keywords
+- [x] Verify test fails (Red)
+- [x] Extract keywords from all `<kwd-group>` elements in `<article-meta>`
+- [x] Add `writeMarkdown()` rendering: `**Keywords**: systematic review, meta-analysis`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: keywords appear in metadata
 
 ### Step 6: Add article type and license extraction
 
-- [ ] Add `articleType?: string` and `license?: string` to `JatsMetadata`
-- [ ] Write test: `<article article-type="research-article">` extracts article type
-- [ ] Write test: `<permissions><license><license-p>This is an open access article...</license-p></license></permissions>` extracts license text
-- [ ] Verify test fails (Red)
-- [ ] Extract `article-type` from root `<article>` attributes
-- [ ] Extract license from `<permissions>/<license>` — use `<license-p>` text or `@xlink:href` attribute
-- [ ] Add `writeMarkdown()` rendering for both fields
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: article type and license info appear in metadata
+- [x] Add `articleType?: string` and `license?: string` to `JatsMetadata`
+- [x] Write test: `<article article-type="research-article">` extracts article type
+- [x] Write test: `<permissions><license><license-p>This is an open access article...</license-p></license></permissions>` extracts license text
+- [x] Verify test fails (Red)
+- [x] Extract `article-type` from root `<article>` attributes
+- [x] Extract license from `<permissions>/<license>` — use `<license-p>` text or `@xlink:href` attribute
+- [x] Add `writeMarkdown()` rendering for both fields
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: article type and license info appear in metadata
 
 ### Final Step: E2E Integration Tests
 
