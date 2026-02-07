@@ -198,9 +198,15 @@ export async function executeReviewExtract(
       lineWidth: 0,
     });
 
+    // Replace finalDecision: null with a commented placeholder for user guidance
+    const yamlWithComments = yamlContent.replace(
+      /finalDecision: null/g,
+      'finalDecision: # include / exclude'
+    );
+
     // Schema reference pointing to adjacent file
     const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
-    finalContent = schemaComment + yamlContent;
+    finalContent = schemaComment + yamlWithComments;
   }
 
   // Ensure output directory exists

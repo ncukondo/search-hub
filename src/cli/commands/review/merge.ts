@@ -32,7 +32,6 @@ export interface ReviewMergeOptions {
 
 export interface ReviewMergeResult {
   reviewsAdded: number;
-  reviewsSkipped: number;
   decisionsSet: number;
   warnings: string[];
 }
@@ -143,7 +142,6 @@ function processWorkFile(
 ): ReviewMergeResult {
   const result: ReviewMergeResult = {
     reviewsAdded: 0,
-    reviewsSkipped: 0,
     decisionsSet: 0,
     warnings: [],
   };
@@ -205,7 +203,6 @@ function processReviewFile(
 ): ReviewMergeResult {
   const result: ReviewMergeResult = {
     reviewsAdded: 0,
-    reviewsSkipped: 0,
     decisionsSet: 0,
     warnings: [],
   };
@@ -319,7 +316,6 @@ export function formatMergeOutput(result: ReviewMergeResult, dryRun: boolean): s
 
   lines.push('Merge Summary:');
   lines.push(`  Reviews added:    ${result.reviewsAdded}`);
-  lines.push(`  Reviews skipped:  ${result.reviewsSkipped} (duplicates)`);
   lines.push(`  Decisions set:    ${result.decisionsSet}`);
 
   if (result.warnings.length > 0) {

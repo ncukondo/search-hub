@@ -1819,7 +1819,7 @@ Examples:
             process.exitCode = EXIT_CODES.GENERAL_ERROR;
             return;
           }
-          extractOptions.basis = options.basis as 'title' | 'abstract';
+          extractOptions.basis = options.basis as 'title' | 'abstract' | 'fulltext';
         }
 
         const result = await executeReviewExtract(extractOptions, sessionsDir);

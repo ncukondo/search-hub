@@ -140,7 +140,7 @@ export function classifyStatus(
   registeredReviewers?: ReviewerRecord[]
 ): ReviewStatus {
   // 1. Finalized takes precedence
-  if (entry.finalDecision !== undefined) {
+  if (entry.finalDecision !== undefined && entry.finalDecision !== null) {
     return 'finalized';
   }
 
