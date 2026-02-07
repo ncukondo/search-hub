@@ -412,7 +412,8 @@ function parseDispQuote(node: OrderedNode): BlockElement {
   const content: InlineContent[] = [];
   for (let i = 0; i < paragraphs.length; i++) {
     if (i > 0) content.push({ type: 'text', text: '\n\n' });
-    content.push(...parseInlineContent(paragraphs[i]!.children));
+    const para = paragraphs[i];
+    if (para) content.push(...parseInlineContent(para.children));
   }
   // If no <p> children, extract inline content directly
   if (paragraphs.length === 0) {
@@ -431,7 +432,7 @@ function parseTableBlock(node: OrderedNode): BlockElement {
     headers: tableResult.headers,
     rows: tableResult.rows,
   };
-  if (tableResult.caption) (tableBlock as { caption?: string }).caption = tableResult.caption;
+  if (tableResult.caption) tableBlock.caption = tableResult.caption;
   return tableBlock;
 }
 
