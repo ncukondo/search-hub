@@ -90,11 +90,11 @@ Update user-facing documentation for the fulltext management feature:
 
 ### Final Step: Review and Verify
 
-- [ ] Review all documentation for accuracy
-- [ ] Verify command examples work
-- [ ] Check for consistency with implementation
-- [ ] **Manual verification**: Follow guide as new user
-- [ ] Acceptance: Documentation is accurate and helpful
+- [x] Review all documentation for accuracy
+- [x] Verify command examples work
+- [x] Check for consistency with implementation
+- [x] **Manual verification**: Follow guide as new user
+- [x] Acceptance: Documentation is accurate and helpful
 
 ## Documentation Structure
 
