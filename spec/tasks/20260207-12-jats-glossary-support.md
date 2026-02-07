@@ -51,12 +51,12 @@ The abbreviations section is completely missing from the Markdown output. While 
 
 ### Step 2: Render glossary in Markdown output
 
-- [ ] Write test: `writeMarkdown()` with glossary data should produce an "Abbreviations" section with definition list
-- [ ] Verify test fails (Red)
-- [ ] Implement rendering (reuse existing `parseDefList()` / `renderBlock()` for def-list type, or render as notes)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Abbreviations section appears in Markdown with term-definition pairs
+- [x] Write test: `writeMarkdown()` with glossary data should produce an "Abbreviations" section with definition list
+- [x] Verify test fails (Red) — tests pass immediately since glossary reuses notes rendering
+- [x] Implement rendering (reuse existing `parseDefList()` / `renderBlock()` for def-list type, or render as notes)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Abbreviations section appears in Markdown with term-definition pairs
 
 ### Step 3: E2E verification
 

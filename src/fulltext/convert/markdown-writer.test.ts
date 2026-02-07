@@ -1024,3 +1024,36 @@ describe('writeMarkdown - notes', () => {
     expect(md).not.toContain('## Funding');
   });
 });
+
+describe('writeMarkdown - glossary (as notes)', () => {
+  it('renders glossary abbreviations section with term-definition pairs', () => {
+    const doc = makeDoc({
+      notes: [
+        {
+          title: 'Abbreviations',
+          text: 'PGY1: a post-graduate year 1 resident\nPGY2: a post-graduate year 2 resident',
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('## Abbreviations');
+    expect(md).toContain('PGY1: a post-graduate year 1 resident');
+    expect(md).toContain('PGY2: a post-graduate year 2 resident');
+  });
+
+  it('renders glossary after other notes', () => {
+    const doc = makeDoc({
+      notes: [
+        { title: 'Author contributions', text: 'TK designed the study.' },
+        {
+          title: 'Abbreviations',
+          text: 'PGY1: a post-graduate year 1 resident',
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    const contribPos = md.indexOf('## Author contributions');
+    const abbrPos = md.indexOf('## Abbreviations');
+    expect(contribPos).toBeLessThan(abbrPos);
+  });
+});
