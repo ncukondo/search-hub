@@ -90,13 +90,13 @@ across any basis are still treated as `conflicting`.
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
+- [x] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
   - Full multi-stage workflow: init → extract title → mark some exclude, leave rest uncertain → merge → extract abstract for uncertain → mark include/exclude → merge → finalize → verify all articles finalized correctly
   - Two-reviewer multi-stage: reviewer A title screening → reviewer B abstract screening → finalize
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Reproduce the workflow from this session
-- [ ] Acceptance: All tests pass, multi-stage screening workflow completes end-to-end
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Reproduce the workflow from this session
+- [x] Acceptance: All tests pass, multi-stage screening workflow completes end-to-end
 
 ## Notes
 
