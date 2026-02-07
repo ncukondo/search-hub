@@ -29,15 +29,15 @@ across any basis are still treated as `conflicting`.
 
 ### Step 1: Add Basis Priority Helper
 
-- [ ] Write test: `src/cli/commands/review/types.test.ts`
+- [x] Write test: `src/cli/commands/review/types.test.ts`
   - `basisRank('title')` < `basisRank('abstract')` < `basisRank('fulltext')`
   - `basisRank(undefined)` returns 0 (lowest)
-- [ ] Add `basisRank(basis: ReviewBasis | undefined): number` to `types.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Basis ordering is correct
+- [x] Add `basisRank(basis: ReviewBasis | undefined): number` to `types.ts`
+- [x] Verify test fails (Red)
+- [x] Implement
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Basis ordering is correct
 
 ### Step 2: Update `classifyStatus` to Consider Basis Priority
 
