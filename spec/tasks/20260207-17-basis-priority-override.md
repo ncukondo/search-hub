@@ -60,17 +60,17 @@ Each step follows the TDD cycle:
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
+- [x] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
   - Full workflow without finalization: title screening → abstract screening → verify correct statuses
-  - 20 agreed-exclude at title → still `agreed-exclude` after abstract reviewer registered
-  - 80 uncertain at title → abstract-include overrides → `agreed-include`
+  - 2 agreed-exclude at title → still `agreed-exclude` after abstract reviewer registered
+  - 8 uncertain at title → abstract-include overrides → `agreed-include`
   - **Minimize mocks** — Only mock external services when absolutely necessary
   - **Follow user flows** — Test the same paths users will take
   - **Use real file I/O** — Test actual file operations with temp directories
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test the feature manually as a user would
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test the feature manually as a user would
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## TDD Cycle Reference
 
