@@ -1175,6 +1175,56 @@ describe('parseJatsReferences - citation-alternatives support', () => {
   });
 });
 
+describe('parseJatsReferences - mixed-citation inline element spacing', () => {
+  it('produces spaced author names from <string-name> elements', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation publication-type="journal">
+                <string-name><surname>McGuire</surname><given-names>N</given-names></string-name>,
+                <string-name><surname>Acai</surname><given-names>A</given-names></string-name>.
+                The McMaster tool. Teach Learn Med. 2023;37(1):1-9.
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    // Should have space between surname and given-names
+    expect(refs[0]!.text).toContain('McGuire N');
+    expect(refs[0]!.text).toContain('Acai A');
+    // Should NOT have concatenated names
+    expect(refs[0]!.text).not.toContain('McGuireN');
+    expect(refs[0]!.text).not.toContain('AcaiA');
+  });
+
+  it('produces spaced author names from <name> elements within <mixed-citation>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation>
+                <name><surname>Smith</surname><given-names>JA</given-names></name>,
+                <name><surname>Doe</surname><given-names>B</given-names></name>.
+                A paper. 2024.
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toContain('Smith JA');
+    expect(refs[0]!.text).toContain('Doe B');
+    expect(refs[0]!.text).not.toContain('SmithJA');
+  });
+});
+
 describe('HTML numeric character reference decoding', () => {
   it('decodes numeric entities in title text', () => {
     const xml = `

@@ -140,16 +140,29 @@ function findArticle(
 
 // ─── Text Extraction ─────────────────────────────────────────────────
 
+/** Tags whose text content should be followed by a space when adjacent to other content. */
+const SPACE_AFTER_TAGS = new Set([
+  'surname',
+  'given-names',
+  'name',
+  'string-name',
+]);
+
 /**
  * Extract plain text from a node that may contain nested elements.
  * Recursively collects all text content from preserveOrder nodes.
+ *
+ * When extracting text from inline container elements (e.g. `<name>`,
+ * `<string-name>`), inserts a space between adjacent child elements
+ * that would otherwise concatenate without whitespace (e.g.
+ * `<surname>McGuire</surname><given-names>N</given-names>` → `McGuire N`).
  */
 function extractAllText(node: unknown): string {
   if (node == null) return '';
   if (typeof node === 'string') return node;
   if (typeof node === 'number') return String(node);
   if (Array.isArray(node)) {
-    return node.map(extractAllText).join('');
+    return joinChildTexts(node);
   }
   if (typeof node === 'object') {
     const obj = node as OrderedNode;
@@ -161,11 +174,43 @@ function extractAllText(node: unknown): string {
     if (tag) {
       const children = obj[tag];
       if (Array.isArray(children)) {
-        return (children as OrderedNode[]).map((c) => extractAllText(c)).join('');
+        return joinChildTexts(children as OrderedNode[]);
       }
     }
   }
   return '';
+}
+
+/**
+ * Join extracted text from an array of child nodes, inserting spaces
+ * between adjacent inline elements where no whitespace separator exists.
+ */
+function joinChildTexts(children: OrderedNode[]): string {
+  const parts: string[] = [];
+  for (const child of children) {
+    const text = extractAllText(child);
+    if (!text) continue;
+
+    const tag = getTagName(child as OrderedNode);
+
+    // If this is a space-after tag and there's previous content that doesn't
+    // end with whitespace or punctuation, insert a space before this text.
+    if (tag && SPACE_AFTER_TAGS.has(tag) && parts.length > 0) {
+      const prev = parts[parts.length - 1]!;
+      if (prev && !/[\s,;.:()\-/]$/.test(prev)) {
+        parts.push(' ');
+      }
+    }
+
+    parts.push(text);
+
+    // If this is a space-after tag, check if a space is needed after.
+    // We handle this by peeking: space will be inserted before the next
+    // element if needed (handled above). But we also need to handle
+    // the case where the next sibling is a text node starting without space.
+    // That's already handled since text nodes include their own whitespace.
+  }
+  return parts.join('');
 }
 
 // ─── Metadata Parsing ────────────────────────────────────────────────
