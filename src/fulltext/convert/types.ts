@@ -22,6 +22,8 @@ export interface JatsMetadata {
   issue?: string;
   pages?: string;
   keywords?: string[];
+  articleType?: string;
+  license?: string;
   abstract?: string;
 }
 

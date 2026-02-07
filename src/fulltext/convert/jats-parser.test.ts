@@ -331,6 +331,58 @@ describe('parseJatsMetadata', () => {
     expect(metadata.keywords).toEqual(['deep learning', 'imaging', 'Alzheimer Disease']);
   });
 
+  it('extracts article-type from root <article> element', () => {
+    const xml = `
+      <article article-type="research-article">
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.articleType).toBe('research-article');
+  });
+
+  it('extracts license from <permissions>/<license> using @xlink:href', () => {
+    const xml = `
+      <article xmlns:xlink="http://www.w3.org/1999/xlink">
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <permissions>
+              <license xlink:href="https://creativecommons.org/licenses/by/4.0/">
+                <license-p>This is an open access article distributed under the CC-BY license.</license-p>
+              </license>
+            </permissions>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.license).toBe('https://creativecommons.org/licenses/by/4.0/');
+  });
+
+  it('extracts license text from <license-p> when no @xlink:href', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <permissions>
+              <license>
+                <license-p>This is an open access article.</license-p>
+              </license>
+            </permissions>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.license).toBe('This is an open access article.');
+  });
+
   it('handles missing optional fields gracefully', () => {
     const xml = `
       <article>

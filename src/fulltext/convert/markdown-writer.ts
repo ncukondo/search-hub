@@ -199,12 +199,22 @@ export function writeMarkdown(doc: JatsDocument): string {
     lines.push(`**Citation**: ${citation}`);
   }
 
+  // Article type
+  if (doc.metadata.articleType) {
+    lines.push(`**Article Type**: ${doc.metadata.articleType}`);
+  }
+
   // Keywords
   if (doc.metadata.keywords && doc.metadata.keywords.length > 0) {
     lines.push(`**Keywords**: ${doc.metadata.keywords.join(', ')}`);
   }
 
-  const hasMetaLines = doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal || doc.metadata.publicationDate || doc.metadata.volume || doc.metadata.pages || (doc.metadata.keywords && doc.metadata.keywords.length > 0);
+  // License
+  if (doc.metadata.license) {
+    lines.push(`**License**: ${doc.metadata.license}`);
+  }
+
+  const hasMetaLines = doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal || doc.metadata.publicationDate || doc.metadata.volume || doc.metadata.pages || (doc.metadata.keywords && doc.metadata.keywords.length > 0) || doc.metadata.articleType || doc.metadata.license;
   if (hasMetaLines) {
     lines.push('');
   }

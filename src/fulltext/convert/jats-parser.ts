@@ -344,6 +344,26 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
     }
   }
 
+  // Article type (from root <article> element attribute)
+  const articleType = article.attrs['article-type'] || undefined;
+
+  // License (from <permissions>/<license>)
+  let license: string | undefined;
+  const permissions = findChild(metaChildren, 'permissions');
+  if (permissions) {
+    const licenseNode = findChild(permissions.children, 'license');
+    if (licenseNode) {
+      // Prefer @xlink:href (standardized URL) over <license-p> (free-text)
+      const href = licenseNode.attrs['xlink:href'];
+      if (href) {
+        license = href;
+      } else {
+        const licenseP = findChild(licenseNode.children, 'license-p');
+        if (licenseP) license = extractAllText(licenseP.children).trim();
+      }
+    }
+  }
+
   // Keywords (from all <kwd-group> elements)
   const kwdGroups = findChildren(metaChildren, 'kwd-group');
   const keywords: string[] = [];
@@ -397,6 +417,8 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   if (issue) result.issue = issue;
   if (pages) result.pages = pages;
   if (keywords.length > 0) result.keywords = keywords;
+  if (articleType) result.articleType = articleType;
+  if (license) result.license = license;
   if (abstract) result.abstract = abstract;
   return result;
 }
