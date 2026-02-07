@@ -170,7 +170,7 @@ describe('writeMarkdown', () => {
     expect(md).toContain('> Second paragraph.');
   });
 
-  it('converts figures to ![Figure N](caption)', () => {
+  it('converts figures with caption in alt text position', () => {
     const doc = makeDoc({
       sections: [
         {
@@ -184,7 +184,24 @@ describe('writeMarkdown', () => {
       ],
     });
     const md = writeMarkdown(doc);
-    expect(md).toContain('![Figure 1](Score distribution)');
+    expect(md).toContain('![Figure 1. Score distribution]()');
+  });
+
+  it('converts figures without caption using label only', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            { type: 'figure', label: 'Figure 2' },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('![Figure 2]()');
   });
 
   it('converts lists (ordered and unordered)', () => {

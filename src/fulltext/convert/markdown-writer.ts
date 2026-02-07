@@ -92,8 +92,8 @@ function renderBlock(block: BlockElement): string {
 
     case 'figure': {
       const label = block.label ?? 'Figure';
-      const caption = block.caption ?? '';
-      return `![${label}](${caption})`;
+      const altText = block.caption ? `${label}. ${block.caption}` : label;
+      return `![${altText}]()`;
     }
   }
 }
