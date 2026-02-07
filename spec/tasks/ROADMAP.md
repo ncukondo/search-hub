@@ -82,7 +82,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 73 | Review Extract Format Enhancement | 72 | ✅ Completed | [20260206-07](completed/20260206-07-review-extract-format.md) |
 | 74 | Review Finalize Command | 72 | ✅ Completed | [20260206-08](completed/20260206-08-review-finalize.md) |
 | 75 | Dynamic Review Next Steps | 72, 73, 74 | ✅ Completed | [20260206-09](completed/20260206-09-review-dynamic-next-steps.md) |
-| 76 | Fix JATS Reference Parsing Quality | 70 | 🔲 Pending | [20260207-01](20260207-01-jats-reference-quality.md) |
+| 76 | Fix JATS Reference Parsing Quality | 70 | ✅ Completed | [20260207-01](completed/20260207-01-jats-reference-quality.md) |
 | 77 | Fix JATS PMCID Extraction for `pmcid` | 70 | ✅ Completed | [20260207-02](completed/20260207-02-jats-pmcid-extraction.md) |
 | 78 | Improve JATS Table and Figure Rendering | 70 | 🔲 Pending | [20260207-03](20260207-03-jats-table-figure-rendering.md) |
 
