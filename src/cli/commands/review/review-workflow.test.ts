@@ -1840,5 +1840,90 @@ summary:
       expect(finalStatus.finalized).toBe(10);
       expect(finalStatus.incomplete).toBe(0);
     });
+
+    it('3-stage workflow without finalization: title exclude stays after abstract reviewer registered (Task 92)', async () => {
+      // Uses the standard 10-article setup
+      await setupSessionWithResults();
+
+      // Init
+      const initResult = await executeReviewInit({ sessionId }, sessionsDir);
+      expect(initResult.articleCount).toBe(10);
+
+      // === Stage 1: Title screening ===
+      // Reviewer ai:claude screens all 10 at title basis
+      const titleExtract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'task92-title',
+        },
+        sessionsDir
+      );
+      const titleContent = await readFile(titleExtract.outputPath, 'utf-8');
+      const titleFile = parseYaml(titleContent) as WorkFile;
+      expect(titleFile.articles).toHaveLength(10);
+
+      // Mark first 2 as exclude, remaining 8 as uncertain
+      for (let i = 0; i < titleFile.articles.length; i++) {
+        await executeReviewMark({
+          file: titleExtract.outputPath,
+          id: titleFile.articles[i]!.id,
+          decision: i < 2 ? 'exclude' : 'uncertain',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'task92-title' }, sessionsDir);
+
+      // Verify after title screening: 2 agreed-exclude, 8 uncertain
+      const statusAfterTitle = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(statusAfterTitle.agreedExclude).toBe(2);
+      expect(statusAfterTitle.uncertain).toBe(8);
+
+      // === Stage 2: Abstract screening (NO finalization between stages) ===
+      // Reviewer ai:gpt-4o screens the 8 uncertain at abstract basis
+      const abstractExtract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['uncertain'],
+          basis: 'abstract',
+          reviewer: 'ai:gpt-4o',
+          name: 'task92-abstract',
+        },
+        sessionsDir
+      );
+      const abstractContent = await readFile(abstractExtract.outputPath, 'utf-8');
+      const abstractFile = parseYaml(abstractContent) as WorkFile;
+      expect(abstractFile.articles).toHaveLength(8);
+
+      // Mark all 8 as include based on abstract
+      for (const article of abstractFile.articles) {
+        await executeReviewMark({
+          file: abstractExtract.outputPath,
+          id: article.id,
+          decision: 'include',
+          comment: 'Relevant after reading abstract',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'task92-abstract' }, sessionsDir);
+
+      // === Key assertions (Task 92 fixes) ===
+      const statusAfterAbstract = await executeReviewStatus({ sessionId }, sessionsDir);
+
+      // Fix 1: Title-excluded articles stay agreed-exclude (not incomplete)
+      // because abstract reviewer is registered at abstract basis,
+      // but these articles only have title-level reviews
+      expect(statusAfterAbstract.agreedExclude).toBe(2);
+      expect(statusAfterAbstract.incomplete).toBe(0);
+
+      // Fix 2: Abstract-include overrides title-uncertain → agreed-include
+      // (higher basis definitive wins over lower basis decisions)
+      expect(statusAfterAbstract.agreedInclude).toBe(8);
+      expect(statusAfterAbstract.uncertain).toBe(0);
+      expect(statusAfterAbstract.conflicting).toBe(0);
+
+      // All 10 articles have a definitive status, ready for finalization
+      expect(statusAfterAbstract.pending).toBe(0);
+    });
   });
 });
