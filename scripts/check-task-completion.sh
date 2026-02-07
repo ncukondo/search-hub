@@ -37,14 +37,13 @@ case "$TASK_TYPE" in
 
     PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
 
-    # Check CI status
-    # Get all check conclusions, filter out SUCCESS/SKIPPED
-    FAILED_CHECKS=$(gh pr checks "$PR_NUM" --json name,state \
-      --jq '.[] | select(.state != "SUCCESS" and .state != "SKIPPED" and .state != "PENDING" and .state != "") | .name' \
+    # Check CI status using 'bucket' field (normalized: pass, fail, pending, skipping, cancel)
+    FAILED_CHECKS=$(gh pr checks "$PR_NUM" --json name,bucket \
+      --jq '.[] | select(.bucket == "fail" or .bucket == "cancel") | .name' \
       2>/dev/null || true)
 
-    PENDING_CHECKS=$(gh pr checks "$PR_NUM" --json name,state \
-      --jq '.[] | select(.state == "PENDING" or .state == "") | .name' \
+    PENDING_CHECKS=$(gh pr checks "$PR_NUM" --json name,bucket \
+      --jq '.[] | select(.bucket == "pending") | .name' \
       2>/dev/null || true)
 
     if [ -n "$PENDING_CHECKS" ]; then

@@ -288,6 +288,12 @@ process_review_completion() {
   local review_status
   review_status=$("$SCRIPT_DIR/check-task-completion.sh" "$branch" review "$pr_num" 2>/dev/null || echo "error")
 
+  # Skip if already processed (idempotency guard)
+  local current_review_state="${BRANCH_STATES["${branch}:review"]:-}"
+  case "$current_review_state" in
+    approved|fix-requested|commented) return ;;
+  esac
+
   case "$review_status" in
     approved)
       notify_main "info" "Branch $branch: PR #$pr_num APPROVED - Ready for merge"
@@ -299,7 +305,7 @@ process_review_completion() {
       ;;
 
     changes_requested)
-      # Get review body for the notification
+      # Get review body for the notification (truncated for main agent)
       local review_body
       review_body=$(gh pr view "$pr_num" --json reviews --jq '.reviews[-1].body // "No details"' 2>/dev/null | head -c 200 || echo "")
 
