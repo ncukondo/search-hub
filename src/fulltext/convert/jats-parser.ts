@@ -1223,6 +1223,27 @@ export function parseJatsBackMatter(xml: string): BackMatterResult {
         result.notes = notes;
       }
     }
+
+    // Glossary: <glossary> (abbreviations, definitions)
+    const glossaryElements = findChildren(back.children, 'glossary');
+    for (const glossary of glossaryElements) {
+      const titleNode = findChild(glossary.children, 'title');
+      const title = titleNode ? extractAllText(titleNode.children) : 'Glossary';
+      const defList = findChild(glossary.children, 'def-list');
+      if (defList) {
+        const defItems = findChildren(defList.children, 'def-item');
+        const lines: string[] = [];
+        for (const item of defItems) {
+          const termNode = findChild(item.children, 'term');
+          const defNode = findChild(item.children, 'def');
+          const term = termNode ? extractAllText(termNode.children) : '';
+          const definition = defNode ? extractAllText(defNode.children) : '';
+          lines.push(`${term}: ${definition}`);
+        }
+        if (!result.notes) result.notes = [];
+        result.notes.push({ title, text: lines.join('\n') });
+      }
+    }
   }
 
   // Floats-group: <floats-group> (sibling of <body> and <back>)
