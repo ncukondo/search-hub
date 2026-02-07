@@ -179,6 +179,46 @@ describe('convertPmcXmlToMarkdown', () => {
     }
   });
 
+  it('E2E: headerless table produces valid Markdown with empty header row', async () => {
+    const xmlPath = join(tmpDir, 'article', 'fulltext.xml');
+    const mdPath = join(tmpDir, 'article', 'fulltext.md');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <front>
+    <article-meta>
+      <title-group><article-title>Test</article-title></title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Results</title>
+      <table-wrap>
+        <label>Table 1</label>
+        <caption><p>Summary data</p></caption>
+        <table>
+          <tbody>
+            <tr><td>Item A</td><td>10</td><td>Yes</td></tr>
+            <tr><td>Item B</td><td>20</td><td>No</td></tr>
+          </tbody>
+        </table>
+      </table-wrap>
+    </sec>
+  </body>
+</article>`;
+    await writeFile(xmlPath, xml, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+    expect(result.success).toBe(true);
+
+    const md = await readFile(mdPath, 'utf-8');
+    // Verify valid Markdown table with empty header row and separator
+    expect(md).toContain('|  |  |  |');
+    expect(md).toContain('| --- | --- | --- |');
+    expect(md).toContain('| Item A | 10 | Yes |');
+    expect(md).toContain('| Item B | 20 | No |');
+    expect(md).toContain('*Table 1. Summary data*');
+  });
+
   it('E2E: handles efetch XML with entities, element-citation, and pmc-articleset wrapper', async () => {
     const xmlPath = join(tmpDir, 'article', 'fulltext.xml');
     const mdPath = join(tmpDir, 'article', 'fulltext.md');

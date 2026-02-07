@@ -194,6 +194,61 @@ describe('writeMarkdown', () => {
     expect(md).toContain('| B | 2 |');
   });
 
+  it('renders headerless table with empty header row and separator', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Data',
+          level: 2,
+          content: [
+            {
+              type: 'table',
+              headers: [],
+              rows: [
+                ['A', '1'],
+                ['B', '2'],
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    // Should have empty header row, separator, and data rows
+    expect(md).toContain('|  |  |');
+    expect(md).toContain('| --- | --- |');
+    expect(md).toContain('| A | 1 |');
+    expect(md).toContain('| B | 2 |');
+  });
+
+  it('renders headerless table with caption', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Data',
+          level: 2,
+          content: [
+            {
+              type: 'table',
+              caption: 'Table 1. No headers',
+              headers: [],
+              rows: [
+                ['X', 'Y', 'Z'],
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('*Table 1. No headers*');
+    expect(md).toContain('|  |  |  |');
+    expect(md).toContain('| --- | --- | --- |');
+    expect(md).toContain('| X | Y | Z |');
+  });
+
   it('converts blockquotes to > prefixed lines', () => {
     const doc = makeDoc({
       sections: [
