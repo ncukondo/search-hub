@@ -33,6 +33,12 @@ export interface ReviewMergeOptions {
 export interface ReviewMergeResult {
   reviewsAdded: number;
   decisionsSet: number;
+  includeCount: number;
+  excludeCount: number;
+  uncertainCount: number;
+  finalDecisionsSet: number;
+  finalDecisionsIncludeCount: number;
+  finalDecisionsExcludeCount: number;
   warnings: string[];
 }
 
@@ -143,6 +149,12 @@ function processWorkFile(
   const result: ReviewMergeResult = {
     reviewsAdded: 0,
     decisionsSet: 0,
+    includeCount: 0,
+    excludeCount: 0,
+    uncertainCount: 0,
+    finalDecisionsSet: 0,
+    finalDecisionsIncludeCount: 0,
+    finalDecisionsExcludeCount: 0,
     warnings: [],
   };
 
@@ -188,6 +200,11 @@ function processWorkFile(
       mainArticle.reviews.push(review);
     }
     result.reviewsAdded++;
+
+    // Count decision types
+    if (workArticle.decision === 'include') result.includeCount++;
+    else if (workArticle.decision === 'exclude') result.excludeCount++;
+    else if (workArticle.decision === 'uncertain') result.uncertainCount++;
   }
 
   return result;
@@ -204,6 +221,12 @@ function processReviewFile(
   const result: ReviewMergeResult = {
     reviewsAdded: 0,
     decisionsSet: 0,
+    includeCount: 0,
+    excludeCount: 0,
+    uncertainCount: 0,
+    finalDecisionsSet: 0,
+    finalDecisionsIncludeCount: 0,
+    finalDecisionsExcludeCount: 0,
     warnings: [],
   };
 
@@ -248,6 +271,11 @@ function processReviewFile(
         registerReviewer(mainFile, reviewer, basis);
       }
       result.reviewsAdded++;
+
+      // Count decision types
+      if (review.decision === 'include') result.includeCount++;
+      else if (review.decision === 'exclude') result.excludeCount++;
+      else if (review.decision === 'uncertain') result.uncertainCount++;
     }
 
     // Overwrite finalDecision if set in extracted (null means unset)
@@ -256,6 +284,9 @@ function processReviewFile(
         mainArticle.finalDecision = extracted.finalDecision;
       }
       result.decisionsSet++;
+      result.finalDecisionsSet++;
+      if (extracted.finalDecision === 'include') result.finalDecisionsIncludeCount++;
+      else if (extracted.finalDecision === 'exclude') result.finalDecisionsExcludeCount++;
     }
   }
 
@@ -318,8 +349,35 @@ export function formatMergeOutput(result: ReviewMergeResult, dryRun: boolean): s
   }
 
   lines.push('Merge Summary:');
-  lines.push(`  Reviews added:    ${result.reviewsAdded}`);
-  lines.push(`  Decisions set:    ${result.decisionsSet}`);
+
+  // Build reviews line with decision breakdown
+  if (result.reviewsAdded === 0) {
+    lines.push(`  Reviews added: 0`);
+  } else {
+    const parts: string[] = [];
+    if (result.excludeCount > 0) parts.push(`${result.excludeCount} exclude`);
+    if (result.includeCount > 0) parts.push(`${result.includeCount} include`);
+    if (result.uncertainCount > 0) parts.push(`${result.uncertainCount} uncertain`);
+
+    if (parts.length > 0) {
+      lines.push(`  Reviews added: ${result.reviewsAdded} (${parts.join(', ')})`);
+    } else {
+      lines.push(`  Reviews added: ${result.reviewsAdded}`);
+    }
+  }
+
+  // Show final decisions only when some were set
+  if (result.finalDecisionsSet > 0) {
+    const parts: string[] = [];
+    if (result.finalDecisionsIncludeCount > 0) parts.push(`${result.finalDecisionsIncludeCount} include`);
+    if (result.finalDecisionsExcludeCount > 0) parts.push(`${result.finalDecisionsExcludeCount} exclude`);
+
+    if (parts.length > 0) {
+      lines.push(`  Final decisions set: ${result.finalDecisionsSet} (${parts.join(', ')})`);
+    } else {
+      lines.push(`  Final decisions set: ${result.finalDecisionsSet}`);
+    }
+  }
 
   if (result.warnings.length > 0) {
     lines.push('');

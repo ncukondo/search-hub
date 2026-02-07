@@ -14,6 +14,10 @@
       "type": "string",
       "description": "Path to inclusion criteria file"
     },
+    "reviewer": {
+      "type": "string",
+      "description": "Reviewer identifier (only in extracted ReviewFiles)"
+    },
     "articles": {
       "type": "array",
       "description": "List of articles with review data",
@@ -150,10 +154,17 @@
             "$ref": "#/definitions/Review"
           }
         },
+        "reviewHistory": {
+          "type": "array",
+          "description": "Historical reviews (only in extracted ReviewFiles, never in master file)",
+          "items": {
+            "$ref": "#/definitions/Review"
+          }
+        },
         "finalDecision": {
-          "type": "string",
-          "enum": ["include", "exclude"],
-          "description": "Final inclusion/exclusion decision"
+          "type": ["string", "null"],
+          "enum": ["include", "exclude", null],
+          "description": "Final inclusion/exclusion decision (null in extracted files)"
         }
       },
       "additionalProperties": false
