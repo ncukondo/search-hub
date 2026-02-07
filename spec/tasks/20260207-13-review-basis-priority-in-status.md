@@ -29,19 +29,19 @@ across any basis are still treated as `conflicting`.
 
 ### Step 1: Add Basis Priority Helper
 
-- [x] Write test: `src/cli/commands/review/types.test.ts`
+- [ ] Write test: `src/cli/commands/review/types.test.ts`
   - `basisRank('title')` < `basisRank('abstract')` < `basisRank('fulltext')`
   - `basisRank(undefined)` returns 0 (lowest)
-- [x] Add `basisRank(basis: ReviewBasis | undefined): number` to `types.ts`
-- [x] Verify test fails (Red)
-- [x] Implement
-- [x] Verify test passes (Green)
-- [x] Run `npm run lint && npm run typecheck`
-- [x] Acceptance: Basis ordering is correct
+- [ ] Add `basisRank(basis: ReviewBasis | undefined): number` to `types.ts`
+- [ ] Verify test fails (Red)
+- [ ] Implement
+- [ ] Verify test passes (Green)
+- [ ] Run `npm run lint && npm run typecheck`
+- [ ] Acceptance: Basis ordering is correct
 
 ### Step 2: Update `classifyStatus` to Consider Basis Priority
 
-- [x] Write test: `src/cli/commands/review/types.test.ts`
+- [ ] Write test: `src/cli/commands/review/types.test.ts`
   - Same reviewer, title `uncertain` + abstract `include` → `agreed-include`
   - Same reviewer, title `uncertain` + abstract `exclude` → `agreed-exclude`
   - Same reviewer, title `uncertain` + fulltext `include` → `agreed-include`
@@ -52,51 +52,51 @@ across any basis are still treated as `conflicting`.
   - Reviewer A title `include` + reviewer B abstract `exclude` → `conflicting` (definitive vs definitive)
   - All reviews `uncertain` (no higher-basis definitive) → `uncertain` (unchanged)
   - Only title reviews, no `uncertain` conflict → existing behavior unchanged
-- [x] Modify `classifyStatus()` to:
+- [ ] Modify `classifyStatus()` to:
   1. For each reviewer, find their highest-basis review with a definitive decision
   2. If a reviewer has only `uncertain` at lower basis and a definitive decision at higher basis, use the definitive decision
   3. Collect effective decisions (after basis resolution) and apply existing conflict/agreement logic
-- [x] Verify test fails (Red)
-- [x] Implement the basis-priority logic
-- [x] Verify test passes (Green)
-- [x] Run `npm run lint && npm run typecheck`
-- [x] Acceptance: Multi-stage screening `uncertain` → `include/exclude` works correctly
+- [ ] Verify test fails (Red)
+- [ ] Implement the basis-priority logic
+- [ ] Verify test passes (Green)
+- [ ] Run `npm run lint && npm run typecheck`
+- [ ] Acceptance: Multi-stage screening `uncertain` → `include/exclude` works correctly
 
 ### Step 3: Handle Cross-Reviewer Basis Priority
 
-- [x] Write test: `src/cli/commands/review/types.test.ts`
+- [ ] Write test: `src/cli/commands/review/types.test.ts`
   - Reviewer A: title `uncertain`. Reviewer B: abstract `include`. Reviewer C: abstract `include` → `agreed-include`
   - Reviewer A: title `uncertain`. Reviewer B: abstract `include`. Reviewer C: abstract `exclude` → `conflicting`
   - Reviewer A: title `exclude`. Reviewer B: abstract `include` → `conflicting` (both definitive)
   - Reviewer A: abstract `uncertain`. Reviewer B: fulltext `include` → `agreed-include`
-- [x] Implement cross-reviewer logic:
+- [ ] Implement cross-reviewer logic:
   1. For each reviewer, compute their effective decision at highest basis
   2. Discard `uncertain` reviews from reviewers who have no higher-basis definitive decision (they remain uncertain)
   3. Collect all effective decisions: if any reviewer's effective decision is still `uncertain`, overall is `uncertain`
   4. Otherwise, apply include/exclude agreement/conflict logic on effective decisions
-- [x] Verify test passes (Green)
-- [x] Run `npm run lint && npm run typecheck`
-- [x] Acceptance: Cross-reviewer basis priority works correctly
+- [ ] Verify test passes (Green)
+- [ ] Run `npm run lint && npm run typecheck`
+- [ ] Acceptance: Cross-reviewer basis priority works correctly
 
 ### Step 4: Verify Finalize Works with Multi-Stage Screening
 
-- [x] Write test: `src/cli/commands/review/finalize.test.ts`
+- [ ] Write test: `src/cli/commands/review/finalize.test.ts`
   - Article with title `uncertain` + abstract `include` from same reviewer → finalized as include
   - Article with title `uncertain` + abstract `exclude` from different reviewer → finalized as exclude
   - Article with only title `uncertain` → not finalized (still uncertain)
-- [x] Verify tests pass
-- [x] Run `npm run lint && npm run typecheck`
-- [x] Acceptance: `finalize` correctly processes multi-stage reviewed articles
+- [ ] Verify tests pass
+- [ ] Run `npm run lint && npm run typecheck`
+- [ ] Acceptance: `finalize` correctly processes multi-stage reviewed articles
 
 ### Final Step: E2E Integration Tests
 
-- [x] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
+- [ ] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
   - Full multi-stage workflow: init → extract title → mark some exclude, leave rest uncertain → merge → extract abstract for uncertain → mark include/exclude → merge → finalize → verify all articles finalized correctly
   - Two-reviewer multi-stage: reviewer A title screening → reviewer B abstract screening → finalize
-- [x] Verify all E2E tests pass
-- [x] Run full test suite: `npm test`
-- [x] **Manual verification**: Reproduce the workflow from this session
-- [x] Acceptance: All tests pass, multi-stage screening workflow completes end-to-end
+- [ ] Verify all E2E tests pass
+- [ ] Run full test suite: `npm test`
+- [ ] **Manual verification**: Reproduce the workflow from this session
+- [ ] Acceptance: All tests pass, multi-stage screening workflow completes end-to-end
 
 ## Notes
 
