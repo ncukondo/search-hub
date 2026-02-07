@@ -313,7 +313,7 @@ filters: {}
   });
 
   describe('search --dry-run command', () => {
-    it('should show dry-run output from file', { timeout: 30000 }, async () => {
+    it('should show dry-run output from file', async () => {
       const queryFile = join(tempDir, 'search-query.yaml');
       const queryContent = `name: test-query
 query:
@@ -330,7 +330,7 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'search', queryFile, '--dry-run']);
+        await program.parseAsync(['node', 'test', 'search', queryFile, '--dry-run', '--skip-connection-test']);
       } catch {
         // exitOverride may throw
       }
