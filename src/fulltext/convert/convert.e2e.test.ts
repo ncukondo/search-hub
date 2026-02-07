@@ -502,6 +502,150 @@ describe('PMC XML to Markdown E2E conversion', () => {
     expect(md).not.toContain('AcaiA');
   });
 
+  it('converts article with back matter sections (ack, appendices, footnotes)', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>Back Matter Test Article</article-title>
+      </title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Introduction</title>
+      <p>Main body content.</p>
+    </sec>
+  </body>
+  <back>
+    <ack>
+      <title>Acknowledgments</title>
+      <p>We thank the funding agency.</p>
+      <p>We also thank the participants.</p>
+    </ack>
+    <ref-list>
+      <ref id="ref1">
+        <mixed-citation>Smith J. A study. Nature. 2024.</mixed-citation>
+      </ref>
+    </ref-list>
+    <app-group>
+      <app id="app1">
+        <title>Appendix A: Search Strategy</title>
+        <sec>
+          <title>PubMed Search</title>
+          <p>((systematic review) AND (meta-analysis))</p>
+        </sec>
+      </app>
+      <app id="app2">
+        <title>Appendix B: Data Tables</title>
+        <p>Supplementary data content.</p>
+      </app>
+    </app-group>
+    <fn-group>
+      <fn id="fn1"><p>Conflict of interest: none declared.</p></fn>
+      <fn id="fn2"><p>Trial registration: NCT12345678.</p></fn>
+    </fn-group>
+  </back>
+</article>`;
+
+    const xmlPath = join(tmpDir, 'back-matter.xml');
+    const mdPath = join(tmpDir, 'back-matter.md');
+    await writeFile(xmlPath, xml, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+    expect(result.success).toBe(true);
+
+    const md = await readFile(mdPath, 'utf-8');
+
+    // Body sections
+    expect(md).toContain('## Introduction');
+    expect(md).toContain('Main body content.');
+
+    // Acknowledgments before References
+    expect(md).toContain('## Acknowledgments');
+    expect(md).toContain('We thank the funding agency.');
+    expect(md).toContain('We also thank the participants.');
+    const ackPos = md.indexOf('## Acknowledgments');
+    const refPos = md.indexOf('## References');
+    expect(ackPos).toBeLessThan(refPos);
+
+    // References
+    expect(md).toContain('## References');
+    expect(md).toContain('1. Smith J. A study. Nature. 2024.');
+
+    // Appendices after References
+    expect(md).toContain('## Appendix A: Search Strategy');
+    expect(md).toContain('### PubMed Search');
+    expect(md).toContain('((systematic review) AND (meta-analysis))');
+    expect(md).toContain('## Appendix B: Data Tables');
+    expect(md).toContain('Supplementary data content.');
+    const appPos = md.indexOf('## Appendix A');
+    expect(appPos).toBeGreaterThan(refPos);
+
+    // Footnotes
+    expect(md).toContain('## Footnotes');
+    expect(md).toContain('1. Conflict of interest: none declared.');
+    expect(md).toContain('2. Trial registration: NCT12345678.');
+  });
+
+  it('converts article with floats-group figures and tables', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<article xmlns:xlink="http://www.w3.org/1999/xlink">
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>Floats Group Test</article-title>
+      </title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Results</title>
+      <p>See <xref ref-type="fig" rid="fig1">Figure 1</xref> and <xref ref-type="table" rid="tbl1">Table 1</xref>.</p>
+    </sec>
+  </body>
+  <floats-group>
+    <fig id="fig1">
+      <label>Figure 1</label>
+      <caption><title>PRISMA flow diagram</title></caption>
+      <graphic xlink:href="fig1.png"/>
+    </fig>
+    <table-wrap id="tbl1">
+      <label>Table 1</label>
+      <caption><title>Baseline characteristics</title></caption>
+      <table>
+        <thead><tr><th>Group</th><th>N</th></tr></thead>
+        <tbody>
+          <tr><td>Control</td><td>50</td></tr>
+          <tr><td>Intervention</td><td>48</td></tr>
+        </tbody>
+      </table>
+    </table-wrap>
+  </floats-group>
+</article>`;
+
+    const xmlPath = join(tmpDir, 'floats-group.xml');
+    const mdPath = join(tmpDir, 'floats-group.md');
+    await writeFile(xmlPath, xml, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+    expect(result.success).toBe(true);
+
+    const md = await readFile(mdPath, 'utf-8');
+
+    // Body content
+    expect(md).toContain('## Results');
+    expect(md).toContain('See Figure 1 and Table 1.');
+
+    // Floats section
+    expect(md).toContain('## Figures and Tables');
+    expect(md).toContain('![Figure 1. PRISMA flow diagram]()');
+    expect(md).toContain('| Group | N |');
+    expect(md).toContain('| Control | 50 |');
+    expect(md).toContain('| Intervention | 48 |');
+  });
+
   it('preserves ext-link, monospace, and inline-formula in Markdown output', async () => {
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <article xmlns:xlink="http://www.w3.org/1999/xlink">

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseJatsMetadata, parseJatsBody, parseJatsTable, parseJatsReferences } from './jats-parser.js';
+import { parseJatsMetadata, parseJatsBody, parseJatsTable, parseJatsReferences, parseJatsBackMatter } from './jats-parser.js';
 
 describe('parseJatsMetadata', () => {
   it('extracts title from <article-title>', () => {
@@ -1781,5 +1781,187 @@ describe('E2E: multi-paragraph table cells in body', () => {
       expect(table.rows[0]![1]).toBe('Welcome the participant.');
       expect(table.rows[1]![0]).toBe('Experience<br>Ask about their daily routine.<br>Follow up on specifics.');
     }
+  });
+});
+
+describe('parseJatsBackMatter - acknowledgments', () => {
+  it('extracts acknowledgment text from <ack>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ack><title>Acknowledgments</title><p>We thank Dr. Smith for assistance.</p></ack>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.acknowledgments).toBe('We thank Dr. Smith for assistance.');
+  });
+
+  it('extracts acknowledgment with multiple paragraphs', () => {
+    const xml = `
+      <article>
+        <back>
+          <ack>
+            <title>Acknowledgements</title>
+            <p>We thank Dr. Smith for assistance.</p>
+            <p>Funding was provided by NIH grant R01.</p>
+          </ack>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.acknowledgments).toContain('We thank Dr. Smith');
+    expect(backMatter.acknowledgments).toContain('Funding was provided');
+  });
+
+  it('returns undefined acknowledgments when <ack> is absent', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list><ref id="r1"><mixed-citation>Test</mixed-citation></ref></ref-list>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.acknowledgments).toBeUndefined();
+  });
+});
+
+describe('parseJatsBackMatter - appendices', () => {
+  it('extracts appendices from <app-group>/<app>', () => {
+    const xml = `
+      <article>
+        <back>
+          <app-group>
+            <app id="app1">
+              <title>Appendix A: Search Strategy</title>
+              <sec>
+                <title>PubMed Search</title>
+                <p>((systematic review) AND ...)</p>
+              </sec>
+            </app>
+          </app-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.appendices).toHaveLength(1);
+    expect(backMatter.appendices![0]!.title).toBe('Appendix A: Search Strategy');
+    expect(backMatter.appendices![0]!.subsections).toHaveLength(1);
+    expect(backMatter.appendices![0]!.subsections[0]!.title).toBe('PubMed Search');
+  });
+
+  it('extracts multiple appendices', () => {
+    const xml = `
+      <article>
+        <back>
+          <app-group>
+            <app id="app1">
+              <title>Appendix A</title>
+              <p>Content A</p>
+            </app>
+            <app id="app2">
+              <title>Appendix B</title>
+              <p>Content B</p>
+            </app>
+          </app-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.appendices).toHaveLength(2);
+    expect(backMatter.appendices![0]!.title).toBe('Appendix A');
+    expect(backMatter.appendices![1]!.title).toBe('Appendix B');
+  });
+
+  it('returns undefined appendices when <app-group> is absent', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list><ref id="r1"><mixed-citation>Test</mixed-citation></ref></ref-list>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.appendices).toBeUndefined();
+  });
+});
+
+describe('parseJatsBackMatter - footnotes', () => {
+  it('extracts footnotes from <fn-group>', () => {
+    const xml = `
+      <article>
+        <back>
+          <fn-group>
+            <fn id="fn1"><p>Footnote one text.</p></fn>
+            <fn id="fn2"><p>Footnote two text.</p></fn>
+          </fn-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.footnotes).toHaveLength(2);
+    expect(backMatter.footnotes![0]).toEqual({ id: 'fn1', text: 'Footnote one text.' });
+    expect(backMatter.footnotes![1]).toEqual({ id: 'fn2', text: 'Footnote two text.' });
+  });
+
+  it('returns undefined footnotes when <fn-group> is absent', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list><ref id="r1"><mixed-citation>Test</mixed-citation></ref></ref-list>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.footnotes).toBeUndefined();
+  });
+});
+
+describe('parseJatsBackMatter - floats-group', () => {
+  it('extracts figures and tables from <floats-group>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec><p>See <xref ref-type="fig" rid="fig1">Figure 1</xref>.</p></sec>
+        </body>
+        <floats-group>
+          <fig id="fig1">
+            <label>Figure 1</label>
+            <caption><title>Study flow diagram</title></caption>
+            <graphic xlink:href="fig1.jpg"/>
+          </fig>
+          <table-wrap id="tbl1">
+            <label>Table 1</label>
+            <caption><title>Baseline characteristics</title></caption>
+            <table>
+              <thead><tr><th>Age</th><th>Count</th></tr></thead>
+              <tbody><tr><td>30</td><td>50</td></tr></tbody>
+            </table>
+          </table-wrap>
+        </floats-group>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.floats).toHaveLength(2);
+    expect(backMatter.floats![0]!.type).toBe('figure');
+    if (backMatter.floats![0]!.type === 'figure') {
+      expect(backMatter.floats![0]!.label).toBe('Figure 1');
+      expect(backMatter.floats![0]!.caption).toBe('Study flow diagram');
+    }
+    expect(backMatter.floats![1]!.type).toBe('table');
+    if (backMatter.floats![1]!.type === 'table') {
+      expect(backMatter.floats![1]!.headers).toEqual(['Age', 'Count']);
+    }
+  });
+
+  it('returns undefined floats when <floats-group> is absent', () => {
+    const xml = `
+      <article>
+        <body><sec><p>No floats here.</p></sec></body>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.floats).toBeUndefined();
   });
 });

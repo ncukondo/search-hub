@@ -5,7 +5,7 @@
  */
 
 import { readFile, writeFile, stat } from 'node:fs/promises';
-import { parseJatsMetadata, parseJatsBody, parseJatsReferences } from './jats-parser.js';
+import { parseJatsMetadata, parseJatsBody, parseJatsReferences, parseJatsBackMatter } from './jats-parser.js';
 import { writeMarkdown } from './markdown-writer.js';
 import type { JatsDocument } from './types.js';
 import type { FulltextMeta } from '../types.js';
@@ -36,8 +36,13 @@ export async function convertPmcXmlToMarkdown(
     const metadata = parseJatsMetadata(xml);
     const sections = parseJatsBody(xml);
     const references = parseJatsReferences(xml);
+    const backMatter = parseJatsBackMatter(xml);
 
     const doc: JatsDocument = { metadata, sections, references };
+    if (backMatter.acknowledgments) doc.acknowledgments = backMatter.acknowledgments;
+    if (backMatter.appendices) doc.appendices = backMatter.appendices;
+    if (backMatter.footnotes) doc.footnotes = backMatter.footnotes;
+    if (backMatter.floats) doc.floats = backMatter.floats;
 
     // Write Markdown
     const md = writeMarkdown(doc);
