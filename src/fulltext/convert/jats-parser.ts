@@ -714,6 +714,44 @@ function formatElementCitation(children: OrderedNode[]): string {
 }
 
 /**
+ * Extract text from a <mixed-citation>'s children, deduplicating any
+ * <pub-id> content that also appears as inline text.
+ *
+ * Some publishers include the DOI/PMID both as a text node and inside
+ * a <pub-id> element, causing duplication like "10.1234/x 10.1234/x".
+ */
+function extractMixedCitationText(children: OrderedNode[]): string {
+  // Collect pub-id values
+  const pubIds = findChildren(children, 'pub-id');
+  const pubIdValues = pubIds
+    .map((p) => extractAllText(p.children).trim())
+    .filter(Boolean);
+
+  if (pubIdValues.length === 0) {
+    return extractAllText(children).trim();
+  }
+
+  // Extract full text
+  const fullText = extractAllText(children).trim();
+
+  // For each pub-id value, if it appears more than once, remove extra occurrences
+  let result = fullText;
+  for (const val of pubIdValues) {
+    // Escape regex special characters
+    const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const matches = result.match(new RegExp(escaped, 'g'));
+    if (matches && matches.length > 1) {
+      // Remove the first occurrence (typically the inline text), keep the last (pub-id element)
+      result = result.replace(val, '');
+      // Clean up any leftover extra whitespace
+      result = result.replace(/\s{2,}/g, ' ').trim();
+    }
+  }
+
+  return result;
+}
+
+/**
  * Parse JATS XML back matter to extract references.
  */
 export function parseJatsReferences(xml: string): JatsReference[] {
@@ -741,7 +779,7 @@ export function parseJatsReferences(xml: string): JatsReference[] {
     // Try mixed-citation first (already formatted), then element-citation (structured)
     const mixedCitation = findChild(searchChildren, 'mixed-citation');
     if (mixedCitation) {
-      const text = extractAllText(mixedCitation.children).trim();
+      const text = extractMixedCitationText(mixedCitation.children);
       if (id && text) references.push({ id, text });
       continue;
     }

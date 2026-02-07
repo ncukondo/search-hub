@@ -1225,6 +1225,92 @@ describe('parseJatsReferences - mixed-citation inline element spacing', () => {
   });
 });
 
+describe('parseJatsReferences - pub-id deduplication', () => {
+  it('does not duplicate DOI when mixed-citation contains both inline text and <pub-id>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024. doi: <pub-id pub-id-type="doi">10.1234/test</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    // The DOI should appear only once
+    const doiMatches = refs[0]!.text.match(/10\.1234\/test/g);
+    expect(doiMatches).toHaveLength(1);
+  });
+
+  it('does not duplicate DOI when <pub-id> text is also present as inline text', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <mixed-citation publication-type="journal">
+                Bowyer ER, Shaw SC. Informal near-peer teaching. Educ Health. 2021;34:29.
+                <pub-id pub-id-type="doi">10.4103/efh.EfH_20_18</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    // DOI should appear exactly once
+    const doiMatches = refs[0]!.text.match(/10\.4103\/efh\.EfH_20_18/g);
+    expect(doiMatches).toHaveLength(1);
+  });
+
+  it('does not duplicate when DOI text appears both as text node and inside <pub-id>', () => {
+    // Some publishers put the DOI as both inline text and inside pub-id
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024. 10.1234/test <pub-id pub-id-type="doi">10.1234/test</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    // The DOI should appear only once (deduplicated)
+    const doiMatches = refs[0]!.text.match(/10\.1234\/test/g);
+    expect(doiMatches).toHaveLength(1);
+  });
+
+  it('preserves <pub-id> content when it is the only source of the identifier', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024.
+                <pub-id pub-id-type="doi">10.1234/unique</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toContain('10.1234/unique');
+  });
+});
+
 describe('HTML numeric character reference decoding', () => {
   it('decodes numeric entities in title text', () => {
     const xml = `
