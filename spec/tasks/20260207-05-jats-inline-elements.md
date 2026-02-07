@@ -82,11 +82,11 @@ The most impactful gap is `<ext-link>`, which causes external URLs to be lost. O
 
 ### Step 4: Support `<underline>` and `<sc>` (pass-through)
 
-- [ ] Write test: `<underline>` text is preserved (rendered as plain text or `<u>` HTML)
-- [ ] Write test: `<sc>` (small caps) text is preserved
-- [ ] Add explicit cases in `parseInlineContent()` to handle these as plain text (avoiding the generic unknown-element fallback)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: no content loss from underlined or small-caps text
+- [x] Write test: `<underline>` text is preserved (rendered as plain text or `<u>` HTML)
+- [x] Write test: `<sc>` (small caps) text is preserved
+- [x] Add explicit cases in `parseInlineContent()` to handle these as plain text (avoiding the generic unknown-element fallback)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: no content loss from underlined or small-caps text
 
 ### Final Step: E2E Integration Tests
 

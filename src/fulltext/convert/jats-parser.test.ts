@@ -1385,6 +1385,53 @@ describe('parseJatsReferences - pub-id deduplication', () => {
   });
 });
 
+describe('parseJatsBody - underline and sc', () => {
+  it('parses <underline> as plain text (no content loss)', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The <underline>key finding</underline> was significant.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const texts = para.content.filter((c) => c.type === 'text').map((c) => c.type === 'text' ? c.text : '');
+      const combined = texts.join('');
+      expect(combined).toContain('key finding');
+      expect(combined).toContain('The ');
+      expect(combined).toContain(' was significant.');
+    }
+  });
+
+  it('parses <sc> (small caps) as plain text (no content loss)', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>As described by <sc>Smith</sc> and colleagues.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const texts = para.content.filter((c) => c.type === 'text').map((c) => c.type === 'text' ? c.text : '');
+      const combined = texts.join('');
+      expect(combined).toContain('Smith');
+      expect(combined).toContain('As described by ');
+    }
+  });
+});
+
 describe('parseJatsBody - inline-formula', () => {
   it('parses <inline-formula> with <tex-math> child', () => {
     const xml = `

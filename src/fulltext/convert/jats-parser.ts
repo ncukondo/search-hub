@@ -375,6 +375,10 @@ function parseInlineContent(children: OrderedNode[]): InlineContent[] {
       if (url) {
         result.push({ type: 'link', url, children: parseInlineContent(innerChildren) });
       }
+    } else if (tag === 'underline' || tag === 'sc') {
+      // Pass-through: preserve text content without special formatting
+      const passText = extractAllText(innerChildren);
+      if (passText) result.push({ type: 'text', text: passText });
     } else if (tag === 'xref') {
       const refType = getAttr(child, 'ref-type');
       if (refType === 'bibr') {
