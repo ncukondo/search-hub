@@ -28,18 +28,18 @@ Each step follows the TDD cycle:
 
 ### Step 1: Change basis-priority filter to drop ALL lower-basis decisions
 
-- [ ] Step 1: Higher-basis definitive overrides ALL lower-basis decisions
-  - [ ] Write test: `src/cli/commands/review/types.test.ts`
+- [x] Step 1: Higher-basis definitive overrides ALL lower-basis decisions
+  - [x] Write test: `src/cli/commands/review/types.test.ts`
     - A title:include + B abstract:exclude → `agreed-exclude` (was `conflicting`)
     - A title:exclude + B abstract:include → `agreed-include` (was `conflicting`)
     - Same-basis conflicts remain `conflicting` (A title:include + B title:exclude → `conflicting`)
-  - [ ] Verify test fails (Red)
-  - [ ] Implement: In `classifyStatus()`, line ~237-243: change `decision === 'uncertain' && rank < highestDefinitiveRank` to `rank < highestDefinitiveRank`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Verify test still passes
-  - [ ] Acceptance: Cross-basis definitive decisions resolved by higher basis; same-basis conflicts still `conflicting`
+  - [x] Verify test fails (Red)
+  - [x] Implement: In `classifyStatus()`, line ~237-243: change `decision === 'uncertain' && rank < highestDefinitiveRank` to `rank < highestDefinitiveRank`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Verify test still passes
+  - [x] Acceptance: Cross-basis definitive decisions resolved by higher basis; same-basis conflicts still `conflicting`
 
 ### Step 2: Make `incomplete` check basis-aware
 
