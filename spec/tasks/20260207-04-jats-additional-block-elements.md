@@ -50,8 +50,8 @@ JATS XML specification includes several block-level elements that the current pa
 
 ### Step 2: Add `<def-list>` support
 
-- [ ] Add `'def-list'` type to `BlockElement` union: `{ type: 'def-list'; title?: string; items: { term: string; definition: string }[] }`
-- [ ] Write test: `<def-list>` with `<def-item>` containing `<term>` and `<def>` pairs
+- [x] Add `'def-list'` type to `BlockElement` union: `{ type: 'def-list'; title?: string; items: { term: string; definition: string }[] }`
+- [x] Write test: `<def-list>` with `<def-item>` containing `<term>` and `<def>` pairs
   ```xml
   <def-list>
     <title>Abbreviations</title>
@@ -65,13 +65,13 @@ JATS XML specification includes several block-level elements that the current pa
     </def-item>
   </def-list>
   ```
-- [ ] Verify test fails (Red)
-- [ ] Add `parseDefList()` in `jats-parser.ts`
-- [ ] Add `'def-list'` case to `parseBlockContent()`
-- [ ] Add `renderBlock()` case — render as Markdown definition-style list: `**RCT**: Randomized controlled trial`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: definition lists render readably in Markdown
+- [x] Verify test fails (Red)
+- [x] Add `parseDefList()` in `jats-parser.ts`
+- [x] Add `'def-list'` case to `parseBlockContent()`
+- [x] Add `renderBlock()` case — render as Markdown definition-style list: `**RCT**: Randomized controlled trial`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: definition lists render readably in Markdown
 
 ### Step 3: Add `<disp-formula>` support
 
