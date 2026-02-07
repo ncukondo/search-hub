@@ -2898,6 +2898,64 @@ describe('parseJatsBackMatter - notes', () => {
     expect(backMatter.notes![1]!.text).toBe('The authors declare no competing interests.');
   });
 
+  it('extracts nested <notes> elements within a <notes> wrapper (Declarations)', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes>
+            <title>Declarations</title>
+            <notes id="FPar1">
+              <title>Ethics approval and consent to participate</title>
+              <p>This study was conducted in accordance with the guidelines.</p>
+            </notes>
+            <notes id="FPar2">
+              <title>Consent for publication</title>
+              <p>All participants agreed to publication.</p>
+            </notes>
+            <notes id="FPar3" notes-type="COI-statement">
+              <title>Competing interests</title>
+              <p>The authors declare no competing interests.</p>
+            </notes>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(3);
+    expect(backMatter.notes![0]!.title).toBe('Ethics approval and consent to participate');
+    expect(backMatter.notes![0]!.text).toBe(
+      'This study was conducted in accordance with the guidelines.',
+    );
+    expect(backMatter.notes![1]!.title).toBe('Consent for publication');
+    expect(backMatter.notes![1]!.text).toBe('All participants agreed to publication.');
+    expect(backMatter.notes![2]!.title).toBe('Competing interests');
+    expect(backMatter.notes![2]!.text).toBe('The authors declare no competing interests.');
+  });
+
+  it('handles mixed direct <notes> and wrapper <notes> with nested <notes>', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study.</p>
+          </notes>
+          <notes>
+            <title>Declarations</title>
+            <notes>
+              <title>Competing interests</title>
+              <p>None declared.</p>
+            </notes>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(2);
+    expect(backMatter.notes![0]!.title).toBe('Author contributions');
+    expect(backMatter.notes![1]!.title).toBe('Competing interests');
+  });
+
   it('handles mixed direct <notes> and wrapper <notes> with <sec>', () => {
     const xml = `
       <article>
