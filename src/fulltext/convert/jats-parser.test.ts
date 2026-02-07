@@ -1143,6 +1143,208 @@ describe('parseJatsReferences - element-citation formatting', () => {
   });
 });
 
+describe('parseJatsReferences - citation-alternatives support', () => {
+  it('traverses <citation-alternatives> to find <mixed-citation>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <label>1.</label>
+              <citation-alternatives>
+                <element-citation publication-type="journal">
+                  <person-group person-group-type="author">
+                    <name><surname>Bowyer</surname><given-names>ER</given-names></name>
+                    <name><surname>Shaw</surname><given-names>SC</given-names></name>
+                  </person-group>
+                  <article-title>Informal near-peer teaching</article-title>
+                  <source>Educ Health</source>
+                  <year>2021</year><volume>34</volume><fpage>29</fpage>
+                </element-citation>
+                <mixed-citation publication-type="journal">
+                  Bowyer ER, Shaw SC. Informal near-peer teaching. Educ Health. 2021;34:29.
+                  <pub-id pub-id-type="doi">10.4103/efh.EfH_20_18</pub-id>
+                </mixed-citation>
+              </citation-alternatives>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.id).toBe('CR1');
+    // Should use mixed-citation text, not duplicated concatenation
+    expect(refs[0]!.text).toContain('Bowyer ER, Shaw SC');
+    expect(refs[0]!.text).toContain('Informal near-peer teaching');
+    // Should NOT have duplicated text like "BowyerERShawSC"
+    expect(refs[0]!.text).not.toMatch(/BowyerER/);
+  });
+
+  it('falls back to <element-citation> inside <citation-alternatives> when no mixed-citation', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR2">
+              <label>2.</label>
+              <citation-alternatives>
+                <element-citation publication-type="journal">
+                  <person-group person-group-type="author">
+                    <name><surname>Smith</surname><given-names>J</given-names></name>
+                  </person-group>
+                  <article-title>A study</article-title>
+                  <source>Nature</source>
+                  <year>2023</year>
+                </element-citation>
+              </citation-alternatives>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.text).toBe('Smith J. A study. Nature. 2023.');
+  });
+});
+
+describe('parseJatsReferences - mixed-citation inline element spacing', () => {
+  it('produces spaced author names from <string-name> elements', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation publication-type="journal">
+                <string-name><surname>McGuire</surname><given-names>N</given-names></string-name>,
+                <string-name><surname>Acai</surname><given-names>A</given-names></string-name>.
+                The McMaster tool. Teach Learn Med. 2023;37(1):1-9.
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    // Should have space between surname and given-names
+    expect(refs[0]!.text).toContain('McGuire N');
+    expect(refs[0]!.text).toContain('Acai A');
+    // Should NOT have concatenated names
+    expect(refs[0]!.text).not.toContain('McGuireN');
+    expect(refs[0]!.text).not.toContain('AcaiA');
+  });
+
+  it('produces spaced author names from <name> elements within <mixed-citation>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation>
+                <name><surname>Smith</surname><given-names>JA</given-names></name>,
+                <name><surname>Doe</surname><given-names>B</given-names></name>.
+                A paper. 2024.
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toContain('Smith JA');
+    expect(refs[0]!.text).toContain('Doe B');
+    expect(refs[0]!.text).not.toContain('SmithJA');
+  });
+});
+
+describe('parseJatsReferences - pub-id deduplication', () => {
+  it('does not duplicate DOI when mixed-citation contains both inline text and <pub-id>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024. doi: <pub-id pub-id-type="doi">10.1234/test</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    // The DOI should appear only once
+    const doiMatches = refs[0]!.text.match(/10\.1234\/test/g);
+    expect(doiMatches).toHaveLength(1);
+  });
+
+  it('does not duplicate DOI when <pub-id> text is also present as inline text', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <mixed-citation publication-type="journal">
+                Bowyer ER, Shaw SC. Informal near-peer teaching. Educ Health. 2021;34:29.
+                <pub-id pub-id-type="doi">10.4103/efh.EfH_20_18</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    // DOI should appear exactly once
+    const doiMatches = refs[0]!.text.match(/10\.4103\/efh\.EfH_20_18/g);
+    expect(doiMatches).toHaveLength(1);
+  });
+
+  it('does not duplicate when DOI text appears both as text node and inside <pub-id>', () => {
+    // Some publishers put the DOI as both inline text and inside pub-id
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024. 10.1234/test <pub-id pub-id-type="doi">10.1234/test</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    // The DOI should appear only once (deduplicated)
+    const doiMatches = refs[0]!.text.match(/10\.1234\/test/g);
+    expect(doiMatches).toHaveLength(1);
+  });
+
+  it('preserves <pub-id> content when it is the only source of the identifier', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024.
+                <pub-id pub-id-type="doi">10.1234/unique</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toContain('10.1234/unique');
+  });
+});
+
 describe('HTML numeric character reference decoding', () => {
   it('decodes numeric entities in title text', () => {
     const xml = `

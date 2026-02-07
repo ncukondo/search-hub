@@ -140,16 +140,29 @@ function findArticle(
 
 // ─── Text Extraction ─────────────────────────────────────────────────
 
+/** Tags whose text content should be followed by a space when adjacent to other content. */
+const SPACE_AFTER_TAGS = new Set([
+  'surname',
+  'given-names',
+  'name',
+  'string-name',
+]);
+
 /**
  * Extract plain text from a node that may contain nested elements.
  * Recursively collects all text content from preserveOrder nodes.
+ *
+ * When extracting text from inline container elements (e.g. `<name>`,
+ * `<string-name>`), inserts a space between adjacent child elements
+ * that would otherwise concatenate without whitespace (e.g.
+ * `<surname>McGuire</surname><given-names>N</given-names>` → `McGuire N`).
  */
 function extractAllText(node: unknown): string {
   if (node == null) return '';
   if (typeof node === 'string') return node;
   if (typeof node === 'number') return String(node);
   if (Array.isArray(node)) {
-    return node.map(extractAllText).join('');
+    return joinChildTexts(node);
   }
   if (typeof node === 'object') {
     const obj = node as OrderedNode;
@@ -161,11 +174,43 @@ function extractAllText(node: unknown): string {
     if (tag) {
       const children = obj[tag];
       if (Array.isArray(children)) {
-        return (children as OrderedNode[]).map((c) => extractAllText(c)).join('');
+        return joinChildTexts(children as OrderedNode[]);
       }
     }
   }
   return '';
+}
+
+/**
+ * Join extracted text from an array of child nodes, inserting spaces
+ * between adjacent inline elements where no whitespace separator exists.
+ */
+function joinChildTexts(children: OrderedNode[]): string {
+  const parts: string[] = [];
+  for (const child of children) {
+    const text = extractAllText(child);
+    if (!text) continue;
+
+    const tag = getTagName(child as OrderedNode);
+
+    // If this is a space-after tag and there's previous content that doesn't
+    // end with whitespace or punctuation, insert a space before this text.
+    if (tag && SPACE_AFTER_TAGS.has(tag) && parts.length > 0) {
+      const prev = parts[parts.length - 1]!;
+      if (prev && !/[\s,;.:()\-/]$/.test(prev)) {
+        parts.push(' ');
+      }
+    }
+
+    parts.push(text);
+
+    // If this is a space-after tag, check if a space is needed after.
+    // We handle this by peeking: space will be inserted before the next
+    // element if needed (handled above). But we also need to handle
+    // the case where the next sibling is a text node starting without space.
+    // That's already handled since text nodes include their own whitespace.
+  }
+  return parts.join('');
 }
 
 // ─── Metadata Parsing ────────────────────────────────────────────────
@@ -671,6 +716,44 @@ function formatElementCitation(children: OrderedNode[]): string {
 }
 
 /**
+ * Extract text from a <mixed-citation>'s children, deduplicating any
+ * <pub-id> content that also appears as inline text.
+ *
+ * Some publishers include the DOI/PMID both as a text node and inside
+ * a <pub-id> element, causing duplication like "10.1234/x 10.1234/x".
+ */
+function extractMixedCitationText(children: OrderedNode[]): string {
+  // Collect pub-id values
+  const pubIds = findChildren(children, 'pub-id');
+  const pubIdValues = pubIds
+    .map((p) => extractAllText(p.children).trim())
+    .filter(Boolean);
+
+  if (pubIdValues.length === 0) {
+    return extractAllText(children).trim();
+  }
+
+  // Extract full text
+  const fullText = extractAllText(children).trim();
+
+  // For each pub-id value, if it appears more than once, remove extra occurrences
+  let result = fullText;
+  for (const val of pubIdValues) {
+    // Escape regex special characters
+    const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const matches = result.match(new RegExp(escaped, 'g'));
+    if (matches && matches.length > 1) {
+      // Remove the first occurrence (typically the inline text), keep the last (pub-id element)
+      result = result.replace(val, '');
+      // Clean up any leftover extra whitespace
+      result = result.replace(/\s{2,}/g, ' ').trim();
+    }
+  }
+
+  return result;
+}
+
+/**
  * Parse JATS XML back matter to extract references.
  */
 export function parseJatsReferences(xml: string): JatsReference[] {
@@ -689,15 +772,21 @@ export function parseJatsReferences(xml: string): JatsReference[] {
 
   for (const ref of refs) {
     const id = ref.attrs['id'] ?? '';
+
+    // Determine the search scope: if <citation-alternatives> exists, search within it;
+    // otherwise search direct children of <ref>
+    const citationAlternatives = findChild(ref.children, 'citation-alternatives');
+    const searchChildren = citationAlternatives ? citationAlternatives.children : ref.children;
+
     // Try mixed-citation first (already formatted), then element-citation (structured)
-    const mixedCitation = findChild(ref.children, 'mixed-citation');
+    const mixedCitation = findChild(searchChildren, 'mixed-citation');
     if (mixedCitation) {
-      const text = extractAllText(mixedCitation.children).trim();
+      const text = extractMixedCitationText(mixedCitation.children);
       if (id && text) references.push({ id, text });
       continue;
     }
 
-    const elementCitation = findChild(ref.children, 'element-citation');
+    const elementCitation = findChild(searchChildren, 'element-citation');
     if (elementCitation) {
       const text = formatElementCitation(elementCitation.children);
       if (id && text) references.push({ id, text });

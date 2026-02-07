@@ -30,7 +30,7 @@ These issues affect all 26 references in paper 1 and all 54 references in paper 
 
 ### Step 1: Support `<citation-alternatives>` wrapper in reference parsing
 
-- [ ] Write test: `<ref>` containing `<citation-alternatives>` with both `<element-citation>` and `<mixed-citation>` inside — should extract the `<mixed-citation>` text (preferred) or fall back to `<element-citation>`
+- [x] Write test: `<ref>` containing `<citation-alternatives>` with both `<element-citation>` and `<mixed-citation>` inside — should extract the `<mixed-citation>` text (preferred) or fall back to `<element-citation>`
   ```xml
   <ref id="CR1">
     <label>1.</label>
@@ -52,16 +52,16 @@ These issues affect all 26 references in paper 1 and all 54 references in paper 
   </ref>
   ```
   Expected: `Bowyer ER, Shaw SC. Informal near-peer teaching. Educ Health. 2021;34:29. 10.4103/efh.EfH_20_18` (clean mixed-citation text, no duplication)
-- [ ] Write test: `src/fulltext/convert/jats-parser.test.ts`
-- [ ] Verify test fails (Red)
-- [ ] Update `parseJatsReferences()` to look for `<citation-alternatives>` child of `<ref>`, then search within it for `<mixed-citation>` or `<element-citation>`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: no duplicated reference text when `<citation-alternatives>` is present
+- [x] Write test: `src/fulltext/convert/jats-parser.test.ts`
+- [x] Verify test fails (Red)
+- [x] Update `parseJatsReferences()` to look for `<citation-alternatives>` child of `<ref>`, then search within it for `<mixed-citation>` or `<element-citation>`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: no duplicated reference text when `<citation-alternatives>` is present
 
 ### Step 2: Fix inline element spacing in `extractAllText` for `<mixed-citation>`
 
-- [ ] Write test: `<mixed-citation>` containing `<string-name>` elements produces spaced author names
+- [x] Write test: `<mixed-citation>` containing `<string-name>` elements produces spaced author names
   ```xml
   <mixed-citation publication-type="journal">
     <string-name><surname>McGuire</surname><given-names>N</given-names></string-name>,
@@ -71,29 +71,29 @@ These issues affect all 26 references in paper 1 and all 54 references in paper 
   ```
   Expected: `McGuire N, Acai A. The McMaster tool. Teach Learn Med. 2023;37(1):1-9.`
   Not: `McGuireN, AcaiA. The McMaster tool...`
-- [ ] Write test: `src/fulltext/convert/jats-parser.test.ts`
-- [ ] Verify test fails (Red)
-- [ ] Fix `extractAllText` to insert a space between adjacent inline element text nodes where no whitespace separator exists. Consider:
+- [x] Write test: `src/fulltext/convert/jats-parser.test.ts`
+- [x] Verify test fails (Red)
+- [x] Fix `extractAllText` to insert a space between adjacent inline element text nodes where no whitespace separator exists. Consider:
   - Adding space after text extracted from inline container elements (`<name>`, `<string-name>`, `<surname>`, `<given-names>`) if the next sibling doesn't start with whitespace or punctuation
   - Or: specifically handle `<string-name>` / `<name>` to join surname + given-names with a space
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: author names have proper spacing in references from `<mixed-citation>`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: author names have proper spacing in references from `<mixed-citation>`
 
 ### Step 3: Handle `<pub-id>` duplication in `<mixed-citation>` extracted text
 
-- [ ] Write test: `<mixed-citation>` containing both inline DOI text and a `<pub-id>` element should not duplicate the DOI
-- [ ] Verify and fix if `extractAllText` on `<mixed-citation>` produces `...10.4103/efh.EfH_20_18. 10.4103/efh.EfH_20_18` (DOI from text node + DOI from `<pub-id>` element)
-- [ ] If duplication detected, consider stripping `<pub-id>` elements from `<mixed-citation>` text extraction or deduplicating DOI/PMID values
-- [ ] Acceptance: no duplicated identifiers in reference text
+- [x] Write test: `<mixed-citation>` containing both inline DOI text and a `<pub-id>` element should not duplicate the DOI
+- [x] Verify and fix if `extractAllText` on `<mixed-citation>` produces `...10.4103/efh.EfH_20_18. 10.4103/efh.EfH_20_18` (DOI from text node + DOI from `<pub-id>` element)
+- [x] If duplication detected, consider stripping `<pub-id>` elements from `<mixed-citation>` text extraction or deduplicating DOI/PMID values
+- [x] Acceptance: no duplicated identifiers in reference text
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
+- [x] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
   - Test with XML containing `<citation-alternatives>` pattern
   - Test with XML containing direct `<mixed-citation>` with `<string-name>` elements
-- [ ] Verify references in Markdown output are clean, readable, and not duplicated
-- [ ] Run full test suite: `npm test`
+- [x] Verify references in Markdown output are clean, readable, and not duplicated
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Download PMC11293181 and PMC11864032 XML, convert, inspect references
 
 ## Notes

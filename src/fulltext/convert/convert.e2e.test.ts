@@ -399,4 +399,106 @@ describe('PMC XML to Markdown E2E conversion', () => {
     // Italic text should appear at correct positions with proper spacing
     expect(md).toContain('this is the *yanegawara* system. Under the *yanegawara* system');
   });
+
+  it('handles <citation-alternatives> references without duplication', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>Citation Alternatives Test</article-title>
+      </title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Introduction</title>
+      <p>As shown <xref ref-type="bibr" rid="CR1">[1]</xref>.</p>
+    </sec>
+  </body>
+  <back>
+    <ref-list>
+      <ref id="CR1">
+        <label>1.</label>
+        <citation-alternatives>
+          <element-citation publication-type="journal">
+            <person-group person-group-type="author">
+              <name><surname>Bowyer</surname><given-names>ER</given-names></name>
+              <name><surname>Shaw</surname><given-names>SC</given-names></name>
+            </person-group>
+            <article-title>Informal near-peer teaching</article-title>
+            <source>Educ Health</source>
+            <year>2021</year><volume>34</volume><fpage>29</fpage>
+          </element-citation>
+          <mixed-citation publication-type="journal">
+            Bowyer ER, Shaw SC. Informal near-peer teaching. Educ Health. 2021;34:29.
+          </mixed-citation>
+        </citation-alternatives>
+      </ref>
+    </ref-list>
+  </back>
+</article>`;
+
+    const xmlPath = join(tmpDir, 'cit-alt.xml');
+    const mdPath = join(tmpDir, 'cit-alt.md');
+    await writeFile(xmlPath, xml, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+    expect(result.success).toBe(true);
+    expect(result.references).toBe(1);
+
+    const md = await readFile(mdPath, 'utf-8');
+
+    // Reference should use mixed-citation text, not duplicated
+    expect(md).toContain('Bowyer ER, Shaw SC');
+    // Should NOT have concatenated text like "BowyerERShawSC"
+    expect(md).not.toMatch(/BowyerER/);
+  });
+
+  it('handles <mixed-citation> with <string-name> elements with proper spacing', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>String Name Test</article-title>
+      </title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Introduction</title>
+      <p>See references <xref ref-type="bibr" rid="ref1">[1]</xref>.</p>
+    </sec>
+  </body>
+  <back>
+    <ref-list>
+      <ref id="ref1">
+        <mixed-citation publication-type="journal">
+          <string-name><surname>McGuire</surname><given-names>N</given-names></string-name>,
+          <string-name><surname>Acai</surname><given-names>A</given-names></string-name>.
+          The McMaster tool. Teach Learn Med. 2023;37(1):1-9.
+        </mixed-citation>
+      </ref>
+    </ref-list>
+  </back>
+</article>`;
+
+    const xmlPath = join(tmpDir, 'string-name.xml');
+    const mdPath = join(tmpDir, 'string-name.md');
+    await writeFile(xmlPath, xml, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+    expect(result.success).toBe(true);
+    expect(result.references).toBe(1);
+
+    const md = await readFile(mdPath, 'utf-8');
+
+    // Author names should have proper spacing
+    expect(md).toContain('McGuire N');
+    expect(md).toContain('Acai A');
+    // Should NOT have concatenated names
+    expect(md).not.toContain('McGuireN');
+    expect(md).not.toContain('AcaiA');
+  });
 });
