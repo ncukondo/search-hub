@@ -409,7 +409,7 @@ describe('getSuggestion', () => {
             finalized: 85,
             included: 50,
             excluded: 35,
-            reviewers: [],
+            reviewers: [{ name: 'ai:claude', basis: 'title' }],
           },
         };
         const result = getSuggestion(ctx);
@@ -434,7 +434,7 @@ describe('getSuggestion', () => {
             finalized: 85,
             included: 50,
             excluded: 35,
-            reviewers: [],
+            reviewers: [{ name: 'ai:claude', basis: 'title' }],
           },
         };
         const result = getSuggestion(ctx);
@@ -483,7 +483,7 @@ describe('getSuggestion', () => {
     });
 
     describe('review extract', () => {
-      it('should suggest mark and merge', () => {
+      it('should suggest merge', () => {
         const ctx: SuggestionContext = {
           command: 'review extract',
           sessionId: 'my-session',
@@ -491,15 +491,50 @@ describe('getSuggestion', () => {
         };
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
-        expect(result!.next).toHaveLength(2);
-        expect(result!.next[0]!.command).toContain('review mark');
-        expect(result!.next[1]!.command).toContain('review merge');
-        expect(result!.next[1]!.command).toContain('--name title-screening');
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('review merge');
+        expect(result!.next[0]!.command).toContain('--name title-screening');
+      });
+
+      it('should suggest next batch when --limit used with remaining articles', () => {
+        const ctx: SuggestionContext = {
+          command: 'review extract',
+          sessionId: 'my-session',
+          extractName: 'title-batch-1',
+          extractedCount: 20,
+          totalMatching: 80,
+          extractLimit: 20,
+          extractOffset: 0,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('review merge');
+        expect(result!.seeAlso.length).toBeGreaterThanOrEqual(1);
+        const batchSuggestion = result!.seeAlso.find(s => s.command.includes('--offset'));
+        expect(batchSuggestion).toBeDefined();
+        expect(batchSuggestion!.command).toContain('--offset 20');
+        expect(batchSuggestion!.command).toContain('--limit 20');
+      });
+
+      it('should not suggest next batch when all articles extracted', () => {
+        const ctx: SuggestionContext = {
+          command: 'review extract',
+          sessionId: 'my-session',
+          extractName: 'title-screening',
+          extractedCount: 50,
+          totalMatching: 50,
+          extractLimit: 50,
+          extractOffset: 0,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso).toHaveLength(0);
       });
     });
 
     describe('review merge', () => {
-      it('should suggest status', () => {
+      it('should suggest status when reviewStatus not provided', () => {
         const ctx: SuggestionContext = {
           command: 'review merge',
           sessionId: 'my-session',
@@ -508,6 +543,82 @@ describe('getSuggestion', () => {
         expect(result).not.toBeNull();
         expect(result!.next).toHaveLength(1);
         expect(result!.next[0]!.command).toContain('review status');
+      });
+
+      it('should suggest finalize when agreed > 0', () => {
+        const ctx: SuggestionContext = {
+          command: 'review merge',
+          sessionId: 'my-session',
+          reviewStatus: {
+            sessionId: 'my-session',
+            total: 100,
+            pending: 0,
+            incomplete: 0,
+            uncertain: 0,
+            agreedInclude: 60,
+            agreedExclude: 30,
+            conflicting: 0,
+            finalized: 10,
+            included: 5,
+            excluded: 5,
+            reviewers: [{ name: 'ai:claude', basis: 'title' }],
+          },
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next[0]!.command).toContain('review finalize');
+      });
+    });
+
+    describe('review finalize', () => {
+      it('should suggest next review phase when unresolved articles remain', () => {
+        const ctx: SuggestionContext = {
+          command: 'review finalize',
+          sessionId: 'my-session',
+          reviewStatus: {
+            sessionId: 'my-session',
+            total: 100,
+            pending: 0,
+            incomplete: 0,
+            uncertain: 10,
+            agreedInclude: 0,
+            agreedExclude: 0,
+            conflicting: 5,
+            finalized: 85,
+            included: 50,
+            excluded: 35,
+            reviewers: [{ name: 'ai:claude', basis: 'title' }],
+          },
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next[0]!.command).toContain('review extract');
+        expect(result!.next[0]!.command).toContain('--basis abstract');
+      });
+
+      it('should suggest register when all finalized', () => {
+        const ctx: SuggestionContext = {
+          command: 'review finalize',
+          sessionId: 'my-session',
+          reviewStatus: {
+            sessionId: 'my-session',
+            total: 100,
+            pending: 0,
+            incomplete: 0,
+            uncertain: 0,
+            agreedInclude: 0,
+            agreedExclude: 0,
+            conflicting: 0,
+            finalized: 100,
+            included: 60,
+            excluded: 40,
+            reviewers: [{ name: 'ai:claude', basis: 'title' }],
+          },
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next[0]!.command).toContain('register');
+        expect(result!.next[0]!.command).toContain('--reviewed');
       });
     });
 

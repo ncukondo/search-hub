@@ -1,4 +1,5 @@
 import type { SuggestionContext, SuggestionResult, SuggestionRule } from './types.js';
+import { generateReviewNextSteps } from '../commands/review/next-steps.js';
 
 // Phase 1: Query Preparation rules
 
@@ -218,64 +219,13 @@ const reviewInitRule: SuggestionRule = (ctx) => {
 
 const reviewStatusRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'review status') return null;
-  const sid = ctx.sessionId ?? '<session-id>';
   const rs = ctx.reviewStatus;
   if (!rs) return null;
 
-  // 1. pending > 0: title screening incomplete
-  if (rs.pending > 0) {
-    return {
-      next: [
-        {
-          command: `search-hub review extract --session ${sid} --basis title --filter pending --name title-screening`,
-          description: 'Continue title screening',
-        },
-      ],
-      seeAlso: [],
-    };
-  }
-
-  // 2. agreed > 0: suggest finalization
-  const agreed = rs.agreedInclude + rs.agreedExclude;
-  if (agreed > 0) {
-    return {
-      next: [
-        {
-          command: `search-hub review finalize --session ${sid}`,
-          description: `Finalize ${agreed} articles with consensus`,
-        },
-      ],
-      seeAlso: [],
-    };
-  }
-
-  // 3. conflicting, uncertain, or incomplete > 0: suggest further review
-  if (rs.conflicting > 0 || rs.uncertain > 0 || rs.incomplete > 0) {
-    return {
-      next: [
-        {
-          command: `search-hub review extract --session ${sid} --basis abstract --filter conflicting,uncertain,incomplete --name abstract-screening`,
-          description: 'Start abstract screening for unresolved items',
-        },
-      ],
-      seeAlso: [],
-    };
-  }
-
-  // 5. All finalized
-  if (rs.finalized === rs.total) {
-    return {
-      next: [
-        {
-          command: `search-hub register ${sid} --reviewed`,
-          description: 'Register accepted articles',
-        },
-      ],
-      seeAlso: [],
-    };
-  }
-
-  return null;
+  return generateReviewNextSteps({
+    sessionId: ctx.sessionId ?? '<session-id>',
+    statusResult: rs,
+  });
 };
 
 const reviewListRule: SuggestionRule = (ctx) => {
@@ -296,12 +246,8 @@ const reviewExtractRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'review extract') return null;
   const sid = ctx.sessionId ?? '<session-id>';
   const name = ctx.extractName ?? '<name>';
-  return {
+  const result: SuggestionResult = {
     next: [
-      {
-        command: `search-hub review mark --file <path> ...`,
-        description: 'Record decisions (AI/CLI)',
-      },
       {
         command: `search-hub review merge --session ${sid} --name ${name}`,
         description: 'Merge review results',
@@ -309,20 +255,59 @@ const reviewExtractRule: SuggestionRule = (ctx) => {
     ],
     seeAlso: [],
   };
+
+  // Batch continuation: suggest next batch if --limit was used with remaining articles
+  if (
+    ctx.extractLimit !== undefined &&
+    ctx.extractedCount !== undefined &&
+    ctx.totalMatching !== undefined
+  ) {
+    const nextOffset = (ctx.extractOffset ?? 0) + ctx.extractedCount;
+    const remaining = ctx.totalMatching - nextOffset;
+    if (remaining > 0) {
+      const nextName = name !== '<name>' ? `${name}-next` : 'next-batch';
+      result.seeAlso.push({
+        command: `search-hub review extract --session ${sid} --offset ${nextOffset} --limit ${ctx.extractLimit} --name ${nextName}`,
+        description: `${remaining} articles remaining — extract next batch`,
+      });
+    }
+  }
+
+  return result;
 };
 
 const reviewMergeRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'review merge') return null;
-  const sid = ctx.sessionId ?? '<session-id>';
-  return {
-    next: [
-      {
-        command: `search-hub review status --session ${sid}`,
-        description: 'Check progress',
-      },
-    ],
-    seeAlso: [],
-  };
+  const rs = ctx.reviewStatus;
+  if (!rs) {
+    // Fallback: suggest status check when reviewStatus not available
+    const sid = ctx.sessionId ?? '<session-id>';
+    return {
+      next: [
+        {
+          command: `search-hub review status --session ${sid}`,
+          description: 'Check progress',
+        },
+      ],
+      seeAlso: [],
+    };
+  }
+
+  return generateReviewNextSteps({
+    sessionId: ctx.sessionId ?? '<session-id>',
+    statusResult: rs,
+  });
+};
+
+const reviewFinalizeRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'review finalize') return null;
+  const rs = ctx.reviewStatus;
+  if (!rs) return null;
+
+  return generateReviewNextSteps({
+    sessionId: ctx.sessionId ?? '<session-id>',
+    statusResult: rs,
+  });
 };
 
 const reviewExportRule: SuggestionRule = (ctx) => {
@@ -411,6 +396,7 @@ const rules: SuggestionRule[] = [
   reviewListRule,
   reviewExtractRule,
   reviewMergeRule,
+  reviewFinalizeRule,
   reviewExportRule,
   // Phase 5
   exportRule,

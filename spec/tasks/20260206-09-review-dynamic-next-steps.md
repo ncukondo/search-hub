@@ -54,7 +54,7 @@ workflow by copy-pasting without needing to understand filter options.
 
 ### Step 2: Integrate into `review merge` Output
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts`
+- [x] Write test: `src/cli/commands/review/merge.test.ts`
   - Merge output includes Next Steps section
   - After merge, suggests `review finalize` (if agreed articles exist) or `review status`
 - [ ] Update `formatMergeOutput` to accept optional next steps
@@ -65,7 +65,7 @@ workflow by copy-pasting without needing to understand filter options.
 
 ### Step 3: Integrate into `review finalize` Output
 
-- [ ] Write test: `src/cli/commands/review/finalize.test.ts`
+- [x] Write test: `src/cli/commands/review/finalize.test.ts`
   - After finalize with remaining uncertain → suggests extract for next phase
   - After finalize with all finalized → suggests export
 - [ ] Update `formatFinalizeOutput` to accept optional next steps
@@ -76,7 +76,7 @@ workflow by copy-pasting without needing to understand filter options.
 
 ### Step 4: Integrate into `review extract` Output
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - Extract output suggests merge command with correct `--name`
   - When `--limit` used with remaining articles, suggests next batch
   - Next batch suggestion has correct `--offset` and incremented `--name`
@@ -87,7 +87,7 @@ workflow by copy-pasting without needing to understand filter options.
 
 ### Step 5: Update `review status` Output
 
-- [ ] Write test: `src/cli/commands/review/status.test.ts`
+- [x] Write test: `src/cli/commands/review/status.test.ts`
   - Status output includes dynamic Next Steps instead of static workflow guide
   - Next Steps logic matches `generateReviewNextSteps`
 - [ ] Update `formatStatusOutput` to use `generateReviewNextSteps`
@@ -99,10 +99,10 @@ workflow by copy-pasting without needing to understand filter options.
 ### Step 6: Update `suggestions.md` Spec and Suggestion Rules
 
 - [ ] Update `spec/cli/suggestions.md` Phase 4 section to reference dynamic generation
-- [ ] Update `src/cli/suggestions/rules.ts` review-related rules to use new logic
-- [ ] Verify existing suggestion tests still pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Suggestion system aligned with new review workflow
+- [x] Update `src/cli/suggestions/rules.ts` review-related rules to use new logic
+- [x] Verify existing suggestion tests still pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Suggestion system aligned with new review workflow
 
 ### Final Step: E2E Integration Tests
 
