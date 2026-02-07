@@ -1109,6 +1109,72 @@ describe('parseJatsReferences - element-citation formatting', () => {
   });
 });
 
+describe('parseJatsReferences - citation-alternatives support', () => {
+  it('traverses <citation-alternatives> to find <mixed-citation>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <label>1.</label>
+              <citation-alternatives>
+                <element-citation publication-type="journal">
+                  <person-group person-group-type="author">
+                    <name><surname>Bowyer</surname><given-names>ER</given-names></name>
+                    <name><surname>Shaw</surname><given-names>SC</given-names></name>
+                  </person-group>
+                  <article-title>Informal near-peer teaching</article-title>
+                  <source>Educ Health</source>
+                  <year>2021</year><volume>34</volume><fpage>29</fpage>
+                </element-citation>
+                <mixed-citation publication-type="journal">
+                  Bowyer ER, Shaw SC. Informal near-peer teaching. Educ Health. 2021;34:29.
+                  <pub-id pub-id-type="doi">10.4103/efh.EfH_20_18</pub-id>
+                </mixed-citation>
+              </citation-alternatives>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.id).toBe('CR1');
+    // Should use mixed-citation text, not duplicated concatenation
+    expect(refs[0]!.text).toContain('Bowyer ER, Shaw SC');
+    expect(refs[0]!.text).toContain('Informal near-peer teaching');
+    // Should NOT have duplicated text like "BowyerERShawSC"
+    expect(refs[0]!.text).not.toMatch(/BowyerER/);
+  });
+
+  it('falls back to <element-citation> inside <citation-alternatives> when no mixed-citation', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR2">
+              <label>2.</label>
+              <citation-alternatives>
+                <element-citation publication-type="journal">
+                  <person-group person-group-type="author">
+                    <name><surname>Smith</surname><given-names>J</given-names></name>
+                  </person-group>
+                  <article-title>A study</article-title>
+                  <source>Nature</source>
+                  <year>2023</year>
+                </element-citation>
+              </citation-alternatives>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.text).toBe('Smith J. A study. Nature. 2023.');
+  });
+});
+
 describe('HTML numeric character reference decoding', () => {
   it('decodes numeric entities in title text', () => {
     const xml = `

@@ -687,15 +687,21 @@ export function parseJatsReferences(xml: string): JatsReference[] {
 
   for (const ref of refs) {
     const id = ref.attrs['id'] ?? '';
+
+    // Determine the search scope: if <citation-alternatives> exists, search within it;
+    // otherwise search direct children of <ref>
+    const citationAlternatives = findChild(ref.children, 'citation-alternatives');
+    const searchChildren = citationAlternatives ? citationAlternatives.children : ref.children;
+
     // Try mixed-citation first (already formatted), then element-citation (structured)
-    const mixedCitation = findChild(ref.children, 'mixed-citation');
+    const mixedCitation = findChild(searchChildren, 'mixed-citation');
     if (mixedCitation) {
       const text = extractAllText(mixedCitation.children).trim();
       if (id && text) references.push({ id, text });
       continue;
     }
 
-    const elementCitation = findChild(ref.children, 'element-citation');
+    const elementCitation = findChild(searchChildren, 'element-citation');
     if (elementCitation) {
       const text = formatElementCitation(elementCitation.children);
       if (id && text) references.push({ id, text });
