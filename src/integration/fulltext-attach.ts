@@ -7,7 +7,7 @@
 import { join } from 'node:path';
 import type { FulltextAttachResult } from './types.js';
 import { refFulltextAttach, type RefCliOptions } from './ref-cli.js';
-import { findRefId, loadFulltextEntries, resolveAttachableFiles } from '../fulltext/attach-shared.js';
+import { processFulltextEntries } from '../fulltext/attach-shared.js';
 
 /**
  * Options for attachFulltexts function.
@@ -78,70 +78,10 @@ export async function attachFulltexts(
   const refCliOptions: RefCliOptions = { libraryPath };
   const refLookup = buildRefLookup(addedRefs);
 
-  const result: FulltextAttachResult = {
-    summary: { total: 0, attached: 0, skipped: 0, failed: 0 },
-    attached: [],
-    skipped: [],
-    failed: [],
-  };
-
-  // Load all fulltext entries
-  const entries = await loadFulltextEntries(fulltextDir);
-  result.summary.total = entries.length;
-
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i]!;
-    const { dirName, articleDir, meta } = entry;
-
-    if (onProgress) {
-      onProgress(i + 1, entries.length);
-    }
-
-    // Handle meta load failure
-    if (!meta) {
-      result.summary.failed++;
-      result.failed.push({
-        dirName,
-        reason: 'meta_read_error',
-        error: 'Failed to read meta.json',
-      });
-      continue;
-    }
-
-    // Find matching ref entry
-    const refId = findRefId(meta, refLookup);
-    if (!refId) {
-      result.summary.skipped++;
-      result.skipped.push({ dirName, reason: 'not_in_ref' });
-      continue;
-    }
-
-    // Determine which files to attach (with disk verification)
-    const filesToAttach = await resolveAttachableFiles(articleDir, meta);
-
-    if (filesToAttach.length === 0) {
-      result.summary.skipped++;
-      result.skipped.push({ dirName, reason: 'no_files' });
-      continue;
-    }
-
-    // Attach files
-    try {
-      for (const filename of filesToAttach) {
-        const filePath = join(articleDir, filename);
-        await refFulltextAttach(refId, filePath, refCliOptions);
-      }
-      result.summary.attached++;
-      result.attached.push({ refId, files: filesToAttach });
-    } catch (error) {
-      result.summary.failed++;
-      result.failed.push({
-        dirName,
-        reason: 'attach_error',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  }
-
-  return result;
+  return processFulltextEntries({
+    fulltextDir,
+    refLookup,
+    attachFile: (refId, filePath) => refFulltextAttach(refId, filePath, refCliOptions),
+    ...(onProgress ? { onProgress } : {}),
+  });
 }

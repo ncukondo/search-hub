@@ -7,7 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { FulltextAttachResult } from '../../../integration/types.js';
 import { refFulltextAttach, refExport, type RefCliOptions } from '../../../integration/ref-cli.js';
-import { findRefId, loadFulltextEntries, resolveAttachableFiles } from '../../../fulltext/attach-shared.js';
+import { processFulltextEntries } from '../../../fulltext/attach-shared.js';
 
 export interface FulltextAttachCommandOptions {
   sessionDir: string;
@@ -28,8 +28,14 @@ async function buildRefLookupFromLibrary(
   try {
     // Try to read library directly from JSON file
     const content = await readFile(libraryPath, 'utf-8');
-    const entries = JSON.parse(content) as Array<Record<string, unknown>>;
+    const parsed: unknown = JSON.parse(content);
 
+    if (!Array.isArray(parsed)) {
+      console.warn('Warning: Reference library file is not a JSON array. Falling back to ref export.');
+      throw new Error('Not an array');
+    }
+
+    const entries = parsed as Array<Record<string, unknown>>;
     for (const entry of entries) {
       const id = entry['id'] as string;
       if (!id) continue;
@@ -81,80 +87,14 @@ export async function executeFulltextAttach(
   const libraryPath = join(sessionDir, 'references.json');
   const refCliOptions: RefCliOptions = { libraryPath };
 
-  const result: FulltextAttachResult = {
-    summary: { total: 0, attached: 0, skipped: 0, failed: 0 },
-    attached: [],
-    skipped: [],
-    failed: [],
-  };
-
   // Build ref lookup from library
   const refLookup = await buildRefLookupFromLibrary(libraryPath, refCliOptions);
 
-  // Load all fulltext entries
-  const entries = await loadFulltextEntries(fulltextDir);
-  result.summary.total = entries.length;
-
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i]!;
-    const { dirName, articleDir, meta } = entry;
-
-    if (onProgress) {
-      onProgress(i + 1, entries.length);
-    }
-
-    // Handle meta load failure
-    if (!meta) {
-      result.summary.failed++;
-      result.failed.push({
-        dirName,
-        reason: 'meta_read_error',
-        error: 'Failed to read meta.json',
-      });
-      continue;
-    }
-
-    // Find matching ref entry
-    const refId = findRefId(meta, refLookup);
-    if (!refId) {
-      result.summary.skipped++;
-      result.skipped.push({ dirName, reason: 'not_in_ref' });
-      continue;
-    }
-
-    // Determine which files to attach (with disk verification)
-    const filesToAttach = await resolveAttachableFiles(articleDir, meta);
-
-    if (filesToAttach.length === 0) {
-      result.summary.skipped++;
-      result.skipped.push({ dirName, reason: 'no_files' });
-      continue;
-    }
-
-    if (dryRun) {
-      // Dry run: don't actually attach, just record what would be attached
-      result.summary.attached++;
-      result.attached.push({ refId, files: filesToAttach });
-      continue;
-    }
-
-    // Attach files
-    try {
-      for (const filename of filesToAttach) {
-        const filePath = join(articleDir, filename);
-        await refFulltextAttach(refId, filePath, refCliOptions);
-      }
-      result.summary.attached++;
-      result.attached.push({ refId, files: filesToAttach });
-    } catch (error) {
-      result.summary.failed++;
-      result.failed.push({
-        dirName,
-        reason: 'attach_error',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  }
-
-  return result;
+  return processFulltextEntries({
+    fulltextDir,
+    refLookup,
+    attachFile: (refId, filePath) => refFulltextAttach(refId, filePath, refCliOptions),
+    dryRun,
+    ...(onProgress ? { onProgress } : {}),
+  });
 }
