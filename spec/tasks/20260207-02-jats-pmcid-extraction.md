@@ -25,20 +25,20 @@ As a result, the Markdown output is missing the `**PMC**: PMCxxxxxxxx` metadata 
 
 ### Step 1: Support `pub-id-type="pmcid"` in metadata extraction
 
-- [ ] Write test: XML with `<article-id pub-id-type="pmcid">PMC11293181</article-id>` should extract pmcid `"PMC11293181"` (note: already has `PMC` prefix, so `writeMarkdown` should not double-prefix)
-- [ ] Write test: XML with `<article-id pub-id-type="pmc">11293181</article-id>` should still work (existing behavior)
-- [ ] Verify test fails (Red) for the `pmcid` variant
-- [ ] Update `parseJatsMetadata()`:
+- [x] Write test: XML with `<article-id pub-id-type="pmcid">PMC11293181</article-id>` should extract pmcid `"PMC11293181"` (note: already has `PMC` prefix, so `writeMarkdown` should not double-prefix)
+- [x] Write test: XML with `<article-id pub-id-type="pmc">11293181</article-id>` should still work (existing behavior)
+- [x] Verify test fails (Red) for the `pmcid` variant
+- [x] Update `parseJatsMetadata()`:
   - Add `idType === 'pmcid'` to the condition alongside `idType === 'pmc'`
   - Handle the `PMC` prefix: if the value already starts with `PMC`, strip it before storing (since `writeMarkdown` prepends `PMC`)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: PMCID appears correctly in Markdown metadata for both `pub-id-type` variants
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: PMCID appears correctly in Markdown metadata for both `pub-id-type` variants
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Verify with real efetch XML from PMC11293181 and PMC11864032
-- [ ] Run full test suite: `npm test`
+- [x] Verify with real efetch XML from PMC11293181 and PMC11864032
+- [x] Run full test suite: `npm test`
 
 ## Notes
 

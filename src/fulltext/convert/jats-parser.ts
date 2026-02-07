@@ -199,7 +199,9 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
     const idType = idEntry.attrs['pub-id-type'];
     const idText = extractAllText(idEntry.children);
     if (idType === 'doi') doi = idText;
-    if (idType === 'pmc') pmcid = idText;
+    if (idType === 'pmc' || idType === 'pmcid') {
+      pmcid = idText.replace(/^PMC/, '');
+    }
   }
 
   // Authors
