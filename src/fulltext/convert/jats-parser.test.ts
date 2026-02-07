@@ -1385,6 +1385,101 @@ describe('parseJatsReferences - pub-id deduplication', () => {
   });
 });
 
+describe('parseJatsBody - ext-link and uri', () => {
+  it('parses <ext-link> with xlink:href as link', () => {
+    const xml = `
+      <article xmlns:xlink="http://www.w3.org/1999/xlink">
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>Software available at <ext-link ext-link-type="uri"
+              xlink:href="https://www.r-project.org/">https://www.r-project.org/</ext-link>.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const link = para.content.find((c) => c.type === 'link');
+      expect(link).toBeDefined();
+      if (link?.type === 'link') {
+        expect(link.url).toBe('https://www.r-project.org/');
+        expect(link.children).toEqual([{ type: 'text', text: 'https://www.r-project.org/' }]);
+      }
+    }
+  });
+
+  it('parses <ext-link> with different display text and URL', () => {
+    const xml = `
+      <article xmlns:xlink="http://www.w3.org/1999/xlink">
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>Visit <ext-link ext-link-type="uri"
+              xlink:href="https://example.com/tool">our analysis tool</ext-link> for details.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const link = para.content.find((c) => c.type === 'link');
+      expect(link).toBeDefined();
+      if (link?.type === 'link') {
+        expect(link.url).toBe('https://example.com/tool');
+        expect(link.children).toEqual([{ type: 'text', text: 'our analysis tool' }]);
+      }
+    }
+  });
+
+  it('parses <uri> element as link', () => {
+    const xml = `
+      <article xmlns:xlink="http://www.w3.org/1999/xlink">
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>Available at <uri xlink:href="https://example.com/data">https://example.com/data</uri>.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const link = para.content.find((c) => c.type === 'link');
+      expect(link).toBeDefined();
+      if (link?.type === 'link') {
+        expect(link.url).toBe('https://example.com/data');
+      }
+    }
+  });
+
+  it('parses <uri> without xlink:href using text content as URL', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>See <uri>https://example.com/resource</uri>.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const link = para.content.find((c) => c.type === 'link');
+      expect(link).toBeDefined();
+      if (link?.type === 'link') {
+        expect(link.url).toBe('https://example.com/resource');
+      }
+    }
+  });
+});
+
 describe('HTML numeric character reference decoding', () => {
   it('decodes numeric entities in title text', () => {
     const xml = `

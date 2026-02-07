@@ -34,22 +34,22 @@ The most impactful gap is `<ext-link>`, which causes external URLs to be lost. O
 
 ### Step 1: Support `<ext-link>` with URL preservation
 
-- [ ] Add `'link'` type to `InlineContent` union: `{ type: 'link'; url: string; children: InlineContent[] }`
-- [ ] Write test: `<ext-link ext-link-type="uri" xlink:href="https://example.com">Example</ext-link>` produces link with URL
+- [x] Add `'link'` type to `InlineContent` union: `{ type: 'link'; url: string; children: InlineContent[] }`
+- [x] Write test: `<ext-link ext-link-type="uri" xlink:href="https://example.com">Example</ext-link>` produces link with URL
   ```xml
   <p>Software available at <ext-link ext-link-type="uri"
     xlink:href="https://www.r-project.org/">https://www.r-project.org/</ext-link>.</p>
   ```
-- [ ] Write test: `<uri>` element also produces link
-- [ ] Verify test fails (Red)
-- [ ] Update `parseInlineContent()`:
+- [x] Write test: `<uri>` element also produces link
+- [x] Verify test fails (Red)
+- [x] Update `parseInlineContent()`:
   - Add `ext-link` case: extract `xlink:href` attribute and parse inner content
   - Add `uri` case: extract `xlink:href` or use text content as URL
-- [ ] Add `renderInline()` case: render as Markdown link `[text](url)`
+- [x] Add `renderInline()` case: render as Markdown link `[text](url)`
   - If display text equals URL, render as bare URL
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: external links in body text are clickable in Markdown
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: external links in body text are clickable in Markdown
 
 ### Step 2: Support `<monospace>` as inline code
 

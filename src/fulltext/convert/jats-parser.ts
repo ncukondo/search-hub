@@ -341,6 +341,21 @@ function parseInlineContent(children: OrderedNode[]): InlineContent[] {
       result.push({ type: 'superscript', text: extractAllText(innerChildren) });
     } else if (tag === 'sub') {
       result.push({ type: 'subscript', text: extractAllText(innerChildren) });
+    } else if (tag === 'ext-link') {
+      const href = getAttr(child, 'xlink:href');
+      if (href) {
+        result.push({ type: 'link', url: href, children: parseInlineContent(innerChildren) });
+      } else {
+        const linkText = extractAllText(innerChildren);
+        if (linkText) result.push({ type: 'text', text: linkText });
+      }
+    } else if (tag === 'uri') {
+      const href = getAttr(child, 'xlink:href');
+      const textContent = extractAllText(innerChildren);
+      const url = href || textContent;
+      if (url) {
+        result.push({ type: 'link', url, children: parseInlineContent(innerChildren) });
+      }
     } else if (tag === 'xref') {
       const refType = getAttr(child, 'ref-type');
       if (refType === 'bibr') {
