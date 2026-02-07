@@ -235,8 +235,8 @@ describe('PMC XML to Markdown E2E conversion', () => {
     expect(md).toContain('| Transformer | 31 | 0.93 | 0.91 |');
 
     // Figures
-    expect(md).toContain('![Figure 1](PRISMA flow diagram showing study selection process)');
-    expect(md).toContain('![Figure 2](Forest plot of sensitivity estimates');
+    expect(md).toContain('![Figure 1. PRISMA flow diagram showing study selection process]()');
+    expect(md).toContain('![Figure 2. Forest plot of sensitivity estimates across DL architectures]()');
 
     // References section
     expect(md).toContain('## References');
