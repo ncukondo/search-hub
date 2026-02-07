@@ -31,8 +31,8 @@ JATS XML specification includes several block-level elements that the current pa
 
 ### Step 1: Add `<boxed-text>` support
 
-- [ ] Add `'boxed-text'` type to `BlockElement` union in `types.ts`: `{ type: 'boxed-text'; title?: string; content: BlockElement[] }`
-- [ ] Write test: `<boxed-text>` with `<title>` and `<p>` children parses correctly
+- [x] Add `'boxed-text'` type to `BlockElement` union in `types.ts`: `{ type: 'boxed-text'; title?: string; content: BlockElement[] }`
+- [x] Write test: `<boxed-text>` with `<title>` and `<p>` children parses correctly
   ```xml
   <boxed-text>
     <title>Key Points</title>
@@ -40,18 +40,18 @@ JATS XML specification includes several block-level elements that the current pa
     <p>Point 2: Another finding.</p>
   </boxed-text>
   ```
-- [ ] Verify test fails (Red)
-- [ ] Add `parseBoxedText()` function in `jats-parser.ts` — extract title and recursively parse inner block content
-- [ ] Add `'boxed-text'` case to `parseBlockContent()`
-- [ ] Add `renderBlock()` case in `markdown-writer.ts` — render as blockquote with bold title: `> **Key Points**\n> \n> Point 1...`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: boxed-text content appears in Markdown as styled blockquote
+- [x] Verify test fails (Red)
+- [x] Add `parseBoxedText()` function in `jats-parser.ts` — extract title and recursively parse inner block content
+- [x] Add `'boxed-text'` case to `parseBlockContent()`
+- [x] Add `renderBlock()` case in `markdown-writer.ts` — render as blockquote with bold title: `> **Key Points**\n> \n> Point 1...`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: boxed-text content appears in Markdown as styled blockquote
 
 ### Step 2: Add `<def-list>` support
 
-- [ ] Add `'def-list'` type to `BlockElement` union: `{ type: 'def-list'; title?: string; items: { term: string; definition: string }[] }`
-- [ ] Write test: `<def-list>` with `<def-item>` containing `<term>` and `<def>` pairs
+- [x] Add `'def-list'` type to `BlockElement` union: `{ type: 'def-list'; title?: string; items: { term: string; definition: string }[] }`
+- [x] Write test: `<def-list>` with `<def-item>` containing `<term>` and `<def>` pairs
   ```xml
   <def-list>
     <title>Abbreviations</title>
@@ -65,18 +65,18 @@ JATS XML specification includes several block-level elements that the current pa
     </def-item>
   </def-list>
   ```
-- [ ] Verify test fails (Red)
-- [ ] Add `parseDefList()` in `jats-parser.ts`
-- [ ] Add `'def-list'` case to `parseBlockContent()`
-- [ ] Add `renderBlock()` case — render as Markdown definition-style list: `**RCT**: Randomized controlled trial`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: definition lists render readably in Markdown
+- [x] Verify test fails (Red)
+- [x] Add `parseDefList()` in `jats-parser.ts`
+- [x] Add `'def-list'` case to `parseBlockContent()`
+- [x] Add `renderBlock()` case — render as Markdown definition-style list: `**RCT**: Randomized controlled trial`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: definition lists render readably in Markdown
 
 ### Step 3: Add `<disp-formula>` support
 
-- [ ] Add `'formula'` type to `BlockElement` union: `{ type: 'formula'; id?: string; label?: string; tex?: string; text?: string }`
-- [ ] Write test: `<disp-formula>` with `<tex-math>` child
+- [x] Add `'formula'` type to `BlockElement` union: `{ type: 'formula'; id?: string; label?: string; tex?: string; text?: string }`
+- [x] Write test: `<disp-formula>` with `<tex-math>` child
   ```xml
   <disp-formula id="eq1">
     <label>(1)</label>
@@ -86,42 +86,42 @@ JATS XML specification includes several block-level elements that the current pa
     </alternatives>
   </disp-formula>
   ```
-- [ ] Write test: `<disp-formula>` with direct `<tex-math>` (no `<alternatives>` wrapper)
-- [ ] Verify test fails (Red)
-- [ ] Add `parseDispFormula()` — extract `<tex-math>` content preferentially, fall back to `extractAllText`
-- [ ] Add `'disp-formula'` case to `parseBlockContent()`
-- [ ] Add `renderBlock()` case — render as `$$E = mc^2$$` (LaTeX block) or fenced code block with label
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: formulas appear as LaTeX or readable text in Markdown
+- [x] Write test: `<disp-formula>` with direct `<tex-math>` (no `<alternatives>` wrapper)
+- [x] Verify test fails (Red)
+- [x] Add `parseDispFormula()` — extract `<tex-math>` content preferentially, fall back to `extractAllText`
+- [x] Add `'disp-formula'` case to `parseBlockContent()`
+- [x] Add `renderBlock()` case — render as `$$E = mc^2$$` (LaTeX block) or fenced code block with label
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: formulas appear as LaTeX or readable text in Markdown
 
 ### Step 4: Add `<preformat>` support
 
-- [ ] Add `'preformat'` type to `BlockElement` union: `{ type: 'preformat'; text: string }`
-- [ ] Write test: `<preformat>` element preserves whitespace
-- [ ] Verify test fails (Red)
-- [ ] Add handling in `parseBlockContent()` — extract text content preserving whitespace
-- [ ] Add `renderBlock()` case — render as fenced code block (triple backticks)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: preformatted text renders as code block
+- [x] Add `'preformat'` type to `BlockElement` union: `{ type: 'preformat'; text: string }`
+- [x] Write test: `<preformat>` element preserves whitespace
+- [x] Verify test fails (Red)
+- [x] Add handling in `parseBlockContent()` — extract text content preserving whitespace
+- [x] Add `renderBlock()` case — render as fenced code block (triple backticks)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: preformatted text renders as code block
 
 ### Step 5: Add `<supplementary-material>` support
 
-- [ ] Write test: `<supplementary-material>` with `<label>` and `<caption>` renders as a note
-- [ ] Verify test fails (Red)
-- [ ] Add handling in `parseBlockContent()` — extract label and caption as a paragraph
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: supplementary material references are visible in output
+- [x] Write test: `<supplementary-material>` with `<label>` and `<caption>` renders as a note
+- [x] Verify test fails (Red)
+- [x] Add handling in `parseBlockContent()` — extract label and caption as a paragraph
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: supplementary material references are visible in output
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
+- [x] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
   - Test with XML containing `<boxed-text>`, `<def-list>`, `<disp-formula>`, `<preformat>`
-- [ ] Verify converted Markdown contains all block elements
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Convert a PMC article known to contain these elements
+- [x] Verify converted Markdown contains all block elements
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Convert a PMC article known to contain these elements
 
 ## Notes
 

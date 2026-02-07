@@ -623,8 +623,76 @@ export function parseJatsTable(xml: string): {
   return { headers: [], rows: [] };
 }
 
+/**
+ * Parse a <boxed-text> element into a boxed-text block.
+ * Extracts optional title and recursively parses inner block content.
+ */
+function parseBoxedText(node: OrderedNode): BlockElement {
+  const children = getChildren(node);
+  const titleNode = findChild(children, 'title');
+  const title = titleNode ? extractAllText(titleNode.children) : undefined;
+  const content = parseBlockContent(children);
+  const block: BlockElement = { type: 'boxed-text', content };
+  if (title) block.title = title;
+  return block;
+}
+
+/**
+ * Parse a <def-list> element into a def-list block.
+ * Extracts optional title and <def-item> pairs with <term> and <def>.
+ */
+function parseDefList(node: OrderedNode): BlockElement {
+  const children = getChildren(node);
+  const titleNode = findChild(children, 'title');
+  const title = titleNode ? extractAllText(titleNode.children) : undefined;
+  const defItems = findChildren(children, 'def-item');
+  const items: { term: string; definition: string }[] = [];
+  for (const item of defItems) {
+    const termNode = findChild(item.children, 'term');
+    const defNode = findChild(item.children, 'def');
+    const term = termNode ? extractAllText(termNode.children) : '';
+    const definition = defNode ? extractAllText(defNode.children) : '';
+    items.push({ term, definition });
+  }
+  const block: BlockElement = { type: 'def-list', items };
+  if (title) block.title = title;
+  return block;
+}
+
+/**
+ * Parse a <disp-formula> element into a formula block.
+ * Extracts TeX content from <tex-math> preferentially (inside <alternatives> or direct),
+ * falls back to extractAllText for plain text.
+ */
+function parseDispFormula(node: OrderedNode): BlockElement {
+  const children = getChildren(node);
+  const id = getAttr(node, 'id');
+  const labelNode = findChild(children, 'label');
+  const label = labelNode ? extractAllText(labelNode.children) : undefined;
+
+  // Try <alternatives> wrapper first
+  const alternatives = findChild(children, 'alternatives');
+  const searchChildren = alternatives ? alternatives.children : children;
+
+  const texMath = findChild(searchChildren, 'tex-math');
+  const block: BlockElement = { type: 'formula' };
+  if (id) block.id = id;
+  if (label) block.label = label;
+
+  if (texMath) {
+    block.tex = extractAllText(texMath.children);
+  } else {
+    // Fall back to plain text extraction (skip label)
+    const textChildren = children.filter((c) => !('label' in c));
+    const text = extractAllText(textChildren).trim();
+    if (text) block.text = text;
+  }
+
+  return block;
+}
+
 /** Tags that represent block-level elements when nested inside <p>. */
-const BLOCK_TAGS = new Set(['table-wrap', 'fig', 'disp-quote']);
+const BLOCK_TAGS = new Set(['table-wrap', 'fig', 'disp-quote', 'boxed-text']);
 
 /**
  * Parse a <disp-quote> element into a blockquote block.
@@ -725,6 +793,9 @@ function parseParagraph(pChildren: OrderedNode[]): BlockElement[] {
     } else if (tag === 'disp-quote') {
       flushInline();
       blocks.push(parseDispQuote(child));
+    } else if (tag === 'boxed-text') {
+      flushInline();
+      blocks.push(parseBoxedText(child));
     } else {
       inlineBuffer.push(child);
     }
@@ -756,6 +827,25 @@ function parseBlockContent(sectionChildren: OrderedNode[]): BlockElement[] {
       blocks.push(parseFigBlock(child));
     } else if (tag === 'disp-quote') {
       blocks.push(parseDispQuote(child));
+    } else if (tag === 'boxed-text') {
+      blocks.push(parseBoxedText(child));
+    } else if (tag === 'def-list') {
+      blocks.push(parseDefList(child));
+    } else if (tag === 'disp-formula') {
+      blocks.push(parseDispFormula(child));
+    } else if (tag === 'preformat') {
+      const text = extractAllText(getChildren(child));
+      blocks.push({ type: 'preformat', text });
+    } else if (tag === 'supplementary-material') {
+      const innerChildren = getChildren(child);
+      const labelNode = findChild(innerChildren, 'label');
+      const captionNode = findChild(innerChildren, 'caption');
+      const labelText = labelNode ? extractAllText(labelNode.children) : '';
+      const captionText = captionNode ? extractAllText(captionNode.children) : '';
+      const text = [labelText, captionText].filter(Boolean).join(': ');
+      if (text) {
+        blocks.push({ type: 'paragraph', content: [{ type: 'text', text }] });
+      }
     }
     // Skip title, sec, and other non-block elements
   }

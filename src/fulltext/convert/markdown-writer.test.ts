@@ -586,6 +586,157 @@ describe('writeMarkdown', () => {
     expect(md).not.toMatch(/^## $/m);
   });
 
+  it('renders boxed-text as blockquote with bold title', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            {
+              type: 'boxed-text',
+              title: 'Key Points',
+              content: [
+                { type: 'paragraph', content: [{ type: 'text', text: 'Point 1: Important finding.' }] },
+                { type: 'paragraph', content: [{ type: 'text', text: 'Point 2: Another finding.' }] },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('> **Key Points**');
+    expect(md).toContain('> Point 1: Important finding.');
+    expect(md).toContain('> Point 2: Another finding.');
+  });
+
+  it('renders def-list as definition-style list', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Glossary',
+          level: 2,
+          content: [
+            {
+              type: 'def-list',
+              title: 'Abbreviations',
+              items: [
+                { term: 'RCT', definition: 'Randomized controlled trial' },
+                { term: 'CI', definition: 'Confidence interval' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Abbreviations**');
+    expect(md).toContain('**RCT**: Randomized controlled trial');
+    expect(md).toContain('**CI**: Confidence interval');
+  });
+
+  it('renders def-list without title', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Terms',
+          level: 2,
+          content: [
+            {
+              type: 'def-list',
+              items: [
+                { term: 'API', definition: 'Application Programming Interface' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**API**: Application Programming Interface');
+    expect(md).not.toMatch(/^\*\*[A-Z].*\*\*\n\n\*\*/m); // No title line
+  });
+
+  it('renders formula with TeX as LaTeX block', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Equations',
+          level: 2,
+          content: [
+            { type: 'formula', id: 'eq1', label: '(1)', tex: 'E = mc^2' },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('$$E = mc^2$$');
+    expect(md).toContain('(1)');
+  });
+
+  it('renders formula with text fallback', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Equations',
+          level: 2,
+          content: [
+            { type: 'formula', label: '(2)', text: 'x = y + z' },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('x = y + z');
+    expect(md).toContain('(2)');
+  });
+
+  it('renders preformat as fenced code block', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Code',
+          level: 2,
+          content: [
+            { type: 'preformat', text: 'function hello() {\n  return "world";\n}' },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('```\nfunction hello() {\n  return "world";\n}\n```');
+  });
+
+  it('renders boxed-text without title', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            {
+              type: 'boxed-text',
+              content: [
+                { type: 'paragraph', content: [{ type: 'text', text: 'Some boxed content.' }] },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('> Some boxed content.');
+    expect(md).not.toContain('> **');
+  });
+
   it('E2E: renders document with table, figure, and empty section correctly', () => {
     const doc = makeDoc({
       sections: [

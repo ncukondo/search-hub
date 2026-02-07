@@ -105,6 +105,51 @@ function renderBlock(block: BlockElement): string {
       const altText = block.caption ? `${label}. ${block.caption}` : label;
       return `![${altText}]()`;
     }
+
+    case 'preformat':
+      return '```\n' + block.text + '\n```';
+
+    case 'formula': {
+      const lines: string[] = [];
+      if (block.tex) {
+        lines.push(`$$${block.tex}$$`);
+      } else if (block.text) {
+        lines.push('```');
+        lines.push(block.text);
+        lines.push('```');
+      }
+      if (block.label) {
+        lines.push(block.label);
+      }
+      return lines.join('\n');
+    }
+
+    case 'def-list': {
+      const lines: string[] = [];
+      if (block.title) {
+        lines.push(`**${block.title}**`);
+        lines.push('');
+      }
+      for (const item of block.items) {
+        lines.push(`**${item.term}**: ${item.definition}`);
+      }
+      return lines.join('\n');
+    }
+
+    case 'boxed-text': {
+      const lines: string[] = [];
+      if (block.title) {
+        lines.push(`> **${block.title}**`);
+        lines.push('>');
+      }
+      for (const inner of block.content) {
+        const rendered = renderBlock(inner);
+        rendered.split('\n').forEach((line) => {
+          lines.push(line === '' ? '>' : `> ${line}`);
+        });
+      }
+      return lines.join('\n');
+    }
   }
 }
 
