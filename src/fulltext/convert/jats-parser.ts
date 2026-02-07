@@ -1005,6 +1005,29 @@ function extractMixedCitationText(children: OrderedNode[]): string {
 }
 
 /**
+ * Extract structured pub-id values (DOI, PMID, PMCID) from children nodes.
+ */
+function extractPubIds(children: OrderedNode[]): {
+  doi?: string;
+  pmid?: string;
+  pmcid?: string;
+} {
+  const pubIds = findChildren(children, 'pub-id');
+  const result: { doi?: string; pmid?: string; pmcid?: string } = {};
+  for (const p of pubIds) {
+    const idType = p.attrs['pub-id-type'];
+    const value = extractAllText(p.children).trim();
+    if (!value) continue;
+    if (idType === 'doi') result.doi = value;
+    if (idType === 'pmid') result.pmid = value;
+    if (idType === 'pmc' || idType === 'pmcid') {
+      result.pmcid = value.replace(/^PMC/, '');
+    }
+  }
+  return result;
+}
+
+/**
  * Parse JATS XML back matter to extract references.
  */
 export function parseJatsReferences(xml: string): JatsReference[] {
@@ -1033,14 +1056,16 @@ export function parseJatsReferences(xml: string): JatsReference[] {
     const mixedCitation = findChild(searchChildren, 'mixed-citation');
     if (mixedCitation) {
       const text = extractMixedCitationText(mixedCitation.children);
-      if (id && text) references.push({ id, text });
+      const pubIds = extractPubIds(mixedCitation.children);
+      if (id && text) references.push({ id, text, ...pubIds });
       continue;
     }
 
     const elementCitation = findChild(searchChildren, 'element-citation');
     if (elementCitation) {
       const text = formatElementCitation(elementCitation.children);
-      if (id && text) references.push({ id, text });
+      const pubIds = extractPubIds(elementCitation.children);
+      if (id && text) references.push({ id, text, ...pubIds });
       continue;
     }
 

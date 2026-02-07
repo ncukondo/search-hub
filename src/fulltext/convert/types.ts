@@ -63,6 +63,9 @@ export interface JatsSection {
 export interface JatsReference {
   id: string;
   text: string;
+  doi?: string;
+  pmid?: string;
+  pmcid?: string;
 }
 
 /** A footnote from back matter fn-group. */

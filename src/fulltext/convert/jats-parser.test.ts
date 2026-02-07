@@ -1627,6 +1627,136 @@ describe('parseJatsReferences - pub-id deduplication', () => {
   });
 });
 
+describe('parseJatsReferences - structured pub-id extraction', () => {
+  it('extracts DOI from <pub-id pub-id-type="doi"> in mixed-citation', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024.
+                <pub-id pub-id-type="doi">10.1234/test</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.doi).toBe('10.1234/test');
+  });
+
+  it('extracts PMID from <pub-id pub-id-type="pmid"> in mixed-citation', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024.
+                <pub-id pub-id-type="pmid">12345678</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.pmid).toBe('12345678');
+  });
+
+  it('extracts PMCID from <pub-id pub-id-type="pmc"> in mixed-citation', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024.
+                <pub-id pub-id-type="pmc">PMC9876543</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.pmcid).toBe('9876543');
+  });
+
+  it('extracts multiple pub-ids from a single reference', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024.
+                <pub-id pub-id-type="doi">10.1038/nature12345</pub-id>
+                <pub-id pub-id-type="pmid">99887766</pub-id>
+                <pub-id pub-id-type="pmc">PMC1234567</pub-id>
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.doi).toBe('10.1038/nature12345');
+    expect(refs[0]!.pmid).toBe('99887766');
+    expect(refs[0]!.pmcid).toBe('1234567');
+  });
+
+  it('returns undefined for missing pub-id types', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation publication-type="journal">
+                Smith J. A study. Nature. 2024.
+              </mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.doi).toBeUndefined();
+    expect(refs[0]!.pmid).toBeUndefined();
+    expect(refs[0]!.pmcid).toBeUndefined();
+  });
+
+  it('extracts pub-ids from mixed-citation inside citation-alternatives', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <citation-alternatives>
+                <element-citation publication-type="journal">
+                  <person-group><name><surname>Bowyer</surname><given-names>ER</given-names></name></person-group>
+                  <article-title>Teaching</article-title>
+                  <source>Educ Health</source>
+                  <year>2021</year>
+                </element-citation>
+                <mixed-citation publication-type="journal">
+                  Bowyer ER. Teaching. Educ Health. 2021.
+                  <pub-id pub-id-type="doi">10.4103/efh.EfH_20_18</pub-id>
+                </mixed-citation>
+              </citation-alternatives>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.doi).toBe('10.4103/efh.EfH_20_18');
+  });
+});
+
 describe('parseJatsBody - underline and sc', () => {
   it('parses <underline> as plain text (no content loss)', () => {
     const xml = `
