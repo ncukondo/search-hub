@@ -36,98 +36,98 @@ Each step follows the TDD cycle:
 
 ### Step 1: Schema + types
 
-- [ ] Add `basis` to `review.schema.json` as optional top-level field (enum: title, abstract, fulltext)
-- [ ] Add `basis?: ReviewBasis` to `ReviewFile` interface in `types.ts`
-- [ ] Mark `WorkFile`/`WorkFileArticle` as deprecated (keep for backward compat)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Schema validates files with optional top-level `basis`; types compile
+- [x] Add `basis` to `review.schema.json` as optional top-level field (enum: title, abstract, fulltext)
+- [x] Add `basis?: ReviewBasis` to `ReviewFile` interface in `types.ts`
+- [x] Mark `WorkFile`/`WorkFileArticle` as deprecated (keep for backward compat)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Schema validates files with optional top-level `basis`; types compile
 
 ### Step 2: Add `--finalize` option to CLI
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts` — test `--finalize` option parsing
-- [ ] Add `finalize` to `ReviewExtractOptions` in `types.ts`
-- [ ] Register `--finalize` flag in `src/cli/index.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement option wiring
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `--finalize` flag is recognized and passed to extract handler
+- [x] Write test: `src/cli/commands/review/extract.test.ts` — test `--finalize` option parsing
+- [x] Add `finalize` to `ReviewExtractOptions` in `types.ts`
+- [x] Register `--finalize` flag in `src/cli/index.ts`
+- [x] Verify test fails (Red)
+- [x] Implement option wiring
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `--finalize` flag is recognized and passed to extract handler
 
 ### Step 3: Rewrite extract `--basis` branch
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts` — `--basis` outputs ReviewFile format
-- [ ] Verify test fails (Red)
-- [ ] Rewrite `--basis` branch to output ReviewFile instead of WorkFile:
+- [x] Write test: `src/cli/commands/review/extract.test.ts` — `--basis` outputs ReviewFile format
+- [x] Verify test fails (Red)
+- [x] Rewrite `--basis` branch to output ReviewFile instead of WorkFile:
   - Include identifiers (doi, pmid, etc.) on each article
   - Pre-populate `reviews: [{ decision: 'uncertain', comment: '' }]`
   - Add decision inline comments: title → `# exclude / uncertain`, abstract/fulltext → `# include / exclude / uncertain`
   - Add schema reference + guidance comments at top of file
   - Set top-level `basis` field
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: `--basis title` extract produces ReviewFile with `basis: title`, identifiers, and pre-populated reviews
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: `--basis title` extract produces ReviewFile with `basis: title`, identifiers, and pre-populated reviews
 
 ### Step 4: Add `--finalize` mode to extract
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts` — `--finalize` tests
-- [ ] Verify test fails (Red)
-- [ ] Implement `--finalize` mode:
+- [x] Write test: `src/cli/commands/review/extract.test.ts` — `--finalize` tests
+- [x] Verify test fails (Red)
+- [x] Implement `--finalize` mode:
   - `--finalize` alone: all content + reviewHistory + finalDecision
   - `--finalize --basis title`: title + reviewHistory + finalDecision (no abstract)
   - `--finalize --basis abstract`: title + abstract + reviewHistory + finalDecision
   - No `--basis` and no `--finalize`: backward compat → same as `--finalize` (all content)
   - Add `getFinalDecisionGuidanceComment()` function
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: `--finalize` extracts include reviewHistory, finalDecision field, and scoped content
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: `--finalize` extracts include reviewHistory, finalDecision field, and scoped content
 
 ### Step 5: Update merge for unified format
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts` — unified format merge tests
-- [ ] Verify test fails (Red)
-- [ ] Update `isWorkFile()` to detect OLD format only (flat `id` + `decision` without `reviews`)
-- [ ] Update `processReviewFile()` to use top-level `basis` if present
-- [ ] Keep `processWorkFile()` for backward compat (add deprecation comment)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: Merge correctly handles new unified format; old WorkFile format still works
+- [x] Write test: `src/cli/commands/review/merge.test.ts` — unified format merge tests
+- [x] Verify test fails (Red)
+- [x] Update `isWorkFile()` to detect OLD format only (flat `id` + `decision` without `reviews`)
+- [x] Update `processReviewFile()` to use top-level `basis` if present
+- [x] Keep `processWorkFile()` for backward compat (add deprecation comment)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: Merge correctly handles new unified format; old WorkFile format still works
 
 ### Step 6: Update mark command
 
-- [ ] Write test: `src/cli/commands/review/mark.test.ts` — ReviewFile format tests
-- [ ] Verify test fails (Red)
-- [ ] Rewrite `loadWorkFile()` → `loadScreeningFile()` (loads ReviewFile with basis)
-- [ ] Update article lookup from `id` matching to identifier field matching
-- [ ] Update `reviews[0].decision`/`comment` instead of flat fields
-- [ ] Preserve schema reference + guidance comments on save
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: `review mark` works with new ReviewFile-based screening files
+- [x] Write test: `src/cli/commands/review/mark.test.ts` — ReviewFile format tests
+- [x] Verify test fails (Red)
+- [x] Rewrite `loadWorkFile()` → `loadScreeningFile()` (loads ReviewFile with basis)
+- [x] Update article lookup from `id` matching to identifier field matching
+- [x] Update `reviews[0].decision`/`comment` instead of flat fields
+- [x] Preserve schema reference + guidance comments on save
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: `review mark` works with new ReviewFile-based screening files
 
 ### Step 7: Update tests
 
-- [ ] `extract.test.ts`: Update `--basis` tests → ReviewFile assertions, add `--finalize` tests
-- [ ] `merge.test.ts`: Add new format tests + backward compat tests
-- [ ] `mark.test.ts`: Update to ReviewFile format
-- [ ] `review-workflow.test.ts`: Update E2E assertions
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All existing tests updated and passing
+- [x] `extract.test.ts`: Update `--basis` tests → ReviewFile assertions, add `--finalize` tests
+- [x] `merge.test.ts`: Add new format tests + backward compat tests
+- [x] `mark.test.ts`: Update to ReviewFile format
+- [x] `review-workflow.test.ts`: Update E2E assertions
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All existing tests updated and passing
 
 ### Final Step: E2E Integration Test (MANDATORY)
 
-- [ ] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
+- [x] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
   - Full workflow: init → extract (screening) → mark → merge → extract (finalize) → merge
   - **Minimize mocks** — Only mock external services when absolutely necessary
   - **Follow user flows** — Test the same paths users will take
   - **Use real file I/O** — Test actual file operations with temp directories
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test the feature manually as a user would
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test the feature manually as a user would
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## TDD Cycle Reference
 
