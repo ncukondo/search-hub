@@ -7,6 +7,7 @@ import { executeFulltextInit } from './init.js';
 import { executeFulltextSync } from './sync.js';
 import { executeFulltextConvert } from './convert.js';
 import { executeFulltextCheck } from './check.js';
+import { executeFulltextFetch } from './fetch.js';
 import { executeFulltextAttach } from './attach.js';
 import { executeFulltextStatus, type FulltextStatusResult } from './status.js';
 import { executeFulltextPending, type PendingArticle } from './pending.js';
@@ -32,6 +33,9 @@ Examples:
   $ search-hub fulltext sync SESSION_ID --dry-run     # Preview what would be synced
   $ search-hub fulltext convert SESSION_ID            # Convert PMC XML to Markdown
   $ search-hub fulltext check --session SESSION_ID   # Check OA availability
+  $ search-hub fulltext fetch SESSION_ID              # Download available OA articles
+  $ search-hub fulltext fetch SESSION_ID --dry-run    # Preview what would be downloaded
+  $ search-hub fulltext fetch SESSION_ID --source pmc # Download from specific sources
   $ search-hub fulltext attach SESSION_ID             # Attach fulltexts to ref entries
   $ search-hub fulltext attach SESSION_ID --dry-run   # Preview what would be attached
   $ search-hub fulltext status SESSION_ID            # Show fulltext retrieval status
@@ -235,6 +239,51 @@ Examples:
             console.log(`\nRun \`fulltext fetch\` to download available OA articles.`);
           }
         }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  fulltextCommand
+    .command('fetch')
+    .description('Download available OA fulltexts')
+    .argument('<session-id>', 'session ID')
+    .option('--source <sources>', 'filter by source (comma-separated: pmc,arxiv,unpaywall,core)')
+    .option('--no-convert-markdown', 'skip auto-conversion of PMC XML to Markdown')
+    .option('--dry-run', 'show what would be downloaded without downloading', false)
+    .action(async (sessionId: string, options: { source?: string; convertMarkdown: boolean; dryRun: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+
+        const fetchOpts: Parameters<typeof executeFulltextFetch>[0] = {
+          sessionId,
+          sessionsDir,
+          convertMarkdown: options.convertMarkdown,
+          dryRun: options.dryRun,
+        };
+        if (options.source) fetchOpts.source = options.source.split(',');
+        const result = await executeFulltextFetch(fetchOpts);
+
+        if (!globalOpts.quiet) {
+          if (result.dryRun) {
+            console.log(`\nDry run: would fetch ${result.articles.length} articles`);
+            for (const article of result.articles) {
+              console.log(`  ${article.dirName}: ${article.title} (${article.locationCount} sources)`);
+            }
+          } else {
+            console.log(`\nFulltext Fetch Summary:`);
+            console.log(`  Downloaded: ${result.summary.downloaded}`);
+            console.log(`  Failed:     ${result.summary.failed}`);
+            console.log(`  Skipped:    ${result.summary.skipped}`);
+            console.log(`  Total:      ${result.summary.total}`);
+          }
+        }
+
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
