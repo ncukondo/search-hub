@@ -267,6 +267,30 @@ describe('writeMarkdown', () => {
     expect(md).toContain('Normal **bold** and *italic* and ^2^ end.');
   });
 
+  it('renders code as backtick-quoted text', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Methods',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Run the ' },
+                { type: 'code', text: 'install.sh' },
+                { type: 'text', text: ' script.' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Run the `install.sh` script.');
+  });
+
   it('renders link as Markdown link [text](url)', () => {
     const doc = makeDoc({
       sections: [

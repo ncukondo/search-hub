@@ -53,17 +53,17 @@ The most impactful gap is `<ext-link>`, which causes external URLs to be lost. O
 
 ### Step 2: Support `<monospace>` as inline code
 
-- [ ] Add `'code'` type to `InlineContent` union: `{ type: 'code'; text: string }`
-- [ ] Write test: `<monospace>` renders as backtick-quoted text
+- [x] Add `'code'` type to `InlineContent` union: `{ type: 'code'; text: string }`
+- [x] Write test: `<monospace>` renders as backtick-quoted text
   ```xml
   <p>Run the <monospace>install.sh</monospace> script.</p>
   ```
-- [ ] Verify test fails (Red)
-- [ ] Add `monospace` case to `parseInlineContent()`
-- [ ] Add `renderInline()` case: render as `` `text` ``
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: monospace text renders as inline code in Markdown
+- [x] Verify test fails (Red)
+- [x] Add `monospace` case to `parseInlineContent()`
+- [x] Add `renderInline()` case: render as `` `text` ``
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: monospace text renders as inline code in Markdown
 
 ### Step 3: Support `<inline-formula>` with TeX extraction
 

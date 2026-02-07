@@ -26,7 +26,8 @@ export type InlineContent =
   | { type: 'superscript'; text: string }
   | { type: 'subscript'; text: string }
   | { type: 'citation'; refId: string; text: string }
-  | { type: 'link'; url: string; children: InlineContent[] };
+  | { type: 'link'; url: string; children: InlineContent[] }
+  | { type: 'code'; text: string };
 
 /** A block-level element within a section. */
 export type BlockElement =

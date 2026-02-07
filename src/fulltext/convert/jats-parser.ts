@@ -341,6 +341,8 @@ function parseInlineContent(children: OrderedNode[]): InlineContent[] {
       result.push({ type: 'superscript', text: extractAllText(innerChildren) });
     } else if (tag === 'sub') {
       result.push({ type: 'subscript', text: extractAllText(innerChildren) });
+    } else if (tag === 'monospace') {
+      result.push({ type: 'code', text: extractAllText(innerChildren) });
     } else if (tag === 'ext-link') {
       const href = getAttr(child, 'xlink:href');
       if (href) {

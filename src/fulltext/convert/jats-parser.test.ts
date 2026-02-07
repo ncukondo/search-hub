@@ -1385,6 +1385,53 @@ describe('parseJatsReferences - pub-id deduplication', () => {
   });
 });
 
+describe('parseJatsBody - monospace', () => {
+  it('parses <monospace> as code inline element', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>Run the <monospace>install.sh</monospace> script.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const code = para.content.find((c) => c.type === 'code');
+      expect(code).toBeDefined();
+      if (code?.type === 'code') {
+        expect(code.text).toBe('install.sh');
+      }
+    }
+  });
+
+  it('parses <monospace> for gene name', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The <monospace>BRCA1</monospace> gene was overexpressed.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const code = para.content.find((c) => c.type === 'code');
+      expect(code).toBeDefined();
+      if (code?.type === 'code') {
+        expect(code.text).toBe('BRCA1');
+      }
+    }
+  });
+});
+
 describe('parseJatsBody - ext-link and uri', () => {
   it('parses <ext-link> with xlink:href as link', () => {
     const xml = `

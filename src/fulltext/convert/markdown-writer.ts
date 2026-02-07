@@ -44,6 +44,8 @@ function renderInline(content: InlineContent[]): string {
           return `~${node.text}~`;
         case 'citation':
           return node.text;
+        case 'code':
+          return `\`${node.text}\``;
         case 'link': {
           const linkText = renderInline(node.children);
           if (linkText === node.url) return node.url;
