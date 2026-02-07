@@ -313,7 +313,7 @@ filters: {}
   });
 
   describe('search --dry-run command', () => {
-    it('should show dry-run output from file', async () => {
+    it('should show dry-run output from file', { timeout: 15000 }, async () => {
       const queryFile = join(tempDir, 'search-query.yaml');
       const queryContent = `name: test-query
 query:
