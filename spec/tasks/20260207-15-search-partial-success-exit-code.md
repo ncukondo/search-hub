@@ -24,39 +24,39 @@ failed databases. Add a `--strict` flag that requires all targeted databases to 
 
 ### Step 1: Change Default Exit Code for Partial Success
 
-- [ ] Write test: `src/cli/commands/search-executor.test.ts`
+- [x] Write test: `src/cli/commands/search-executor.test.ts`
   - 3/4 databases succeed, 1 fails → exit code 0
   - All databases fail → exit code non-zero (existing behavior)
   - All databases succeed → exit code 0 (existing behavior)
   - 0 databases targeted → error (existing behavior)
-- [ ] Identify where exit code is determined in `search-executor.ts`
-- [ ] Verify test fails (Red)
-- [ ] Change partial success to exit 0 with warning output
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Partial success exits 0
+- [x] Identify where exit code is determined in `search-executor.ts`
+- [x] Verify test fails (Red)
+- [x] Change partial success to exit 0 with warning output
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Partial success exits 0
 
 ### Step 2: Add `--strict` Flag
 
-- [ ] Write test: `src/cli/commands/search-executor.test.ts`
+- [x] Write test: `src/cli/commands/search-executor.test.ts`
   - `strict: true` + 3/4 succeed → exit code non-zero
   - `strict: true` + all succeed → exit code 0
   - `strict: false` (default) + 3/4 succeed → exit code 0
-- [ ] Add `--strict` option to search command
-- [ ] Implement strict mode check
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `--strict` enforces all-or-nothing
+- [x] Add `--strict` option to search command
+- [x] Implement strict mode check
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `--strict` enforces all-or-nothing
 
 ### Step 3: Apply to `--count-only` and `--preview` Modes
 
-- [ ] Write test: `src/cli/commands/search-executor.test.ts`
+- [x] Write test: `src/cli/commands/search-executor.test.ts`
   - `--count-only` with partial failure → exit 0 (default), non-zero (strict)
   - `--preview` with partial failure → exit 0 (default), non-zero (strict)
-- [ ] Ensure exit code logic applies consistently across all search modes
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Consistent exit codes across search modes
+- [x] Ensure exit code logic applies consistently across all search modes
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Consistent exit codes across search modes
 
 ### Final Step: E2E Integration Tests
 
