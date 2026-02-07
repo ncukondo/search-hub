@@ -29,16 +29,16 @@ Enhance the extract command to support the progressive screening workflow:
 
 ### Step 1: Change Work File Default Decision to `uncertain`
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - Work file articles have `decision: 'uncertain'` (not `null`) by default
   - Merge processes `uncertain` decisions (creates review entry)
   - `null` decisions are still skipped on merge (backward-compatible)
-- [ ] Change `decision: null` to `decision: 'uncertain'` in `executeReviewExtract` work file generation
-- [ ] Verify test fails (Red)
-- [ ] Implement change
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Extracted work files have `decision: uncertain` as default
+- [x] Change `decision: null` to `decision: 'uncertain'` in `executeReviewExtract` work file generation
+- [x] Verify test fails (Red)
+- [x] Implement change
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Extracted work files have `decision: uncertain` as default
 
 ### Step 2: Add `reviewHistory` to ReviewFile Extract
 
