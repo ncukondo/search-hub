@@ -15,6 +15,7 @@ import type {
   JatsSection,
   JatsReference,
   JatsFootnote,
+  BackMatterNote,
   BlockElement,
   InlineContent,
 } from './types.js';
@@ -1056,12 +1057,6 @@ export function parseJatsReferences(xml: string): JatsReference[] {
 }
 
 // ─── Back Matter & Floats Parsing ────────────────────────────────────
-
-/** A notes section from back matter (e.g., author contributions, funding). */
-export interface BackMatterNote {
-  title: string;
-  text: string;
-}
 
 /** Result of parsing back matter and floats-group. */
 export interface BackMatterResult {

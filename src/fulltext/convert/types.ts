@@ -71,6 +71,12 @@ export interface JatsFootnote {
   text: string;
 }
 
+/** A notes section from back matter (e.g., author contributions, funding). */
+export interface BackMatterNote {
+  title: string;
+  text: string;
+}
+
 /** Complete parsed JATS document. */
 export interface JatsDocument {
   metadata: JatsMetadata;
@@ -80,4 +86,5 @@ export interface JatsDocument {
   appendices?: JatsSection[];
   footnotes?: JatsFootnote[];
   floats?: BlockElement[];
+  notes?: BackMatterNote[];
 }

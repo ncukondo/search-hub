@@ -15,6 +15,7 @@ function makeDoc(overrides: Partial<JatsDocument> = {}): JatsDocument {
     ...(overrides.appendices != null ? { appendices: overrides.appendices } : {}),
     ...(overrides.footnotes != null ? { footnotes: overrides.footnotes } : {}),
     ...(overrides.floats != null ? { floats: overrides.floats } : {}),
+    ...(overrides.notes != null ? { notes: overrides.notes } : {}),
   };
 }
 
@@ -868,5 +869,48 @@ describe('writeMarkdown - floats', () => {
     const doc = makeDoc();
     const md = writeMarkdown(doc);
     expect(md).not.toContain('## Figures and Tables');
+  });
+});
+
+describe('writeMarkdown - notes', () => {
+  it('renders notes sections between Acknowledgments and References', () => {
+    const doc = makeDoc({
+      acknowledgments: 'We thank Dr. Smith.',
+      references: [{ id: 'ref1', text: 'Smith J. Title. 2024.' }],
+      notes: [
+        { title: 'Author contributions', text: 'TK designed the study.' },
+        { title: 'Funding', text: 'NIH grant R01.' },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('## Author contributions');
+    expect(md).toContain('TK designed the study.');
+    expect(md).toContain('## Funding');
+    expect(md).toContain('NIH grant R01.');
+    // Position: after Acknowledgments, before References
+    const ackPos = md.indexOf('## Acknowledgments');
+    const notesPos = md.indexOf('## Author contributions');
+    const refPos = md.indexOf('## References');
+    expect(notesPos).toBeGreaterThan(ackPos);
+    expect(notesPos).toBeLessThan(refPos);
+  });
+
+  it('renders notes before References when no Acknowledgments', () => {
+    const doc = makeDoc({
+      references: [{ id: 'ref1', text: 'Smith J. Title. 2024.' }],
+      notes: [{ title: 'Data availability', text: 'Available on request.' }],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('## Data availability');
+    const notesPos = md.indexOf('## Data availability');
+    const refPos = md.indexOf('## References');
+    expect(notesPos).toBeLessThan(refPos);
+  });
+
+  it('does not render notes section when absent', () => {
+    const doc = makeDoc();
+    const md = writeMarkdown(doc);
+    expect(md).not.toContain('## Author contributions');
+    expect(md).not.toContain('## Funding');
   });
 });
