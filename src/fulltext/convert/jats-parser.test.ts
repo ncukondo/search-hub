@@ -2410,6 +2410,46 @@ describe('parseJatsBackMatter - footnotes', () => {
     expect(backMatter.footnotes![1]).toEqual({ id: 'fn2', text: 'Footnote two text.' });
   });
 
+  it('separates title and body text in footnotes with space', () => {
+    const xml = `
+      <article>
+        <back>
+          <fn-group>
+            <fn id="fn1">
+              <p><bold>Publisher's Note</bold></p>
+              <p>Springer Nature remains neutral with regard to jurisdictional claims.</p>
+            </fn>
+          </fn-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.footnotes).toHaveLength(1);
+    expect(backMatter.footnotes![0]!.text).toBe(
+      "Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims.",
+    );
+  });
+
+  it('handles footnote with <title> and <p> children', () => {
+    const xml = `
+      <article>
+        <back>
+          <fn-group>
+            <fn id="fn1">
+              <title>Publisher's Note</title>
+              <p>Springer Nature remains neutral with regard to jurisdictional claims.</p>
+            </fn>
+          </fn-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.footnotes).toHaveLength(1);
+    expect(backMatter.footnotes![0]!.text).toBe(
+      "Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims.",
+    );
+  });
+
   it('returns undefined footnotes when <fn-group> is absent', () => {
     const xml = `
       <article>

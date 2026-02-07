@@ -1111,12 +1111,25 @@ export function parseJatsBackMatter(xml: string): BackMatterResult {
     if (fnGroup) {
       const fns = findChildren(fnGroup.children, 'fn');
       if (fns.length > 0) {
-        result.footnotes = fns.map((fn) => ({
-          id: fn.attrs['id'] ?? '',
-          text: extractAllText(
-            findChildren(fn.children, 'p').flatMap((p) => p.children),
-          ),
-        }));
+        result.footnotes = fns.map((fn) => {
+          const parts: string[] = [];
+          // Include <title> if present
+          const titleNode = findChild(fn.children, 'title');
+          if (titleNode) {
+            const titleText = extractAllText(titleNode.children).trim();
+            if (titleText) parts.push(titleText);
+          }
+          // Extract text from each <p> separately and join with space
+          const paragraphs = findChildren(fn.children, 'p');
+          for (const p of paragraphs) {
+            const pText = extractAllText(p.children).trim();
+            if (pText) parts.push(pText);
+          }
+          return {
+            id: fn.attrs['id'] ?? '',
+            text: parts.join(' '),
+          };
+        });
       }
     }
 
