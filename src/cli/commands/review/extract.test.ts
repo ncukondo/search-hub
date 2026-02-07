@@ -674,4 +674,130 @@ describe('executeReviewExtract', () => {
       expect(reviewFile.articles[0]!.title).toBe('Pending 1');
     });
   });
+
+  describe('--finalize mode', () => {
+    const articlesWithReviews: ArticleEntry[] = [
+      {
+        title: 'Reviewed Article',
+        pmid: '1',
+        doi: '10.1234/reviewed',
+        abstract: 'Abstract text.',
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract', timestamp: '2024-01-02T00:00:00Z' },
+        ],
+      },
+      {
+        title: 'Unreviewed Article',
+        pmid: '2',
+        abstract: 'Another abstract.',
+        reviews: [],
+      },
+    ];
+
+    it('--finalize outputs ReviewFile with reviewHistory and finalDecision', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-test', reviewer: 'human:admin', finalize: true },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      expect(extracted.reviewer).toBe('human:admin');
+      expect(extracted.articles).toHaveLength(2);
+
+      // Should have reviewHistory with existing reviews
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+      expect(extracted.articles[0]!.reviewHistory![0]!.reviewer).toBe('ai:claude');
+
+      // reviews should be empty
+      expect(extracted.articles[0]!.reviews).toEqual([]);
+
+      // finalDecision should be null (placeholder)
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
+
+      // Should include all content (title + abstract)
+      expect(extracted.articles[0]!.abstract).toBe('Abstract text.');
+    });
+
+    it('--finalize includes guidance comment for final decision', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-guide', reviewer: 'human:admin', finalize: true },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('yaml-language-server');
+      expect(content).toContain('finalDecision');
+      expect(content).toContain('# include / exclude');
+    });
+
+    it('--finalize --basis title scopes content to title only', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-title', reviewer: 'human:admin', finalize: true, basis: 'title' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      // Should have reviewHistory
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+
+      // Title only - no abstract
+      expect(extracted.articles[0]!.abstract).toBeUndefined();
+
+      // Should still have finalDecision
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
+    });
+
+    it('--finalize --basis abstract scopes content to title + abstract', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-abstract', reviewer: 'human:admin', finalize: true, basis: 'abstract' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      // Should have reviewHistory
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+
+      // Should include abstract
+      expect(extracted.articles[0]!.abstract).toBe('Abstract text.');
+
+      // Should still have finalDecision
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
+    });
+
+    it('no --basis and no --finalize behaves same as --finalize', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'compat', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      // Should have reviewHistory
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+
+      // Should have all content
+      expect(extracted.articles[0]!.abstract).toBe('Abstract text.');
+
+      // Should have finalDecision
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
+    });
+  });
 });
