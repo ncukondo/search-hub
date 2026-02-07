@@ -68,7 +68,7 @@ Update user-facing documentation for the fulltext management feature:
 
 ### Step 4: Create docs/fulltext.md Guide
 
-- [ ] Create comprehensive fulltext management guide
+- [x] Create comprehensive fulltext management guide
   - Overview and capabilities
   - Data sources (Unpaywall, PMC, arXiv, CORE)
   - Directory structure explanation
@@ -78,8 +78,8 @@ Update user-facing documentation for the fulltext management feature:
     - Mixed workflow
   - Integration with register command
   - Troubleshooting
-- [ ] Add diagrams if helpful (ASCII or Mermaid)
-- [ ] Acceptance: New users can understand and use fulltext features
+- [x] Add diagrams if helpful (ASCII or Mermaid)
+- [x] Acceptance: New users can understand and use fulltext features
 
 ### Step 5: Cross-link Documentation
 
