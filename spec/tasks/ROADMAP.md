@@ -68,16 +68,16 @@ This file tracks high-level progress. For implementation details, see individual
 | 59 | Fulltext Management Foundation | 4 | ✅ Completed | [20260205-03](completed/20260205-03-fulltext-foundation.md) |
 | 60 | Fulltext Init and Sync Commands | 59 | ✅ Completed | [20260205-04](completed/20260205-04-fulltext-init-sync.md) |
 | 61 | Fulltext OA Discovery | 59 | ✅ Completed | [20260205-05](completed/20260205-05-fulltext-oa-discovery.md) |
-| 62 | Fulltext Fetch Command | 59, 61 | 🔲 Planned | [20260205-06](20260205-06-fulltext-fetch.md) |
+| 62 | Fulltext Fetch Command | 59, 61 | ✅ Completed | [20260205-06](completed/20260205-06-fulltext-fetch.md) |
 | 63 | PMC XML to Markdown Conversion | 59 | ✅ Completed | [20260205-07](completed/20260205-07-fulltext-pmc-markdown.md) |
-| 64 | Fulltext Register Integration | 59, 11 | 🔲 Planned | [20260205-08](20260205-08-fulltext-register-integration.md) |
-| 65 | Fulltext Status and Pending Commands | 59, 61 | 🔲 Planned | [20260205-09](20260205-09-fulltext-status-pending.md) |
+| 64 | Fulltext Register Integration | 59, 11 | ✅ Completed | [20260205-08](completed/20260205-08-fulltext-register-integration.md) |
+| 65 | Fulltext Status and Pending Commands | 59, 61 | ✅ Completed | [20260205-09](completed/20260205-09-fulltext-status-pending.md) |
 | 66 | Fulltext Documentation | 59-65 | 🔲 Planned | [20260205-10](20260205-10-fulltext-documentation.md) |
-| 67 | Remove fulltext-index.json | 60, 61 | 🔲 Planned | [20260206-01](20260206-01-remove-fulltext-index-json.md) |
-| 68 | JATS Parser `preserveOrder` Refactor | 63 | 🔲 Planned | [20260206-02](20260206-02-jats-preserve-order.md) |
+| 67 | Remove fulltext-index.json | 60, 61 | ✅ Completed | [20260206-01](completed/20260206-01-remove-fulltext-index-json.md) |
+| 68 | JATS Parser `preserveOrder` Refactor | 63 | ✅ Completed | [20260206-02](completed/20260206-02-jats-preserve-order.md) |
 | 69 | JATS `<disp-quote>` & Nested Block Elements | 68 | 🔲 Planned | [20260206-03](20260206-03-jats-block-elements.md) |
 | 70 | JATS Minor Fixes (Entities, Refs, PMCID) | 68 | 🔲 Planned | [20260206-04](20260206-04-jats-minor-fixes.md) |
-| 71 | Reviewer Registration in Review Merge | 44 | 🔲 Planned | [20260206-05](20260206-05-reviewer-registration.md) |
+| 71 | Reviewer Registration in Review Merge | 44 | ✅ Completed | [20260206-05](completed/20260206-05-reviewer-registration.md) |
 | 72 | Review Status Model Expansion | 71 | 🔲 Planned | [20260206-06](20260206-06-review-status-model.md) |
 | 73 | Review Extract Format Enhancement | 72 | 🔲 Planned | [20260206-07](20260206-07-review-extract-format.md) |
 | 74 | Review Finalize Command | 72 | 🔲 Planned | [20260206-08](20260206-08-review-finalize.md) |
