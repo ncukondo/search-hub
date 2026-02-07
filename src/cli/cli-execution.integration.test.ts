@@ -330,7 +330,7 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'search', queryFile, '--dry-run']);
+        await program.parseAsync(['node', 'test', 'search', queryFile, '--dry-run', '--skip-connection-test']);
       } catch {
         // exitOverride may throw
       }
