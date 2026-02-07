@@ -20,7 +20,17 @@ import { executeReviewMark } from './mark.js';
 import { executeReviewFinalize } from './finalize.js';
 import { getIncludedArticles } from '../register.js';
 import { generateReviewNextSteps } from './next-steps.js';
-import type { ReviewDecision, ReviewFile, WorkFile } from './types.js';
+import type { ReviewDecision, ReviewFile, ArticleEntry } from './types.js';
+
+/** Get the best identifier for an extracted article (mirrors getArticleId in extract.ts) */
+function getArticleId(article: ArticleEntry): string {
+  if (article.doi) return article.doi;
+  if (article.pmid) return article.pmid;
+  if (article.scopusId) return article.scopusId;
+  if (article.arxivId) return article.arxivId;
+  if (article.ericId) return article.ericId;
+  return article.title;
+}
 
 describe('Review Workflow E2E', () => {
   let tempDir: string;
@@ -493,46 +503,46 @@ summary:
       const expectedPath = join(sessionsDir, sessionId, 'for-review', 'title-screening', 'review.yaml');
       expect(extractResult.outputPath).toBe(expectedPath);
 
-      // Verify work file format
-      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workFileContent) as WorkFile;
-      expect(workFile.sessionId).toBe(sessionId);
-      expect(workFile.basis).toBe('title');
-      expect(workFile.reviewer).toBe('ai:claude');
-      expect(workFile.articles).toHaveLength(5);
-      expect(workFile.articles[0]!.decision).toBe('uncertain');
-      expect(workFile.articles[0]!.comment).toBe('');
+      // Verify ReviewFile screening format
+      const screeningContent = await readFile(extractResult.outputPath, 'utf-8');
+      const screeningFile = parseYaml(screeningContent) as ReviewFile;
+      expect(screeningFile.sessionId).toBe(sessionId);
+      expect(screeningFile.basis).toBe('title');
+      expect(screeningFile.reviewer).toBe('ai:claude');
+      expect(screeningFile.articles).toHaveLength(5);
+      expect(screeningFile.articles[0]!.reviews[0]!.decision).toBe('uncertain');
+      expect(screeningFile.articles[0]!.reviews[0]!.comment).toBe('');
       // Title-only basis should not include abstract
-      expect(workFile.articles[0]!.abstract).toBeUndefined();
+      expect(screeningFile.articles[0]!.abstract).toBeUndefined();
 
       // Step 3: Mark decisions using review mark command
       await executeReviewMark({
         file: extractResult.outputPath,
-        id: workFile.articles[0]!.id,
+        id: getArticleId(screeningFile.articles[0]!),
         decision: 'include',
         comment: 'Relevant to research',
       });
       await executeReviewMark({
         file: extractResult.outputPath,
-        id: workFile.articles[1]!.id,
+        id: getArticleId(screeningFile.articles[1]!),
         decision: 'exclude',
         comment: 'Off topic',
       });
       await executeReviewMark({
         file: extractResult.outputPath,
-        id: workFile.articles[2]!.id,
+        id: getArticleId(screeningFile.articles[2]!),
         decision: 'uncertain',
         comment: 'Needs abstract review',
       });
 
       // Verify marks were saved
       const markedContent = await readFile(extractResult.outputPath, 'utf-8');
-      const markedFile = parseYaml(markedContent) as WorkFile;
-      expect(markedFile.articles[0]!.decision).toBe('include');
-      expect(markedFile.articles[1]!.decision).toBe('exclude');
-      expect(markedFile.articles[2]!.decision).toBe('uncertain');
+      const markedFile = parseYaml(markedContent) as ReviewFile;
+      expect(markedFile.articles[0]!.reviews[0]!.decision).toBe('include');
+      expect(markedFile.articles[1]!.reviews[0]!.decision).toBe('exclude');
+      expect(markedFile.articles[2]!.reviews[0]!.decision).toBe('uncertain');
 
-      // Step 4: Merge work file back to master (uses --name)
+      // Step 4: Merge screening file back to master (uses --name)
       const mergeResult = await executeReviewMerge(
         { sessionId, name: 'title-screening' },
         sessionsDir
@@ -546,7 +556,7 @@ summary:
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
 
       // Find reviewed articles by DOI
-      const article1 = reviewFile.articles.find((a) => a.doi === workFile.articles[0]!.id);
+      const article1 = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[0]!));
       expect(article1!.reviews).toHaveLength(1);
       expect(article1!.reviews[0]!.reviewer).toBe('ai:claude');
       expect(article1!.reviews[0]!.decision).toBe('include');
@@ -554,11 +564,11 @@ summary:
       expect(article1!.reviews[0]!.timestamp).toBeDefined();
       expect(article1!.reviews[0]!.comment).toBe('Relevant to research');
 
-      const article2 = reviewFile.articles.find((a) => a.doi === workFile.articles[1]!.id);
+      const article2 = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[1]!));
       expect(article2!.reviews[0]!.decision).toBe('exclude');
       expect(article2!.reviews[0]!.basis).toBe('title');
 
-      const article3 = reviewFile.articles.find((a) => a.doi === workFile.articles[2]!.id);
+      const article3 = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[2]!));
       expect(article3!.reviews[0]!.decision).toBe('uncertain');
     });
 
@@ -582,11 +592,11 @@ summary:
 
       // Mark all as uncertain (need abstract review)
       const phase1Content = await readFile(phase1Extract.outputPath, 'utf-8');
-      const phase1File = parseYaml(phase1Content) as WorkFile;
+      const phase1File = parseYaml(phase1Content) as ReviewFile;
       for (const article of phase1File.articles) {
         await executeReviewMark({
           file: phase1Extract.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'uncertain',
           comment: 'Need abstract review',
         });
@@ -613,7 +623,7 @@ summary:
 
       // Verify abstract is included
       const phase2Content = await readFile(phase2Extract.outputPath, 'utf-8');
-      const phase2File = parseYaml(phase2Content) as WorkFile;
+      const phase2File = parseYaml(phase2Content) as ReviewFile;
       expect(phase2File.basis).toBe('abstract');
       // Articles should have abstract now
       const articlesWithAbstract = phase2File.articles.filter((a) => a.abstract);
@@ -622,13 +632,13 @@ summary:
       // Mark some as include, some as exclude
       await executeReviewMark({
         file: phase2Extract.outputPath,
-        id: phase2File.articles[0]!.id,
+        id: getArticleId(phase2File.articles[0]!),
         decision: 'include',
         comment: 'Confirmed relevant from abstract',
       });
       await executeReviewMark({
         file: phase2Extract.outputPath,
-        id: phase2File.articles[1]!.id,
+        id: getArticleId(phase2File.articles[1]!),
         decision: 'exclude',
         comment: 'Not relevant after reading abstract',
       });
@@ -644,7 +654,7 @@ summary:
       const finalReviews = parseYaml(finalReviewsContent) as ReviewFile;
 
       const articleWithTwoReviews = finalReviews.articles.find(
-        (a) => a.doi === phase2File.articles[0]!.id
+        (a) => a.doi === getArticleId(phase2File.articles[0]!)
       );
       expect(articleWithTwoReviews!.reviews).toHaveLength(2);
 
@@ -677,12 +687,12 @@ summary:
         sessionsDir
       );
 
-      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workFileContent) as WorkFile;
+      const screeningContent = await readFile(extractResult.outputPath, 'utf-8');
+      const screeningFile = parseYaml(screeningContent) as ReviewFile;
 
       await executeReviewMark({
         file: extractResult.outputPath,
-        id: workFile.articles[0]!.id,
+        id: getArticleId(screeningFile.articles[0]!),
         decision: 'include',
         comment: 'Yes',
       });
@@ -714,10 +724,10 @@ summary:
         sessionsDir
       );
       const phase1Content = await readFile(phase1Extract.outputPath, 'utf-8');
-      const phase1File = parseYaml(phase1Content) as WorkFile;
+      const phase1File = parseYaml(phase1Content) as ReviewFile;
       await executeReviewMark({
         file: phase1Extract.outputPath,
-        id: phase1File.articles[0]!.id,
+        id: getArticleId(phase1File.articles[0]!),
         decision: 'uncertain',
         comment: 'Needs more review',
       });
@@ -735,10 +745,10 @@ summary:
         sessionsDir
       );
       const phase2Content = await readFile(phase2Extract.outputPath, 'utf-8');
-      const phase2File = parseYaml(phase2Content) as WorkFile;
+      const phase2File = parseYaml(phase2Content) as ReviewFile;
       await executeReviewMark({
         file: phase2Extract.outputPath,
-        id: phase2File.articles[0]!.id,
+        id: getArticleId(phase2File.articles[0]!),
         decision: 'include',
         comment: 'Confirmed',
       });
@@ -772,10 +782,10 @@ summary:
         },
         sessionsDir
       );
-      const wf1 = parseYaml(await readFile(extract1.outputPath, 'utf-8')) as WorkFile;
+      const sf1 = parseYaml(await readFile(extract1.outputPath, 'utf-8')) as ReviewFile;
       await executeReviewMark({
         file: extract1.outputPath,
-        id: wf1.articles[0]!.id,
+        id: getArticleId(sf1.articles[0]!),
         decision: 'include',
         comment: '',
       });
@@ -793,10 +803,10 @@ summary:
         },
         sessionsDir
       );
-      const wf2 = parseYaml(await readFile(extract2.outputPath, 'utf-8')) as WorkFile;
+      const sf2 = parseYaml(await readFile(extract2.outputPath, 'utf-8')) as ReviewFile;
       await executeReviewMark({
         file: extract2.outputPath,
-        id: wf2.articles[0]!.id,
+        id: getArticleId(sf2.articles[0]!),
         decision: 'exclude',
         comment: '',
       });
@@ -834,14 +844,14 @@ summary:
       expect(extractResult.outputPath).toContain(join(sessionsDir, sessionId, 'for-review'));
 
       // Read, mark, and verify flow uses internal paths
-      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workFileContent) as WorkFile;
+      const screeningContent = await readFile(extractResult.outputPath, 'utf-8');
+      const screeningFile = parseYaml(screeningContent) as ReviewFile;
 
       // Mark all articles
-      for (const article of workFile.articles) {
+      for (const article of screeningFile.articles) {
         await executeReviewMark({
           file: extractResult.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'include',
           comment: 'Relevant',
         });
@@ -886,12 +896,12 @@ summary:
         sessionsDir
       );
       const phase1Content = await readFile(phase1Extract.outputPath, 'utf-8');
-      const phase1File = parseYaml(phase1Content) as WorkFile;
+      const phase1File = parseYaml(phase1Content) as ReviewFile;
       // Mark all articles as include
       for (const article of phase1File.articles) {
         await executeReviewMark({
           file: phase1Extract.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'include',
           comment: '',
         });
@@ -913,12 +923,12 @@ summary:
         sessionsDir
       );
       const phase2Content = await readFile(phase2Extract.outputPath, 'utf-8');
-      const phase2File = parseYaml(phase2Content) as WorkFile;
+      const phase2File = parseYaml(phase2Content) as ReviewFile;
       // Mark the 3 extracted articles as include
       for (const article of phase2File.articles) {
         await executeReviewMark({
           file: phase2Extract.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'include',
           comment: '',
         });
@@ -956,12 +966,12 @@ summary:
         sessionsDir
       );
       const r1Content = await readFile(r1Extract.outputPath, 'utf-8');
-      const r1File = parseYaml(r1Content) as WorkFile;
+      const r1File = parseYaml(r1Content) as ReviewFile;
       // Mark first 3 as include, last 2 as exclude
       for (let i = 0; i < r1File.articles.length; i++) {
         await executeReviewMark({
           file: r1Extract.outputPath,
-          id: r1File.articles[i]!.id,
+          id: getArticleId(r1File.articles[i]!),
           decision: i < 3 ? 'include' : 'exclude',
           comment: '',
         });
@@ -989,17 +999,18 @@ summary:
         sessionsDir
       );
       const r2Content = await readFile(r2Extract.outputPath, 'utf-8');
-      const r2File = parseYaml(r2Content) as WorkFile;
+      const r2File = parseYaml(r2Content) as ReviewFile;
       expect(r2File.articles).toHaveLength(5);
 
       // Match reviewer 1's decisions exactly
       for (const article of r2File.articles) {
-        // Find corresponding article in r1 by ID
-        const r1Index = r1File.articles.findIndex((a) => a.id === article.id);
+        // Find corresponding article in r1 by identifier
+        const articleId = getArticleId(article);
+        const r1Index = r1File.articles.findIndex((a) => getArticleId(a) === articleId);
         const decision = r1Index < 3 ? 'include' : 'exclude';
         await executeReviewMark({
           file: r2Extract.outputPath,
-          id: article.id,
+          id: articleId,
           decision: decision as ReviewDecision,
           comment: '',
         });
@@ -1103,23 +1114,23 @@ summary:
       );
 
       // Verify all articles default to 'uncertain'
-      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workFileContent) as WorkFile;
-      expect(workFile.articles).toHaveLength(10);
-      for (const article of workFile.articles) {
-        expect(article.decision).toBe('uncertain');
+      const screeningContent = await readFile(extractResult.outputPath, 'utf-8');
+      const screeningFile = parseYaml(screeningContent) as ReviewFile;
+      expect(screeningFile.articles).toHaveLength(10);
+      for (const article of screeningFile.articles) {
+        expect(article.reviews[0]!.decision).toBe('uncertain');
       }
 
       // Mark-by-exception: only change the ones we want to exclude, leave rest as uncertain
       await executeReviewMark({
         file: extractResult.outputPath,
-        id: workFile.articles[0]!.id,
+        id: getArticleId(screeningFile.articles[0]!),
         decision: 'exclude',
         comment: 'Off topic',
       });
       await executeReviewMark({
         file: extractResult.outputPath,
-        id: workFile.articles[3]!.id,
+        id: getArticleId(screeningFile.articles[3]!),
         decision: 'exclude',
         comment: 'Wrong population',
       });
@@ -1142,13 +1153,13 @@ summary:
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
 
       // Check that excluded articles have 'exclude' review
-      const excludedArticle = reviewFile.articles.find((a) => a.doi === workFile.articles[0]!.id);
+      const excludedArticle = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[0]!));
       expect(excludedArticle!.reviews).toHaveLength(1);
       expect(excludedArticle!.reviews[0]!.decision).toBe('exclude');
       expect(excludedArticle!.reviews[0]!.comment).toBe('Off topic');
 
       // Check that uncertain articles have 'uncertain' review
-      const uncertainArticle = reviewFile.articles.find((a) => a.doi === workFile.articles[1]!.id);
+      const uncertainArticle = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[1]!));
       expect(uncertainArticle!.reviews).toHaveLength(1);
       expect(uncertainArticle!.reviews[0]!.decision).toBe('uncertain');
 
@@ -1176,12 +1187,12 @@ summary:
         },
         sessionsDir
       );
-      const aiWorkFile = parseYaml(await readFile(aiExtract.outputPath, 'utf-8')) as WorkFile;
+      const aiScreening = parseYaml(await readFile(aiExtract.outputPath, 'utf-8')) as ReviewFile;
       // AI marks: 3 include, 2 exclude
-      for (let i = 0; i < aiWorkFile.articles.length; i++) {
+      for (let i = 0; i < aiScreening.articles.length; i++) {
         await executeReviewMark({
           file: aiExtract.outputPath,
-          id: aiWorkFile.articles[i]!.id,
+          id: getArticleId(aiScreening.articles[i]!),
           decision: i < 3 ? 'include' : 'exclude',
           comment: '',
         });
@@ -1303,27 +1314,27 @@ summary:
         sessionsDir
       );
 
-      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workFileContent) as WorkFile;
-      expect(workFile.basis).toBe('fulltext');
-      expect(workFile.articles).toHaveLength(3);
+      const screeningContent = await readFile(extractResult.outputPath, 'utf-8');
+      const screeningFile = parseYaml(screeningContent) as ReviewFile;
+      expect(screeningFile.basis).toBe('fulltext');
+      expect(screeningFile.articles).toHaveLength(3);
 
       // Article 0: has fulltext and abstract
-      expect(workFile.articles[0]!.fulltext).toBe('2024-smith-machine-learning');
-      expect(workFile.articles[0]!.abstract).toBeDefined();
+      expect(screeningFile.articles[0]!.fulltext).toEqual({ dirName: '2024-smith-machine-learning', hasFiles: { pdf: true, xml: false, markdown: false } });
+      expect(screeningFile.articles[0]!.abstract).toBeDefined();
 
       // Article 1: has fulltext and abstract
-      expect(workFile.articles[1]!.fulltext).toBe('2023-jones-deep-learning');
-      expect(workFile.articles[1]!.abstract).toBeDefined();
+      expect(screeningFile.articles[1]!.fulltext).toEqual({ dirName: '2023-jones-deep-learning', hasFiles: { pdf: true, xml: false, markdown: false } });
+      expect(screeningFile.articles[1]!.abstract).toBeDefined();
 
       // Article 2: no fulltext ref
-      expect(workFile.articles[2]!.fulltext).toBeUndefined();
-      expect(workFile.articles[2]!.abstract).toBeDefined();
+      expect(screeningFile.articles[2]!.fulltext).toBeUndefined();
+      expect(screeningFile.articles[2]!.abstract).toBeDefined();
 
       // Mark and merge to verify fulltext basis is carried through
       await executeReviewMark({
         file: extractResult.outputPath,
-        id: workFile.articles[0]!.id,
+        id: getArticleId(screeningFile.articles[0]!),
         decision: 'include',
         comment: 'Good paper',
       });
@@ -1332,7 +1343,7 @@ summary:
       // Verify merged review has fulltext basis
       const finalContent = await readFile(reviewsPath, 'utf-8');
       const finalFile = parseYaml(finalContent) as ReviewFile;
-      const reviewedArticle = finalFile.articles.find((a) => a.doi === workFile.articles[0]!.id);
+      const reviewedArticle = finalFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[0]!));
       expect(reviewedArticle!.reviews).toHaveLength(1);
       expect(reviewedArticle!.reviews[0]!.basis).toBe('fulltext');
       expect(reviewedArticle!.reviews[0]!.decision).toBe('include');
@@ -1355,18 +1366,18 @@ summary:
         },
         sessionsDir
       );
-      const workContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workContent) as WorkFile;
+      const screeningContent = await readFile(extractResult.outputPath, 'utf-8');
+      const screeningFile = parseYaml(screeningContent) as ReviewFile;
 
       // Mark first 3 as include, next 2 as exclude, rest as uncertain
-      for (let i = 0; i < workFile.articles.length; i++) {
+      for (let i = 0; i < screeningFile.articles.length; i++) {
         let decision: ReviewDecision;
         if (i < 3) decision = 'include';
         else if (i < 5) decision = 'exclude';
         else decision = 'uncertain';
         await executeReviewMark({
           file: extractResult.outputPath,
-          id: workFile.articles[i]!.id,
+          id: getArticleId(screeningFile.articles[i]!),
           decision,
         });
       }
@@ -1411,11 +1422,11 @@ summary:
         sessionsDir
       );
       const r1Content = await readFile(r1Extract.outputPath, 'utf-8');
-      const r1File = parseYaml(r1Content) as WorkFile;
+      const r1File = parseYaml(r1Content) as ReviewFile;
       for (const article of r1File.articles) {
         await executeReviewMark({
           file: r1Extract.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'include',
         });
       }
@@ -1434,11 +1445,11 @@ summary:
         sessionsDir
       );
       const r2Content = await readFile(r2Extract.outputPath, 'utf-8');
-      const r2File = parseYaml(r2Content) as WorkFile;
+      const r2File = parseYaml(r2Content) as ReviewFile;
       for (let i = 0; i < r2File.articles.length; i++) {
         await executeReviewMark({
           file: r2Extract.outputPath,
-          id: r2File.articles[i]!.id,
+          id: getArticleId(r2File.articles[i]!),
           decision: i < 3 ? 'include' : 'uncertain',
         });
       }
@@ -1467,12 +1478,12 @@ summary:
         },
         sessionsDir
       );
-      const workContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workContent) as WorkFile;
-      for (const article of workFile.articles) {
+      const screeningContent2 = await readFile(extractResult.outputPath, 'utf-8');
+      const screeningFile2 = parseYaml(screeningContent2) as ReviewFile;
+      for (const article of screeningFile2.articles) {
         await executeReviewMark({
           file: extractResult.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'include',
         });
       }
@@ -1512,12 +1523,12 @@ summary:
         },
         sessionsDir
       );
-      const workContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workContent) as WorkFile;
-      for (const article of workFile.articles) {
+      const screeningContent3 = await readFile(extractResult.outputPath, 'utf-8');
+      const screeningFile3 = parseYaml(screeningContent3) as ReviewFile;
+      for (const article of screeningFile3.articles) {
         await executeReviewMark({
           file: extractResult.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'include',
         });
       }
@@ -1549,12 +1560,12 @@ summary:
         },
         sessionsDir
       );
-      const workContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workContent) as WorkFile;
-      for (let i = 0; i < workFile.articles.length; i++) {
+      const screeningContent4 = await readFile(extractResult.outputPath, 'utf-8');
+      const screeningFile4 = parseYaml(screeningContent4) as ReviewFile;
+      for (let i = 0; i < screeningFile4.articles.length; i++) {
         await executeReviewMark({
           file: extractResult.outputPath,
-          id: workFile.articles[i]!.id,
+          id: getArticleId(screeningFile4.articles[i]!),
           decision: i < 3 ? 'include' : 'exclude',
         });
       }
@@ -1602,12 +1613,12 @@ summary:
         { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'ns-title' },
         sessionsDir
       );
-      const workContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workContent) as WorkFile;
-      for (let i = 0; i < workFile.articles.length; i++) {
+      const nsContent = await readFile(extractResult.outputPath, 'utf-8');
+      const nsFile = parseYaml(nsContent) as ReviewFile;
+      for (let i = 0; i < nsFile.articles.length; i++) {
         await executeReviewMark({
           file: extractResult.outputPath,
-          id: workFile.articles[i]!.id,
+          id: getArticleId(nsFile.articles[i]!),
           decision: i < 5 ? 'include' : 'exclude',
         });
       }
@@ -1637,12 +1648,12 @@ summary:
         { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'ns-title-unc' },
         sessionsDir
       );
-      const workContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workContent) as WorkFile;
-      for (const article of workFile.articles) {
+      const nsUncContent = await readFile(extractResult.outputPath, 'utf-8');
+      const nsUncFile = parseYaml(nsUncContent) as ReviewFile;
+      for (const article of nsUncFile.articles) {
         await executeReviewMark({
           file: extractResult.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'uncertain',
         });
       }
@@ -1704,13 +1715,13 @@ summary:
         sessionsDir
       );
       const titleContent = await readFile(titleExtract.outputPath, 'utf-8');
-      const titleFile = parseYaml(titleContent) as WorkFile;
+      const titleFile = parseYaml(titleContent) as ReviewFile;
 
       // Mark first 3 as exclude (clearly irrelevant), rest as uncertain
       for (let i = 0; i < titleFile.articles.length; i++) {
         await executeReviewMark({
           file: titleExtract.outputPath,
-          id: titleFile.articles[i]!.id,
+          id: getArticleId(titleFile.articles[i]!),
           decision: i < 3 ? 'exclude' : 'uncertain',
         });
       }
@@ -1733,14 +1744,14 @@ summary:
         sessionsDir
       );
       const abstractContent = await readFile(abstractExtract.outputPath, 'utf-8');
-      const abstractFile = parseYaml(abstractContent) as WorkFile;
+      const abstractFile = parseYaml(abstractContent) as ReviewFile;
       expect(abstractFile.articles).toHaveLength(7);
 
       // Mark 4 as include, 3 as exclude based on abstract
       for (let i = 0; i < abstractFile.articles.length; i++) {
         await executeReviewMark({
           file: abstractExtract.outputPath,
-          id: abstractFile.articles[i]!.id,
+          id: getArticleId(abstractFile.articles[i]!),
           decision: i < 4 ? 'include' : 'exclude',
         });
       }
@@ -1784,13 +1795,13 @@ summary:
         sessionsDir
       );
       const r1Content = await readFile(r1Extract.outputPath, 'utf-8');
-      const r1File = parseYaml(r1Content) as WorkFile;
+      const r1File = parseYaml(r1Content) as ReviewFile;
 
       // Reviewer A: exclude 2, uncertain for rest
       for (let i = 0; i < r1File.articles.length; i++) {
         await executeReviewMark({
           file: r1Extract.outputPath,
-          id: r1File.articles[i]!.id,
+          id: getArticleId(r1File.articles[i]!),
           decision: i < 2 ? 'exclude' : 'uncertain',
         });
       }
@@ -1808,14 +1819,14 @@ summary:
         sessionsDir
       );
       const r2Content = await readFile(r2Extract.outputPath, 'utf-8');
-      const r2File = parseYaml(r2Content) as WorkFile;
+      const r2File = parseYaml(r2Content) as ReviewFile;
       expect(r2File.articles).toHaveLength(8);
 
       // Reviewer B: include 5, exclude 3
       for (let i = 0; i < r2File.articles.length; i++) {
         await executeReviewMark({
           file: r2Extract.outputPath,
-          id: r2File.articles[i]!.id,
+          id: getArticleId(r2File.articles[i]!),
           decision: i < 5 ? 'include' : 'exclude',
         });
       }
@@ -1862,14 +1873,14 @@ summary:
         sessionsDir
       );
       const titleContent = await readFile(titleExtract.outputPath, 'utf-8');
-      const titleFile = parseYaml(titleContent) as WorkFile;
+      const titleFile = parseYaml(titleContent) as ReviewFile;
       expect(titleFile.articles).toHaveLength(10);
 
       // Mark first 2 as exclude, remaining 8 as uncertain
       for (let i = 0; i < titleFile.articles.length; i++) {
         await executeReviewMark({
           file: titleExtract.outputPath,
-          id: titleFile.articles[i]!.id,
+          id: getArticleId(titleFile.articles[i]!),
           decision: i < 2 ? 'exclude' : 'uncertain',
         });
       }
@@ -1893,14 +1904,14 @@ summary:
         sessionsDir
       );
       const abstractContent = await readFile(abstractExtract.outputPath, 'utf-8');
-      const abstractFile = parseYaml(abstractContent) as WorkFile;
+      const abstractFile = parseYaml(abstractContent) as ReviewFile;
       expect(abstractFile.articles).toHaveLength(8);
 
       // Mark all 8 as include based on abstract
       for (const article of abstractFile.articles) {
         await executeReviewMark({
           file: abstractExtract.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'include',
           comment: 'Relevant after reading abstract',
         });

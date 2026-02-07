@@ -12,15 +12,23 @@ import { validateName } from './extract.js';
 /**
  * Check if a file is a work file (has basis field)
  */
+/** @deprecated Detects old WorkFile format (flat id/decision fields). Kept for backward compat. */
 function isWorkFile(file: unknown): file is WorkFile {
-  return (
-    typeof file === 'object' &&
-    file !== null &&
-    'basis' in file &&
-    'reviewer' in file &&
-    'articles' in file &&
-    Array.isArray((file as WorkFile).articles)
-  );
+  if (
+    typeof file !== 'object' ||
+    file === null ||
+    !('basis' in file) ||
+    !('reviewer' in file) ||
+    !('articles' in file) ||
+    !Array.isArray((file as WorkFile).articles)
+  ) {
+    return false;
+  }
+  // Distinguish from new ReviewFile-with-basis: old WorkFile has articles with flat `id` + `decision` fields
+  const articles = (file as WorkFile).articles;
+  if (articles.length === 0) return false;
+  const first = articles[0]!;
+  return 'id' in first && 'decision' in first && !('reviews' in first);
 }
 
 export interface ReviewMergeOptions {
@@ -255,8 +263,8 @@ function processReviewFile(
       if (!reviewer) {
         throw new Error('reviewer is required: set reviewer on individual review or top-level ReviewFile');
       }
-      // Fill in basis from review or auto-detect from article data
-      const basis = review.basis ?? detectBasis(extracted);
+      // Fill in basis from review, top-level field, or auto-detect from article data
+      const basis = review.basis ?? extractedFile.basis ?? detectBasis(extracted);
 
       if (!options.dryRun) {
         const mergedReview: Review = {

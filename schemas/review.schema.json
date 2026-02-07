@@ -25,6 +25,11 @@
         "$ref": "#/definitions/ArticleEntry"
       }
     },
+    "basis": {
+      "type": "string",
+      "enum": ["title", "abstract", "fulltext"],
+      "description": "Basis level for screening (only in extracted ReviewFiles)"
+    },
     "reviewers": {
       "type": "array",
       "description": "Registry of reviewers who participated at each basis level",

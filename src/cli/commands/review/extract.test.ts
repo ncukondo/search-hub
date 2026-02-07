@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile, mkdir, readFile, access } from 'node:fs/promise
 import { tmpdir } from 'node:os';
 import { stringify as stringifyYaml, parse as parseYaml } from 'yaml';
 import { executeReviewExtract } from './extract.js';
-import type { ReviewFile, ArticleEntry, WorkFile } from './types.js';
+import type { ReviewFile, ArticleEntry } from './types.js';
 
 describe('executeReviewExtract', () => {
   let tempDir: string;
@@ -441,7 +441,7 @@ describe('executeReviewExtract', () => {
     });
   });
 
-  describe('--basis and --reviewer options', () => {
+  describe('--basis screening mode (unified ReviewFile format)', () => {
     const articlesWithAbstracts: ArticleEntry[] = [
       {
         title: 'Article with Abstract',
@@ -457,7 +457,7 @@ describe('executeReviewExtract', () => {
       },
     ];
 
-    it('extracts with --basis title outputs only id and title', async () => {
+    it('extracts with --basis title outputs ReviewFile with identifiers and title only', async () => {
       await writeReviewFile(articlesWithAbstracts);
 
       const result = await executeReviewExtract(
@@ -471,20 +471,25 @@ describe('executeReviewExtract', () => {
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
-      const workFile = parseYaml(content) as WorkFile;
+      const reviewFile = parseYaml(content) as ReviewFile;
 
-      expect(workFile.sessionId).toBe(sessionId);
-      expect(workFile.basis).toBe('title');
-      expect(workFile.reviewer).toBe('ai:claude');
-      expect(workFile.articles).toHaveLength(2);
-      expect(workFile.articles[0]!.id).toBe('10.1234/test');
-      expect(workFile.articles[0]!.title).toBe('Article with Abstract');
-      expect(workFile.articles[0]!.abstract).toBeUndefined();
-      expect(workFile.articles[0]!.decision).toBe('uncertain');
-      expect(workFile.articles[0]!.comment).toBe('');
+      expect(reviewFile.sessionId).toBe(sessionId);
+      expect(reviewFile.basis).toBe('title');
+      expect(reviewFile.reviewer).toBe('ai:claude');
+      expect(reviewFile.articles).toHaveLength(2);
+      // Should include identifiers
+      expect(reviewFile.articles[0]!.doi).toBe('10.1234/test');
+      expect(reviewFile.articles[0]!.pmid).toBe('100');
+      expect(reviewFile.articles[0]!.title).toBe('Article with Abstract');
+      // Title basis: no abstract
+      expect(reviewFile.articles[0]!.abstract).toBeUndefined();
+      // Pre-populated reviews
+      expect(reviewFile.articles[0]!.reviews).toHaveLength(1);
+      expect(reviewFile.articles[0]!.reviews[0]!.decision).toBe('uncertain');
+      expect(reviewFile.articles[0]!.reviews[0]!.comment).toBe('');
     });
 
-    it('extracts with --basis abstract outputs id, title, and abstract', async () => {
+    it('extracts with --basis abstract outputs identifiers, title, and abstract', async () => {
       await writeReviewFile(articlesWithAbstracts);
 
       const result = await executeReviewExtract(
@@ -498,15 +503,15 @@ describe('executeReviewExtract', () => {
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
-      const workFile = parseYaml(content) as WorkFile;
+      const reviewFile = parseYaml(content) as ReviewFile;
 
-      expect(workFile.basis).toBe('abstract');
-      expect(workFile.articles[0]!.abstract).toBe('This is the abstract text.');
+      expect(reviewFile.basis).toBe('abstract');
+      expect(reviewFile.articles[0]!.abstract).toBe('This is the abstract text.');
       // Article without abstract should still be included
-      expect(workFile.articles[1]!.abstract).toBeUndefined();
+      expect(reviewFile.articles[1]!.abstract).toBeUndefined();
     });
 
-    it('uses first available identifier as id (doi > pmid > scopusId > ...)', async () => {
+    it('includes identifiers (doi, pmid, etc.) on each article', async () => {
       const articles: ArticleEntry[] = [
         { title: 'DOI Article', doi: '10.1234/doi', pmid: '1', reviews: [] },
         { title: 'PMID Article', pmid: '2', scopusId: 'S2', reviews: [] },
@@ -520,14 +525,16 @@ describe('executeReviewExtract', () => {
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
-      const workFile = parseYaml(content) as WorkFile;
+      const reviewFile = parseYaml(content) as ReviewFile;
 
-      expect(workFile.articles[0]!.id).toBe('10.1234/doi');
-      expect(workFile.articles[1]!.id).toBe('2');
-      expect(workFile.articles[2]!.id).toBe('S3');
+      expect(reviewFile.articles[0]!.doi).toBe('10.1234/doi');
+      expect(reviewFile.articles[0]!.pmid).toBe('1');
+      expect(reviewFile.articles[1]!.pmid).toBe('2');
+      expect(reviewFile.articles[1]!.scopusId).toBe('S2');
+      expect(reviewFile.articles[2]!.scopusId).toBe('S3');
     });
 
-    it('defaults decision to uncertain in work file articles', async () => {
+    it('pre-populates reviews with uncertain decision', async () => {
       await writeReviewFile(articlesWithAbstracts);
 
       const result = await executeReviewExtract(
@@ -541,11 +548,12 @@ describe('executeReviewExtract', () => {
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
-      const workFile = parseYaml(content) as WorkFile;
+      const reviewFile = parseYaml(content) as ReviewFile;
 
-      // All articles should default to 'uncertain' instead of null
-      for (const article of workFile.articles) {
-        expect(article.decision).toBe('uncertain');
+      for (const article of reviewFile.articles) {
+        expect(article.reviews).toHaveLength(1);
+        expect(article.reviews[0]!.decision).toBe('uncertain');
+        expect(article.reviews[0]!.comment).toBe('');
       }
     });
 
@@ -579,15 +587,66 @@ describe('executeReviewExtract', () => {
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
-      const workFile = parseYaml(content) as WorkFile;
+      const reviewFile = parseYaml(content) as ReviewFile;
 
-      expect(workFile.basis).toBe('fulltext');
-      // Article with fulltext should have dirName and abstract
-      expect(workFile.articles[0]!.fulltext).toBe('smith2024-abcd1234');
-      expect(workFile.articles[0]!.abstract).toBe('Abstract text.');
+      expect(reviewFile.basis).toBe('fulltext');
+      // Article with fulltext should have fulltext ref (as object with dirName) and abstract
+      expect(reviewFile.articles[0]!.fulltext).toEqual({ dirName: 'smith2024-abcd1234', hasFiles: { pdf: true, xml: false, markdown: true } });
+      expect(reviewFile.articles[0]!.abstract).toBe('Abstract text.');
       // Article without fulltext should still be included but without fulltext
-      expect(workFile.articles[1]!.fulltext).toBeUndefined();
-      expect(workFile.articles[1]!.abstract).toBe('Another abstract.');
+      expect(reviewFile.articles[1]!.fulltext).toBeUndefined();
+      expect(reviewFile.articles[1]!.abstract).toBe('Another abstract.');
+    });
+
+    it('adds decision inline comments for title basis', async () => {
+      await writeReviewFile(articlesWithAbstracts);
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'title', reviewer: 'ai:claude', name: 'comment-test' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('# exclude / uncertain');
+    });
+
+    it('adds decision inline comments for abstract basis', async () => {
+      await writeReviewFile(articlesWithAbstracts);
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'abstract', reviewer: 'ai:claude', name: 'comment-test' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('# include / exclude / uncertain');
+    });
+
+    it('includes schema reference and guidance comments', async () => {
+      await writeReviewFile(articlesWithAbstracts);
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'title', reviewer: 'ai:claude', name: 'schema-test' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('yaml-language-server');
+      expect(content).toContain('review.schema.json');
+      expect(content).toContain('Screening');
+    });
+
+    it('sets top-level basis field', async () => {
+      await writeReviewFile(articlesWithAbstracts);
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'abstract', reviewer: 'ai:claude', name: 'basis-field' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const reviewFile = parseYaml(content) as ReviewFile;
+      expect(reviewFile.basis).toBe('abstract');
     });
 
     it('combines filter with basis option', async () => {
@@ -609,10 +668,136 @@ describe('executeReviewExtract', () => {
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
-      const workFile = parseYaml(content) as WorkFile;
+      const reviewFile = parseYaml(content) as ReviewFile;
 
-      expect(workFile.articles).toHaveLength(1);
-      expect(workFile.articles[0]!.title).toBe('Pending 1');
+      expect(reviewFile.articles).toHaveLength(1);
+      expect(reviewFile.articles[0]!.title).toBe('Pending 1');
+    });
+  });
+
+  describe('--finalize mode', () => {
+    const articlesWithReviews: ArticleEntry[] = [
+      {
+        title: 'Reviewed Article',
+        pmid: '1',
+        doi: '10.1234/reviewed',
+        abstract: 'Abstract text.',
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract', timestamp: '2024-01-02T00:00:00Z' },
+        ],
+      },
+      {
+        title: 'Unreviewed Article',
+        pmid: '2',
+        abstract: 'Another abstract.',
+        reviews: [],
+      },
+    ];
+
+    it('--finalize outputs ReviewFile with reviewHistory and finalDecision', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-test', reviewer: 'human:admin', finalize: true },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      expect(extracted.reviewer).toBe('human:admin');
+      expect(extracted.articles).toHaveLength(2);
+
+      // Should have reviewHistory with existing reviews
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+      expect(extracted.articles[0]!.reviewHistory![0]!.reviewer).toBe('ai:claude');
+
+      // reviews should be empty
+      expect(extracted.articles[0]!.reviews).toEqual([]);
+
+      // finalDecision should be null (placeholder)
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
+
+      // Should include all content (title + abstract)
+      expect(extracted.articles[0]!.abstract).toBe('Abstract text.');
+    });
+
+    it('--finalize includes guidance comment for final decision', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-guide', reviewer: 'human:admin', finalize: true },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('yaml-language-server');
+      expect(content).toContain('finalDecision');
+      expect(content).toContain('# include / exclude');
+    });
+
+    it('--finalize --basis title scopes content to title only', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-title', reviewer: 'human:admin', finalize: true, basis: 'title' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      // Should have reviewHistory
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+
+      // Title only - no abstract
+      expect(extracted.articles[0]!.abstract).toBeUndefined();
+
+      // Should still have finalDecision
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
+    });
+
+    it('--finalize --basis abstract scopes content to title + abstract', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-abstract', reviewer: 'human:admin', finalize: true, basis: 'abstract' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      // Should have reviewHistory
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+
+      // Should include abstract
+      expect(extracted.articles[0]!.abstract).toBe('Abstract text.');
+
+      // Should still have finalDecision
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
+    });
+
+    it('no --basis and no --finalize behaves same as --finalize', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'compat', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      // Should have reviewHistory
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+
+      // Should have all content
+      expect(extracted.articles[0]!.abstract).toBe('Abstract text.');
+
+      // Should have finalDecision
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
     });
   });
 });
