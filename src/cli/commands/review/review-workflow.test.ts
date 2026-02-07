@@ -1686,4 +1686,159 @@ summary:
       expect(batchSuggestion!.description).toContain('7'); // 10 - 3 = 7 remaining
     });
   });
+
+  describe('Multi-stage screening with basis priority (Task 88)', () => {
+    it('full multi-stage workflow: title uncertain → abstract include/exclude → finalize', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Phase 1: Title screening - mark some exclude, rest uncertain
+      const titleExtract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'multi-stage-title',
+        },
+        sessionsDir
+      );
+      const titleContent = await readFile(titleExtract.outputPath, 'utf-8');
+      const titleFile = parseYaml(titleContent) as WorkFile;
+
+      // Mark first 3 as exclude (clearly irrelevant), rest as uncertain
+      for (let i = 0; i < titleFile.articles.length; i++) {
+        await executeReviewMark({
+          file: titleExtract.outputPath,
+          id: titleFile.articles[i]!.id,
+          decision: i < 3 ? 'exclude' : 'uncertain',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'multi-stage-title' }, sessionsDir);
+
+      // After title screening: 3 agreed-exclude, 7 uncertain
+      const statusAfterTitle = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(statusAfterTitle.agreedExclude).toBe(3);
+      expect(statusAfterTitle.uncertain).toBe(7);
+
+      // Phase 2: Abstract screening for uncertain articles
+      const abstractExtract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['uncertain'],
+          basis: 'abstract',
+          reviewer: 'ai:claude',
+          name: 'multi-stage-abstract',
+        },
+        sessionsDir
+      );
+      const abstractContent = await readFile(abstractExtract.outputPath, 'utf-8');
+      const abstractFile = parseYaml(abstractContent) as WorkFile;
+      expect(abstractFile.articles).toHaveLength(7);
+
+      // Mark 4 as include, 3 as exclude based on abstract
+      for (let i = 0; i < abstractFile.articles.length; i++) {
+        await executeReviewMark({
+          file: abstractExtract.outputPath,
+          id: abstractFile.articles[i]!.id,
+          decision: i < 4 ? 'include' : 'exclude',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'multi-stage-abstract' }, sessionsDir);
+
+      // After abstract screening with basis priority:
+      // The 7 articles that were title-uncertain now have abstract decisions
+      // Basis priority: abstract include/exclude overrides title uncertain
+      // So: 4 agreed-include, 3+3=6 agreed-exclude, 0 uncertain
+      const statusAfterAbstract = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(statusAfterAbstract.agreedInclude).toBe(4);
+      expect(statusAfterAbstract.agreedExclude).toBe(6); // 3 from title + 3 from abstract
+      expect(statusAfterAbstract.uncertain).toBe(0); // No uncertain left
+
+      // Phase 3: Finalize - all articles should now be finalizable
+      const finalizeResult = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(finalizeResult.includedCount).toBe(4);
+      expect(finalizeResult.excludedCount).toBe(6);
+      expect(finalizeResult.skippedByStatus.uncertain).toBe(0);
+
+      // Verify all articles are finalized
+      const finalStatus = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(finalStatus.finalized).toBe(10);
+      expect(finalStatus.included).toBe(4);
+      expect(finalStatus.excluded).toBe(6);
+    });
+
+    it('two-reviewer multi-stage: reviewer A title screening → reviewer B abstract screening → finalize', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Phase 1: Reviewer A does title screening
+      const r1Extract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:gpt-4o',
+          name: 'r1-title',
+        },
+        sessionsDir
+      );
+      const r1Content = await readFile(r1Extract.outputPath, 'utf-8');
+      const r1File = parseYaml(r1Content) as WorkFile;
+
+      // Reviewer A: exclude 2, uncertain for rest
+      for (let i = 0; i < r1File.articles.length; i++) {
+        await executeReviewMark({
+          file: r1Extract.outputPath,
+          id: r1File.articles[i]!.id,
+          decision: i < 2 ? 'exclude' : 'uncertain',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'r1-title' }, sessionsDir);
+
+      // Phase 2: Reviewer B does abstract screening for uncertain articles
+      const r2Extract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['uncertain'],
+          basis: 'abstract',
+          reviewer: 'ai:claude',
+          name: 'r2-abstract',
+        },
+        sessionsDir
+      );
+      const r2Content = await readFile(r2Extract.outputPath, 'utf-8');
+      const r2File = parseYaml(r2Content) as WorkFile;
+      expect(r2File.articles).toHaveLength(8);
+
+      // Reviewer B: include 5, exclude 3
+      for (let i = 0; i < r2File.articles.length; i++) {
+        await executeReviewMark({
+          file: r2Extract.outputPath,
+          id: r2File.articles[i]!.id,
+          decision: i < 5 ? 'include' : 'exclude',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'r2-abstract' }, sessionsDir);
+
+      // Basis priority resolves: title uncertain from R1 is overridden by abstract decisions from R2
+      // However, the 2 articles excluded by R1 at title are now incomplete (R2 hasn't reviewed them)
+      const statusAfter = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(statusAfter.agreedInclude).toBe(5);
+      expect(statusAfter.agreedExclude).toBe(3); // 3 from R2 abstract screening
+      expect(statusAfter.incomplete).toBe(2); // 2 from R1 title exclude, missing R2
+      expect(statusAfter.uncertain).toBe(0);
+
+      // Finalize: only agreed articles get finalized
+      const finalizeResult = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(finalizeResult.includedCount).toBe(5);
+      expect(finalizeResult.excludedCount).toBe(3);
+      expect(finalizeResult.skippedByStatus.incomplete).toBe(2);
+
+      // Verify
+      const finalStatus = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(finalStatus.finalized).toBe(8);
+      expect(finalStatus.incomplete).toBe(2); // Still incomplete
+    });
+  });
 });

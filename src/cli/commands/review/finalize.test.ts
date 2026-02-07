@@ -317,6 +317,83 @@ describe('executeReviewFinalize', () => {
       expect(result.skippedByStatus['agreed-include']).toBe(1);
     });
   });
+
+  describe('Step 4: multi-stage screening with basis priority', () => {
+    it('article with title uncertain + abstract include from same reviewer → finalized as include', async () => {
+      await setupReviewFile({
+        sessionId,
+        reviewers: [{ name: 'ai:claude', basis: 'title' }],
+        articles: [
+          {
+            doi: '10.1234/multi1',
+            title: 'Multi-stage Article',
+            reviews: [
+              { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+              { reviewer: 'ai:claude', decision: 'include', basis: 'abstract' },
+            ],
+          },
+        ],
+      });
+
+      const result = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(result.includedCount).toBe(1);
+      expect(result.excludedCount).toBe(0);
+
+      const reviewFile = await readReviewFile();
+      expect(reviewFile.articles[0]!.finalDecision).toBe('include');
+    });
+
+    it('article with title uncertain + abstract exclude from different reviewer → finalized as exclude', async () => {
+      await setupReviewFile({
+        sessionId,
+        reviewers: [
+          { name: 'ai:claude', basis: 'title' },
+          { name: 'ai:gpt-4o', basis: 'abstract' },
+        ],
+        articles: [
+          {
+            doi: '10.1234/multi2',
+            title: 'Cross-Reviewer Multi-stage',
+            reviews: [
+              { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+              { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'abstract' },
+            ],
+          },
+        ],
+      });
+
+      const result = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(result.includedCount).toBe(0);
+      expect(result.excludedCount).toBe(1);
+
+      const reviewFile = await readReviewFile();
+      expect(reviewFile.articles[0]!.finalDecision).toBe('exclude');
+    });
+
+    it('article with only title uncertain → not finalized (still uncertain)', async () => {
+      await setupReviewFile({
+        sessionId,
+        reviewers: [{ name: 'ai:claude', basis: 'title' }],
+        articles: [
+          {
+            doi: '10.1234/unc-only',
+            title: 'Uncertain Only',
+            reviews: [
+              { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+            ],
+          },
+        ],
+      });
+
+      const result = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(result.includedCount).toBe(0);
+      expect(result.excludedCount).toBe(0);
+      expect(result.skippedByStatus.uncertain).toBe(1);
+
+      const reviewFile = await readReviewFile();
+      expect(reviewFile.articles[0]!.finalDecision).toBeUndefined();
+    });
+  });
 });
 
 describe('formatFinalizeOutput', () => {
