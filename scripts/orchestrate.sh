@@ -196,10 +196,21 @@ process_branch() {
 
   # Only process when agent becomes idle
   if [ "$agent_state" != "idle" ]; then
-    BRANCH_STATES[$state_key]="$agent_state"
+    # Don't overwrite terminal states (already processed)
+    case "${BRANCH_STATES[$state_key]:-}" in
+      transitioned|approved|fix-requested|commented) ;;
+      *) BRANCH_STATES[$state_key]="$agent_state" ;;
+    esac
     BRANCH_LAST_ACTIVITY[$branch]=$(date +%s)
     return
   fi
+
+  # Agent is idle - skip if already in terminal state
+  case "${BRANCH_STATES[$state_key]:-}" in
+    transitioned|approved|fix-requested|commented)
+      return
+      ;;
+  esac
 
   # Agent is idle - check what to do based on role
   case "$role" in
@@ -247,7 +258,10 @@ process_implement_completion() {
         notify_main "info" "Branch $branch: Reviewer started for PR #$pr_num"
         BRANCH_STATES["${branch}:implement"]="transitioned"
       else
-        notify_main "warning" "Branch $branch: PR completed but could not find PR number"
+        if [ "${BRANCH_STATES["${branch}:implement"]:-}" != "no-pr-notified" ]; then
+          notify_main "warning" "Branch $branch: PR completed but could not find PR number"
+          BRANCH_STATES["${branch}:implement"]="no-pr-notified"
+        fi
       fi
       ;;
 
@@ -268,7 +282,10 @@ process_implement_completion() {
       ;;
 
     error|*)
-      notify_main "error" "Branch $branch: Unexpected task status: $task_status"
+      if [ "${BRANCH_STATES["${branch}:implement:error"]:-}" != "notified" ]; then
+        notify_main "error" "Branch $branch: Unexpected task status: $task_status"
+        BRANCH_STATES["${branch}:implement:error"]="notified"
+      fi
       ;;
   esac
 }
@@ -330,6 +347,11 @@ $full_review
       "$SCRIPT_DIR/set-role.sh" "$WORKTREE_BASE/$(echo "$branch" | tr '/' '-')" implement 2>/dev/null || true
 
       BRANCH_STATES["${branch}:review"]="fix-requested"
+
+      # Clear implement terminal states to allow re-processing after fix
+      unset 'BRANCH_STATES["${branch}:implement"]' 2>/dev/null || true
+      unset 'BRANCH_STATES["${branch}:implement:ci-failed"]' 2>/dev/null || true
+      unset 'BRANCH_STATES["${branch}:implement:error"]' 2>/dev/null || true
       ;;
 
     commented)
@@ -346,7 +368,10 @@ $full_review
       ;;
 
     error|*)
-      notify_main "error" "Branch $branch: Unexpected review status: $review_status"
+      if [ "${BRANCH_STATES["${branch}:review:error"]:-}" != "notified" ]; then
+        notify_main "error" "Branch $branch: Unexpected review status: $review_status"
+        BRANCH_STATES["${branch}:review:error"]="notified"
+      fi
       ;;
   esac
 }
