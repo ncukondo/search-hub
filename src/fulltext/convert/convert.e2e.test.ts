@@ -501,4 +501,54 @@ describe('PMC XML to Markdown E2E conversion', () => {
     expect(md).not.toContain('McGuireN');
     expect(md).not.toContain('AcaiA');
   });
+
+  it('preserves ext-link, monospace, and inline-formula in Markdown output', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<article xmlns:xlink="http://www.w3.org/1999/xlink">
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>Inline Elements Test</article-title>
+      </title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Methods</title>
+      <p>Analysis was performed using R (<ext-link ext-link-type="uri"
+        xlink:href="https://www.r-project.org/">https://www.r-project.org/</ext-link>)
+        and the <monospace>tidyverse</monospace> package.</p>
+      <p>Visit <ext-link ext-link-type="uri"
+        xlink:href="https://example.com/data">our data repository</ext-link> for datasets.</p>
+      <p>Statistical significance was set at <inline-formula><tex-math>p &lt; 0.05</tex-math></inline-formula>.</p>
+      <p>The <underline>primary outcome</underline> was measured using <sc>Smith</sc> criteria.</p>
+      <p>Data available at <uri xlink:href="https://doi.org/10.5281/zenodo.123">https://doi.org/10.5281/zenodo.123</uri>.</p>
+    </sec>
+  </body>
+</article>`;
+
+    const xmlPath = join(tmpDir, 'inline.xml');
+    const mdPath = join(tmpDir, 'inline.md');
+    await writeFile(xmlPath, xml, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+    expect(result.success).toBe(true);
+
+    const md = await readFile(mdPath, 'utf-8');
+
+    // ext-link: bare URL when display text matches URL
+    expect(md).toContain('https://www.r-project.org/');
+    // ext-link: Markdown link when display text differs
+    expect(md).toContain('[our data repository](https://example.com/data)');
+    // monospace: backtick-quoted
+    expect(md).toContain('`tidyverse`');
+    // inline-formula: LaTeX notation
+    expect(md).toContain('$p < 0.05$');
+    // underline: text preserved
+    expect(md).toContain('primary outcome');
+    // sc: text preserved
+    expect(md).toContain('Smith');
+    // uri: link preserved
+    expect(md).toContain('https://doi.org/10.5281/zenodo.123');
+  });
 });

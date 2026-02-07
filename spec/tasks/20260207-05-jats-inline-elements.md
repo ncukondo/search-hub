@@ -90,11 +90,11 @@ The most impactful gap is `<ext-link>`, which causes external URLs to be lost. O
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
+- [x] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
   - Test with XML containing `<ext-link>`, `<monospace>`, `<inline-formula>`
-- [ ] Verify links are preserved as Markdown links in output
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Convert a PMC article with external links, verify clickable URLs
+- [x] Verify links are preserved as Markdown links in output
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Convert a PMC article with external links, verify clickable URLs
 
 ## Notes
 
