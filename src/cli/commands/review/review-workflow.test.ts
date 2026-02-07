@@ -1595,6 +1595,7 @@ summary:
       expect(steps1!.next[0]!.command).toContain('review extract');
       expect(steps1!.next[0]!.command).toContain('--basis title');
       expect(steps1!.next[0]!.command).toContain('--filter pending');
+      expect(steps1!.next[0]!.command).toContain('--reviewer "<name>"');
 
       // 2. After title screening → agreed articles → suggests finalize
       const extractResult = await executeReviewExtract(
@@ -1653,6 +1654,7 @@ summary:
       expect(steps).not.toBeNull();
       expect(steps!.next[0]!.command).toContain('review extract');
       expect(steps!.next[0]!.command).toContain('--basis abstract');
+      expect(steps!.next[0]!.command).toContain('--reviewer "<name>"');
       expect(steps!.next[0]!.command).toContain('--name abstract-screening');
     });
 

@@ -1,5 +1,5 @@
 import type { SuggestionContext, SuggestionResult, SuggestionRule } from './types.js';
-import { generateReviewNextSteps } from '../commands/review/next-steps.js';
+import { computeBatchContinuation, generateReviewNextSteps } from '../commands/review/next-steps.js';
 
 // Phase 1: Query Preparation rules
 
@@ -262,15 +262,15 @@ const reviewExtractRule: SuggestionRule = (ctx) => {
     ctx.extractedCount !== undefined &&
     ctx.totalMatching !== undefined
   ) {
-    const nextOffset = (ctx.extractOffset ?? 0) + ctx.extractedCount;
-    const remaining = ctx.totalMatching - nextOffset;
-    if (remaining > 0) {
-      const nextName = name !== '<name>' ? `${name}-next` : 'next-batch';
-      result.seeAlso.push({
-        command: `search-hub review extract --session ${sid} --offset ${nextOffset} --limit ${ctx.extractLimit} --name ${nextName}`,
-        description: `${remaining} articles remaining — extract next batch`,
-      });
-    }
+    const batch = computeBatchContinuation({
+      sessionId: sid,
+      extractName: name !== '<name>' ? name : undefined,
+      extractedCount: ctx.extractedCount,
+      totalMatching: ctx.totalMatching,
+      limit: ctx.extractLimit,
+      offset: ctx.extractOffset,
+    });
+    if (batch) result.seeAlso.push(batch);
   }
 
   return result;

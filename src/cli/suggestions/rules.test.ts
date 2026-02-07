@@ -367,6 +367,7 @@ describe('getSuggestion', () => {
         expect(result).not.toBeNull();
         expect(result!.next[0]!.command).toContain('--basis title');
         expect(result!.next[0]!.command).toContain('--filter pending');
+        expect(result!.next[0]!.command).toContain('--reviewer "<name>"');
       });
 
       it('should suggest finalization when agreed > 0', () => {
@@ -416,6 +417,7 @@ describe('getSuggestion', () => {
         expect(result).not.toBeNull();
         expect(result!.next[0]!.command).toContain('--basis abstract');
         expect(result!.next[0]!.command).toContain('--filter conflicting,uncertain,incomplete');
+        expect(result!.next[0]!.command).toContain('--reviewer "<name>"');
       });
 
       it('should suggest abstract screening when uncertain or incomplete > 0', () => {
@@ -441,6 +443,7 @@ describe('getSuggestion', () => {
         expect(result).not.toBeNull();
         expect(result!.next[0]!.command).toContain('--basis abstract');
         expect(result!.next[0]!.command).toContain('--filter conflicting,uncertain,incomplete');
+        expect(result!.next[0]!.command).toContain('--reviewer "<name>"');
       });
 
       it('should suggest register when all finalized', () => {
@@ -594,6 +597,7 @@ describe('getSuggestion', () => {
         expect(result).not.toBeNull();
         expect(result!.next[0]!.command).toContain('review extract');
         expect(result!.next[0]!.command).toContain('--basis abstract');
+        expect(result!.next[0]!.command).toContain('--reviewer "<name>"');
       });
 
       it('should suggest register when all finalized', () => {

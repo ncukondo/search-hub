@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateReviewNextSteps, type ReviewNextStepsContext } from './next-steps.js';
+import { computeBatchContinuation, generateReviewNextSteps, type ReviewNextStepsContext } from './next-steps.js';
 import type { ReviewStatusResult } from './status.js';
 
 function makeStatusResult(overrides: Partial<ReviewStatusResult> = {}): ReviewStatusResult {
@@ -62,6 +62,7 @@ describe('generateReviewNextSteps', () => {
       expect(result!.next[0]!.command).toContain('--basis title');
       expect(result!.next[0]!.command).toContain('--filter conflicting,uncertain,incomplete');
       expect(result!.next[0]!.command).toContain('--session my-session');
+      expect(result!.next[0]!.command).toContain('--reviewer "<name>"');
     });
 
     it('should detect next basis: has title reviews → abstract', () => {
@@ -115,6 +116,7 @@ describe('generateReviewNextSteps', () => {
       expect(result!.next[0]!.command).toContain('review extract');
       expect(result!.next[0]!.command).toContain('--basis title');
       expect(result!.next[0]!.command).toContain('--filter pending');
+      expect(result!.next[0]!.command).toContain('--reviewer "<name>"');
       expect(result!.next[0]!.command).toContain('--name title-screening');
     });
   });
@@ -206,5 +208,60 @@ describe('generateReviewNextSteps', () => {
       const result = generateReviewNextSteps(ctx);
       expect(result).toBeNull();
     });
+  });
+});
+
+describe('computeBatchContinuation', () => {
+  it('should return suggestion with correct offset and limit', () => {
+    const result = computeBatchContinuation({
+      sessionId: 'my-session',
+      extractName: 'batch-1',
+      extractedCount: 20,
+      totalMatching: 80,
+      limit: 20,
+      offset: 0,
+    });
+    expect(result).not.toBeNull();
+    expect(result!.command).toContain('--offset 20');
+    expect(result!.command).toContain('--limit 20');
+    expect(result!.command).toContain('--name batch-1-next');
+    expect(result!.command).toContain('--session my-session');
+    expect(result!.description).toContain('60');
+  });
+
+  it('should return null when no remaining articles', () => {
+    const result = computeBatchContinuation({
+      sessionId: 'my-session',
+      extractName: 'batch-1',
+      extractedCount: 20,
+      totalMatching: 20,
+      limit: 20,
+      offset: 0,
+    });
+    expect(result).toBeNull();
+  });
+
+  it('should use next-batch as default name when extractName is undefined', () => {
+    const result = computeBatchContinuation({
+      sessionId: 'my-session',
+      extractedCount: 10,
+      totalMatching: 30,
+      limit: 10,
+      offset: 0,
+    });
+    expect(result).not.toBeNull();
+    expect(result!.command).toContain('--name next-batch');
+  });
+
+  it('should default offset to 0 when not provided', () => {
+    const result = computeBatchContinuation({
+      sessionId: 'my-session',
+      extractName: 'batch',
+      extractedCount: 10,
+      totalMatching: 30,
+      limit: 10,
+    });
+    expect(result).not.toBeNull();
+    expect(result!.command).toContain('--offset 10');
   });
 });

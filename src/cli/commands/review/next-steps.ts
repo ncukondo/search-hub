@@ -5,7 +5,7 @@
 
 import type { ReviewStatusResult } from './status.js';
 import type { ReviewBasis } from './types.js';
-import type { SuggestionResult } from '../../suggestions/types.js';
+import type { Suggestion, SuggestionResult } from '../../suggestions/types.js';
 
 export interface ReviewNextStepsContext {
   sessionId: string;
@@ -20,6 +20,31 @@ export interface ReviewNextStepsContext {
   limit?: number;
   /** Offset used in extract */
   offset?: number;
+}
+
+export interface BatchContinuationParams {
+  sessionId: string;
+  extractName?: string | undefined;
+  extractedCount: number;
+  totalMatching: number;
+  limit: number;
+  offset?: number | undefined;
+}
+
+/**
+ * Compute a batch continuation suggestion when --limit was used with remaining articles.
+ * Returns null if no remaining articles.
+ */
+export function computeBatchContinuation(params: BatchContinuationParams): Suggestion | null {
+  const nextOffset = (params.offset ?? 0) + params.extractedCount;
+  const remaining = params.totalMatching - nextOffset;
+  if (remaining <= 0) return null;
+
+  const nextName = params.extractName ? `${params.extractName}-next` : 'next-batch';
+  return {
+    command: `search-hub review extract --session ${params.sessionId} --offset ${nextOffset} --limit ${params.limit} --name ${nextName}`,
+    description: `${remaining} articles remaining — extract next batch`,
+  };
 }
 
 /**
@@ -54,7 +79,7 @@ export function generateReviewNextSteps(ctx: ReviewNextStepsContext): Suggestion
   // 1. pending > 0: title screening incomplete
   if (rs.pending > 0) {
     result.next.push({
-      command: `search-hub review extract --session ${sessionId} --basis title --filter pending --name title-screening`,
+      command: `search-hub review extract --session ${sessionId} --basis title --filter pending --reviewer "<name>" --name title-screening`,
       description: `Extract ${rs.pending} pending articles for title screening`,
     });
   }
@@ -72,7 +97,7 @@ export function generateReviewNextSteps(ctx: ReviewNextStepsContext): Suggestion
       const unresolved = rs.conflicting + rs.uncertain + rs.incomplete;
       const nextBasis = detectNextBasis(rs.reviewers);
       result.next.push({
-        command: `search-hub review extract --session ${sessionId} --filter conflicting,uncertain,incomplete --basis ${nextBasis} --name ${nextBasis}-screening`,
+        command: `search-hub review extract --session ${sessionId} --filter conflicting,uncertain,incomplete --basis ${nextBasis} --reviewer "<name>" --name ${nextBasis}-screening`,
         description: `${unresolved} articles need ${nextBasis}-level review`,
       });
     }
@@ -95,15 +120,15 @@ export function generateReviewNextSteps(ctx: ReviewNextStepsContext): Suggestion
     ctx.extractedCount !== undefined &&
     ctx.totalMatching !== undefined
   ) {
-    const nextOffset = (ctx.offset ?? 0) + ctx.extractedCount;
-    const remaining = ctx.totalMatching - nextOffset;
-    if (remaining > 0) {
-      const nextName = ctx.extractName ? `${ctx.extractName}-next` : 'next-batch';
-      result.seeAlso.push({
-        command: `search-hub review extract --session ${sessionId} --offset ${nextOffset} --limit ${ctx.limit} --name ${nextName}`,
-        description: `${remaining} articles remaining — extract next batch`,
-      });
-    }
+    const batch = computeBatchContinuation({
+      sessionId,
+      extractName: ctx.extractName,
+      extractedCount: ctx.extractedCount,
+      totalMatching: ctx.totalMatching,
+      limit: ctx.limit,
+      offset: ctx.offset,
+    });
+    if (batch) result.seeAlso.push(batch);
   }
 
   return result;

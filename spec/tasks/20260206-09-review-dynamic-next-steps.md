@@ -29,7 +29,7 @@ workflow by copy-pasting without needing to understand filter options.
 - [x] Write test: `src/cli/commands/review/next-steps.test.ts`
   - `agreed > 0` → suggests `review finalize`
   - `agreed = 0, uncertain + conflicting + incomplete > 0` → suggests `review extract` with next basis
-  - All finalized → suggests `review export`
+  - All finalized → suggests `register --reviewed`
   - `--limit` used with remaining → suggests next batch with correct offset
   - Next basis detection: no abstract reviews → abstract; has abstract → fulltext
   - Session ID is embedded in suggested commands
