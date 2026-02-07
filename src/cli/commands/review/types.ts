@@ -165,12 +165,23 @@ export function classifyStatus(
   }
 
   // 3. Check for incomplete (registered reviewer missing)
+  // Only check reviewers whose registered basis ≤ article's highest reviewed basis
   if (registeredReviewers && registeredReviewers.length > 0) {
     const reviewerNames = new Set(reviews.map((r) => r.reviewer));
-    const hasAllReviewers = registeredReviewers.every((reg) =>
+    let highestReviewedRank = 0;
+    for (const r of reviews) {
+      highestReviewedRank = Math.max(highestReviewedRank, basisRank(r.basis));
+    }
+    // When reviews have no basis (legacy), check all registered reviewers
+    const applicableReviewers = highestReviewedRank === 0
+      ? registeredReviewers
+      : registeredReviewers.filter(
+          (reg) => basisRank(reg.basis) <= highestReviewedRank
+        );
+    const hasAllReviewers = applicableReviewers.every((reg) =>
       reviewerNames.has(reg.name)
     );
-    if (!hasAllReviewers) {
+    if (applicableReviewers.length > 0 && !hasAllReviewers) {
       return 'incomplete';
     }
   }
@@ -224,12 +235,12 @@ export function classifyStatus(
     }
   }
 
-  // Collect effective decisions, excluding reviewers whose only decision is
-  // uncertain at a lower basis than the highest global definitive
+  // Collect effective decisions, excluding reviewers whose effective decision
+  // is at a lower basis than the highest global definitive
   const effectiveDecisions: ReviewDecision[] = [];
   for (const { decision, rank } of reviewerMap.values()) {
-    if (decision === 'uncertain' && rank < highestDefinitiveRank) {
-      // This reviewer's uncertainty was resolved by a higher-basis definitive — skip
+    if (rank < highestDefinitiveRank) {
+      // This reviewer's decision is at a lower basis than the highest definitive — skip
       continue;
     }
     effectiveDecisions.push(decision);

@@ -28,49 +28,49 @@ Each step follows the TDD cycle:
 
 ### Step 1: Change basis-priority filter to drop ALL lower-basis decisions
 
-- [ ] Step 1: Higher-basis definitive overrides ALL lower-basis decisions
-  - [ ] Write test: `src/cli/commands/review/types.test.ts`
+- [x] Step 1: Higher-basis definitive overrides ALL lower-basis decisions
+  - [x] Write test: `src/cli/commands/review/types.test.ts`
     - A title:include + B abstract:exclude → `agreed-exclude` (was `conflicting`)
     - A title:exclude + B abstract:include → `agreed-include` (was `conflicting`)
     - Same-basis conflicts remain `conflicting` (A title:include + B title:exclude → `conflicting`)
-  - [ ] Verify test fails (Red)
-  - [ ] Implement: In `classifyStatus()`, line ~237-243: change `decision === 'uncertain' && rank < highestDefinitiveRank` to `rank < highestDefinitiveRank`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Verify test still passes
-  - [ ] Acceptance: Cross-basis definitive decisions resolved by higher basis; same-basis conflicts still `conflicting`
+  - [x] Verify test fails (Red)
+  - [x] Implement: In `classifyStatus()`, line ~237-243: change `decision === 'uncertain' && rank < highestDefinitiveRank` to `rank < highestDefinitiveRank`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Verify test still passes
+  - [x] Acceptance: Cross-basis definitive decisions resolved by higher basis; same-basis conflicts still `conflicting`
 
 ### Step 2: Make `incomplete` check basis-aware
 
-- [ ] Step 2: Filter registered reviewers by article's highest reviewed basis
-  - [ ] Write test: `src/cli/commands/review/types.test.ts`
+- [x] Step 2: Filter registered reviewers by article's highest reviewed basis
+  - [x] Write test: `src/cli/commands/review/types.test.ts`
     - Title-only article + abstract reviewer registered → NOT `incomplete`
     - Two title reviewers exclude + abstract reviewer registered but didn't review → `agreed-exclude`
     - Article with abstract review + abstract reviewer not yet reviewed → `incomplete` (unchanged)
-  - [ ] Verify test fails (Red)
-  - [ ] Implement: In `classifyStatus()`, line ~168-176: filter `registeredReviewers` to only those with `basisRank(reg.basis) <= highestReviewedRank` of the article
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Verify test still passes
-  - [ ] Acceptance: `incomplete` only checks reviewers whose registered basis ≤ article's highest reviewed basis
+  - [x] Verify test fails (Red)
+  - [x] Implement: In `classifyStatus()`, line ~168-176: filter `registeredReviewers` to only those with `basisRank(reg.basis) <= highestReviewedRank` of the article
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Verify test still passes
+  - [x] Acceptance: `incomplete` only checks reviewers whose registered basis ≤ article's highest reviewed basis
 
 ### Final Step: E2E Multi-Stage Workflow Test (MANDATORY)
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
+- [x] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
   - Full workflow without finalization: title screening → abstract screening → verify correct statuses
-  - 20 agreed-exclude at title → still `agreed-exclude` after abstract reviewer registered
-  - 80 uncertain at title → abstract-include overrides → `agreed-include`
+  - 2 agreed-exclude at title → still `agreed-exclude` after abstract reviewer registered
+  - 8 uncertain at title → abstract-include overrides → `agreed-include`
   - **Minimize mocks** — Only mock external services when absolutely necessary
   - **Follow user flows** — Test the same paths users will take
   - **Use real file I/O** — Test actual file operations with temp directories
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test the feature manually as a user would
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test the feature manually as a user would
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## TDD Cycle Reference
 
