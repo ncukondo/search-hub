@@ -122,7 +122,7 @@ vi.mock('../../integration/ref-cli.js', () => ({
 }));
 
 // Import after mocking
-const { executeSearch, executeCountOnly, createProviderInstance, isProviderConfigured } = await import('./search-executor.js');
+const { executeSearch, executeCountOnly, executePreview, createProviderInstance, isProviderConfigured } = await import('./search-executor.js');
 
 describe('search-executor', () => {
   let tempDir: string;
@@ -1127,6 +1127,35 @@ filters:
       warnSpy.mockRestore();
     });
 
+    it('should return mixed results when some providers fail (partial success)', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+
+      // Make eric count fail
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+      const mockedEric = vi.mocked(ERICProvider);
+      const originalEricImpl = mockedEric.getMockImplementation();
+      mockedEric.mockImplementation(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        search: vi.fn().mockImplementation(async function* () {}),
+        count: vi.fn().mockRejectedValue(new Error('ERIC API timeout')),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
+      }) as any);
+
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const results = await executeCountOnly(options, config);
+
+      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+
+      expect(results).toHaveLength(2);
+      const pubmed = results.find((r) => r.provider === 'pubmed');
+      const eric = results.find((r) => r.provider === 'eric');
+      expect(pubmed?.count).toBe(42);
+      expect(pubmed?.error).toBeUndefined();
+      expect(eric?.error).toBe('ERIC API timeout');
+    });
+
     it('should return empty array when no providers available', async () => {
       config.providers.pubmed.enabled = false;
       config.providers.eric.enabled = false;
@@ -1140,6 +1169,39 @@ filters:
       const results = await executeCountOnly(options, config);
 
       expect(results).toHaveLength(0);
+    });
+  });
+
+  describe('executePreview partial success', () => {
+    it('should return mixed results when some providers fail in preview mode', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+
+      // Make eric fail in preview
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+      const mockedEric = vi.mocked(ERICProvider);
+      const originalEricImpl = mockedEric.getMockImplementation();
+      mockedEric.mockImplementation(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('ERIC preview error');
+        }),
+        count: vi.fn().mockRejectedValue(new Error('ERIC preview error')),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
+      }) as any);
+
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const results = await executePreview(options, config);
+
+      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+
+      expect(results).toHaveLength(2);
+      const pubmed = results.find((r) => r.provider === 'pubmed');
+      const eric = results.find((r) => r.provider === 'eric');
+      expect(pubmed?.count).toBe(42);
+      expect(pubmed?.error).toBeUndefined();
+      expect(eric?.error).toBe('ERIC preview error');
     });
   });
 });

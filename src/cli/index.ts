@@ -511,6 +511,7 @@ Examples:
     .option('--preview', 'get hit counts and first 5 titles without creating session')
     .option('--skip-connection-test', 'skip API connection test during dry-run')
     .option('--no-resume', 'start fresh even if session exists')
+    .option('--strict', 'require all targeted databases to succeed (exit non-zero on partial failure)')
     .addHelpText('after', `
 Workflow position:
   query validate → [this command: search] → results / summary / diff
@@ -535,6 +536,7 @@ Examples:
           preview?: boolean;
           skipConnectionTest?: boolean;
           resume?: boolean;
+          strict?: boolean;
         }
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
@@ -549,6 +551,7 @@ Examples:
             countOnly: options?.countOnly,
             preview: options?.preview,
             noResume: options?.resume === false,
+            strict: options?.strict,
           });
 
           const validation = validateSearchInput(searchOpts);
@@ -653,8 +656,19 @@ Examples:
               console.log(formatPreviewOutput(previews, searchOpts.queryFile));
             }
 
-            const hasErrors = previews.some((p) => p.error);
-            process.exitCode = hasErrors ? EXIT_CODES.NETWORK_ERROR : EXIT_CODES.SUCCESS;
+            const previewHasErrors = previews.some((p) => p.error);
+            const previewAllFailed = previews.every((p) => p.error);
+            if (previewAllFailed) {
+              process.exitCode = EXIT_CODES.NETWORK_ERROR;
+            } else if (previewHasErrors && searchOpts.strict) {
+              process.exitCode = EXIT_CODES.NETWORK_ERROR;
+            } else {
+              process.exitCode = EXIT_CODES.SUCCESS;
+            }
+            if (previewHasErrors && !previewAllFailed && !globalOpts.quiet) {
+              const failed = previews.filter((p) => p.error).map((p) => `${p.provider}: ${p.error}`);
+              console.warn(`\nWarning: Some providers failed:\n  ${failed.join('\n  ')}`);
+            }
             return;
           }
 
@@ -686,8 +700,19 @@ Examples:
               if (suggestion) console.log(suggestion);
             }
 
-            const hasErrors = counts.some((c) => c.error);
-            process.exitCode = hasErrors ? EXIT_CODES.NETWORK_ERROR : EXIT_CODES.SUCCESS;
+            const countHasErrors = counts.some((c) => c.error);
+            const countAllFailed = counts.every((c) => c.error);
+            if (countAllFailed) {
+              process.exitCode = EXIT_CODES.NETWORK_ERROR;
+            } else if (countHasErrors && searchOpts.strict) {
+              process.exitCode = EXIT_CODES.NETWORK_ERROR;
+            } else {
+              process.exitCode = EXIT_CODES.SUCCESS;
+            }
+            if (countHasErrors && !countAllFailed && !globalOpts.quiet) {
+              const failed = counts.filter((c) => c.error).map((c) => `${c.provider}: ${c.error}`);
+              console.warn(`\nWarning: Some providers failed:\n  ${failed.join('\n  ')}`);
+            }
             return;
           }
 
@@ -715,7 +740,20 @@ Examples:
               console.log(`\nSearch completed. Session: ${result.sessionId}`);
               if (result.results) {
                 for (const [provider, stats] of Object.entries(result.results)) {
-                  console.log(`  ${provider}: ${stats.retrieved} results`);
+                  if (stats.error) {
+                    console.log(`  ${provider}: FAILED - ${stats.error}`);
+                  } else {
+                    console.log(`  ${provider}: ${stats.retrieved} results`);
+                  }
+                }
+              }
+              // Show warning for partial success
+              if (result.sessionStatus === 'partial' && result.results) {
+                const failed = Object.entries(result.results)
+                  .filter(([, s]) => s.error)
+                  .map(([p, s]) => `${p}: ${s.error}`);
+                if (failed.length > 0) {
+                  console.warn(`\nWarning: Some providers failed:\n  ${failed.join('\n  ')}`);
                 }
               }
               // Show next step suggestions
