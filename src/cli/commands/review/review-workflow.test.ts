@@ -18,7 +18,7 @@ import { executeReviewMerge } from './merge.js';
 import { executeReviewExport } from './export.js';
 import { executeReviewMark } from './mark.js';
 import { getIncludedArticles } from '../register.js';
-import type { ReviewFile, WorkFile } from './types.js';
+import type { ReviewDecision, ReviewFile, WorkFile } from './types.js';
 
 describe('Review Workflow E2E', () => {
   let tempDir: string;
@@ -906,6 +906,224 @@ summary:
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       const reviewedArticles = reviewFile.articles.filter((a) => (a.reviews ?? []).length > 0);
       expect(reviewedArticles).toHaveLength(3);
+    });
+  });
+
+  describe('7-state status model E2E', () => {
+    it('shows incomplete status when one registered reviewer has not reviewed', async () => {
+      await setupSessionWithResults();
+
+      // Init review
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Phase 1: Reviewer 1 (ai:gpt-4o) reviews all articles at title basis
+      const phase1Extract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:gpt-4o',
+          name: 'reviewer1-title',
+        },
+        sessionsDir
+      );
+      const phase1Content = await readFile(phase1Extract.outputPath, 'utf-8');
+      const phase1File = parseYaml(phase1Content) as WorkFile;
+      // Mark all articles as include
+      for (const article of phase1File.articles) {
+        await executeReviewMark({
+          file: phase1Extract.outputPath,
+          id: article.id,
+          decision: 'include',
+          comment: '',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'reviewer1-title' }, sessionsDir);
+
+      // Phase 2: Reviewer 2 (ai:claude) reviews only SOME articles at title basis
+      const phase2Extract = await executeReviewExtract(
+        {
+          sessionId,
+          // All are agreed-include now (only one reviewer, all said include)
+          // But after registering reviewer 2, they become incomplete
+          filter: ['agreed-include'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 3, // Only review 3 of 10
+          name: 'reviewer2-partial',
+        },
+        sessionsDir
+      );
+      const phase2Content = await readFile(phase2Extract.outputPath, 'utf-8');
+      const phase2File = parseYaml(phase2Content) as WorkFile;
+      // Mark the 3 extracted articles as include
+      for (const article of phase2File.articles) {
+        await executeReviewMark({
+          file: phase2Extract.outputPath,
+          id: article.id,
+          decision: 'include',
+          comment: '',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'reviewer2-partial' }, sessionsDir);
+
+      // Now we have 2 registered reviewers at title basis:
+      // - ai:gpt-4o reviewed all 10
+      // - ai:claude reviewed only 3
+      // So 3 articles have both reviews → agreed-include
+      // And 7 articles are missing ai:claude → incomplete
+
+      const status = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(status.reviewers).toHaveLength(2);
+      expect(status.incomplete).toBe(7);
+      expect(status.agreedInclude).toBe(3);
+      expect(status.pending).toBe(0);
+    });
+
+    it('detects agreed-include and agreed-exclude consensus from multiple reviewers', async () => {
+      await setupSessionWithResults();
+
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Reviewer 1: reviews first 5 articles
+      const r1Extract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:gpt-4o',
+          limit: 5,
+          name: 'r1-screen',
+        },
+        sessionsDir
+      );
+      const r1Content = await readFile(r1Extract.outputPath, 'utf-8');
+      const r1File = parseYaml(r1Content) as WorkFile;
+      // Mark first 3 as include, last 2 as exclude
+      for (let i = 0; i < r1File.articles.length; i++) {
+        await executeReviewMark({
+          file: r1Extract.outputPath,
+          id: r1File.articles[i]!.id,
+          decision: i < 3 ? 'include' : 'exclude',
+          comment: '',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'r1-screen' }, sessionsDir);
+
+      // After r1 merge: 1 registered reviewer (ai:gpt-4o)
+      // 3 articles = agreed-include, 2 = agreed-exclude, 5 = pending
+      const statusAfterR1 = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(statusAfterR1.agreedInclude).toBe(3);
+      expect(statusAfterR1.agreedExclude).toBe(2);
+      expect(statusAfterR1.pending).toBe(5);
+
+      // Reviewer 2: reviews same 5 articles (use agreed-include + agreed-exclude filter)
+      // After r1 merge, articles are agreed-include/agreed-exclude (only 1 reviewer registered)
+      const r2Extract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['agreed-include', 'agreed-exclude'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 5,
+          name: 'r2-screen',
+        },
+        sessionsDir
+      );
+      const r2Content = await readFile(r2Extract.outputPath, 'utf-8');
+      const r2File = parseYaml(r2Content) as WorkFile;
+      expect(r2File.articles).toHaveLength(5);
+
+      // Match reviewer 1's decisions exactly
+      for (const article of r2File.articles) {
+        // Find corresponding article in r1 by ID
+        const r1Index = r1File.articles.findIndex((a) => a.id === article.id);
+        const decision = r1Index < 3 ? 'include' : 'exclude';
+        await executeReviewMark({
+          file: r2Extract.outputPath,
+          id: article.id,
+          decision: decision as ReviewDecision,
+          comment: '',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'r2-screen' }, sessionsDir);
+
+      // Now 2 registered reviewers. Both agreed on include/exclude.
+      const status = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(status.agreedInclude).toBe(3); // Both reviewers said include
+      expect(status.agreedExclude).toBe(2); // Both reviewers said exclude
+      expect(status.pending).toBe(5); // Remaining 5 have no reviews → still pending
+      expect(status.incomplete).toBe(0);
+      expect(status.conflicting).toBe(0);
+    });
+
+    it('classifies correctly when reviewer registry is empty (backward compatibility)', async () => {
+      await setupSessionWithResults();
+
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Manually add reviews without using extract/merge workflow
+      // This simulates backward-compatible scenario with no reviewer registry
+      const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
+      const reviewsContent = await readFile(reviewsPath, 'utf-8');
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+
+      // Ensure no reviewer registry
+      reviewFile.reviewers = [];
+
+      // Add reviews directly (simulating manual edits or old workflow)
+      // Article 0: one include → agreed-include (no incomplete check since registry empty)
+      reviewFile.articles[0]!.reviews = [
+        { reviewer: 'manual-reviewer', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
+      ];
+
+      // Article 1: one exclude → agreed-exclude
+      reviewFile.articles[1]!.reviews = [
+        { reviewer: 'manual-reviewer', decision: 'exclude', timestamp: '2024-01-01T00:00:00Z' },
+      ];
+
+      // Article 2: conflicting decisions
+      reviewFile.articles[2]!.reviews = [
+        { reviewer: 'reviewer-a', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
+        { reviewer: 'reviewer-b', decision: 'exclude', timestamp: '2024-01-01T01:00:00Z' },
+      ];
+
+      // Article 3: uncertain
+      reviewFile.articles[3]!.reviews = [
+        { reviewer: 'reviewer-a', decision: 'uncertain', timestamp: '2024-01-01T00:00:00Z' },
+      ];
+
+      // Article 4: finalized
+      reviewFile.articles[4]!.reviews = [
+        { reviewer: 'reviewer-a', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
+      ];
+      reviewFile.articles[4]!.finalDecision = 'include';
+
+      await writeFile(reviewsPath, stringifyYaml(reviewFile));
+
+      const status = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(status.agreedInclude).toBe(1);
+      expect(status.agreedExclude).toBe(1);
+      expect(status.conflicting).toBe(1);
+      expect(status.uncertain).toBe(1);
+      expect(status.finalized).toBe(1);
+      expect(status.included).toBe(1);
+      expect(status.pending).toBe(5); // Articles 5-9 still pending
+      expect(status.incomplete).toBe(0); // No incomplete since registry is empty
+
+      // Also verify list filtering works
+      const agreedIncludeList = await executeReviewList(
+        { sessionId, filter: 'agreed-include' },
+        sessionsDir
+      );
+      expect(agreedIncludeList.articles).toHaveLength(1);
+      expect(agreedIncludeList.articles[0]!.status).toBe('agreed-include');
+
+      const conflictingList = await executeReviewList(
+        { sessionId, filter: 'conflicting' },
+        sessionsDir
+      );
+      expect(conflictingList.articles).toHaveLength(1);
     });
   });
 });
