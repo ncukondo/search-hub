@@ -5,7 +5,7 @@
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { parse as parseYaml } from 'yaml';
-import { classifyStatus, type ReviewFile, type ReviewStatus, type ReviewerRecord } from './types.js';
+import { classifyStatus, type ReviewFile, type ReviewStatus } from './types.js';
 
 export type ListFilter =
   | 'pending'
