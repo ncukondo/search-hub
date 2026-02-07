@@ -29,6 +29,7 @@ describe('writeMarkdown', () => {
         ],
         doi: '10.1234/example',
         pmcid: '1234567',
+        pmid: '38654321',
       },
     });
     const md = writeMarkdown(doc);
@@ -36,6 +37,70 @@ describe('writeMarkdown', () => {
     expect(md).toContain('**Authors**: Smith J, Jones A');
     expect(md).toContain('**DOI**: 10.1234/example');
     expect(md).toContain('**PMC**: PMC1234567');
+    expect(md).toContain('**PMID**: 38654321');
+  });
+
+  it('renders publication date with zero-padded month and day', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        publicationDate: { year: '2024', month: '3', day: '5' },
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Published**: 2024-03-05');
+  });
+
+  it('renders publication date with year-month only', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        publicationDate: { year: '2024', month: '11' },
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Published**: 2024-11');
+  });
+
+  it('renders citation with volume, issue, and pages', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        volume: '10',
+        issue: '2',
+        pages: '100-110',
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Citation**: Vol. 10(2), pp. 100-110');
+  });
+
+  it('renders citation with volume and elocation-id only', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        volume: '89',
+        pages: 'e102945',
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Citation**: Vol. 89, pp. e102945');
+  });
+
+  it('renders keywords list', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        keywords: ['systematic review', 'meta-analysis', 'deep learning'],
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Keywords**: systematic review, meta-analysis, deep learning');
   });
 
   it('converts sections to ## headings', () => {

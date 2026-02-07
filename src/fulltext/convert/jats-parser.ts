@@ -241,6 +241,7 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   const articleIds = findChildren(metaChildren, 'article-id');
   let doi: string | undefined;
   let pmcid: string | undefined;
+  let pmid: string | undefined;
   for (const idEntry of articleIds) {
     const idType = idEntry.attrs['pub-id-type'];
     const idText = extractAllText(idEntry.children);
@@ -248,6 +249,7 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
     if (idType === 'pmc' || idType === 'pmcid') {
       pmcid = idText.replace(/^PMC/, '');
     }
+    if (idType === 'pmid') pmid = idText;
   }
 
   // Authors
@@ -304,9 +306,120 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
     }
   }
 
+  // Publication date (from <article-meta>/<pub-date>)
+  // Priority: epub > ppub > collection > any other
+  const pubDates = findChildren(metaChildren, 'pub-date');
+  let publicationDate: { year: string; month?: string; day?: string } | undefined;
+  const datePriority: Record<string, number> = { epub: 0, ppub: 1, collection: 2 };
+  let bestPriority = Infinity;
+  for (const pd of pubDates) {
+    // Support both pub-type (NLM/early JATS) and date-type (JATS 1.2+)
+    const dateType = pd.attrs['pub-type'] ?? pd.attrs['date-type'] ?? '';
+    const priority = datePriority[dateType] ?? 3;
+    if (priority < bestPriority) {
+      bestPriority = priority;
+      const yearNode = findChild(pd.children, 'year');
+      if (yearNode) {
+        const year = extractAllText(yearNode.children);
+        const monthNode = findChild(pd.children, 'month');
+        const dayNode = findChild(pd.children, 'day');
+        const date: { year: string; month?: string; day?: string } = { year };
+        if (monthNode) date.month = extractAllText(monthNode.children);
+        if (dayNode) date.day = extractAllText(dayNode.children);
+        publicationDate = date;
+      }
+    }
+  }
+  // If no prioritized date found, take first available
+  if (!publicationDate && pubDates.length > 0) {
+    const pd = pubDates[0]!;
+    const yearNode = findChild(pd.children, 'year');
+    if (yearNode) {
+      const year = extractAllText(yearNode.children);
+      const monthNode = findChild(pd.children, 'month');
+      const dayNode = findChild(pd.children, 'day');
+      const date: { year: string; month?: string; day?: string } = { year };
+      if (monthNode) date.month = extractAllText(monthNode.children);
+      if (dayNode) date.day = extractAllText(dayNode.children);
+      publicationDate = date;
+    }
+  }
+
+  // Article type (from root <article> element attribute)
+  const articleType = article.attrs['article-type'] || undefined;
+
+  // License (from <permissions>/<license>)
+  let license: string | undefined;
+  const permissions = findChild(metaChildren, 'permissions');
+  if (permissions) {
+    const licenseNode = findChild(permissions.children, 'license');
+    if (licenseNode) {
+      // Prefer @xlink:href (standardized URL) over <license-p> (free-text)
+      const href = licenseNode.attrs['xlink:href'];
+      if (href) {
+        license = href;
+      } else {
+        const licenseP = findChild(licenseNode.children, 'license-p');
+        if (licenseP) license = extractAllText(licenseP.children).trim();
+      }
+    }
+  }
+
+  // Keywords (from all <kwd-group> elements)
+  const kwdGroups = findChildren(metaChildren, 'kwd-group');
+  const keywords: string[] = [];
+  for (const kwdGroup of kwdGroups) {
+    const kwds = findChildren(kwdGroup.children, 'kwd');
+    for (const kwd of kwds) {
+      const text = extractAllText(kwd.children).trim();
+      if (text) keywords.push(text);
+    }
+  }
+
+  // Volume, issue, pages
+  const volumeNode = findChild(metaChildren, 'volume');
+  const volume = volumeNode ? extractAllText(volumeNode.children) : undefined;
+  const issueNode = findChild(metaChildren, 'issue');
+  const issue = issueNode ? extractAllText(issueNode.children) : undefined;
+  let pages: string | undefined;
+  const fpageNode = findChild(metaChildren, 'fpage');
+  const lpageNode = findChild(metaChildren, 'lpage');
+  if (fpageNode) {
+    const fp = extractAllText(fpageNode.children);
+    const lp = lpageNode ? extractAllText(lpageNode.children) : '';
+    pages = lp ? `${fp}-${lp}` : fp;
+  } else {
+    const elocationNode = findChild(metaChildren, 'elocation-id');
+    if (elocationNode) pages = extractAllText(elocationNode.children);
+  }
+
+  // Journal name (from <front>/<journal-meta>)
+  const journalMeta = findChild(front.children, 'journal-meta');
+  let journal: string | undefined;
+  if (journalMeta) {
+    const titleGroup = findChild(journalMeta.children, 'journal-title-group');
+    if (titleGroup) {
+      const jTitle = findChild(titleGroup.children, 'journal-title');
+      if (jTitle) journal = extractAllText(jTitle.children);
+    }
+    if (!journal) {
+      const jTitle = findChild(journalMeta.children, 'journal-title');
+      if (jTitle) journal = extractAllText(jTitle.children);
+    }
+  }
+
   const result: JatsMetadata = { title, authors };
   if (doi) result.doi = doi;
   if (pmcid) result.pmcid = pmcid;
+  if (pmid) result.pmid = pmid;
+  if (journal) result.journal = journal;
+  if (publicationDate) result.publicationDate = publicationDate;
+  if (volume) result.volume = volume;
+  if (issue) result.issue = issue;
+  if (pages) result.pages = pages;
+  if (keywords.length > 0) result.keywords = keywords;
+  if (articleType) result.articleType = articleType;
+  if (license) result.license = license;
   if (abstract) result.abstract = abstract;
   return result;
 }
