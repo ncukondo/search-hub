@@ -681,6 +681,19 @@ function parseBlockContent(sectionChildren: OrderedNode[]): BlockElement[] {
       blocks.push(parseDefList(child));
     } else if (tag === 'disp-formula') {
       blocks.push(parseDispFormula(child));
+    } else if (tag === 'preformat') {
+      const text = extractAllText(getChildren(child));
+      blocks.push({ type: 'preformat', text });
+    } else if (tag === 'supplementary-material') {
+      const innerChildren = getChildren(child);
+      const labelNode = findChild(innerChildren, 'label');
+      const captionNode = findChild(innerChildren, 'caption');
+      const labelText = labelNode ? extractAllText(labelNode.children) : '';
+      const captionText = captionNode ? extractAllText(captionNode.children) : '';
+      const text = [labelText, captionText].filter(Boolean).join(': ');
+      if (text) {
+        blocks.push({ type: 'paragraph', content: [{ type: 'text', text }] });
+      }
     }
     // Skip title, sec, and other non-block elements
   }

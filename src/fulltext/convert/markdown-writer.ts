@@ -96,6 +96,9 @@ function renderBlock(block: BlockElement): string {
       return `![${altText}]()`;
     }
 
+    case 'preformat':
+      return '```\n' + block.text + '\n```';
+
     case 'formula': {
       const lines: string[] = [];
       if (block.tex) {

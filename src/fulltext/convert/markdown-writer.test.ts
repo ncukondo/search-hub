@@ -508,6 +508,23 @@ describe('writeMarkdown', () => {
     expect(md).toContain('(2)');
   });
 
+  it('renders preformat as fenced code block', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Code',
+          level: 2,
+          content: [
+            { type: 'preformat', text: 'function hello() {\n  return "world";\n}' },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('```\nfunction hello() {\n  return "world";\n}\n```');
+  });
+
   it('renders boxed-text without title', () => {
     const doc = makeDoc({
       sections: [

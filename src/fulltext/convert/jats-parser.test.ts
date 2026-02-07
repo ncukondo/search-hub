@@ -1671,6 +1671,81 @@ describe('parseJatsBody - disp-formula', () => {
   });
 });
 
+describe('parseJatsBody - preformat', () => {
+  it('parses <preformat> element preserving whitespace', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Code</title>
+            <preformat>function hello() {
+  return "world";
+}</preformat>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('preformat');
+    if (content[0]!.type === 'preformat') {
+      expect(content[0]!.text).toContain('function hello()');
+      expect(content[0]!.text).toContain('return "world"');
+    }
+  });
+});
+
+describe('parseJatsBody - supplementary-material', () => {
+  it('parses <supplementary-material> with label and caption as paragraph', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Data</title>
+            <supplementary-material id="sup1">
+              <label>Supplementary File 1</label>
+              <caption><p>Raw data from the experiment</p></caption>
+            </supplementary-material>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('paragraph');
+    if (content[0]!.type === 'paragraph') {
+      const text = content[0]!.content.map((c) => c.type === 'text' ? c.text : '').join('');
+      expect(text).toContain('Supplementary File 1');
+      expect(text).toContain('Raw data from the experiment');
+    }
+  });
+
+  it('handles <supplementary-material> without caption', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Data</title>
+            <supplementary-material id="sup2">
+              <label>Table S1</label>
+            </supplementary-material>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('paragraph');
+    if (content[0]!.type === 'paragraph') {
+      const text = content[0]!.content.map((c) => c.type === 'text' ? c.text : '').join('');
+      expect(text).toContain('Table S1');
+    }
+  });
+});
+
 describe('E2E: multi-paragraph table cells in body', () => {
   it('parses XML with multi-paragraph table cells correctly', () => {
     const xml = `

@@ -36,7 +36,8 @@ export type BlockElement =
   | { type: 'figure'; id?: string; label?: string; caption?: string }
   | { type: 'boxed-text'; title?: string; content: BlockElement[] }
   | { type: 'def-list'; title?: string; items: { term: string; definition: string }[] }
-  | { type: 'formula'; id?: string; label?: string; tex?: string; text?: string };
+  | { type: 'formula'; id?: string; label?: string; tex?: string; text?: string }
+  | { type: 'preformat'; text: string };
 
 /** A document section (may contain nested subsections). */
 export interface JatsSection {
