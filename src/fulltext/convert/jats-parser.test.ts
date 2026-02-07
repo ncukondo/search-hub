@@ -125,6 +125,40 @@ describe('parseJatsMetadata', () => {
     expect(metadata.abstract).toContain('Methods text.');
   });
 
+  it('extracts PMCID from <article-id pub-id-type="pmcid"> stripping PMC prefix', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <article-id pub-id-type="pmcid">PMC11293181</article-id>
+            <title-group>
+              <article-title>Test</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.pmcid).toBe('11293181');
+  });
+
+  it('extracts PMCID from <article-id pub-id-type="pmcid"> without PMC prefix', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <article-id pub-id-type="pmcid">11293181</article-id>
+            <title-group>
+              <article-title>Test</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.pmcid).toBe('11293181');
+  });
+
   it('handles missing optional fields gracefully', () => {
     const xml = `
       <article>
