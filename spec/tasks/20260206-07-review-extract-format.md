@@ -97,16 +97,16 @@ Enhance the extract command to support the progressive screening workflow:
 
 ### Step 6: Remove `--input` from Mark Command
 
-- [ ] Write test: `src/cli/commands/review/mark.test.ts`
+- [x] Write test: `src/cli/commands/review/mark.test.ts`
   - Remove batch input tests
   - Single marking still works
-- [ ] Remove `input` from `ReviewMarkOptions`
-- [ ] Remove batch marking code from `executeReviewMark`
-- [ ] Remove `DecisionInput` interface
-- [ ] Update CLI: remove `--input` option
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `mark` only supports single-article marking
+- [x] Remove `input` from `ReviewMarkOptions`
+- [x] Remove batch marking code from `executeReviewMark`
+- [x] Remove `DecisionInput` interface
+- [x] Update CLI: remove `--input` option
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `mark` only supports single-article marking
 
 ### Final Step: E2E Integration Tests
 
