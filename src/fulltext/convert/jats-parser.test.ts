@@ -437,6 +437,46 @@ describe('parseJatsTable', () => {
   });
 });
 
+describe('parseJatsTable - multi-paragraph cells', () => {
+  it('joins multiple <p> elements in <td> with <br> separator', () => {
+    const xml = `
+      <table-wrap>
+        <table>
+          <thead>
+            <tr><th>Topic</th><th>Instructions</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><p>Introduction</p><p>Explain that this interview has nothing to do with evaluation.</p></td>
+              <td><p>Simple cell</p></td>
+            </tr>
+          </tbody>
+        </table>
+      </table-wrap>
+    `;
+    const table = parseJatsTable(xml);
+    expect(table.rows[0]![0]).toBe('Introduction<br>Explain that this interview has nothing to do with evaluation.');
+    expect(table.rows[0]![1]).toBe('Simple cell');
+  });
+
+  it('handles <th> with multiple <p> elements', () => {
+    const xml = `
+      <table-wrap>
+        <table>
+          <thead>
+            <tr><th><p>Header Line 1</p><p>Header Line 2</p></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>data</td></tr>
+          </tbody>
+        </table>
+      </table-wrap>
+    `;
+    const table = parseJatsTable(xml);
+    expect(table.headers[0]).toBe('Header Line 1<br>Header Line 2');
+  });
+});
+
 describe('parseJatsBody - figures', () => {
   it('extracts <fig> with caption', () => {
     const xml = `
