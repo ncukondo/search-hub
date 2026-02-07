@@ -36,6 +36,30 @@ describe('writeMarkdown', () => {
     expect(md).toContain('**PMID**: 38654321');
   });
 
+  it('renders publication date with zero-padded month and day', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        publicationDate: { year: '2024', month: '3', day: '5' },
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Published**: 2024-03-05');
+  });
+
+  it('renders publication date with year-month only', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        publicationDate: { year: '2024', month: '11' },
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Published**: 2024-11');
+  });
+
   it('converts sections to ## headings', () => {
     const doc = makeDoc({
       sections: [

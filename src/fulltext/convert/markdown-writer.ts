@@ -171,7 +171,19 @@ export function writeMarkdown(doc: JatsDocument): string {
     lines.push(`**Journal**: ${doc.metadata.journal}`);
   }
 
-  if (doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal) {
+  // Published date
+  if (doc.metadata.publicationDate) {
+    const d = doc.metadata.publicationDate;
+    let dateStr = d.year;
+    if (d.month) {
+      dateStr += `-${d.month.padStart(2, '0')}`;
+      if (d.day) dateStr += `-${d.day.padStart(2, '0')}`;
+    }
+    lines.push(`**Published**: ${dateStr}`);
+  }
+
+  const hasMetaLines = doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal || doc.metadata.publicationDate;
+  if (hasMetaLines) {
     lines.push('');
   }
 

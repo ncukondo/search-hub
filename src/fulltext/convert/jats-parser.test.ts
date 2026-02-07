@@ -199,6 +199,62 @@ describe('parseJatsMetadata', () => {
     expect(metadata.journal).toBe('Nature Medicine');
   });
 
+  it('extracts publication date from <pub-date pub-type="epub">', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <pub-date pub-type="epub"><year>2024</year><month>03</month><day>15</day></pub-date>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.publicationDate).toBeDefined();
+    expect(metadata.publicationDate!.year).toBe('2024');
+    expect(metadata.publicationDate!.month).toBeDefined();
+    expect(metadata.publicationDate!.day).toBeDefined();
+  });
+
+  it('prefers epub over ppub over collection for publication date', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <pub-date pub-type="collection"><year>2023</year></pub-date>
+            <pub-date pub-type="ppub"><year>2024</year><month>06</month></pub-date>
+            <pub-date pub-type="epub"><year>2024</year><month>03</month><day>15</day></pub-date>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.publicationDate).toBeDefined();
+    // epub should be preferred (year 2024, month 3, day 15)
+    expect(metadata.publicationDate!.year).toBe('2024');
+    expect(metadata.publicationDate!.day).toBeDefined();
+  });
+
+  it('supports JATS 1.2+ date-type attribute for publication date', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <pub-date date-type="pub" publication-format="electronic"><year>2024</year><month>05</month></pub-date>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.publicationDate).toBeDefined();
+    expect(metadata.publicationDate!.year).toBe('2024');
+    expect(metadata.publicationDate!.month).toBeDefined();
+    expect(metadata.publicationDate!.day).toBeUndefined();
+  });
+
   it('handles missing optional fields gracefully', () => {
     const xml = `
       <article>

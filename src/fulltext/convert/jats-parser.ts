@@ -305,6 +305,45 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
     }
   }
 
+  // Publication date (from <article-meta>/<pub-date>)
+  // Priority: epub > ppub > collection > any other
+  const pubDates = findChildren(metaChildren, 'pub-date');
+  let publicationDate: { year: string; month?: string; day?: string } | undefined;
+  const datePriority: Record<string, number> = { epub: 0, ppub: 1, collection: 2 };
+  let bestPriority = Infinity;
+  for (const pd of pubDates) {
+    // Support both pub-type (NLM/early JATS) and date-type (JATS 1.2+)
+    const dateType = pd.attrs['pub-type'] ?? pd.attrs['date-type'] ?? '';
+    const priority = datePriority[dateType] ?? 3;
+    if (priority < bestPriority) {
+      bestPriority = priority;
+      const yearNode = findChild(pd.children, 'year');
+      if (yearNode) {
+        const year = extractAllText(yearNode.children);
+        const monthNode = findChild(pd.children, 'month');
+        const dayNode = findChild(pd.children, 'day');
+        const date: { year: string; month?: string; day?: string } = { year };
+        if (monthNode) date.month = extractAllText(monthNode.children);
+        if (dayNode) date.day = extractAllText(dayNode.children);
+        publicationDate = date;
+      }
+    }
+  }
+  // If no prioritized date found, take first available
+  if (!publicationDate && pubDates.length > 0) {
+    const pd = pubDates[0]!;
+    const yearNode = findChild(pd.children, 'year');
+    if (yearNode) {
+      const year = extractAllText(yearNode.children);
+      const monthNode = findChild(pd.children, 'month');
+      const dayNode = findChild(pd.children, 'day');
+      const date: { year: string; month?: string; day?: string } = { year };
+      if (monthNode) date.month = extractAllText(monthNode.children);
+      if (dayNode) date.day = extractAllText(dayNode.children);
+      publicationDate = date;
+    }
+  }
+
   // Journal name (from <front>/<journal-meta>)
   const journalMeta = findChild(front.children, 'journal-meta');
   let journal: string | undefined;
@@ -325,6 +364,7 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   if (pmcid) result.pmcid = pmcid;
   if (pmid) result.pmid = pmid;
   if (journal) result.journal = journal;
+  if (publicationDate) result.publicationDate = publicationDate;
   if (abstract) result.abstract = abstract;
   return result;
 }
