@@ -85,15 +85,15 @@ Enhance the extract command to support the progressive screening workflow:
 
 ### Step 5: Add `--basis fulltext` Support
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - `--basis fulltext` includes `fulltext` field (dirName) in work file articles
   - Abstract is also included for fulltext basis
-- [ ] Add `fulltext?: string` to `WorkFileArticle`
-- [ ] Update `executeReviewExtract` to include fulltext dirName for `--basis fulltext`
-- [ ] Update CLI basis validation to accept `'fulltext'`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `extract --basis fulltext` includes fulltext reference
+- [x] Add `fulltext?: string` to `WorkFileArticle`
+- [x] Update `executeReviewExtract` to include fulltext dirName for `--basis fulltext`
+- [x] Update CLI basis validation to accept `'fulltext'`
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `extract --basis fulltext` includes fulltext reference
 
 ### Step 6: Remove `--input` from Mark Command
 
