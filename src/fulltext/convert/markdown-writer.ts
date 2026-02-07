@@ -96,6 +96,21 @@ function renderBlock(block: BlockElement): string {
       return `![${altText}]()`;
     }
 
+    case 'formula': {
+      const lines: string[] = [];
+      if (block.tex) {
+        lines.push(`$$${block.tex}$$`);
+      } else if (block.text) {
+        lines.push('```');
+        lines.push(block.text);
+        lines.push('```');
+      }
+      if (block.label) {
+        lines.push(block.label);
+      }
+      return lines.join('\n');
+    }
+
     case 'def-list': {
       const lines: string[] = [];
       if (block.title) {

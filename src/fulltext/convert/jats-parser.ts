@@ -507,6 +507,38 @@ function parseDefList(node: OrderedNode): BlockElement {
   return block;
 }
 
+/**
+ * Parse a <disp-formula> element into a formula block.
+ * Extracts TeX content from <tex-math> preferentially (inside <alternatives> or direct),
+ * falls back to extractAllText for plain text.
+ */
+function parseDispFormula(node: OrderedNode): BlockElement {
+  const children = getChildren(node);
+  const id = getAttr(node, 'id');
+  const labelNode = findChild(children, 'label');
+  const label = labelNode ? extractAllText(labelNode.children) : undefined;
+
+  // Try <alternatives> wrapper first
+  const alternatives = findChild(children, 'alternatives');
+  const searchChildren = alternatives ? alternatives.children : children;
+
+  const texMath = findChild(searchChildren, 'tex-math');
+  const block: BlockElement = { type: 'formula' };
+  if (id) block.id = id;
+  if (label) block.label = label;
+
+  if (texMath) {
+    block.tex = extractAllText(texMath.children);
+  } else {
+    // Fall back to plain text extraction (skip label)
+    const textChildren = children.filter((c) => !('label' in c));
+    const text = extractAllText(textChildren).trim();
+    if (text) block.text = text;
+  }
+
+  return block;
+}
+
 /** Tags that represent block-level elements when nested inside <p>. */
 const BLOCK_TAGS = new Set(['table-wrap', 'fig', 'disp-quote', 'boxed-text']);
 
@@ -647,6 +679,8 @@ function parseBlockContent(sectionChildren: OrderedNode[]): BlockElement[] {
       blocks.push(parseBoxedText(child));
     } else if (tag === 'def-list') {
       blocks.push(parseDefList(child));
+    } else if (tag === 'disp-formula') {
+      blocks.push(parseDispFormula(child));
     }
     // Skip title, sec, and other non-block elements
   }

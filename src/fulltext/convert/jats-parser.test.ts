@@ -1596,6 +1596,81 @@ describe('parseJatsBody - def-list', () => {
   });
 });
 
+describe('parseJatsBody - disp-formula', () => {
+  it('parses <disp-formula> with <alternatives> containing <tex-math>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Equations</title>
+            <disp-formula id="eq1">
+              <label>(1)</label>
+              <alternatives>
+                <tex-math>E = mc^2</tex-math>
+                <mml:math><mml:mi>E</mml:mi></mml:math>
+              </alternatives>
+            </disp-formula>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('formula');
+    if (content[0]!.type === 'formula') {
+      expect(content[0]!.id).toBe('eq1');
+      expect(content[0]!.label).toBe('(1)');
+      expect(content[0]!.tex).toBe('E = mc^2');
+    }
+  });
+
+  it('parses <disp-formula> with direct <tex-math> (no alternatives)', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Equations</title>
+            <disp-formula>
+              <tex-math>a^2 + b^2 = c^2</tex-math>
+            </disp-formula>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('formula');
+    if (content[0]!.type === 'formula') {
+      expect(content[0]!.tex).toBe('a^2 + b^2 = c^2');
+    }
+  });
+
+  it('parses <disp-formula> without tex-math, extracts text', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Equations</title>
+            <disp-formula id="eq2">
+              <label>(2)</label>
+              x = y + z
+            </disp-formula>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('formula');
+    if (content[0]!.type === 'formula') {
+      expect(content[0]!.text).toContain('x = y + z');
+    }
+  });
+});
+
 describe('E2E: multi-paragraph table cells in body', () => {
   it('parses XML with multi-paragraph table cells correctly', () => {
     const xml = `

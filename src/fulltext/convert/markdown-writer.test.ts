@@ -472,6 +472,42 @@ describe('writeMarkdown', () => {
     expect(md).not.toMatch(/^\*\*[A-Z].*\*\*\n\n\*\*/m); // No title line
   });
 
+  it('renders formula with TeX as LaTeX block', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Equations',
+          level: 2,
+          content: [
+            { type: 'formula', id: 'eq1', label: '(1)', tex: 'E = mc^2' },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('$$E = mc^2$$');
+    expect(md).toContain('(1)');
+  });
+
+  it('renders formula with text fallback', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Equations',
+          level: 2,
+          content: [
+            { type: 'formula', label: '(2)', text: 'x = y + z' },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('x = y + z');
+    expect(md).toContain('(2)');
+  });
+
   it('renders boxed-text without title', () => {
     const doc = makeDoc({
       sections: [
