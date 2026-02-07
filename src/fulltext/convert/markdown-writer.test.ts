@@ -125,6 +125,51 @@ describe('writeMarkdown', () => {
     expect(md).toContain('| B | 2 |');
   });
 
+  it('converts blockquotes to > prefixed lines', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Interview',
+          level: 2,
+          content: [
+            {
+              type: 'blockquote',
+              content: [{ type: 'text', text: 'This is a quoted passage.' }],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('> This is a quoted passage.');
+  });
+
+  it('converts multi-paragraph blockquotes with > prefix on each paragraph', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Interview',
+          level: 2,
+          content: [
+            {
+              type: 'blockquote',
+              content: [
+                { type: 'text', text: 'First paragraph.' },
+                { type: 'text', text: '\n\n' },
+                { type: 'text', text: 'Second paragraph.' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('> First paragraph.');
+    expect(md).toContain('> Second paragraph.');
+  });
+
   it('converts figures to ![Figure N](caption)', () => {
     const doc = makeDoc({
       sections: [
@@ -236,5 +281,39 @@ describe('writeMarkdown', () => {
     const md = writeMarkdown(doc);
     expect(md).toContain('# Test Article');
     expect(typeof md).toBe('string');
+  });
+
+  it('renders blockquote among paragraphs and tables', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Discussion',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Opening statement.' }] },
+            {
+              type: 'blockquote',
+              content: [
+                { type: 'text', text: 'A notable ' },
+                { type: 'italic', children: [{ type: 'text', text: 'finding' }] },
+                { type: 'text', text: ' from the study.' },
+              ],
+            },
+            {
+              type: 'table',
+              headers: ['Metric', 'Value'],
+              rows: [['Accuracy', '95%']],
+            },
+            { type: 'paragraph', content: [{ type: 'text', text: 'Closing statement.' }] },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Opening statement.');
+    expect(md).toContain('> A notable *finding* from the study.');
+    expect(md).toContain('| Metric | Value |');
+    expect(md).toContain('Closing statement.');
   });
 });

@@ -57,6 +57,14 @@ function renderBlock(block: BlockElement): string {
     case 'paragraph':
       return renderInline(block.content);
 
+    case 'blockquote': {
+      const text = renderInline(block.content);
+      return text
+        .split('\n')
+        .map((line) => (line === '' ? '>' : `> ${line}`))
+        .join('\n');
+    }
+
     case 'list': {
       return block.items
         .map((item, i) => {

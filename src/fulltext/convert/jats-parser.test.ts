@@ -594,6 +594,273 @@ describe('parseJatsBody - preserveOrder inline interleaving', () => {
   });
 });
 
+describe('parseJatsBody - nested block elements in <p>', () => {
+  it('extracts <table-wrap> nested inside <p> as separate blocks', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>See Table <xref ref-type="table" rid="Tab1">1</xref>.</p>
+            <p><table-wrap id="Tab1">
+              <label>Table 1</label>
+              <caption><p>Demographics</p></caption>
+              <table>
+                <thead><tr><th>Age</th><th>Count</th></tr></thead>
+                <tbody><tr><td>25</td><td>10</td></tr></tbody>
+              </table>
+            </table-wrap></p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    // First <p> is a normal paragraph, second <p> contains only table-wrap
+    expect(content).toHaveLength(2);
+    expect(content[0]!.type).toBe('paragraph');
+    expect(content[1]!.type).toBe('table');
+    if (content[1]!.type === 'table') {
+      expect(content[1]!.headers).toEqual(['Age', 'Count']);
+    }
+  });
+
+  it('extracts <fig> nested inside <p> as separate blocks', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p><fig id="fig1">
+              <label>Figure 1</label>
+              <caption><p>Score distribution</p></caption>
+            </fig></p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('figure');
+    if (content[0]!.type === 'figure') {
+      expect(content[0]!.label).toBe('Figure 1');
+      expect(content[0]!.caption).toBe('Score distribution');
+    }
+  });
+
+  it('splits <p> with inline text before and after nested <table-wrap>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>Before table. <table-wrap>
+              <table><thead><tr><th>X</th></tr></thead><tbody><tr><td>1</td></tr></tbody></table>
+            </table-wrap> After table.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(3);
+    expect(content[0]!.type).toBe('paragraph');
+    expect(content[1]!.type).toBe('table');
+    expect(content[2]!.type).toBe('paragraph');
+  });
+});
+
+describe('parseJatsBody - blockquotes', () => {
+  it('parses <disp-quote> as blockquote block', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Interview</title>
+            <disp-quote>
+              <p>This is a quoted passage.</p>
+            </disp-quote>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('blockquote');
+    if (content[0]!.type === 'blockquote') {
+      const text = content[0]!.content.find((c) => c.type === 'text');
+      expect(text).toBeDefined();
+    }
+  });
+
+  it('parses <disp-quote> with multiple <p> children', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Interview</title>
+            <disp-quote>
+              <p>First quoted paragraph.</p>
+              <p>Second quoted paragraph.</p>
+            </disp-quote>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('blockquote');
+    if (content[0]!.type === 'blockquote') {
+      // Should contain inline content from both paragraphs
+      const texts = content[0]!.content.filter((c) => c.type === 'text');
+      expect(texts.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('handles <disp-quote> nested inside <p>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The participant said: <disp-quote><p>I felt relieved.</p></disp-quote></p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    // Should split: paragraph "The participant said: " + blockquote "I felt relieved."
+    expect(content.length).toBe(2);
+    expect(content[0]!.type).toBe('paragraph');
+    expect(content[1]!.type).toBe('blockquote');
+  });
+
+  it('preserves ordering with <disp-quote> among other blocks', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Discussion</title>
+            <p>Introduction text.</p>
+            <disp-quote>
+              <p>A famous quote.</p>
+            </disp-quote>
+            <p>Conclusion text.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content.map((b) => b.type)).toEqual(['paragraph', 'blockquote', 'paragraph']);
+  });
+});
+
+describe('parseJatsBody - E2E block element integration', () => {
+  it('parses PMC XML with <disp-quote> inside <p>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>Participant 1 stated:
+              <disp-quote>
+                <p>I think the <italic>intervention</italic> was very helpful.</p>
+                <p>It changed my daily routine.</p>
+              </disp-quote>
+            </p>
+            <p>This was consistent with other responses.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    // Should produce: paragraph (text before quote) + blockquote + paragraph (after)
+    expect(content.length).toBe(3);
+    expect(content[0]!.type).toBe('paragraph');
+    expect(content[1]!.type).toBe('blockquote');
+    expect(content[2]!.type).toBe('paragraph');
+
+    // Blockquote should preserve inline formatting
+    if (content[1]!.type === 'blockquote') {
+      const hasItalic = content[1]!.content.some((c) => c.type === 'italic');
+      expect(hasItalic).toBe(true);
+    }
+  });
+
+  it('parses PMC XML with <table-wrap> inside <p>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The demographics are shown below.
+              <table-wrap id="Tab1">
+                <label>Table 1</label>
+                <caption><p>Participant demographics</p></caption>
+                <table>
+                  <thead><tr><th>Group</th><th>N</th><th>Mean Age</th></tr></thead>
+                  <tbody>
+                    <tr><td>Control</td><td>50</td><td>34.2</td></tr>
+                    <tr><td>Intervention</td><td>48</td><td>35.1</td></tr>
+                  </tbody>
+                </table>
+              </table-wrap>
+            </p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content.length).toBe(2);
+    expect(content[0]!.type).toBe('paragraph');
+    expect(content[1]!.type).toBe('table');
+    if (content[1]!.type === 'table') {
+      expect(content[1]!.headers).toEqual(['Group', 'N', 'Mean Age']);
+      expect(content[1]!.rows).toHaveLength(2);
+      expect(content[1]!.caption).toContain('Table 1');
+    }
+  });
+
+  it('handles complex section with mixed block elements', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Discussion</title>
+            <p>First paragraph of discussion.</p>
+            <disp-quote>
+              <p>A relevant quote from the literature.</p>
+            </disp-quote>
+            <p>Following paragraph with a nested figure:
+              <fig id="fig1">
+                <label>Figure 1</label>
+                <caption><p>Results overview</p></caption>
+              </fig>
+            </p>
+            <p>Final paragraph.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content.map((b) => b.type)).toEqual([
+      'paragraph',
+      'blockquote',
+      'paragraph',
+      'figure',
+      'paragraph',
+    ]);
+  });
+});
+
 describe('parseJatsReferences', () => {
   it('extracts <ref-list> references', () => {
     const xml = `

@@ -415,10 +415,121 @@ export function parseJatsTable(xml: string): {
   return { headers: [], rows: [] };
 }
 
+/** Tags that represent block-level elements when nested inside <p>. */
+const BLOCK_TAGS = new Set(['table-wrap', 'fig', 'disp-quote']);
+
+/**
+ * Parse a <disp-quote> element into a blockquote block.
+ * Extracts <p> children and concatenates their inline content.
+ */
+function parseDispQuote(node: OrderedNode): BlockElement {
+  const children = getChildren(node);
+  const paragraphs = findChildren(children, 'p');
+  const content: InlineContent[] = [];
+  for (let i = 0; i < paragraphs.length; i++) {
+    if (i > 0) content.push({ type: 'text', text: '\n\n' });
+    const para = paragraphs[i];
+    if (para) content.push(...parseInlineContent(para.children));
+  }
+  // If no <p> children, extract inline content directly
+  if (paragraphs.length === 0) {
+    content.push(...parseInlineContent(children));
+  }
+  return { type: 'blockquote', content };
+}
+
+/**
+ * Parse a <table-wrap> node into a table block element.
+ */
+function parseTableBlock(node: OrderedNode): BlockElement {
+  const tableResult = parseTableWrap(node);
+  const tableBlock: BlockElement = {
+    type: 'table',
+    headers: tableResult.headers,
+    rows: tableResult.rows,
+  };
+  if (tableResult.caption) tableBlock.caption = tableResult.caption;
+  return tableBlock;
+}
+
+/**
+ * Parse a <fig> node into a figure block element.
+ */
+function parseFigBlock(node: OrderedNode): BlockElement {
+  const innerChildren = getChildren(node);
+  const figBlock: BlockElement = { type: 'figure' };
+  const figId = getAttr(node, 'id');
+  if (figId) figBlock.id = figId;
+  const figLabel = findChild(innerChildren, 'label');
+  if (figLabel) {
+    const labelText = extractAllText(figLabel.children);
+    if (labelText) figBlock.label = labelText;
+  }
+  const figCaption = findChild(innerChildren, 'caption');
+  if (figCaption) {
+    const captionText = extractAllText(figCaption.children);
+    if (captionText) figBlock.caption = captionText;
+  }
+  return figBlock;
+}
+
+/**
+ * Parse a <p> element, splitting it if it contains nested block elements
+ * (table-wrap, fig, disp-quote). Returns one or more block elements.
+ */
+function parseParagraph(pChildren: OrderedNode[]): BlockElement[] {
+  // Check if <p> contains any nested block elements
+  const hasNestedBlocks = pChildren.some((child) => {
+    const tag = getTagName(child);
+    return tag != null && BLOCK_TAGS.has(tag);
+  });
+
+  if (!hasNestedBlocks) {
+    return [{ type: 'paragraph', content: parseInlineContent(pChildren) }];
+  }
+
+  // Split into inline runs and block elements
+  const blocks: BlockElement[] = [];
+  let inlineBuffer: OrderedNode[] = [];
+
+  const flushInline = () => {
+    if (inlineBuffer.length > 0) {
+      const content = parseInlineContent(inlineBuffer);
+      // Skip whitespace-only paragraphs created by XML formatting
+      const hasNonWhitespace = content.some(
+        (c) => c.type !== 'text' || c.text.trim() !== '',
+      );
+      if (content.length > 0 && hasNonWhitespace) {
+        blocks.push({ type: 'paragraph', content });
+      }
+      inlineBuffer = [];
+    }
+  };
+
+  for (const child of pChildren) {
+    const tag = getTagName(child);
+    if (tag === 'table-wrap') {
+      flushInline();
+      blocks.push(parseTableBlock(child));
+    } else if (tag === 'fig') {
+      flushInline();
+      blocks.push(parseFigBlock(child));
+    } else if (tag === 'disp-quote') {
+      flushInline();
+      blocks.push(parseDispQuote(child));
+    } else {
+      inlineBuffer.push(child);
+    }
+  }
+  flushInline();
+
+  return blocks;
+}
+
 /**
  * Parse block-level content from a section's children.
  * Iterates in document order to preserve ordering of paragraphs, lists,
- * tables, and figures.
+ * tables, figures, and blockquotes.
  */
 function parseBlockContent(sectionChildren: OrderedNode[]): BlockElement[] {
   const blocks: BlockElement[] = [];
@@ -427,36 +538,16 @@ function parseBlockContent(sectionChildren: OrderedNode[]): BlockElement[] {
     const tag = getTagName(child);
     if (!tag) continue;
 
-    const innerChildren = getChildren(child);
-
     if (tag === 'p') {
-      blocks.push({ type: 'paragraph', content: parseInlineContent(innerChildren) });
+      blocks.push(...parseParagraph(getChildren(child)));
     } else if (tag === 'list') {
       blocks.push(parseList(child));
     } else if (tag === 'table-wrap') {
-      const tableResult = parseTableWrap(child);
-      const tableBlock: BlockElement = {
-        type: 'table',
-        headers: tableResult.headers,
-        rows: tableResult.rows,
-      };
-      if (tableResult.caption) (tableBlock as { caption?: string }).caption = tableResult.caption;
-      blocks.push(tableBlock);
+      blocks.push(parseTableBlock(child));
     } else if (tag === 'fig') {
-      const figBlock: BlockElement = { type: 'figure' };
-      const figId = getAttr(child, 'id');
-      if (figId) figBlock.id = figId;
-      const figLabel = findChild(innerChildren, 'label');
-      if (figLabel) {
-        const labelText = extractAllText(figLabel.children);
-        if (labelText) figBlock.label = labelText;
-      }
-      const figCaption = findChild(innerChildren, 'caption');
-      if (figCaption) {
-        const captionText = extractAllText(figCaption.children);
-        if (captionText) figBlock.caption = captionText;
-      }
-      blocks.push(figBlock);
+      blocks.push(parseFigBlock(child));
+    } else if (tag === 'disp-quote') {
+      blocks.push(parseDispQuote(child));
     }
     // Skip title, sec, and other non-block elements
   }

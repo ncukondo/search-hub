@@ -30,6 +30,7 @@ export type InlineContent =
 /** A block-level element within a section. */
 export type BlockElement =
   | { type: 'paragraph'; content: InlineContent[] }
+  | { type: 'blockquote'; content: InlineContent[] }
   | { type: 'list'; ordered: boolean; items: InlineContent[][] }
   | { type: 'table'; caption?: string; headers: string[]; rows: string[][] }
   | { type: 'figure'; id?: string; label?: string; caption?: string };
