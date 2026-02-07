@@ -36,7 +36,7 @@ import { translateQuery as translateArxiv } from '../../providers/arxiv/translat
 import { translateQuery as translateScopus } from '../../providers/scopus/translator.js';
 import { stringify as stringifyYaml } from 'yaml';
 import { registerArticles, saveRegistrationRecord } from '../../integration/register.js';
-import { buildFailureErrorMessage } from './search-utils.js';
+import { buildFailureErrorMessage, buildPartialErrorMessage } from './search-utils.js';
 import { getConfigDir } from '../../config/paths.js';
 import type { RegistrationRecord } from '../../integration/types.js';
 import { checkRefAvailable } from '../../integration/ref-cli.js';
@@ -479,6 +479,17 @@ export async function executeSearch(
       sessionStatus,
       results,
       error: buildFailureErrorMessage(results),
+    };
+  }
+
+  // In strict mode, partial success is treated as failure
+  if (options.strict && sessionStatus === 'partial') {
+    return {
+      success: false,
+      sessionId,
+      sessionStatus,
+      results,
+      error: buildPartialErrorMessage(results),
     };
   }
 

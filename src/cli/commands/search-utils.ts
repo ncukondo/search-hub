@@ -25,6 +25,35 @@ export function buildFailureErrorMessage(
 }
 
 /**
+ * Build a detailed error message for partial success (some providers failed, some succeeded).
+ * Used when --strict mode is enabled.
+ */
+export function buildPartialErrorMessage(
+  results: Record<string, { hits: number; retrieved: number; error?: string }>
+): string {
+  const failedLines = Object.entries(results)
+    .filter(([, r]) => r.error)
+    .map(([provider, r]) => `  ${provider}: ${r.error}`);
+
+  const succeededLines = Object.entries(results)
+    .filter(([, r]) => !r.error)
+    .map(([provider, r]) => `  ${provider}: ${r.retrieved} results`);
+
+  const lines: string[] = [];
+  lines.push('Partial success (--strict mode: treating as failure):');
+  if (failedLines.length > 0) {
+    lines.push('  Failed:');
+    lines.push(...failedLines.map((l) => '  ' + l));
+  }
+  if (succeededLines.length > 0) {
+    lines.push('  Succeeded:');
+    lines.push(...succeededLines.map((l) => '  ' + l));
+  }
+
+  return lines.join('\n');
+}
+
+/**
  * Format verbose per-provider details for CLI output.
  */
 export function formatVerboseProviderDetails(

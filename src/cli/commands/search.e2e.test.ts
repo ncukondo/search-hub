@@ -1948,3 +1948,158 @@ query:
     });
   });
 });
+
+describe('search-hub search: partial success exit code E2E', () => {
+  let ctx: E2EContext;
+
+  beforeEach(async () => {
+    ctx = await setupE2EContext();
+    vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  describe('search with unconfigured Scopus exits 0 with warning', () => {
+    it('should succeed when Scopus is unconfigured and other providers work (default mode)', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await executeSearch(
+        { queryFile: queryPath },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      // Should succeed (exit 0) — Scopus is skipped in default mode
+      expect(result.success).toBe(true);
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['eric']?.retrieved).toBe(1);
+      expect(result.results?.['scopus']).toBeUndefined();
+
+      // Warning about skipping Scopus
+      const warnCalls = warnSpy.mock.calls.map((c) => c.join(' '));
+      expect(warnCalls.some((msg) => msg.includes('Skipping scopus'))).toBe(true);
+
+      warnSpy.mockRestore();
+    });
+
+    it('should succeed with partial status when explicitly targeted provider fails', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await executeSearch(
+        { queryFile: queryPath, providers: ['pubmed', 'eric', 'scopus'] },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      // Should succeed (exit 0) — partial success is OK without --strict
+      expect(result.success).toBe(true);
+      expect(result.sessionStatus).toBe('partial');
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['eric']?.retrieved).toBe(1);
+      expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
+
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe('search with --strict and unconfigured Scopus exits non-zero', () => {
+    it('should fail with --strict when explicitly targeted provider fails', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await executeSearch(
+        { queryFile: queryPath, providers: ['pubmed', 'eric', 'scopus'], strict: true },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      // Should fail (exit non-zero) — strict mode treats partial as failure
+      expect(result.success).toBe(false);
+      expect(result.sessionStatus).toBe('partial');
+      expect(result.error).toContain('Partial success');
+      expect(result.error).toContain('--strict');
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['scopus']?.error).toContain('provider configuration incomplete');
+
+      warnSpy.mockRestore();
+    });
+
+    it('should succeed with --strict when all providers succeed', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const result = await executeSearch(
+        { queryFile: queryPath, strict: true },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      // Should succeed (exit 0) — all providers worked
+      expect(result.success).toBe(true);
+      expect(result.sessionStatus).toBe('completed');
+    });
+  });
+
+  describe('count-only with partial failure', () => {
+    it('should return partial results without error status in default mode', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = '';
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const counts = await executeCountOnly(
+        { queryFile: queryPath, providers: ['pubmed', 'scopus'] },
+        config
+      );
+
+      // pubmed succeeds, scopus fails
+      expect(counts).toHaveLength(2);
+      const pubmed = counts.find((c) => c.provider === 'pubmed');
+      const scopus = counts.find((c) => c.provider === 'scopus');
+      expect(pubmed?.count).toBe(2);
+      expect(pubmed?.error).toBeUndefined();
+      expect(scopus?.error).toBeDefined();
+
+      // Partial failure: some have errors, some don't → exit 0 (default behavior)
+      const hasErrors = counts.some((c) => c.error);
+      const allFailed = counts.every((c) => c.error);
+      expect(hasErrors).toBe(true);
+      expect(allFailed).toBe(false);
+
+      warnSpy.mockRestore();
+    });
+  });
+});
