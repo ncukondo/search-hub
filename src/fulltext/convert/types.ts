@@ -25,7 +25,10 @@ export type InlineContent =
   | { type: 'italic'; children: InlineContent[] }
   | { type: 'superscript'; text: string }
   | { type: 'subscript'; text: string }
-  | { type: 'citation'; refId: string; text: string };
+  | { type: 'citation'; refId: string; text: string }
+  | { type: 'link'; url: string; children: InlineContent[] }
+  | { type: 'code'; text: string }
+  | { type: 'inline-formula'; tex?: string; text: string };
 
 /** A block-level element within a section. */
 export type BlockElement =

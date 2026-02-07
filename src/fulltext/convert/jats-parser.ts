@@ -342,6 +342,44 @@ function parseInlineContent(children: OrderedNode[]): InlineContent[] {
       result.push({ type: 'superscript', text: extractAllText(innerChildren) });
     } else if (tag === 'sub') {
       result.push({ type: 'subscript', text: extractAllText(innerChildren) });
+    } else if (tag === 'inline-formula') {
+      // Try to find <tex-math> directly or inside <alternatives>
+      let texMath = findChild(innerChildren, 'tex-math');
+      if (!texMath) {
+        const alternatives = findChild(innerChildren, 'alternatives');
+        if (alternatives) {
+          texMath = findChild(alternatives.children, 'tex-math');
+        }
+      }
+      const tex = texMath ? extractAllText(texMath.children) : undefined;
+      const text = tex || extractAllText(innerChildren);
+      const entry: { type: 'inline-formula'; tex?: string; text: string } = {
+        type: 'inline-formula',
+        text,
+      };
+      if (tex) entry.tex = tex;
+      result.push(entry);
+    } else if (tag === 'monospace') {
+      result.push({ type: 'code', text: extractAllText(innerChildren) });
+    } else if (tag === 'ext-link') {
+      const href = getAttr(child, 'xlink:href');
+      if (href) {
+        result.push({ type: 'link', url: href, children: parseInlineContent(innerChildren) });
+      } else {
+        const linkText = extractAllText(innerChildren);
+        if (linkText) result.push({ type: 'text', text: linkText });
+      }
+    } else if (tag === 'uri') {
+      const href = getAttr(child, 'xlink:href');
+      const textContent = extractAllText(innerChildren);
+      const url = href || textContent;
+      if (url) {
+        result.push({ type: 'link', url, children: parseInlineContent(innerChildren) });
+      }
+    } else if (tag === 'underline' || tag === 'sc') {
+      // Pass-through: preserve text content without special formatting
+      const passText = extractAllText(innerChildren);
+      if (passText) result.push({ type: 'text', text: passText });
     } else if (tag === 'xref') {
       const refType = getAttr(child, 'ref-type');
       if (refType === 'bibr') {

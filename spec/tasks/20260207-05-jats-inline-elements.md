@@ -34,67 +34,67 @@ The most impactful gap is `<ext-link>`, which causes external URLs to be lost. O
 
 ### Step 1: Support `<ext-link>` with URL preservation
 
-- [ ] Add `'link'` type to `InlineContent` union: `{ type: 'link'; url: string; children: InlineContent[] }`
-- [ ] Write test: `<ext-link ext-link-type="uri" xlink:href="https://example.com">Example</ext-link>` produces link with URL
+- [x] Add `'link'` type to `InlineContent` union: `{ type: 'link'; url: string; children: InlineContent[] }`
+- [x] Write test: `<ext-link ext-link-type="uri" xlink:href="https://example.com">Example</ext-link>` produces link with URL
   ```xml
   <p>Software available at <ext-link ext-link-type="uri"
     xlink:href="https://www.r-project.org/">https://www.r-project.org/</ext-link>.</p>
   ```
-- [ ] Write test: `<uri>` element also produces link
-- [ ] Verify test fails (Red)
-- [ ] Update `parseInlineContent()`:
+- [x] Write test: `<uri>` element also produces link
+- [x] Verify test fails (Red)
+- [x] Update `parseInlineContent()`:
   - Add `ext-link` case: extract `xlink:href` attribute and parse inner content
   - Add `uri` case: extract `xlink:href` or use text content as URL
-- [ ] Add `renderInline()` case: render as Markdown link `[text](url)`
+- [x] Add `renderInline()` case: render as Markdown link `[text](url)`
   - If display text equals URL, render as bare URL
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: external links in body text are clickable in Markdown
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: external links in body text are clickable in Markdown
 
 ### Step 2: Support `<monospace>` as inline code
 
-- [ ] Add `'code'` type to `InlineContent` union: `{ type: 'code'; text: string }`
-- [ ] Write test: `<monospace>` renders as backtick-quoted text
+- [x] Add `'code'` type to `InlineContent` union: `{ type: 'code'; text: string }`
+- [x] Write test: `<monospace>` renders as backtick-quoted text
   ```xml
   <p>Run the <monospace>install.sh</monospace> script.</p>
   ```
-- [ ] Verify test fails (Red)
-- [ ] Add `monospace` case to `parseInlineContent()`
-- [ ] Add `renderInline()` case: render as `` `text` ``
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: monospace text renders as inline code in Markdown
+- [x] Verify test fails (Red)
+- [x] Add `monospace` case to `parseInlineContent()`
+- [x] Add `renderInline()` case: render as `` `text` ``
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: monospace text renders as inline code in Markdown
 
 ### Step 3: Support `<inline-formula>` with TeX extraction
 
-- [ ] Add `'inline-formula'` type to `InlineContent` union: `{ type: 'inline-formula'; tex?: string; text: string }`
-- [ ] Write test: `<inline-formula>` with `<tex-math>` child
+- [x] Add `'inline-formula'` type to `InlineContent` union: `{ type: 'inline-formula'; tex?: string; text: string }`
+- [x] Write test: `<inline-formula>` with `<tex-math>` child
   ```xml
   <p>where <inline-formula><tex-math>p &lt; 0.05</tex-math></inline-formula> was significant</p>
   ```
-- [ ] Write test: `<inline-formula>` with `<alternatives>` containing `<tex-math>`
-- [ ] Verify test fails (Red)
-- [ ] Add `inline-formula` case to `parseInlineContent()` — extract `<tex-math>` content
-- [ ] Add `renderInline()` case: render as `$p < 0.05$` (inline LaTeX) or plain text fallback
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: inline formulas render as LaTeX notation
+- [x] Write test: `<inline-formula>` with `<alternatives>` containing `<tex-math>`
+- [x] Verify test fails (Red)
+- [x] Add `inline-formula` case to `parseInlineContent()` — extract `<tex-math>` content
+- [x] Add `renderInline()` case: render as `$p < 0.05$` (inline LaTeX) or plain text fallback
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: inline formulas render as LaTeX notation
 
 ### Step 4: Support `<underline>` and `<sc>` (pass-through)
 
-- [ ] Write test: `<underline>` text is preserved (rendered as plain text or `<u>` HTML)
-- [ ] Write test: `<sc>` (small caps) text is preserved
-- [ ] Add explicit cases in `parseInlineContent()` to handle these as plain text (avoiding the generic unknown-element fallback)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: no content loss from underlined or small-caps text
+- [x] Write test: `<underline>` text is preserved (rendered as plain text or `<u>` HTML)
+- [x] Write test: `<sc>` (small caps) text is preserved
+- [x] Add explicit cases in `parseInlineContent()` to handle these as plain text (avoiding the generic unknown-element fallback)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: no content loss from underlined or small-caps text
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
+- [x] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
   - Test with XML containing `<ext-link>`, `<monospace>`, `<inline-formula>`
-- [ ] Verify links are preserved as Markdown links in output
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Convert a PMC article with external links, verify clickable URLs
+- [x] Verify links are preserved as Markdown links in output
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Convert a PMC article with external links, verify clickable URLs
 
 ## Notes
 

@@ -271,6 +271,126 @@ describe('writeMarkdown', () => {
     expect(md).toContain('Normal **bold** and *italic* and ^2^ end.');
   });
 
+  it('renders inline-formula with TeX as $...$', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Methods',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'where ' },
+                { type: 'inline-formula', tex: 'p < 0.05', text: 'p < 0.05' },
+                { type: 'text', text: ' was significant' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('where $p < 0.05$ was significant');
+  });
+
+  it('renders inline-formula without TeX as plain text', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'ratio ' },
+                { type: 'inline-formula', text: 'r = 2.5' },
+                { type: 'text', text: ' observed' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('ratio r = 2.5 observed');
+  });
+
+  it('renders code as backtick-quoted text', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Methods',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Run the ' },
+                { type: 'code', text: 'install.sh' },
+                { type: 'text', text: ' script.' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Run the `install.sh` script.');
+  });
+
+  it('renders link as Markdown link [text](url)', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Methods',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Visit ' },
+                { type: 'link', url: 'https://example.com/tool', children: [{ type: 'text', text: 'our tool' }] },
+                { type: 'text', text: ' for details.' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Visit [our tool](https://example.com/tool) for details.');
+  });
+
+  it('renders link as bare URL when display text equals URL', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Methods',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Available at ' },
+                { type: 'link', url: 'https://www.r-project.org/', children: [{ type: 'text', text: 'https://www.r-project.org/' }] },
+                { type: 'text', text: '.' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Available at https://www.r-project.org/.');
+  });
+
   it('generates references section', () => {
     const doc = makeDoc({
       references: [
