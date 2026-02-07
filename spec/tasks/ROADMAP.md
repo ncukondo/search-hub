@@ -89,7 +89,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 80 | Support Additional JATS Inline Elements | 78 | ✅ Completed | [20260207-05](completed/20260207-05-jats-inline-elements.md) |
 | 81 | Support JATS Back Matter and Floats Group | 78 | ✅ Completed | [20260207-06](completed/20260207-06-jats-back-matter-floats.md) |
 | 82 | Extract Extended JATS Metadata | 77 | ✅ Completed | [20260207-07](completed/20260207-07-jats-extended-metadata.md) |
-| 83 | Fix JATS Reference pub-id Formatting | 76 | 🔲 Pending | [20260207-08](20260207-08-jats-reference-pubid-formatting.md) |
+| 83 | Fix JATS Reference pub-id Formatting | 76 | ✅ Completed | [20260207-08](completed/20260207-08-jats-reference-pubid-formatting.md) |
 | 84 | Fix JATS Headerless Table Rendering | 78 | ✅ Completed | [20260207-09](completed/20260207-09-jats-headerless-table-rendering.md) |
 | 85 | Extract JATS Back Matter Notes Sections | 81 | ✅ Completed | [20260207-10](completed/20260207-10-jats-back-matter-notes.md) |
 
