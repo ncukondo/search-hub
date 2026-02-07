@@ -81,7 +81,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 72 | Review Status Model Expansion | 71 | ✅ Completed | [20260206-06](completed/20260206-06-review-status-model.md) |
 | 73 | Review Extract Format Enhancement | 72 | ✅ Completed | [20260206-07](completed/20260206-07-review-extract-format.md) |
 | 74 | Review Finalize Command | 72 | ✅ Completed | [20260206-08](completed/20260206-08-review-finalize.md) |
-| 75 | Dynamic Review Next Steps | 72, 73, 74 | 🔲 Planned | [20260206-09](20260206-09-review-dynamic-next-steps.md) |
+| 75 | Dynamic Review Next Steps | 72, 73, 74 | ✅ Completed | [20260206-09](completed/20260206-09-review-dynamic-next-steps.md) |
 
 ## Development Flow
 
