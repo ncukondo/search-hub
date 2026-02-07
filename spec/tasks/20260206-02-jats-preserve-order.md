@@ -48,82 +48,82 @@ Key differences:
 
 ### Step 1: Enable `preserveOrder` and Refactor `extractAllText`
 
-- [ ] Update `parser` config: add `preserveOrder: true`
-- [ ] Write test: mixed `<xref>` and `#text` interleaving produces correct concatenated text
-- [ ] Refactor `extractAllText()` to walk ordered arrays instead of object keys
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
+- [x] Update `parser` config: add `preserveOrder: true`
+- [x] Write test: mixed `<xref>` and `#text` interleaving produces correct concatenated text
+- [x] Refactor `extractAllText()` to walk ordered arrays instead of object keys
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
 
 ### Step 2: Refactor `parseInlineContent` for Ordered Traversal
 
 This is the core fix. Currently iterates over object keys; must iterate over the
 ordered child array to preserve interleaving of `#text`, `<xref>`, `<italic>`, `<bold>`, etc.
 
-- [ ] Write test: paragraph with interleaved text and `<xref>` citations
+- [x] Write test: paragraph with interleaved text and `<xref>` citations
   ```xml
   <p>The adage [<xref ref-type="bibr" rid="CR1">1</xref>]. Several studies
   [<xref ref-type="bibr" rid="CR2">2</xref>,<xref ref-type="bibr" rid="CR3">3</xref>].</p>
   ```
   Expected IR: `[text("The adage ["), citation("CR1","1"), text("]. Several studies\n["), citation("CR2","2"), text(","), citation("CR3","3"), text("].")]`
-- [ ] Write test: mixed text and `<italic>` preserves order
+- [x] Write test: mixed text and `<italic>` preserves order
   ```xml
   <p>this is the <italic>yanegawara</italic> system. Under the <italic>yanegawara</italic> system</p>
   ```
   Expected: `[text("this is the "), italic("yanegawara"), text(" system. Under the "), italic("yanegawara"), text(" system")]`
-- [ ] Refactor `parseInlineContent()` to iterate ordered child array
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: citation and italic positions match original XML order
+- [x] Refactor `parseInlineContent()` to iterate ordered child array
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: citation and italic positions match original XML order
 
 ### Step 3: Refactor `parseBlockContent`
 
 Adapt block-level parsing to the new ordered array format.
 
-- [ ] Write test: section with `<p>`, `<list>`, `<table-wrap>` in specific order produces blocks in same order
-- [ ] Refactor `parseBlockContent()` to iterate ordered children
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
+- [x] Write test: section with `<p>`, `<list>`, `<table-wrap>` in specific order produces blocks in same order
+- [x] Refactor `parseBlockContent()` to iterate ordered children
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
 
 ### Step 4: Refactor `parseSection` and `parseJatsBody`
 
-- [ ] Write test: nested `<sec>` elements produce correct section hierarchy
-- [ ] Refactor `parseSection()` and `parseJatsBody()` for new format
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
+- [x] Write test: nested `<sec>` elements produce correct section hierarchy
+- [x] Refactor `parseSection()` and `parseJatsBody()` for new format
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
 
 ### Step 5: Refactor `parseJatsMetadata`
 
 Adapt metadata extraction (title, authors, abstract, IDs) to ordered array format.
 
-- [ ] Write test: metadata extraction from sample JATS front matter
-- [ ] Refactor `parseJatsMetadata()` for new format
-- [ ] Add helper function(s) to navigate the `preserveOrder` structure (e.g., `findChild(node, tagName)`, `findChildren(node, tagName)`, `getAttr(node, attrName)`)
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
+- [x] Write test: metadata extraction from sample JATS front matter
+- [x] Refactor `parseJatsMetadata()` for new format
+- [x] Add helper function(s) to navigate the `preserveOrder` structure (e.g., `findChild(node, tagName)`, `findChildren(node, tagName)`, `getAttr(node, attrName)`)
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
 
 ### Step 6: Refactor `parseJatsReferences`
 
-- [ ] Write test: reference list with `<mixed-citation>` and `<element-citation>`
-- [ ] Refactor `parseJatsReferences()` for new format
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
+- [x] Write test: reference list with `<mixed-citation>` and `<element-citation>`
+- [x] Refactor `parseJatsReferences()` for new format
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
 
 ### Step 7: Refactor Remaining Functions
 
-- [ ] Refactor `parseList()` for new format
-- [ ] Refactor `parseJatsTable()` / `parseTableRow()` / `parseTableWrap()` for new format
-- [ ] Refactor `textContent()` helper for new format
-- [ ] Run full test suite
-- [ ] Run `npm run lint && npm run typecheck`
+- [x] Refactor `parseList()` for new format
+- [x] Refactor `parseJatsTable()` / `parseTableRow()` / `parseTableWrap()` for new format
+- [x] Refactor `textContent()` helper for new format
+- [x] Run full test suite
+- [x] Run `npm run lint && npm run typecheck`
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Update `convert.e2e.test.ts` — existing tests should pass with new parser
-- [ ] Add E2E test with real PMC XML containing interleaved citations (PMID:39090703 / PMC11293181)
-- [ ] Verify inline citations appear in correct positions in Markdown output
-- [ ] Verify italic text appears in correct positions
-- [ ] Run full test suite: `npm test`
-- [ ] Manual verification with reproduction script from Issue #65
+- [x] Update `convert.e2e.test.ts` — existing tests should pass with new parser
+- [x] Add E2E test with real PMC XML containing interleaved citations (PMID:39090703 / PMC11293181)
+- [x] Verify inline citations appear in correct positions in Markdown output
+- [x] Verify italic text appears in correct positions
+- [x] Run full test suite: `npm test`
+- [x] Manual verification with reproduction script from Issue #65
 
 ## Design Notes
 
