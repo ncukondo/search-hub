@@ -27,17 +27,17 @@ Update user-facing documentation for the fulltext management feature:
 
 ### Step 1: Update README.md
 
-- [ ] Add "Fulltext management" to Features section
+- [x] Add "Fulltext management" to Features section
   - OA discovery and automatic retrieval
   - PMC XML to Markdown conversion
   - Manual PDF management
   - Auto-attach on register
-- [ ] Add brief example in Quick Start or new section
-- [ ] Acceptance: README reflects fulltext capabilities
+- [x] Add brief example in Quick Start or new section
+- [x] Acceptance: README reflects fulltext capabilities
 
 ### Step 2: Update docs/commands.md
 
-- [ ] Add `fulltext` command group section
+- [x] Add `fulltext` command group section
   - `fulltext init` - Create directories for manual download
   - `fulltext sync` - Detect manually added files
   - `fulltext check` - Check OA availability
@@ -46,29 +46,29 @@ Update user-facing documentation for the fulltext management feature:
   - `fulltext attach` - Attach to reference-manager
   - `fulltext status` - Show retrieval status
   - `fulltext pending` - List articles needing manual download
-- [ ] Document options for each command
-- [ ] Add examples
-- [ ] Acceptance: All fulltext commands documented
+- [x] Document options for each command
+- [x] Add examples
+- [x] Acceptance: All fulltext commands documented
 
 ### Step 3: Update docs/configuration.md
 
-- [ ] Add `[fulltext]` section
+- [x] Add `[fulltext]` section
   - `enabled`
   - `auto_convert_markdown`
   - `auto_attach_on_register`
-- [ ] Add `[fulltext.sources]` section
+- [x] Add `[fulltext.sources]` section
   - `unpaywall_email`
   - `core_api_key`
   - `prefer_sources`
-- [ ] Add `[fulltext.download]` section
+- [x] Add `[fulltext.download]` section
   - `concurrent_downloads`
   - `retry_attempts`
-- [ ] Add environment variable alternatives
-- [ ] Acceptance: All fulltext config options documented
+- [x] Add environment variable alternatives (noted as not yet implemented in `env.ts`; documented the gap)
+- [x] Acceptance: All fulltext config options documented
 
 ### Step 4: Create docs/fulltext.md Guide
 
-- [ ] Create comprehensive fulltext management guide
+- [x] Create comprehensive fulltext management guide
   - Overview and capabilities
   - Data sources (Unpaywall, PMC, arXiv, CORE)
   - Directory structure explanation
@@ -78,23 +78,23 @@ Update user-facing documentation for the fulltext management feature:
     - Mixed workflow
   - Integration with register command
   - Troubleshooting
-- [ ] Add diagrams if helpful (ASCII or Mermaid)
-- [ ] Acceptance: New users can understand and use fulltext features
+- [x] Add diagrams if helpful (ASCII or Mermaid) — N/A: documentation is clear without diagrams
+- [x] Acceptance: New users can understand and use fulltext features
 
 ### Step 5: Cross-link Documentation
 
-- [ ] Add links from README to docs/fulltext.md
-- [ ] Add links from docs/commands.md to docs/fulltext.md
-- [ ] Update docs index if exists
-- [ ] Acceptance: Documentation is well-connected
+- [x] Add links from README to docs/fulltext.md
+- [x] Add links from docs/commands.md to docs/fulltext.md
+- [x] Update docs index if exists
+- [x] Acceptance: Documentation is well-connected
 
 ### Final Step: Review and Verify
 
-- [ ] Review all documentation for accuracy
-- [ ] Verify command examples work
-- [ ] Check for consistency with implementation
-- [ ] **Manual verification**: Follow guide as new user
-- [ ] Acceptance: Documentation is accurate and helpful
+- [x] Review all documentation for accuracy
+- [x] Verify command examples work
+- [x] Check for consistency with implementation
+- [x] **Manual verification**: Follow guide as new user
+- [x] Acceptance: Documentation is accurate and helpful
 
 ## Documentation Structure
 

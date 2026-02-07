@@ -11,6 +11,7 @@ A CLI tool for systematic literature searching across multiple academic database
 - **Unified query syntax**: YAML-based DSL with automatic translation
 - **Reproducible searches**: Full session logging for PRISMA reporting
 - **Resume support**: Continue interrupted searches at DB or page level
+- **Fulltext management**: OA discovery, automatic retrieval, PMC XML to Markdown conversion
 - **Reference manager integration**: Works with [reference-manager](https://github.com/ncukondo/reference-manager)
 
 ## Installation
@@ -114,12 +115,35 @@ Developing an effective search query is iterative. Start broad, then refine base
 
 - **Keep query versions**: Save each iteration (v1, v2, v3) to track your development process and maintain reproducibility.
 
+## Fulltext Retrieval
+
+After screening, retrieve fulltext articles for included papers:
+
+```bash
+# Check Open Access availability
+search-hub fulltext check --session <session-id>
+
+# Download available OA fulltexts (auto-converts PMC XML to Markdown)
+search-hub fulltext fetch <session-id>
+
+# For non-OA articles: create directories for manual download
+search-hub fulltext init <session-id>
+search-hub fulltext pending <session-id>
+
+# After manually adding PDFs, sync and register
+search-hub fulltext sync <session-id>
+search-hub register <session-id>
+```
+
+See [Fulltext Management Guide](./docs/fulltext.md) for details.
+
 ## Documentation
 
 - [Query Guide](./docs/query-guide.md) - How to write query files
 - [Command Reference](./docs/commands.md) - All CLI commands and options
 - [Configuration](./docs/configuration.md) - Setup and configuration
 - [Databases](./docs/databases.md) - Supported databases and tips
+- [Fulltext Management](./docs/fulltext.md) - Fulltext retrieval and management
 
 ## Development
 
