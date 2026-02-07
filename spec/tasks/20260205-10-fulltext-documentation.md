@@ -63,7 +63,7 @@ Update user-facing documentation for the fulltext management feature:
 - [x] Add `[fulltext.download]` section
   - `concurrent_downloads`
   - `retry_attempts`
-- [x] Add environment variable alternatives
+- [x] Add environment variable alternatives (noted as not yet implemented in `env.ts`; documented the gap)
 - [x] Acceptance: All fulltext config options documented
 
 ### Step 4: Create docs/fulltext.md Guide
@@ -78,7 +78,7 @@ Update user-facing documentation for the fulltext management feature:
     - Mixed workflow
   - Integration with register command
   - Troubleshooting
-- [x] Add diagrams if helpful (ASCII or Mermaid)
+- [x] Add diagrams if helpful (ASCII or Mermaid) — N/A: documentation is clear without diagrams
 - [x] Acceptance: New users can understand and use fulltext features
 
 ### Step 5: Cross-link Documentation
