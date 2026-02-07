@@ -72,7 +72,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'title-screening' },
+        { sessionId, name: 'title-screening', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -122,7 +122,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], name: 'batch' },
+        { sessionId, filter: ['pending'], name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -136,7 +136,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending', 'conflicting'], name: 'batch' },
+        { sessionId, filter: ['pending', 'conflicting'], name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -147,7 +147,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'batch' },
+        { sessionId, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -160,7 +160,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'year', name: 'batch' },
+        { sessionId, filter: ['pending'], sort: 'year', name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -174,7 +174,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'title', name: 'batch' },
+        { sessionId, filter: ['pending'], sort: 'title', name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -188,11 +188,11 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result1 = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch1' },
+        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch1', reviewer: 'human:admin' },
         sessionsDir
       );
       const result2 = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch2' },
+        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch2', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -210,7 +210,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'none', name: 'batch' },
+        { sessionId, filter: ['pending'], sort: 'none', name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -226,7 +226,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], limit: 2, name: 'batch' },
+        { sessionId, filter: ['pending'], limit: 2, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -237,7 +237,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], offset: 1, name: 'batch' },
+        { sessionId, filter: ['pending'], offset: 1, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -251,7 +251,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], offset: 1, limit: 1, name: 'batch' },
+        { sessionId, filter: ['pending'], offset: 1, limit: 1, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -267,7 +267,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'new-review' },
+        { sessionId, name: 'new-review', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -279,7 +279,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'batch' },
+        { sessionId, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -300,7 +300,7 @@ describe('executeReviewExtract', () => {
       );
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'batch' },
+        { sessionId, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -377,6 +377,24 @@ describe('executeReviewExtract', () => {
       expect(extracted.reviewer).toBe('human:admin');
     });
 
+    it('replaces finalDecision: null preserving indentation', async () => {
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeReviewFile(articles);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'indent-test', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      // Should NOT contain literal "finalDecision: null"
+      expect(content).not.toContain('finalDecision: null');
+      // Should contain the comment placeholder
+      expect(content).toContain('finalDecision: # include / exclude');
+    });
+
     it('sets finalDecision to null in extracted ReviewFile', async () => {
       const articlesWithDecision: ArticleEntry[] = [
         {
@@ -404,6 +422,22 @@ describe('executeReviewExtract', () => {
       // finalDecision should be null in extracted file
       expect(extracted.articles[0]!.finalDecision).toBeNull();
       expect(extracted.articles[1]!.finalDecision).toBeNull();
+    });
+  });
+
+  describe('reviewer validation for ReviewFile mode', () => {
+    it('throws when --reviewer is not specified for review file extract (no basis)', async () => {
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeReviewFile(articles);
+
+      await expect(
+        executeReviewExtract(
+          { sessionId, name: 'no-reviewer' },
+          sessionsDir
+        )
+      ).rejects.toThrow('--reviewer is required for review file extract');
     });
   });
 

@@ -181,6 +181,9 @@ export async function executeReviewExtract(
     });
     finalContent = yamlContent;
   } else {
+    if (!options.reviewer) {
+      throw new Error('--reviewer is required for review file extract');
+    }
     // Build output review file with reviewHistory separation
     const outputFile: ReviewFile = {
       sessionId: options.sessionId,
@@ -200,8 +203,8 @@ export async function executeReviewExtract(
 
     // Replace finalDecision: null with a commented placeholder for user guidance
     const yamlWithComments = yamlContent.replace(
-      /finalDecision: null/g,
-      'finalDecision: # include / exclude'
+      /^(\s*)finalDecision: null$/gm,
+      '$1finalDecision: # include / exclude'
     );
 
     // Schema reference pointing to adjacent file

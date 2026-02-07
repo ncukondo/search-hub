@@ -229,6 +229,9 @@ function processReviewFile(
     for (const review of extractedReviews) {
       // Fill in reviewer from top-level field if not on individual review
       const reviewer = review.reviewer ?? topLevelReviewer;
+      if (!reviewer) {
+        throw new Error('reviewer is required: set reviewer on individual review or top-level ReviewFile');
+      }
       // Fill in basis from review or auto-detect from article data
       const basis = review.basis ?? detectBasis(extracted);
 

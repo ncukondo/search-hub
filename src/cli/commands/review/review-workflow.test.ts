@@ -120,7 +120,7 @@ summary:
 
     // Step 4: Extract - Create batch for review (uses --name)
     const extractResult = await executeReviewExtract(
-      { sessionId, filter: ['pending'], limit: 5, name: 'batch1' },
+      { sessionId, filter: ['pending'], limit: 5, name: 'batch1', reviewer: 'human:admin' },
       sessionsDir
     );
     expect(extractResult.extractedCount).toBe(5);
@@ -219,7 +219,7 @@ summary:
 
     // Extract with schema (uses --name)
     const extractResult = await executeReviewExtract(
-      { sessionId, filter: ['pending'], limit: 3, name: 'schema-test' },
+      { sessionId, filter: ['pending'], limit: 3, name: 'schema-test', reviewer: 'human:admin' },
       sessionsDir
     );
 
@@ -242,7 +242,7 @@ summary:
 
     // First cycle: Extract → Edit → Merge
     const extract1 = await executeReviewExtract(
-      { sessionId, filter: ['pending'], offset: 0, limit: 3, name: 'cycle1' },
+      { sessionId, filter: ['pending'], offset: 0, limit: 3, name: 'cycle1', reviewer: 'human:admin' },
       sessionsDir
     );
 
@@ -260,7 +260,7 @@ summary:
 
     // Second cycle: Another reviewer
     const extract2 = await executeReviewExtract(
-      { sessionId, filter: ['pending'], offset: 0, limit: 3, name: 'cycle2' },
+      { sessionId, filter: ['pending'], offset: 0, limit: 3, name: 'cycle2', reviewer: 'human:admin' },
       sessionsDir
     );
 
@@ -298,7 +298,7 @@ summary:
     await executeReviewInit({ sessionId }, sessionsDir);
 
     const extractResult = await executeReviewExtract(
-      { sessionId, filter: ['pending'], limit: 2, name: 'dryrun-test' },
+      { sessionId, filter: ['pending'], limit: 2, name: 'dryrun-test', reviewer: 'human:admin' },
       sessionsDir
     );
 

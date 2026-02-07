@@ -630,6 +630,39 @@ describe('executeReviewMerge', () => {
       expect(merged.articles[0]!.reviews[0]!.reviewer).toBe('human:admin');
     });
 
+    it('throws when reviewer is undefined on both review and top-level', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      // Write extracted file WITHOUT top-level reviewer and without reviewer on the review
+      const reviewFile: ReviewFile = {
+        sessionId,
+        // no reviewer field
+        articles: [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [],
+            reviews: [
+              { decision: 'include' } as any, // no reviewer
+            ],
+            finalDecision: null,
+          },
+        ],
+      };
+
+      const content = stringifyYaml(reviewFile);
+      const dir = join(sessionsDir, sessionId, 'for-review', 'no-reviewer');
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, 'review.yaml'), content);
+
+      await expect(
+        executeReviewMerge({ sessionId, name: 'no-reviewer' }, sessionsDir)
+      ).rejects.toThrow('reviewer is required');
+    });
+
     it('auto-detects basis from article data (abstract present)', async () => {
       const mainArticles: ArticleEntry[] = [
         { title: 'Article 1', pmid: '1', abstract: 'Some abstract', reviews: [] },
