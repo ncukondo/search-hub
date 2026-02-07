@@ -1205,4 +1205,44 @@ describe('HTML numeric character reference decoding', () => {
     expect(refs[0]!.text).toContain('\u2019');
     expect(refs[0]!.text).not.toContain('&#8217;');
   });
+
+  it('decodes hex entities &#xHHHH; in body text', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The value is &#x0003c;10 and &#x0003e;5.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const text = para.content.map(c => c.type === 'text' ? c.text : '').join('');
+      expect(text).toContain('<10');
+      expect(text).toContain('>5');
+      expect(text).not.toContain('&#x0003c;');
+      expect(text).not.toContain('&#x0003e;');
+    }
+  });
+
+  it('decodes hex entities in reference text', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation>Smith J. The &#x0003c;em&#x0003e;study&#x0003c;/em&#x0003e;. 2024.</mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toContain('<em>');
+    expect(refs[0]!.text).not.toContain('&#x0003c;');
+  });
 });
