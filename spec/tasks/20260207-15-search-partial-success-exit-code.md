@@ -60,12 +60,12 @@ failed databases. Add a `--strict` flag that requires all targeted databases to 
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/search.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/search.e2e.test.ts`
   - Search with unconfigured Scopus → exit 0, warning in output
   - Search with `--strict` and unconfigured Scopus → exit non-zero
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All tests pass
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass
 
 ## Notes
 

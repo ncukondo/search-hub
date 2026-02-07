@@ -1184,6 +1184,7 @@ filters:
       mockedEric.mockImplementation(() => ({
         name: 'eric',
         translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
         search: vi.fn().mockImplementation(async function* () {
           throw new Error('ERIC preview error');
         }),
