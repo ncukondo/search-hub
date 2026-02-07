@@ -282,4 +282,38 @@ describe('writeMarkdown', () => {
     expect(md).toContain('# Test Article');
     expect(typeof md).toBe('string');
   });
+
+  it('renders blockquote among paragraphs and tables', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Discussion',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Opening statement.' }] },
+            {
+              type: 'blockquote',
+              content: [
+                { type: 'text', text: 'A notable ' },
+                { type: 'italic', children: [{ type: 'text', text: 'finding' }] },
+                { type: 'text', text: ' from the study.' },
+              ],
+            },
+            {
+              type: 'table',
+              headers: ['Metric', 'Value'],
+              rows: [['Accuracy', '95%']],
+            },
+            { type: 'paragraph', content: [{ type: 'text', text: 'Closing statement.' }] },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Opening statement.');
+    expect(md).toContain('> A notable *finding* from the study.');
+    expect(md).toContain('| Metric | Value |');
+    expect(md).toContain('Closing statement.');
+  });
 });

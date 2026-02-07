@@ -760,6 +760,107 @@ describe('parseJatsBody - blockquotes', () => {
   });
 });
 
+describe('parseJatsBody - E2E block element integration', () => {
+  it('parses PMC XML with <disp-quote> inside <p>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>Participant 1 stated:
+              <disp-quote>
+                <p>I think the <italic>intervention</italic> was very helpful.</p>
+                <p>It changed my daily routine.</p>
+              </disp-quote>
+            </p>
+            <p>This was consistent with other responses.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    // Should produce: paragraph (text before quote) + blockquote + paragraph (after)
+    expect(content.length).toBe(3);
+    expect(content[0]!.type).toBe('paragraph');
+    expect(content[1]!.type).toBe('blockquote');
+    expect(content[2]!.type).toBe('paragraph');
+
+    // Blockquote should preserve inline formatting
+    if (content[1]!.type === 'blockquote') {
+      const hasItalic = content[1]!.content.some((c) => c.type === 'italic');
+      expect(hasItalic).toBe(true);
+    }
+  });
+
+  it('parses PMC XML with <table-wrap> inside <p>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The demographics are shown below.
+              <table-wrap id="Tab1">
+                <label>Table 1</label>
+                <caption><p>Participant demographics</p></caption>
+                <table>
+                  <thead><tr><th>Group</th><th>N</th><th>Mean Age</th></tr></thead>
+                  <tbody>
+                    <tr><td>Control</td><td>50</td><td>34.2</td></tr>
+                    <tr><td>Intervention</td><td>48</td><td>35.1</td></tr>
+                  </tbody>
+                </table>
+              </table-wrap>
+            </p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content.length).toBe(2);
+    expect(content[0]!.type).toBe('paragraph');
+    expect(content[1]!.type).toBe('table');
+    if (content[1]!.type === 'table') {
+      expect(content[1]!.headers).toEqual(['Group', 'N', 'Mean Age']);
+      expect(content[1]!.rows).toHaveLength(2);
+      expect(content[1]!.caption).toContain('Table 1');
+    }
+  });
+
+  it('handles complex section with mixed block elements', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Discussion</title>
+            <p>First paragraph of discussion.</p>
+            <disp-quote>
+              <p>A relevant quote from the literature.</p>
+            </disp-quote>
+            <p>Following paragraph with a nested figure:
+              <fig id="fig1">
+                <label>Figure 1</label>
+                <caption><p>Results overview</p></caption>
+              </fig>
+            </p>
+            <p>Final paragraph.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content.map((b) => b.type)).toEqual([
+      'paragraph',
+      'blockquote',
+      'paragraph',
+      'figure',
+      'paragraph',
+    ]);
+  });
+});
+
 describe('parseJatsReferences', () => {
   it('extracts <ref-list> references', () => {
     const xml = `

@@ -478,7 +478,11 @@ function parseParagraph(pChildren: OrderedNode[]): BlockElement[] {
   const flushInline = () => {
     if (inlineBuffer.length > 0) {
       const content = parseInlineContent(inlineBuffer);
-      if (content.length > 0) {
+      // Skip whitespace-only paragraphs created by XML formatting
+      const hasNonWhitespace = content.some(
+        (c) => c.type !== 'text' || c.text.trim() !== '',
+      );
+      if (content.length > 0 && hasNonWhitespace) {
         blocks.push({ type: 'paragraph', content });
       }
       inlineBuffer = [];
