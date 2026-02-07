@@ -27,13 +27,13 @@ Update user-facing documentation for the fulltext management feature:
 
 ### Step 1: Update README.md
 
-- [ ] Add "Fulltext management" to Features section
+- [x] Add "Fulltext management" to Features section
   - OA discovery and automatic retrieval
   - PMC XML to Markdown conversion
   - Manual PDF management
   - Auto-attach on register
-- [ ] Add brief example in Quick Start or new section
-- [ ] Acceptance: README reflects fulltext capabilities
+- [x] Add brief example in Quick Start or new section
+- [x] Acceptance: README reflects fulltext capabilities
 
 ### Step 2: Update docs/commands.md
 
