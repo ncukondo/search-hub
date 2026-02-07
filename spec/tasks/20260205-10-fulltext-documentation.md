@@ -83,10 +83,10 @@ Update user-facing documentation for the fulltext management feature:
 
 ### Step 5: Cross-link Documentation
 
-- [ ] Add links from README to docs/fulltext.md
-- [ ] Add links from docs/commands.md to docs/fulltext.md
-- [ ] Update docs index if exists
-- [ ] Acceptance: Documentation is well-connected
+- [x] Add links from README to docs/fulltext.md
+- [x] Add links from docs/commands.md to docs/fulltext.md
+- [x] Update docs index if exists
+- [x] Acceptance: Documentation is well-connected
 
 ### Final Step: Review and Verify
 
