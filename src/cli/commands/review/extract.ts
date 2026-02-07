@@ -142,6 +142,50 @@ function buildScreeningArticle(article: ArticleEntry, basis: ReviewBasis): Artic
   return result;
 }
 
+/** Build a finalize article with reviewHistory and finalDecision, optionally scoped by basis */
+function buildFinalizeArticle(article: ArticleEntry, basis?: ReviewBasis): ArticleEntry {
+  const result: ArticleEntry = { title: article.title, reviews: [] };
+
+  // Always include identifiers
+  if (article.doi) result.doi = article.doi;
+  if (article.pmid) result.pmid = article.pmid;
+  if (article.scopusId) result.scopusId = article.scopusId;
+  if (article.arxivId) result.arxivId = article.arxivId;
+  if (article.ericId) result.ericId = article.ericId;
+
+  // Always include bibliographic metadata
+  if (article.authors) result.authors = article.authors;
+  if (article.year) result.year = article.year;
+
+  // Scope content by basis (or include all if no basis)
+  if (!basis || basis === 'abstract' || basis === 'fulltext') {
+    if (article.abstract) result.abstract = article.abstract;
+  }
+  if (!basis || basis === 'fulltext') {
+    if (article.fulltext) result.fulltext = article.fulltext;
+  }
+
+  // Add reviewHistory (existing reviews, read-only)
+  result.reviewHistory = article.reviews ?? [];
+
+  // Empty reviews for new reviews
+  result.reviews = [];
+
+  // Null finalDecision as placeholder
+  result.finalDecision = null;
+
+  return result;
+}
+
+function getFinalDecisionGuidanceComment(): string {
+  return [
+    '# yaml-language-server: $schema=./review.schema.json',
+    '# Final decision file: set finalDecision on each article',
+    '# Valid decisions: include / exclude / null',
+    '',
+  ].join('\n');
+}
+
 /**
  * Sort articles based on sort option
  */
@@ -223,7 +267,7 @@ export async function executeReviewExtract(
 
   let finalContent: string;
 
-  if (options.basis) {
+  if (options.basis && !options.finalize) {
     // Screening mode: basis-scoped content with pre-populated reviews
     const outputFile: ReviewFile = {
       sessionId: options.sessionId,
@@ -244,16 +288,11 @@ export async function executeReviewExtract(
     const guidanceComment = getBasisGuidanceComment(options.basis);
     finalContent = guidanceComment + yamlWithComments;
   } else {
-    // Final decision mode (or no basis): all content + reviewHistory + finalDecision
+    // Final decision mode: --finalize, or no --basis (backward compat)
     const outputFile: ReviewFile = {
       sessionId: options.sessionId,
       reviewer: options.reviewer,
-      articles: paginated.map((article) => ({
-        ...article,
-        reviewHistory: article.reviews ?? [],
-        reviews: [],
-        finalDecision: null,
-      })),
+      articles: paginated.map((article) => buildFinalizeArticle(article, options.basis)),
     };
 
     const yamlContent = stringifyYaml(outputFile, { lineWidth: 0 });
@@ -264,8 +303,8 @@ export async function executeReviewExtract(
       '$1finalDecision: # include / exclude'
     );
 
-    const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
-    finalContent = schemaComment + yamlWithComments;
+    const guidanceComment = getFinalDecisionGuidanceComment();
+    finalContent = guidanceComment + yamlWithComments;
   }
 
   // Ensure output directory exists
