@@ -360,6 +360,23 @@ describe('executeReviewExtract', () => {
       expect(extracted.articles[1]!.reviewHistory).toEqual([]);
     });
 
+    it('includes top-level reviewer field in extracted ReviewFile', async () => {
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeReviewFile(articles);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'confirm', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile & { reviewer?: string };
+
+      expect(extracted.reviewer).toBe('human:admin');
+    });
+
     it('sets finalDecision to null in extracted ReviewFile', async () => {
       const articlesWithDecision: ArticleEntry[] = [
         {

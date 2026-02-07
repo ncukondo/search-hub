@@ -81,6 +81,8 @@ export interface ReviewFile {
   sessionId: string;
   /** Path to inclusion criteria file */
   criteria?: string;
+  /** Reviewer identifier (only in extracted ReviewFiles) */
+  reviewer?: string;
   articles: ArticleEntry[];
   /** Registry of reviewers who participated at each basis level */
   reviewers?: ReviewerRecord[];

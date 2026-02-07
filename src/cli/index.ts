@@ -1799,7 +1799,17 @@ Examples:
           extractOptions.seed = parseInt(options.seed, 10);
         }
 
-        // Handle basis and reviewer options
+        // Reviewer is required for all extract modes
+        if (!options.reviewer) {
+          if (!globalOpts.quiet) {
+            console.error('Error: --reviewer is required');
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+        extractOptions.reviewer = options.reviewer;
+
+        // Handle basis option
         if (options.basis) {
           const validBasis = ['title', 'abstract'];
           if (!validBasis.includes(options.basis)) {
@@ -1810,16 +1820,6 @@ Examples:
             return;
           }
           extractOptions.basis = options.basis as 'title' | 'abstract';
-
-          // Reviewer is required when basis is specified
-          if (!options.reviewer) {
-            if (!globalOpts.quiet) {
-              console.error('Error: --reviewer is required when --basis is specified');
-            }
-            process.exitCode = EXIT_CODES.GENERAL_ERROR;
-            return;
-          }
-          extractOptions.reviewer = options.reviewer;
         }
 
         const result = await executeReviewExtract(extractOptions, sessionsDir);

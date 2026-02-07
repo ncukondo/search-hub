@@ -18,7 +18,7 @@ export interface ReviewExtractOptions {
   offset?: number;
   /** Basis for the review (title, abstract). When specified, outputs work file format. */
   basis?: ReviewBasis;
-  /** Reviewer identifier (e.g., "ai:claude"). Required when basis is specified. */
+  /** Reviewer identifier (e.g., "ai:claude"). Required for all extract modes. */
   reviewer?: string;
   /** Name for the review subset (output goes to for-review/<name>/review.yaml) */
   name: string;
@@ -180,6 +180,7 @@ export async function executeReviewExtract(
     // Build output review file with reviewHistory separation
     const outputFile: ReviewFile = {
       sessionId: options.sessionId,
+      ...(options.reviewer && { reviewer: options.reviewer }),
       articles: paginated.map((article) => ({
         ...article,
         reviewHistory: article.reviews ?? [],
