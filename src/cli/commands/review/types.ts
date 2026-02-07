@@ -106,21 +106,34 @@ export interface WorkFile {
 }
 
 /**
- * Review status classification
+ * Review status classification (7-state model)
  */
-export type ReviewStatus = 'pending' | 'conflicting' | 'needs-final' | 'finalized';
+export type ReviewStatus =
+  | 'pending'
+  | 'incomplete'
+  | 'uncertain'
+  | 'agreed-include'
+  | 'agreed-exclude'
+  | 'conflicting'
+  | 'finalized';
 
 /**
  * Classify the review status of an article entry
  *
- * Status precedence:
- * 1. finalized - has finalDecision
- * 2. pending - no reviews
- * 3. conflicting - reviewers disagree
- * 4. needs-final - has reviews but no finalDecision
+ * Classification logic (in order):
+ * 1. finalDecision set?           → finalized
+ * 2. No reviews?                  → pending
+ * 3. Registered reviewer missing? → incomplete
+ * 4. include AND exclude present? → conflicting
+ * 5. Any uncertain?               → uncertain
+ * 6. All include?                 → agreed-include
+ * 7. All exclude?                 → agreed-exclude
  */
-export function classifyStatus(entry: ArticleEntry): ReviewStatus {
-  // Finalized takes precedence
+export function classifyStatus(
+  entry: ArticleEntry,
+  registeredReviewers?: ReviewerRecord[]
+): ReviewStatus {
+  // 1. Finalized takes precedence
   if (entry.finalDecision !== undefined) {
     return 'finalized';
   }
@@ -131,18 +144,45 @@ export function classifyStatus(entry: ArticleEntry): ReviewStatus {
     return 'pending';
   }
 
-  // Check for conflicts among reviews that have decisions
-  const decisions = reviews
-    .filter((r) => r.decision !== undefined)
-    .map((r) => r.decision);
-
-  if (decisions.length > 0) {
-    const uniqueDecisions = new Set(decisions);
-    if (uniqueDecisions.size > 1) {
-      return 'conflicting';
+  // 3. Check for incomplete (registered reviewer missing)
+  if (registeredReviewers && registeredReviewers.length > 0) {
+    const reviewerNames = new Set(reviews.map((r) => r.reviewer));
+    const hasAllReviewers = registeredReviewers.every((reg) =>
+      reviewerNames.has(reg.name)
+    );
+    if (!hasAllReviewers) {
+      return 'incomplete';
     }
   }
 
-  // Has reviews but no finalDecision
-  return 'needs-final';
+  // Get decisions from reviews that have them
+  const decisions = reviews
+    .filter((r) => r.decision !== undefined)
+    .map((r) => r.decision!);
+
+  if (decisions.length === 0) {
+    // All reviews lack a decision — treat as pending
+    return 'pending';
+  }
+
+  // 4. Check for conflicts: both include and exclude present
+  const hasInclude = decisions.includes('include');
+  const hasExclude = decisions.includes('exclude');
+  if (hasInclude && hasExclude) {
+    return 'conflicting';
+  }
+
+  // 5. Any uncertain?
+  const hasUncertain = decisions.includes('uncertain');
+  if (hasUncertain) {
+    return 'uncertain';
+  }
+
+  // 6. All include?
+  if (decisions.every((d) => d === 'include')) {
+    return 'agreed-include';
+  }
+
+  // 7. All exclude (only remaining possibility after ruling out conflicts and uncertain)
+  return 'agreed-exclude';
 }

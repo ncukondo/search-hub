@@ -154,13 +154,15 @@ describe('Next Step Suggestions E2E', () => {
           sessionId: 'session-abc',
           total: 100,
           pending: 80,
+          incomplete: 0,
+          uncertain: 0,
+          agreedInclude: 0,
+          agreedExclude: 0,
           conflicting: 0,
-          needsFinal: 0,
           finalized: 0,
           included: 0,
           excluded: 0,
-          titleReviewed: 0,
-          abstractReviewed: 0,
+          reviewers: [],
         },
       });
 
@@ -177,13 +179,15 @@ describe('Next Step Suggestions E2E', () => {
           sessionId: 'session-abc',
           total: 100,
           pending: 0,
+          incomplete: 0,
+          uncertain: 0,
+          agreedInclude: 0,
+          agreedExclude: 0,
           conflicting: 5,
-          needsFinal: 10,
           finalized: 85,
           included: 50,
           excluded: 35,
-          titleReviewed: 0,
-          abstractReviewed: 0,
+          reviewers: [],
         },
       });
 
@@ -191,7 +195,7 @@ describe('Next Step Suggestions E2E', () => {
       expect(result!.next[0]!.command).toContain('--filter conflicting');
     });
 
-    it('should suggest finalization when needs-final > 0 and finalized > 0', () => {
+    it('should suggest finalization when agreed > 0', () => {
       const result = getSuggestion({
         command: 'review status',
         sessionId: 'session-abc',
@@ -199,18 +203,20 @@ describe('Next Step Suggestions E2E', () => {
           sessionId: 'session-abc',
           total: 100,
           pending: 0,
+          incomplete: 0,
+          uncertain: 0,
+          agreedInclude: 10,
+          agreedExclude: 5,
           conflicting: 0,
-          needsFinal: 15,
           finalized: 85,
           included: 50,
           excluded: 35,
-          titleReviewed: 0,
-          abstractReviewed: 0,
+          reviewers: [],
         },
       });
 
       expect(result).not.toBeNull();
-      expect(result!.next[0]!.command).toContain('--filter needs-final');
+      expect(result!.next[0]!.command).toContain('review finalize');
     });
 
     it('should suggest registration when all finalized', () => {
@@ -221,13 +227,15 @@ describe('Next Step Suggestions E2E', () => {
           sessionId: 'session-abc',
           total: 100,
           pending: 0,
+          incomplete: 0,
+          uncertain: 0,
+          agreedInclude: 0,
+          agreedExclude: 0,
           conflicting: 0,
-          needsFinal: 0,
           finalized: 100,
           included: 60,
           excluded: 40,
-          titleReviewed: 0,
-          abstractReviewed: 0,
+          reviewers: [],
         },
       });
 
@@ -324,7 +332,7 @@ describe('Next Step Suggestions E2E', () => {
         command: 'review status',
         ctx: {
           sessionId: 'sid',
-          reviewStatus: { sessionId: 'sid', total: 10, pending: 5, conflicting: 0, needsFinal: 0, finalized: 0, included: 0, excluded: 0, titleReviewed: 0, abstractReviewed: 0 },
+          reviewStatus: { sessionId: 'sid', total: 10, pending: 5, incomplete: 0, uncertain: 0, agreedInclude: 0, agreedExclude: 0, conflicting: 0, finalized: 0, included: 0, excluded: 0, reviewers: [] },
         },
       },
       { command: 'review list', ctx: { sessionId: 'sid' } },

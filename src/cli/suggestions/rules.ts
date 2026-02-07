@@ -235,54 +235,34 @@ const reviewStatusRule: SuggestionRule = (ctx) => {
     };
   }
 
-  // 2. All reviewed or needs-final, no conflicting, no finalized yet → abstract screening
-  //    (pending=0, conflicting=0, needsFinal > 0, finalized could be partial)
-  //    Simplified: if no pending and no conflicting → suggest abstract screening for uncertain items
-  //    But we need to differentiate "title done, abstract not started" from "abstract in progress"
-  //    Per spec: pending=0, title reviewed > 0, abstract reviewed = 0 → abstract screening
-  //    Since we don't have basis-level breakdown, we use: pending=0, conflicting=0, needsFinal > 0
-  //    as a signal to suggest abstract screening or finalization
-
-  // 3. conflicting > 0: resolve conflicts
-  if (rs.conflicting > 0) {
+  // 2. agreed > 0: suggest finalization
+  const agreed = rs.agreedInclude + rs.agreedExclude;
+  if (agreed > 0) {
     return {
       next: [
         {
-          command: `search-hub review list --session ${sid} --filter conflicting`,
-          description: 'Resolve conflicting reviews',
+          command: `search-hub review finalize --session ${sid}`,
+          description: `Finalize ${agreed} articles with consensus`,
         },
       ],
       seeAlso: [],
     };
   }
 
-  // 4. needs-final > 0, some already finalized → finalization phase
-  if (rs.needsFinal > 0 && rs.finalized > 0) {
+  // 3. conflicting, uncertain, or incomplete > 0: suggest further review
+  if (rs.conflicting > 0 || rs.uncertain > 0 || rs.incomplete > 0) {
     return {
       next: [
         {
-          command: `search-hub review list --session ${sid} --filter needs-final`,
-          description: 'Finalize reviewed items',
+          command: `search-hub review extract --session ${sid} --basis abstract --filter conflicting,uncertain,incomplete --name abstract-screening`,
+          description: 'Start abstract screening for unresolved items',
         },
       ],
       seeAlso: [],
     };
   }
 
-  // 5. needs-final > 0, none finalized yet → abstract screening phase
-  if (rs.needsFinal > 0) {
-    return {
-      next: [
-        {
-          command: `search-hub review extract --session ${sid} --basis abstract --filter uncertain --name abstract-screening`,
-          description: 'Start abstract screening for uncertain items',
-        },
-      ],
-      seeAlso: [],
-    };
-  }
-
-  // 6. All finalized
+  // 5. All finalized
   if (rs.finalized === rs.total) {
     return {
       next: [

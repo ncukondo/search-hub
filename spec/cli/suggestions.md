@@ -279,33 +279,33 @@ sessions/<session-id>/
 
 #### Dynamic Next Steps Logic
 
-Implemented by `generateReviewNextSteps(context)`. Evaluated top-to-bottom:
+Implemented by `reviewStatusRule()`. Evaluated top-to-bottom:
 
-**1. agreed > 0 (consensus exists, can finalize)**:
+**1. pending > 0 (initial screening)**:
+```
+Next:
+  search-hub review extract --session <sid> --filter pending \
+    --basis title --reviewer "name" --name title-screening
+```
+
+**2. agreed > 0 (consensus exists, can finalize)**:
 ```
 Next:
   search-hub review finalize --session <sid>                    # auto-finalize agreed articles
 ```
 
-**2. (uncertain + conflicting + incomplete) > 0, agreed = 0 (needs further review)**:
+**3. (conflicting + uncertain + incomplete) > 0 (needs further review)**:
 Detect next basis from reviewer registry (title → abstract → fulltext).
 ```
 Next:
-  search-hub review extract --session <sid> --filter uncertain,conflicting,incomplete \
+  search-hub review extract --session <sid> --filter conflicting,uncertain,incomplete \
     --basis <next_basis> --reviewer "name" --name <next_basis>-screening
 ```
 
-**3. all finalized**:
+**4. all finalized**:
 ```
 Next:
-  search-hub review export --session <sid> --only included      # export results
-```
-
-**4. pending > 0 (initial screening)**:
-```
-Next:
-  search-hub review extract --session <sid> --filter pending \
-    --basis title --reviewer "name" --name title-screening
+  search-hub register <sid> --reviewed                          # register accepted articles
 ```
 
 **5. batch continuation (--limit used with remaining articles)**:

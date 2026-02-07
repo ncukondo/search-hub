@@ -124,10 +124,11 @@ export async function executeReviewExtract(
   const reviewFile = await loadReviewFile(sessionDir);
 
   // Filter articles by status
+  const reviewers = reviewFile.reviewers;
   let filtered: ArticleEntry[];
   if (options.filter && options.filter.length > 0) {
     filtered = reviewFile.articles.filter((article) => {
-      const status = classifyStatus(article);
+      const status = classifyStatus(article, reviewers);
       return options.filter!.includes(status);
     });
   } else {

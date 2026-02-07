@@ -1707,12 +1707,12 @@ Examples:
     .command('list')
     .description('List articles with optional filtering')
     .requiredOption('--session <id>', 'session ID')
-    .option('--filter <type>', 'filter by status: pending, conflicting, needs-final, finalized, all', 'all')
+    .option('--filter <type>', 'filter by status: pending, incomplete, uncertain, agreed-include, agreed-exclude, conflicting, finalized, all', 'all')
     .option('--json', 'output as JSON')
     .action(async (options: { session: string; filter?: string; json?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
-        const validFilters: ListFilter[] = ['pending', 'conflicting', 'needs-final', 'finalized', 'all'];
+        const validFilters: ListFilter[] = ['pending', 'incomplete', 'uncertain', 'agreed-include', 'agreed-exclude', 'conflicting', 'finalized', 'all'];
         const filter = (options.filter ?? 'all') as ListFilter;
         if (!validFilters.includes(filter)) {
           if (!globalOpts.quiet) {
@@ -1749,7 +1749,7 @@ Examples:
     .description('Extract subset to for-review/<name>/review.yaml for distributed review')
     .requiredOption('--session <id>', 'session ID')
     .requiredOption('--name <name>', 'name for the review subset (output: for-review/<name>/review.yaml)')
-    .option('--filter <types>', 'filter by status (comma-separated): pending, conflicting, needs-final')
+    .option('--filter <types>', 'filter by status (comma-separated): pending, incomplete, uncertain, agreed-include, agreed-exclude, conflicting, finalized')
     .option('--sort <method>', 'sort method: year, title, random, none', 'none')
     .option('--limit <n>', 'limit number of articles')
     .option('--offset <n>', 'skip first n articles')

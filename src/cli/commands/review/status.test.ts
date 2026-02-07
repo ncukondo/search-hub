@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { stringify as stringifyYaml } from 'yaml';
-import { executeReviewStatus } from './status.js';
+import { executeReviewStatus, formatStatusOutput } from './status.js';
 import type { ReviewFile, ArticleEntry } from './types.js';
 
 describe('executeReviewStatus', () => {
@@ -21,26 +21,27 @@ describe('executeReviewStatus', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  async function writeReviewFile(articles: ArticleEntry[]): Promise<void> {
+  async function writeReviewFile(articles: ArticleEntry[], reviewFile?: Partial<ReviewFile>): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
     const internalDir = join(sessionDir, '.internal');
     await mkdir(internalDir, { recursive: true });
 
-    const reviewFile: ReviewFile = {
+    const rf: ReviewFile = {
       sessionId,
       articles,
+      ...reviewFile,
     };
 
-    const content = stringifyYaml(reviewFile);
+    const content = stringifyYaml(rf);
     await writeFile(join(internalDir, 'reviews.yaml'), content);
   }
 
-  it('counts articles by status correctly', async () => {
+  it('counts articles by status correctly (no reviewer registry)', async () => {
     const articles: ArticleEntry[] = [
       // pending (no reviews)
       { title: 'Article 1', pmid: '1', reviews: [] },
       { title: 'Article 2', pmid: '2', reviews: [] },
-      // needs-final (has reviews but no finalDecision)
+      // agreed-include (has reviews, all include, no registry)
       {
         title: 'Article 3', pmid: '3',
         reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
@@ -72,76 +73,85 @@ describe('executeReviewStatus', () => {
 
     expect(result.total).toBe(6);
     expect(result.pending).toBe(2);
+    expect(result.incomplete).toBe(0);
+    expect(result.uncertain).toBe(0);
+    expect(result.agreedInclude).toBe(1);
+    expect(result.agreedExclude).toBe(0);
     expect(result.conflicting).toBe(1);
-    expect(result.needsFinal).toBe(1);
     expect(result.finalized).toBe(2);
     expect(result.included).toBe(1);
     expect(result.excluded).toBe(1);
   });
 
-  describe('basis breakdown', () => {
-    it('counts title-reviewed and abstract-reviewed articles', async () => {
-      const articles: ArticleEntry[] = [
-        // pending
-        { title: 'Article 1', pmid: '1', reviews: [] },
-        // title-reviewed only
-        {
-          title: 'Article 2', pmid: '2',
-          reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' }],
-        },
-        // abstract-reviewed
-        {
-          title: 'Article 3', pmid: '3',
-          reviews: [
-            { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
-            { reviewer: 'ai:claude', decision: 'include', basis: 'abstract', timestamp: '2024-01-02T00:00:00Z' },
-          ],
-        },
-      ];
+  it('counts incomplete and uncertain with reviewer registry', async () => {
+    const articles: ArticleEntry[] = [
+      // incomplete: only claude reviewed, gpt-4o missing
+      {
+        title: 'Article 1', pmid: '1',
+        reviews: [{ reviewer: 'ai:claude', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
+      },
+      // uncertain: both reviewed, one uncertain
+      {
+        title: 'Article 2', pmid: '2',
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
+          { reviewer: 'ai:gpt-4o', decision: 'uncertain', timestamp: '2024-01-01T01:00:00Z' },
+        ],
+      },
+      // agreed-include: both include
+      {
+        title: 'Article 3', pmid: '3',
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', timestamp: '2024-01-01T01:00:00Z' },
+        ],
+      },
+      // agreed-exclude: both exclude
+      {
+        title: 'Article 4', pmid: '4',
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'exclude', timestamp: '2024-01-01T00:00:00Z' },
+          { reviewer: 'ai:gpt-4o', decision: 'exclude', timestamp: '2024-01-01T01:00:00Z' },
+        ],
+      },
+    ];
 
-      await writeReviewFile(articles);
-
-      const result = await executeReviewStatus({ sessionId }, sessionsDir);
-
-      expect(result.titleReviewed).toBe(2); // Articles 2 and 3
-      expect(result.abstractReviewed).toBe(1); // Only Article 3
+    await writeReviewFile(articles, {
+      reviewers: [
+        { name: 'ai:claude', basis: 'title' },
+        { name: 'ai:gpt-4o', basis: 'title' },
+      ],
     });
 
-    it('returns zero for basis counts when no reviews have basis', async () => {
-      const articles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-        {
-          title: 'Article 2', pmid: '2',
-          reviews: [{ reviewer: 'human', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
-        },
-      ];
+    const result = await executeReviewStatus({ sessionId }, sessionsDir);
 
-      await writeReviewFile(articles);
+    expect(result.total).toBe(4);
+    expect(result.incomplete).toBe(1);
+    expect(result.uncertain).toBe(1);
+    expect(result.agreedInclude).toBe(1);
+    expect(result.agreedExclude).toBe(1);
+  });
 
-      const result = await executeReviewStatus({ sessionId }, sessionsDir);
-
-      expect(result.titleReviewed).toBe(0);
-      expect(result.abstractReviewed).toBe(0);
+  it('includes reviewers in result', async () => {
+    await writeReviewFile([], {
+      reviewers: [
+        { name: 'ai:claude', basis: 'title' },
+        { name: 'ai:gpt-4o', basis: 'title' },
+      ],
     });
 
-    it('displays basis breakdown in formatted output', async () => {
-      const { formatStatusOutput } = await import('./status.js');
-      const articles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-        {
-          title: 'Article 2', pmid: '2',
-          reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' }],
-        },
-      ];
+    const result = await executeReviewStatus({ sessionId }, sessionsDir);
 
-      await writeReviewFile(articles);
+    expect(result.reviewers).toHaveLength(2);
+    expect(result.reviewers[0]).toEqual({ name: 'ai:claude', basis: 'title' });
+  });
 
-      const result = await executeReviewStatus({ sessionId }, sessionsDir);
-      const output = formatStatusOutput(result);
+  it('returns empty reviewers when none registered', async () => {
+    await writeReviewFile([]);
 
-      expect(output).toContain('title: 1');
-      expect(output).toContain('abstract: 0');
-    });
+    const result = await executeReviewStatus({ sessionId }, sessionsDir);
+
+    expect(result.reviewers).toHaveLength(0);
   });
 
   it('returns zero counts for empty review file', async () => {
@@ -151,101 +161,96 @@ describe('executeReviewStatus', () => {
 
     expect(result.total).toBe(0);
     expect(result.pending).toBe(0);
+    expect(result.incomplete).toBe(0);
+    expect(result.uncertain).toBe(0);
+    expect(result.agreedInclude).toBe(0);
+    expect(result.agreedExclude).toBe(0);
     expect(result.conflicting).toBe(0);
-    expect(result.needsFinal).toBe(0);
     expect(result.finalized).toBe(0);
     expect(result.included).toBe(0);
     expect(result.excluded).toBe(0);
   });
 
-  it('formats human-readable output', async () => {
-    const articles: ArticleEntry[] = [
-      { title: 'Article 1', pmid: '1', reviews: [] },
-      { title: 'Article 2', pmid: '2', reviews: [], finalDecision: 'include' },
-    ];
-
-    await writeReviewFile(articles);
-
-    const result = await executeReviewStatus({ sessionId }, sessionsDir);
-
-    expect(result.total).toBe(2);
-    expect(result.pending).toBe(1);
-    expect(result.finalized).toBe(1);
-  });
-
   it('throws error if reviews.yaml does not exist', async () => {
     const sessionDir = join(sessionsDir, sessionId);
     await mkdir(sessionDir, { recursive: true });
-    // Don't create reviews.yaml
 
     await expect(executeReviewStatus({ sessionId }, sessionsDir)).rejects.toThrow();
   });
 
-  describe('workflow guidance', () => {
-    it('includes workflow guidance in output', async () => {
-      const { formatStatusOutput } = await import('./status.js');
-      const articles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+  describe('formatStatusOutput', () => {
+    it('shows new status breakdown', () => {
+      const output = formatStatusOutput({
+        sessionId: 'my-session',
+        total: 100,
+        pending: 10,
+        incomplete: 8,
+        uncertain: 12,
+        agreedInclude: 30,
+        agreedExclude: 15,
+        conflicting: 3,
+        finalized: 22,
+        included: 15,
+        excluded: 7,
+        reviewers: [
+          { name: 'ai:claude', basis: 'title' },
+          { name: 'ai:gpt-4o', basis: 'title' },
+        ],
+      });
 
-      await writeReviewFile(articles);
-
-      const result = await executeReviewStatus({ sessionId }, sessionsDir);
-      const output = formatStatusOutput(result);
-
-      expect(output).toContain('AI Agent Workflow');
+      expect(output).toContain('Review Progress: my-session');
+      expect(output).toContain('Total:         100');
+      expect(output).toContain('Pending:       10');
+      expect(output).toContain('Incomplete:    8');
+      expect(output).toContain('Uncertain:     12');
+      expect(output).toContain('Agreed:        45');
+      expect(output).toContain('include: 30');
+      expect(output).toContain('exclude: 15');
+      expect(output).toContain('Conflicting:   3');
+      expect(output).toContain('Finalized:     22');
+      expect(output).toContain('Reviewers:');
+      expect(output).toContain('ai:claude  (title)');
+      expect(output).toContain('ai:gpt-4o  (title)');
     });
 
-    it('includes Phase 1 title screening workflow with --name', async () => {
-      const { formatStatusOutput } = await import('./status.js');
-      const articles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+    it('does not include static AI Agent Workflow section', () => {
+      const output = formatStatusOutput({
+        sessionId: 'my-session',
+        total: 10,
+        pending: 10,
+        incomplete: 0,
+        uncertain: 0,
+        agreedInclude: 0,
+        agreedExclude: 0,
+        conflicting: 0,
+        finalized: 0,
+        included: 0,
+        excluded: 0,
+        reviewers: [],
+      });
 
-      await writeReviewFile(articles);
-
-      const result = await executeReviewStatus({ sessionId }, sessionsDir);
-      const output = formatStatusOutput(result);
-
-      expect(output).toContain('Phase 1');
-      expect(output).toContain('title screening');
-      expect(output).toContain('--basis title');
-      expect(output).toContain('--name title-screening');
-      expect(output).toContain('review extract');
-      expect(output).toContain('review mark');
-      expect(output).toContain('review merge');
+      expect(output).not.toContain('AI Agent Workflow');
+      expect(output).not.toContain('Phase 1');
+      expect(output).not.toContain('Phase 2');
     });
 
-    it('includes Phase 2 abstract screening workflow with --name', async () => {
-      const { formatStatusOutput } = await import('./status.js');
-      const articles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+    it('hides reviewers section when no reviewers registered', () => {
+      const output = formatStatusOutput({
+        sessionId: 'my-session',
+        total: 10,
+        pending: 10,
+        incomplete: 0,
+        uncertain: 0,
+        agreedInclude: 0,
+        agreedExclude: 0,
+        conflicting: 0,
+        finalized: 0,
+        included: 0,
+        excluded: 0,
+        reviewers: [],
+      });
 
-      await writeReviewFile(articles);
-
-      const result = await executeReviewStatus({ sessionId }, sessionsDir);
-      const output = formatStatusOutput(result);
-
-      expect(output).toContain('Phase 2');
-      expect(output).toContain('abstract screening');
-      expect(output).toContain('--basis abstract');
-      expect(output).toContain('--name abstract-screening');
-      expect(output).toContain('--filter uncertain');
-    });
-
-    it('includes session ID in workflow commands', async () => {
-      const { formatStatusOutput } = await import('./status.js');
-      const articles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
-
-      await writeReviewFile(articles);
-
-      const result = await executeReviewStatus({ sessionId }, sessionsDir);
-      const output = formatStatusOutput(result);
-
-      expect(output).toContain(`--session ${sessionId}`);
+      expect(output).not.toContain('Reviewers:');
     });
   });
 });

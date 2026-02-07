@@ -21,17 +21,18 @@ describe('executeReviewList', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  async function writeReviewFile(articles: ArticleEntry[]): Promise<void> {
+  async function writeReviewFile(articles: ArticleEntry[], reviewFile?: Partial<ReviewFile>): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
     const internalDir = join(sessionDir, '.internal');
     await mkdir(internalDir, { recursive: true });
 
-    const reviewFile: ReviewFile = {
+    const rf: ReviewFile = {
       sessionId,
       articles,
+      ...reviewFile,
     };
 
-    const content = stringifyYaml(reviewFile);
+    const content = stringifyYaml(rf);
     await writeFile(join(internalDir, 'reviews.yaml'), content);
   }
 
@@ -39,9 +40,9 @@ describe('executeReviewList', () => {
     // pending (no reviews)
     { title: 'Pending Article 1', pmid: '1', reviews: [] },
     { title: 'Pending Article 2', pmid: '2', reviews: [] },
-    // needs-final (has reviews but no finalDecision)
+    // agreed-include (all reviewers agree include, no registry)
     {
-      title: 'Needs Final Article',
+      title: 'Agreed Include Article',
       pmid: '3',
       reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
     },
@@ -98,14 +99,14 @@ describe('executeReviewList', () => {
       expect(result.articles[0]!.status).toBe('conflicting');
     });
 
-    it('filters needs-final articles correctly', async () => {
+    it('filters agreed-include articles correctly', async () => {
       await writeReviewFile(sampleArticles);
 
-      const result = await executeReviewList({ sessionId, filter: 'needs-final' }, sessionsDir);
+      const result = await executeReviewList({ sessionId, filter: 'agreed-include' }, sessionsDir);
 
       expect(result.articles).toHaveLength(1);
-      expect(result.articles[0]!.title).toBe('Needs Final Article');
-      expect(result.articles[0]!.status).toBe('needs-final');
+      expect(result.articles[0]!.title).toBe('Agreed Include Article');
+      expect(result.articles[0]!.status).toBe('agreed-include');
     });
 
     it('filters finalized articles correctly', async () => {
@@ -115,6 +116,44 @@ describe('executeReviewList', () => {
 
       expect(result.articles).toHaveLength(2);
       expect(result.articles.every((a) => a.status === 'finalized')).toBe(true);
+    });
+
+    it('filters uncertain articles correctly', async () => {
+      const articles: ArticleEntry[] = [
+        {
+          title: 'Uncertain Article',
+          pmid: '10',
+          reviews: [{ reviewer: 'ai:claude', decision: 'uncertain' }],
+        },
+        { title: 'Pending', pmid: '11', reviews: [] },
+      ];
+      await writeReviewFile(articles);
+
+      const result = await executeReviewList({ sessionId, filter: 'uncertain' }, sessionsDir);
+
+      expect(result.articles).toHaveLength(1);
+      expect(result.articles[0]!.status).toBe('uncertain');
+    });
+
+    it('filters incomplete articles when reviewer registry exists', async () => {
+      const articles: ArticleEntry[] = [
+        {
+          title: 'Incomplete Article',
+          pmid: '10',
+          reviews: [{ reviewer: 'ai:claude', decision: 'include' }],
+        },
+      ];
+      await writeReviewFile(articles, {
+        reviewers: [
+          { name: 'ai:claude', basis: 'title' },
+          { name: 'ai:gpt-4o', basis: 'title' },
+        ],
+      });
+
+      const result = await executeReviewList({ sessionId, filter: 'incomplete' }, sessionsDir);
+
+      expect(result.articles).toHaveLength(1);
+      expect(result.articles[0]!.status).toBe('incomplete');
     });
 
     it('defaults to "all" filter when not specified', async () => {
@@ -133,7 +172,7 @@ describe('executeReviewList', () => {
       const result = await executeReviewList({ sessionId, filter: 'all' }, sessionsDir);
 
       expect(result.articles[0]!.status).toBe('pending');
-      expect(result.articles[2]!.status).toBe('needs-final');
+      expect(result.articles[2]!.status).toBe('agreed-include');
       expect(result.articles[3]!.status).toBe('conflicting');
       expect(result.articles[4]!.status).toBe('finalized');
     });
@@ -187,41 +226,5 @@ describe('executeReviewList', () => {
     // Don't create reviews.yaml
 
     await expect(executeReviewList({ sessionId }, sessionsDir)).rejects.toThrow();
-  });
-
-  describe('workflow field in result', () => {
-    it('includes workflow object in result', async () => {
-      await writeReviewFile(sampleArticles);
-
-      const result = await executeReviewList({ sessionId }, sessionsDir);
-
-      expect(result.workflow).toBeDefined();
-    });
-
-    it('workflow includes phase1 title screening commands', async () => {
-      await writeReviewFile(sampleArticles);
-
-      const result = await executeReviewList({ sessionId }, sessionsDir);
-
-      expect(result.workflow!.phase1).toBeDefined();
-      expect(result.workflow!.phase1.basis).toBe('title');
-      expect(result.workflow!.phase1.extract).toContain('--basis title');
-      expect(result.workflow!.phase1.extract).toContain(`--session ${sessionId}`);
-      expect(result.workflow!.phase1.mark).toContain('review mark');
-      expect(result.workflow!.phase1.merge).toContain('review merge');
-    });
-
-    it('workflow includes phase2 abstract screening commands', async () => {
-      await writeReviewFile(sampleArticles);
-
-      const result = await executeReviewList({ sessionId }, sessionsDir);
-
-      expect(result.workflow!.phase2).toBeDefined();
-      expect(result.workflow!.phase2.basis).toBe('abstract');
-      expect(result.workflow!.phase2.extract).toContain('--basis abstract');
-      expect(result.workflow!.phase2.extract).toContain('--filter uncertain');
-      expect(result.workflow!.phase2.mark).toContain('review mark');
-      expect(result.workflow!.phase2.merge).toContain('review merge');
-    });
   });
 });

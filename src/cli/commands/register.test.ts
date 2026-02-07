@@ -443,7 +443,7 @@ articles:
       });
     });
 
-    it('counts needs-final articles as pending', async () => {
+    it('counts agreed-include articles as pending', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
       const internalDir = join(sessionDir, '.internal');
@@ -462,7 +462,7 @@ articles:
 
       const result = await getReviewSummary(sessionId, sessionsDir);
 
-      // has review but no finalDecision = needs-final = counted as pending
+      // has review but no finalDecision = agreed-include = counted as pending
       expect(result.pending).toBe(1);
       expect(result.included).toBe(0);
     });
