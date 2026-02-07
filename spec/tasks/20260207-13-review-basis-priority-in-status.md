@@ -64,19 +64,19 @@ across any basis are still treated as `conflicting`.
 
 ### Step 3: Handle Cross-Reviewer Basis Priority
 
-- [ ] Write test: `src/cli/commands/review/types.test.ts`
+- [x] Write test: `src/cli/commands/review/types.test.ts`
   - Reviewer A: title `uncertain`. Reviewer B: abstract `include`. Reviewer C: abstract `include` → `agreed-include`
   - Reviewer A: title `uncertain`. Reviewer B: abstract `include`. Reviewer C: abstract `exclude` → `conflicting`
   - Reviewer A: title `exclude`. Reviewer B: abstract `include` → `conflicting` (both definitive)
   - Reviewer A: abstract `uncertain`. Reviewer B: fulltext `include` → `agreed-include`
-- [ ] Implement cross-reviewer logic:
+- [x] Implement cross-reviewer logic:
   1. For each reviewer, compute their effective decision at highest basis
   2. Discard `uncertain` reviews from reviewers who have no higher-basis definitive decision (they remain uncertain)
   3. Collect all effective decisions: if any reviewer's effective decision is still `uncertain`, overall is `uncertain`
   4. Otherwise, apply include/exclude agreement/conflict logic on effective decisions
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Cross-reviewer basis priority works correctly
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Cross-reviewer basis priority works correctly
 
 ### Step 4: Verify Finalize Works with Multi-Stage Screening
 
