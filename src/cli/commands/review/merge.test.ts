@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { mkdtemp, rm, writeFile, mkdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { stringify as stringifyYaml, parse as parseYaml } from 'yaml';
-import { executeReviewMerge, registerReviewer } from './merge.js';
+import { executeReviewMerge, registerReviewer, formatMergeOutput } from './merge.js';
 import type { ReviewFile, ArticleEntry, WorkFile } from './types.js';
 
 describe('executeReviewMerge', () => {
@@ -1093,6 +1093,252 @@ describe('executeReviewMerge', () => {
       expect(merged.articles[0]!.reviews[0]!.decision).toBe('include');
       expect(merged.articles[1]!.reviews[0]!.decision).toBe('exclude');
       expect(merged.articles[2]!.reviews[0]!.decision).toBe('uncertain');
+    });
+  });
+
+  describe('decision breakdown counts', () => {
+    async function writeWorkFile(workFile: WorkFile, name: string): Promise<void> {
+      const content = stringifyYaml(workFile);
+      const dir = join(sessionsDir, sessionId, 'for-review', name);
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, 'review.yaml'), content);
+    }
+
+    it('counts include, exclude, uncertain in work file merge', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'A1', doi: '10.1/a1', reviews: [] },
+        { title: 'A2', doi: '10.1/a2', reviews: [] },
+        { title: 'A3', doi: '10.1/a3', reviews: [] },
+        { title: 'A4', doi: '10.1/a4', reviews: [] },
+        { title: 'A5', doi: '10.1/a5', reviews: [] },
+        { title: 'A6', doi: '10.1/a6', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1/a1', title: 'A1', decision: 'include', comment: '' },
+          { id: '10.1/a2', title: 'A2', decision: 'include', comment: '' },
+          { id: '10.1/a3', title: 'A3', decision: 'include', comment: '' },
+          { id: '10.1/a4', title: 'A4', decision: 'exclude', comment: '' },
+          { id: '10.1/a5', title: 'A5', decision: 'exclude', comment: '' },
+          { id: '10.1/a6', title: 'A6', decision: 'uncertain', comment: '' },
+        ],
+      };
+      await writeWorkFile(workFile, 'batch');
+
+      const result = await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
+
+      expect(result.includeCount).toBe(3);
+      expect(result.excludeCount).toBe(2);
+      expect(result.uncertainCount).toBe(1);
+    });
+
+    it('counts all exclude when no include or uncertain', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'A1', doi: '10.1/a1', reviews: [] },
+        { title: 'A2', doi: '10.1/a2', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1/a1', title: 'A1', decision: 'exclude', comment: '' },
+          { id: '10.1/a2', title: 'A2', decision: 'exclude', comment: '' },
+        ],
+      };
+      await writeWorkFile(workFile, 'batch');
+
+      const result = await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
+
+      expect(result.includeCount).toBe(0);
+      expect(result.excludeCount).toBe(2);
+      expect(result.uncertainCount).toBe(0);
+    });
+
+    it('counts finalDecisions in review file merge', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'A1', pmid: '1', reviews: [] },
+        { title: 'A2', pmid: '2', reviews: [] },
+        { title: 'A3', pmid: '3', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const extractedArticles: ArticleEntry[] = [
+        {
+          title: 'A1', pmid: '1',
+          reviews: [{ reviewer: 'human:admin', decision: 'include' }],
+          finalDecision: 'include',
+        },
+        {
+          title: 'A2', pmid: '2',
+          reviews: [{ reviewer: 'human:admin', decision: 'exclude' }],
+          finalDecision: 'exclude',
+        },
+        {
+          title: 'A3', pmid: '3',
+          reviews: [{ reviewer: 'human:admin', decision: 'include' }],
+        },
+      ];
+      await writeExtractedFile(extractedArticles, 'batch');
+
+      const result = await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
+
+      expect(result.reviewsAdded).toBe(3);
+      expect(result.includeCount).toBe(2);
+      expect(result.excludeCount).toBe(1);
+      expect(result.uncertainCount).toBe(0);
+      expect(result.finalDecisionsSet).toBe(2);
+      expect(result.finalDecisionsIncludeCount).toBe(1);
+      expect(result.finalDecisionsExcludeCount).toBe(1);
+    });
+  });
+
+  describe('formatMergeOutput', () => {
+    it('shows reviews breakdown for work file merge', () => {
+      const result = {
+        reviewsAdded: 93,
+        decisionsSet: 0,
+        includeCount: 36,
+        excludeCount: 53,
+        uncertainCount: 4,
+        finalDecisionsSet: 0,
+        finalDecisionsIncludeCount: 0,
+        finalDecisionsExcludeCount: 0,
+        warnings: [],
+      };
+
+      const output = formatMergeOutput(result, false);
+      expect(output).toContain('Reviews added: 93 (53 exclude, 36 include, 4 uncertain)');
+    });
+
+    it('shows final decisions for review file merge', () => {
+      const result = {
+        reviewsAdded: 10,
+        decisionsSet: 3,
+        includeCount: 6,
+        excludeCount: 3,
+        uncertainCount: 1,
+        finalDecisionsSet: 3,
+        finalDecisionsIncludeCount: 2,
+        finalDecisionsExcludeCount: 1,
+        warnings: [],
+      };
+
+      const output = formatMergeOutput(result, false);
+      expect(output).toContain('Reviews added: 10');
+      expect(output).toContain('Final decisions set: 3 (2 include, 1 exclude)');
+    });
+
+    it('shows zero reviews without breakdown', () => {
+      const result = {
+        reviewsAdded: 0,
+        decisionsSet: 0,
+        includeCount: 0,
+        excludeCount: 0,
+        uncertainCount: 0,
+        finalDecisionsSet: 0,
+        finalDecisionsIncludeCount: 0,
+        finalDecisionsExcludeCount: 0,
+        warnings: [],
+      };
+
+      const output = formatMergeOutput(result, false);
+      expect(output).toContain('Reviews added: 0');
+      expect(output).not.toContain('(');
+    });
+
+    it('omits zero-count categories in breakdown', () => {
+      const result = {
+        reviewsAdded: 10,
+        decisionsSet: 0,
+        includeCount: 7,
+        excludeCount: 3,
+        uncertainCount: 0,
+        finalDecisionsSet: 0,
+        finalDecisionsIncludeCount: 0,
+        finalDecisionsExcludeCount: 0,
+        warnings: [],
+      };
+
+      const output = formatMergeOutput(result, false);
+      expect(output).toContain('Reviews added: 10 (3 exclude, 7 include)');
+      expect(output).not.toContain('uncertain');
+    });
+
+    it('does not show "Decisions set" line', () => {
+      const result = {
+        reviewsAdded: 5,
+        decisionsSet: 0,
+        includeCount: 5,
+        excludeCount: 0,
+        uncertainCount: 0,
+        finalDecisionsSet: 0,
+        finalDecisionsIncludeCount: 0,
+        finalDecisionsExcludeCount: 0,
+        warnings: [],
+      };
+
+      const output = formatMergeOutput(result, false);
+      expect(output).not.toContain('Decisions set:');
+    });
+
+    it('does not show final decisions line when none set', () => {
+      const result = {
+        reviewsAdded: 5,
+        decisionsSet: 0,
+        includeCount: 5,
+        excludeCount: 0,
+        uncertainCount: 0,
+        finalDecisionsSet: 0,
+        finalDecisionsIncludeCount: 0,
+        finalDecisionsExcludeCount: 0,
+        warnings: [],
+      };
+
+      const output = formatMergeOutput(result, false);
+      expect(output).not.toContain('Final decisions');
+    });
+
+    it('shows dry run header', () => {
+      const result = {
+        reviewsAdded: 5,
+        decisionsSet: 0,
+        includeCount: 5,
+        excludeCount: 0,
+        uncertainCount: 0,
+        finalDecisionsSet: 0,
+        finalDecisionsIncludeCount: 0,
+        finalDecisionsExcludeCount: 0,
+        warnings: [],
+      };
+
+      const output = formatMergeOutput(result, true);
+      expect(output).toContain('Dry run - no changes made');
+    });
+
+    it('shows warnings', () => {
+      const result = {
+        reviewsAdded: 0,
+        decisionsSet: 0,
+        includeCount: 0,
+        excludeCount: 0,
+        uncertainCount: 0,
+        finalDecisionsSet: 0,
+        finalDecisionsIncludeCount: 0,
+        finalDecisionsExcludeCount: 0,
+        warnings: ['Article not found: "Test"'],
+      };
+
+      const output = formatMergeOutput(result, false);
+      expect(output).toContain('Warnings:');
+      expect(output).toContain('Article not found: "Test"');
     });
   });
 });

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  basisRank,
   classifyStatus,
   type ArticleEntry,
   type Review,
@@ -7,6 +8,23 @@ import {
   type ReviewFile,
   type ReviewerRecord,
 } from './types.js';
+
+describe('basisRank', () => {
+  it('returns 0 for undefined', () => {
+    expect(basisRank(undefined)).toBe(0);
+  });
+
+  it('title < abstract < fulltext', () => {
+    expect(basisRank('title')).toBeLessThan(basisRank('abstract'));
+    expect(basisRank('abstract')).toBeLessThan(basisRank('fulltext'));
+  });
+
+  it('returns positive numbers for all basis values', () => {
+    expect(basisRank('title')).toBeGreaterThan(0);
+    expect(basisRank('abstract')).toBeGreaterThan(0);
+    expect(basisRank('fulltext')).toBeGreaterThan(0);
+  });
+});
 
 describe('classifyStatus', () => {
   const baseEntry: Omit<ArticleEntry, 'reviews' | 'finalDecision'> = {
@@ -330,6 +348,167 @@ describe('classifyStatus', () => {
       ],
     };
     expect(classifyStatus(entry)).toBe('uncertain');
+  });
+
+  describe('basis priority', () => {
+    it('same reviewer: title uncertain + abstract include → agreed-include', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:claude', decision: 'include', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
+
+    it('same reviewer: title uncertain + abstract exclude → agreed-exclude', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:claude', decision: 'exclude', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-exclude');
+    });
+
+    it('same reviewer: title uncertain + fulltext include → agreed-include', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:claude', decision: 'include', basis: 'fulltext' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
+
+    it('different reviewers: A title uncertain + B abstract include → agreed-include', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
+
+    it('different reviewers: A title uncertain + B abstract exclude → agreed-exclude', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-exclude');
+    });
+
+    it('two reviewers: both abstract include with earlier title uncertain → agreed-include', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:claude', decision: 'include', basis: 'abstract' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
+
+    it('A abstract include + B abstract exclude → conflicting (unchanged)', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', basis: 'abstract' },
+          { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('conflicting');
+    });
+
+    it('A title include + B abstract exclude → conflicting (definitive vs definitive)', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('conflicting');
+    });
+
+    it('all reviews uncertain (no higher-basis definitive) → uncertain (unchanged)', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'uncertain', basis: 'title' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('uncertain');
+    });
+
+    it('only title reviews, no uncertain conflict → existing behavior unchanged', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'title' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
+
+    // Cross-reviewer basis priority (Step 3)
+    it('A: title uncertain, B: abstract include, C: abstract include → agreed-include', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
+          { reviewer: 'ai:gemini', decision: 'include', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
+
+    it('A: title uncertain, B: abstract include, C: abstract exclude → conflicting', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
+          { reviewer: 'ai:gemini', decision: 'exclude', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('conflicting');
+    });
+
+    it('A: title exclude, B: abstract include → conflicting (both definitive)', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'exclude', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('conflicting');
+    });
+
+    it('A: abstract uncertain, B: fulltext include → agreed-include', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'abstract' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'fulltext' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
   });
 });
 
