@@ -19,6 +19,7 @@ import { executeReviewExport } from './export.js';
 import { executeReviewMark } from './mark.js';
 import { executeReviewFinalize } from './finalize.js';
 import { getIncludedArticles } from '../register.js';
+import { generateReviewNextSteps } from './next-steps.js';
 import type { ReviewDecision, ReviewFile, WorkFile } from './types.js';
 
 describe('Review Workflow E2E', () => {
@@ -1579,6 +1580,110 @@ summary:
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
       expect(finalized).toHaveLength(5);
+    });
+  });
+
+  describe('Dynamic Next Steps progression', () => {
+    it('suggests correct next steps through entire workflow', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // 1. All pending → suggests title screening extract
+      const status1 = await executeReviewStatus({ sessionId }, sessionsDir);
+      const steps1 = generateReviewNextSteps({ sessionId, statusResult: status1 });
+      expect(steps1).not.toBeNull();
+      expect(steps1!.next[0]!.command).toContain('review extract');
+      expect(steps1!.next[0]!.command).toContain('--basis title');
+      expect(steps1!.next[0]!.command).toContain('--filter pending');
+      expect(steps1!.next[0]!.command).toContain('--reviewer "<name>"');
+
+      // 2. After title screening → agreed articles → suggests finalize
+      const extractResult = await executeReviewExtract(
+        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'ns-title' },
+        sessionsDir
+      );
+      const workContent = await readFile(extractResult.outputPath, 'utf-8');
+      const workFile = parseYaml(workContent) as WorkFile;
+      for (let i = 0; i < workFile.articles.length; i++) {
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: workFile.articles[i]!.id,
+          decision: i < 5 ? 'include' : 'exclude',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'ns-title' }, sessionsDir);
+
+      const status2 = await executeReviewStatus({ sessionId }, sessionsDir);
+      const steps2 = generateReviewNextSteps({ sessionId, statusResult: status2 });
+      expect(steps2).not.toBeNull();
+      expect(steps2!.next[0]!.command).toContain('review finalize');
+
+      // 3. After finalize → all finalized → suggests register
+      await executeReviewFinalize({ sessionId }, sessionsDir);
+
+      const status3 = await executeReviewStatus({ sessionId }, sessionsDir);
+      const steps3 = generateReviewNextSteps({ sessionId, statusResult: status3 });
+      expect(steps3).not.toBeNull();
+      expect(steps3!.next[0]!.command).toContain('register');
+      expect(steps3!.next[0]!.command).toContain('--reviewed');
+    });
+
+    it('suggests abstract screening after title screening with uncertain results', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Title screening: mark all as uncertain
+      const extractResult = await executeReviewExtract(
+        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'ns-title-unc' },
+        sessionsDir
+      );
+      const workContent = await readFile(extractResult.outputPath, 'utf-8');
+      const workFile = parseYaml(workContent) as WorkFile;
+      for (const article of workFile.articles) {
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: article.id,
+          decision: 'uncertain',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'ns-title-unc' }, sessionsDir);
+
+      // All uncertain, reviewer registry has title → should suggest abstract screening
+      const status = await executeReviewStatus({ sessionId }, sessionsDir);
+      const steps = generateReviewNextSteps({ sessionId, statusResult: status });
+      expect(steps).not.toBeNull();
+      expect(steps!.next[0]!.command).toContain('review extract');
+      expect(steps!.next[0]!.command).toContain('--basis abstract');
+      expect(steps!.next[0]!.command).toContain('--reviewer "<name>"');
+      expect(steps!.next[0]!.command).toContain('--name abstract-screening');
+    });
+
+    it('batch continuation: suggests next batch with correct offset', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      const extractResult = await executeReviewExtract(
+        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', limit: 3, offset: 0, name: 'batch-1' },
+        sessionsDir
+      );
+
+      const status = await executeReviewStatus({ sessionId }, sessionsDir);
+      const steps = generateReviewNextSteps({
+        sessionId,
+        statusResult: status,
+        extractName: 'batch-1',
+        extractedCount: extractResult.extractedCount,
+        totalMatching: extractResult.totalMatching,
+        limit: 3,
+        offset: 0,
+      });
+      expect(steps).not.toBeNull();
+      // Should have batch continuation in seeAlso
+      const batchSuggestion = steps!.seeAlso.find(s => s.command.includes('--offset'));
+      expect(batchSuggestion).toBeDefined();
+      expect(batchSuggestion!.command).toContain('--offset 3');
+      expect(batchSuggestion!.command).toContain('--limit 3');
+      expect(batchSuggestion!.description).toContain('7'); // 10 - 3 = 7 remaining
     });
   });
 });

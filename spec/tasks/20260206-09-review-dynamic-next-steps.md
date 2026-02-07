@@ -26,15 +26,15 @@ workflow by copy-pasting without needing to understand filter options.
 
 ### Step 1: Create `generateReviewNextSteps` Common Function
 
-- [ ] Write test: `src/cli/commands/review/next-steps.test.ts`
+- [x] Write test: `src/cli/commands/review/next-steps.test.ts`
   - `agreed > 0` → suggests `review finalize`
   - `agreed = 0, uncertain + conflicting + incomplete > 0` → suggests `review extract` with next basis
-  - All finalized → suggests `review export`
+  - All finalized → suggests `register --reviewed`
   - `--limit` used with remaining → suggests next batch with correct offset
   - Next basis detection: no abstract reviews → abstract; has abstract → fulltext
   - Session ID is embedded in suggested commands
-- [ ] Create `src/cli/commands/review/next-steps.ts` with `generateReviewNextSteps()`
-- [ ] Define `ReviewNextStepsContext` interface:
+- [x] Create `src/cli/commands/review/next-steps.ts` with `generateReviewNextSteps()`
+- [x] Define `ReviewNextStepsContext` interface:
   ```typescript
   interface ReviewNextStepsContext {
     sessionId: string;
@@ -46,75 +46,75 @@ workflow by copy-pasting without needing to understand filter options.
     offset?: number;            // for batch continuation
   }
   ```
-- [ ] Verify test fails (Red)
-- [ ] Implement `generateReviewNextSteps`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Correct next steps generated for all scenarios
+- [x] Verify test fails (Red)
+- [x] Implement `generateReviewNextSteps`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Correct next steps generated for all scenarios
 
 ### Step 2: Integrate into `review merge` Output
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts`
+- [x] Write test: `src/cli/commands/review/merge.test.ts`
   - Merge output includes Next Steps section
   - After merge, suggests `review finalize` (if agreed articles exist) or `review status`
-- [ ] Update `formatMergeOutput` to accept optional next steps
-- [ ] Update `executeReviewMerge` caller in `index.ts` to compute and pass next steps
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `review merge` output shows contextual next steps
+- [x] Update `formatMergeOutput` to accept optional next steps
+- [x] Update `executeReviewMerge` caller in `index.ts` to compute and pass next steps
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `review merge` output shows contextual next steps
 
 ### Step 3: Integrate into `review finalize` Output
 
-- [ ] Write test: `src/cli/commands/review/finalize.test.ts`
+- [x] Write test: `src/cli/commands/review/finalize.test.ts`
   - After finalize with remaining uncertain → suggests extract for next phase
   - After finalize with all finalized → suggests export
-- [ ] Update `formatFinalizeOutput` to accept optional next steps
-- [ ] Update finalize caller in `index.ts` to compute and pass next steps
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `review finalize` output shows contextual next steps
+- [x] Update `formatFinalizeOutput` to accept optional next steps
+- [x] Update finalize caller in `index.ts` to compute and pass next steps
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `review finalize` output shows contextual next steps
 
 ### Step 4: Integrate into `review extract` Output
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - Extract output suggests merge command with correct `--name`
   - When `--limit` used with remaining articles, suggests next batch
   - Next batch suggestion has correct `--offset` and incremented `--name`
-- [ ] Update extract output in `index.ts` to include next steps
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `review extract` output shows merge and batch continuation hints
+- [x] Update extract output in `index.ts` to include next steps
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `review extract` output shows merge and batch continuation hints
 
 ### Step 5: Update `review status` Output
 
-- [ ] Write test: `src/cli/commands/review/status.test.ts`
+- [x] Write test: `src/cli/commands/review/status.test.ts`
   - Status output includes dynamic Next Steps instead of static workflow guide
   - Next Steps logic matches `generateReviewNextSteps`
-- [ ] Update `formatStatusOutput` to use `generateReviewNextSteps`
-- [ ] Remove old static "AI Agent Workflow" block
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `review status` shows dynamic, context-aware next steps
+- [x] Update `formatStatusOutput` to use `generateReviewNextSteps`
+- [x] Remove old static "AI Agent Workflow" block
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `review status` shows dynamic, context-aware next steps
 
 ### Step 6: Update `suggestions.md` Spec and Suggestion Rules
 
-- [ ] Update `spec/cli/suggestions.md` Phase 4 section to reference dynamic generation
-- [ ] Update `src/cli/suggestions/rules.ts` review-related rules to use new logic
-- [ ] Verify existing suggestion tests still pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Suggestion system aligned with new review workflow
+- [x] Update `spec/cli/suggestions.md` Phase 4 section to reference dynamic generation
+- [x] Update `src/cli/suggestions/rules.ts` review-related rules to use new logic
+- [x] Verify existing suggestion tests still pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Suggestion system aligned with new review workflow
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
+- [x] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
   - Full workflow progression: verify each command's output suggests the correct next step
   - After merge → finalize suggestion appears
   - After finalize → extract for next phase suggestion appears
   - After all finalized → export suggestion appears
   - Batch continuation: extract with limit → next batch suggested with correct offset
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All tests pass, users can follow Next Steps through entire workflow
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, users can follow Next Steps through entire workflow
 
 ## Notes
 

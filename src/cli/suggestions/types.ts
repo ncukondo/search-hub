@@ -41,6 +41,14 @@ export interface SuggestionContext {
   queryFile?: string | undefined;
   /** Extract --name value */
   extractName?: string | undefined;
+  /** Number of articles extracted in current batch */
+  extractedCount?: number | undefined;
+  /** Total articles matching the filter */
+  totalMatching?: number | undefined;
+  /** Limit used in extract */
+  extractLimit?: number | undefined;
+  /** Offset used in extract */
+  extractOffset?: number | undefined;
   /** Output file path (for query init) */
   outputFile?: string | undefined;
   /** Whether validation succeeded (for query validate) */
