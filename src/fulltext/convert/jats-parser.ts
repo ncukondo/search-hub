@@ -3,6 +3,9 @@
  *
  * Parses JATS (Journal Article Tag Suite) XML into an intermediate
  * representation for Markdown conversion.
+ *
+ * Uses fast-xml-parser with `preserveOrder: true` to maintain document order
+ * of interleaved elements (e.g. text, citations, formatting).
  */
 
 import { XMLParser } from 'fast-xml-parser';
@@ -15,47 +18,115 @@ import type {
   InlineContent,
 } from './types.js';
 
+/**
+ * A node in the preserveOrder output.
+ * Either a text node `{ "#text": string | number }` or an element node
+ * `{ tagName: OrderedNode[], ":@"?: { "@_attr": value } }`.
+ */
+type OrderedNode = Record<string, unknown>;
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   textNodeName: '#text',
-  trimValues: true,
-  isArray: (name) => {
-    const arrayElements = [
-      'contrib',
-      'article-id',
-      'sec',
-      'p',
-      'ref',
-      'list-item',
-      'tr',
-      'td',
-      'th',
-      'fig',
-      'table-wrap',
-      'xref',
-    ];
-    return arrayElements.includes(name);
-  },
+  trimValues: false,
+  preserveOrder: true,
 });
 
-/**
- * Extract text content from a parsed XML node.
- * Handles both string values and objects with #text.
- */
-function textContent(node: unknown): string {
-  if (node == null) return '';
-  if (typeof node === 'string') return node;
-  if (typeof node === 'number') return String(node);
-  if (typeof node === 'object' && '#text' in (node as Record<string, unknown>)) {
-    return String((node as Record<string, unknown>)['#text'] ?? '');
+// ─── Navigation Helpers ──────────────────────────────────────────────
+
+/** Get the tag name of an ordered node (the first key that isn't ":@" or "#text"). */
+function getTagName(node: OrderedNode): string | undefined {
+  for (const key of Object.keys(node)) {
+    if (key !== ':@' && key !== '#text') return key;
   }
-  return '';
+  return undefined;
 }
+
+/** Get the children array of an element node. */
+function getChildren(node: OrderedNode): OrderedNode[] {
+  const tag = getTagName(node);
+  if (!tag) return [];
+  const children = node[tag];
+  return Array.isArray(children) ? (children as OrderedNode[]) : [];
+}
+
+/** Get attributes of an element node. */
+function getAttr(node: OrderedNode, attrName: string): string | undefined {
+  const attrs = node[':@'] as Record<string, unknown> | undefined;
+  if (!attrs) return undefined;
+  const val = attrs[`@_${attrName}`];
+  return val != null ? String(val) : undefined;
+}
+
+/** Get all attributes of an element node (strips @_ prefix for consistency with getAttr). */
+function getAttrs(node: OrderedNode): Record<string, string> {
+  const attrs = node[':@'] as Record<string, unknown> | undefined;
+  if (!attrs) return {};
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key.startsWith('@_')) {
+      result[key.slice(2)] = String(value);
+    }
+  }
+  return result;
+}
+
+/** Find the first child element with the given tag name. */
+function findChild(
+  children: OrderedNode[],
+  tagName: string,
+): { node: OrderedNode; children: OrderedNode[]; attrs: Record<string, string> } | undefined {
+  for (const child of children) {
+    if (tagName in child) {
+      const childArr = child[tagName];
+      return {
+        node: child,
+        children: Array.isArray(childArr) ? (childArr as OrderedNode[]) : [],
+        attrs: getAttrs(child),
+      };
+    }
+  }
+  return undefined;
+}
+
+/** Find all child elements with the given tag name. */
+function findChildren(
+  children: OrderedNode[],
+  tagName: string,
+): Array<{ node: OrderedNode; children: OrderedNode[]; attrs: Record<string, string> }> {
+  const results: Array<{
+    node: OrderedNode;
+    children: OrderedNode[];
+    attrs: Record<string, string>;
+  }> = [];
+  for (const child of children) {
+    if (tagName in child) {
+      const childArr = child[tagName];
+      results.push({
+        node: child,
+        children: Array.isArray(childArr) ? (childArr as OrderedNode[]) : [],
+        attrs: getAttrs(child),
+      });
+    }
+  }
+  return results;
+}
+
+/** Get text content from a #text node. */
+function getTextContent(child: OrderedNode): string | undefined {
+  if ('#text' in child) {
+    const val = child['#text'];
+    return val != null ? String(val) : undefined;
+  }
+  return undefined;
+}
+
+// ─── Text Extraction ─────────────────────────────────────────────────
 
 /**
  * Extract plain text from a node that may contain nested elements.
- * Recursively collects all text content.
+ * Recursively collects all text content from preserveOrder nodes.
  */
 function extractAllText(node: unknown): string {
   if (node == null) return '';
@@ -65,71 +136,91 @@ function extractAllText(node: unknown): string {
     return node.map(extractAllText).join('');
   }
   if (typeof node === 'object') {
-    const obj = node as Record<string, unknown>;
-    const parts: string[] = [];
-    for (const [key, value] of Object.entries(obj)) {
-      if (key.startsWith('@_')) continue;
-      parts.push(extractAllText(value));
+    const obj = node as OrderedNode;
+    // Text node
+    const text = getTextContent(obj);
+    if (text != null) return text;
+    // Element node — recurse into children
+    const tag = getTagName(obj);
+    if (tag) {
+      const children = obj[tag];
+      if (Array.isArray(children)) {
+        return (children as OrderedNode[]).map((c) => extractAllText(c)).join('');
+      }
     }
-    return parts.join('');
   }
   return '';
 }
+
+// ─── Metadata Parsing ────────────────────────────────────────────────
 
 /**
  * Parse JATS XML front matter to extract article metadata.
  */
 export function parseJatsMetadata(xml: string): JatsMetadata {
-  const parsed = parser.parse(xml);
-  const front = parsed.article?.front;
-  const articleMeta = front?.['article-meta'] ?? {};
+  const parsed = parser.parse(xml) as OrderedNode[];
+  const article = findChild(parsed, 'article');
+  if (!article) return { title: '', authors: [] };
+
+  const front = findChild(article.children, 'front');
+  if (!front) return { title: '', authors: [] };
+
+  const articleMeta = findChild(front.children, 'article-meta');
+  if (!articleMeta) return { title: '', authors: [] };
+
+  const metaChildren = articleMeta.children;
 
   // Title
-  const titleGroup = articleMeta['title-group'];
-  const title = extractAllText(titleGroup?.['article-title']) || '';
+  const titleGroup = findChild(metaChildren, 'title-group');
+  const articleTitle = titleGroup ? findChild(titleGroup.children, 'article-title') : undefined;
+  const title = articleTitle ? extractAllText(articleTitle.children) : '';
 
   // Article IDs
-  const articleIds: Array<Record<string, unknown>> = articleMeta['article-id'] ?? [];
+  const articleIds = findChildren(metaChildren, 'article-id');
   let doi: string | undefined;
   let pmcid: string | undefined;
-  for (const idNode of articleIds) {
-    const idType = idNode['@_pub-id-type'];
-    const idText = textContent(idNode);
+  for (const idEntry of articleIds) {
+    const idType = idEntry.attrs['pub-id-type'];
+    const idText = extractAllText(idEntry.children);
     if (idType === 'doi') doi = idText;
     if (idType === 'pmc') pmcid = idText;
   }
 
   // Authors
   const authors: JatsAuthor[] = [];
-  const contribGroup = articleMeta['contrib-group'];
-  const contribs: Array<Record<string, unknown>> = contribGroup?.contrib ?? [];
-  for (const contrib of contribs) {
-    if (contrib['@_contrib-type'] !== 'author') continue;
-    const name = contrib['name'] as Record<string, unknown> | undefined;
-    if (!name) continue;
-    const author: JatsAuthor = {
-      surname: textContent(name['surname']),
-    };
-    const givenNames = textContent(name['given-names']);
-    if (givenNames) {
-      author.givenNames = givenNames;
+  const contribGroup = findChild(metaChildren, 'contrib-group');
+  if (contribGroup) {
+    const contribs = findChildren(contribGroup.children, 'contrib');
+    for (const contrib of contribs) {
+      if (contrib.attrs['contrib-type'] !== 'author') continue;
+      const nameNode = findChild(contrib.children, 'name');
+      if (!nameNode) continue;
+      const surnameNode = findChild(nameNode.children, 'surname');
+      const givenNamesNode = findChild(nameNode.children, 'given-names');
+      const author: JatsAuthor = {
+        surname: surnameNode ? extractAllText(surnameNode.children) : '',
+      };
+      const givenNames = givenNamesNode ? extractAllText(givenNamesNode.children) : '';
+      if (givenNames) {
+        author.givenNames = givenNames;
+      }
+      authors.push(author);
     }
-    authors.push(author);
   }
 
   // Abstract
-  const abstractNode = articleMeta.abstract;
+  const abstractNode = findChild(metaChildren, 'abstract');
   let abstract: string | undefined;
   if (abstractNode) {
     // Structured abstract with <sec> elements
-    const sections: Array<Record<string, unknown>> = abstractNode.sec ?? [];
+    const sections = findChildren(abstractNode.children, 'sec');
     if (sections.length > 0) {
       const parts: string[] = [];
       for (const sec of sections) {
-        const secTitle = extractAllText(sec['title']);
-        const secP = sec['p'];
-        const paragraphs: unknown[] = Array.isArray(secP) ? secP : secP != null ? [secP] : [];
-        const text = paragraphs.map(extractAllText).join(' ');
+        const secTitleNode = findChild(sec.children, 'title');
+        const secTitle = secTitleNode ? extractAllText(secTitleNode.children) : '';
+        const secPs = findChildren(sec.children, 'p');
+        const text = secPs.map((p) => extractAllText(p.children)).join(' ');
         if (secTitle) {
           parts.push(`${secTitle}: ${text}`);
         } else {
@@ -139,15 +230,11 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
       abstract = parts.join('\n\n');
     } else {
       // Simple abstract with <p>
-      const paragraphs: unknown[] = Array.isArray(abstractNode.p)
-        ? abstractNode.p
-        : abstractNode.p != null
-          ? [abstractNode.p]
-          : [];
+      const paragraphs = findChildren(abstractNode.children, 'p');
       if (paragraphs.length > 0) {
-        abstract = paragraphs.map(extractAllText).join('\n\n');
+        abstract = paragraphs.map((p) => extractAllText(p.children)).join('\n\n');
       } else {
-        const text = extractAllText(abstractNode);
+        const text = extractAllText(abstractNode.children);
         if (text) abstract = text;
       }
     }
@@ -160,80 +247,74 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   return result;
 }
 
+// ─── Inline Content Parsing ──────────────────────────────────────────
+
 /**
- * Parse inline content from a paragraph node.
- * Handles mixed text and element content (bold, italic, sup, sub, xref).
+ * Parse inline content from a paragraph's children array.
+ * Iterates in document order to preserve interleaving of text, citations,
+ * and formatting elements.
  */
-function parseInlineContent(node: unknown): InlineContent[] {
-  if (node == null) return [];
-  if (typeof node === 'string') return [{ type: 'text', text: node }];
-  if (typeof node === 'number') return [{ type: 'text', text: String(node) }];
+function parseInlineContent(children: OrderedNode[]): InlineContent[] {
+  const result: InlineContent[] = [];
 
-  if (Array.isArray(node)) {
-    return node.flatMap(parseInlineContent);
-  }
-
-  if (typeof node === 'object') {
-    const obj = node as Record<string, unknown>;
-    const result: InlineContent[] = [];
-
-    for (const [key, value] of Object.entries(obj)) {
-      if (key.startsWith('@_')) continue;
-
-      if (key === '#text') {
-        const text = String(value ?? '');
-        if (text) result.push({ type: 'text', text });
-      } else if (key === 'bold') {
-        const children = parseInlineContent(value);
-        result.push({ type: 'bold', children });
-      } else if (key === 'italic') {
-        const children = parseInlineContent(value);
-        result.push({ type: 'italic', children });
-      } else if (key === 'sup') {
-        result.push({ type: 'superscript', text: extractAllText(value) });
-      } else if (key === 'sub') {
-        result.push({ type: 'subscript', text: extractAllText(value) });
-      } else if (key === 'xref') {
-        const xrefs = Array.isArray(value) ? value : [value];
-        for (const xref of xrefs) {
-          if (typeof xref === 'object' && xref != null) {
-            const xobj = xref as Record<string, unknown>;
-            const refType = xobj['@_ref-type'];
-            if (refType === 'bibr') {
-              result.push({
-                type: 'citation',
-                refId: String(xobj['@_rid'] ?? ''),
-                text: extractAllText(xobj),
-              });
-            } else {
-              result.push({ type: 'text', text: extractAllText(xobj) });
-            }
-          }
-        }
-      } else {
-        // Unknown inline element - extract text
-        const text = extractAllText(value);
-        if (text) result.push({ type: 'text', text });
-      }
+  for (const child of children) {
+    // Text node
+    const text = getTextContent(child);
+    if (text != null) {
+      if (text) result.push({ type: 'text', text });
+      continue;
     }
-    return result;
+
+    const tag = getTagName(child);
+    if (!tag) continue;
+
+    const innerChildren = getChildren(child);
+
+    if (tag === 'bold') {
+      result.push({ type: 'bold', children: parseInlineContent(innerChildren) });
+    } else if (tag === 'italic') {
+      result.push({ type: 'italic', children: parseInlineContent(innerChildren) });
+    } else if (tag === 'sup') {
+      result.push({ type: 'superscript', text: extractAllText(innerChildren) });
+    } else if (tag === 'sub') {
+      result.push({ type: 'subscript', text: extractAllText(innerChildren) });
+    } else if (tag === 'xref') {
+      const refType = getAttr(child, 'ref-type');
+      if (refType === 'bibr') {
+        result.push({
+          type: 'citation',
+          refId: getAttr(child, 'rid') ?? '',
+          text: extractAllText(innerChildren),
+        });
+      } else {
+        const xrefText = extractAllText(innerChildren);
+        if (xrefText) result.push({ type: 'text', text: xrefText });
+      }
+    } else {
+      // Unknown inline element — extract text
+      const unknownText = extractAllText(innerChildren);
+      if (unknownText) result.push({ type: 'text', text: unknownText });
+    }
   }
-  return [];
+
+  return result;
 }
+
+// ─── Block Content Parsing ───────────────────────────────────────────
 
 /**
  * Parse a <list> element into a BlockElement.
  */
-function parseList(listNode: Record<string, unknown>): BlockElement {
-  const listType = listNode['@_list-type'];
+function parseList(listNode: OrderedNode): BlockElement {
+  const listType = getAttr(listNode, 'list-type');
   const ordered = listType === 'order';
-  const listItems: Array<Record<string, unknown>> = (listNode['list-item'] as Array<Record<string, unknown>>) ?? [];
+  const listChildren = getChildren(listNode);
+  const listItems = findChildren(listChildren, 'list-item');
   const items: InlineContent[][] = [];
 
   for (const item of listItems) {
-    const pNodes = item['p'];
-    const paragraphs: unknown[] = Array.isArray(pNodes) ? pNodes : pNodes != null ? [pNodes] : [];
-    const content = paragraphs.flatMap(parseInlineContent);
+    const pNodes = findChildren(item.children, 'p');
+    const content = pNodes.flatMap((p) => parseInlineContent(p.children));
     items.push(content);
   }
 
@@ -243,68 +324,57 @@ function parseList(listNode: Record<string, unknown>): BlockElement {
 /**
  * Parse a table row into an array of cell text content.
  */
-function parseTableRow(tr: Record<string, unknown>): string[] {
+function parseTableRow(trChildren: OrderedNode[]): string[] {
   const cells: string[] = [];
-  // Try both th (headers) and td (data) — th first so headers come in order
-  for (const cellTag of ['th', 'td']) {
-    const cellNodes = tr[cellTag];
-    if (cellNodes) {
-      const cellArray: unknown[] = Array.isArray(cellNodes) ? cellNodes : [cellNodes];
-      for (const cell of cellArray) {
-        cells.push(String(extractAllText(cell)));
-      }
+  for (const child of trChildren) {
+    const tag = getTagName(child);
+    if (tag === 'th' || tag === 'td') {
+      cells.push(extractAllText(getChildren(child)));
     }
   }
   return cells;
 }
 
 /**
- * Parse a <table-wrap> element into a table block.
- * Exported for standalone use and used internally by parseBlockContent.
- */
-export function parseJatsTable(xml: string): { caption?: string; headers: string[]; rows: string[][] } {
-  const parsed = parser.parse(xml);
-  let tableWrap = parsed['table-wrap'] ?? parsed;
-  // isArray may wrap it in an array
-  if (Array.isArray(tableWrap)) tableWrap = tableWrap[0];
-  return parseTableWrap(tableWrap as Record<string, unknown>);
-}
-
-/**
  * Parse an already-parsed table-wrap node.
  */
-function parseTableWrap(tableWrap: Record<string, unknown>): { caption?: string; headers: string[]; rows: string[][] } {
+function parseTableWrap(tableWrapNode: OrderedNode): {
+  caption?: string;
+  headers: string[];
+  rows: string[][];
+} {
+  const children = getChildren(tableWrapNode);
+
   // Caption
-  const label = extractAllText(tableWrap['label']);
-  const captionNode = tableWrap['caption'];
-  const captionText = captionNode ? extractAllText(captionNode) : '';
+  const labelNode = findChild(children, 'label');
+  const label = labelNode ? extractAllText(labelNode.children) : '';
+  const captionNode = findChild(children, 'caption');
+  const captionText = captionNode ? extractAllText(captionNode.children) : '';
   const captionStr = [label, captionText].filter(Boolean).join('. ');
 
-  const table = tableWrap['table'] as Record<string, unknown> | undefined;
-  const result: { caption?: string; headers: string[]; rows: string[][] } = { headers: [], rows: [] };
+  const tableNode = findChild(children, 'table');
+  const result: { caption?: string; headers: string[]; rows: string[][] } = {
+    headers: [],
+    rows: [],
+  };
   if (captionStr) result.caption = captionStr;
-  if (!table) return result;
+  if (!tableNode) return result;
 
   // Headers from thead
-  const thead = table['thead'] as Record<string, unknown> | undefined;
+  const thead = findChild(tableNode.children, 'thead');
   if (thead) {
-    const headRows = thead['tr'];
-    const headRowArray: unknown[] = Array.isArray(headRows) ? headRows : headRows ? [headRows] : [];
-    if (headRowArray.length > 0) {
-      const firstRow = headRowArray[0] as Record<string, unknown>;
-      result.headers.push(...parseTableRow(firstRow));
+    const headRows = findChildren(thead.children, 'tr');
+    if (headRows.length > 0) {
+      result.headers.push(...parseTableRow(headRows[0]!.children));
     }
   }
 
   // Body rows
-  const tbody = table['tbody'] as Record<string, unknown> | undefined;
+  const tbody = findChild(tableNode.children, 'tbody');
   if (tbody) {
-    const bodyRows = tbody['tr'];
-    const bodyRowArray: unknown[] = Array.isArray(bodyRows) ? bodyRows : bodyRows ? [bodyRows] : [];
-    for (const row of bodyRowArray) {
-      if (typeof row === 'object' && row != null) {
-        result.rows.push(parseTableRow(row as Record<string, unknown>));
-      }
+    const bodyRows = findChildren(tbody.children, 'tr');
+    for (const row of bodyRows) {
+      result.rows.push(parseTableRow(row.children));
     }
   }
 
@@ -312,87 +382,87 @@ function parseTableWrap(tableWrap: Record<string, unknown>): { caption?: string;
 }
 
 /**
- * Parse block-level content from a section.
+ * Parse a <table-wrap> element into a table block.
+ * Exported for standalone use and used internally by parseBlockContent.
  */
-function parseBlockContent(sectionNode: Record<string, unknown>): BlockElement[] {
+export function parseJatsTable(xml: string): {
+  caption?: string;
+  headers: string[];
+  rows: string[][];
+} {
+  const parsed = parser.parse(xml) as OrderedNode[];
+  const tableWrap = findChild(parsed, 'table-wrap');
+  if (tableWrap) {
+    return parseTableWrap(tableWrap.node);
+  }
+  // Fallback: if not wrapped, try to find table directly
+  return { headers: [], rows: [] };
+}
+
+/**
+ * Parse block-level content from a section's children.
+ * Iterates in document order to preserve ordering of paragraphs, lists,
+ * tables, and figures.
+ */
+function parseBlockContent(sectionChildren: OrderedNode[]): BlockElement[] {
   const blocks: BlockElement[] = [];
 
-  // Paragraphs
-  const pNodes = sectionNode['p'];
-  if (pNodes) {
-    const paragraphs: unknown[] = Array.isArray(pNodes) ? pNodes : [pNodes];
-    for (const p of paragraphs) {
-      blocks.push({ type: 'paragraph', content: parseInlineContent(p) });
-    }
-  }
+  for (const child of sectionChildren) {
+    const tag = getTagName(child);
+    if (!tag) continue;
 
-  // Lists
-  const listNode = sectionNode['list'];
-  if (listNode) {
-    const lists = Array.isArray(listNode) ? listNode : [listNode];
-    for (const list of lists) {
-      if (typeof list === 'object' && list != null) {
-        blocks.push(parseList(list as Record<string, unknown>));
-      }
-    }
-  }
+    const innerChildren = getChildren(child);
 
-  // Tables
-  const tableWrapNode = sectionNode['table-wrap'];
-  if (tableWrapNode) {
-    const tableWraps: unknown[] = Array.isArray(tableWrapNode) ? tableWrapNode : [tableWrapNode];
-    for (const tw of tableWraps) {
-      if (typeof tw === 'object' && tw != null) {
-        const tableResult = parseTableWrap(tw as Record<string, unknown>);
-        const tableBlock: BlockElement = { type: 'table', headers: tableResult.headers, rows: tableResult.rows };
-        if (tableResult.caption) (tableBlock as { caption?: string }).caption = tableResult.caption;
-        blocks.push(tableBlock);
+    if (tag === 'p') {
+      blocks.push({ type: 'paragraph', content: parseInlineContent(innerChildren) });
+    } else if (tag === 'list') {
+      blocks.push(parseList(child));
+    } else if (tag === 'table-wrap') {
+      const tableResult = parseTableWrap(child);
+      const tableBlock: BlockElement = {
+        type: 'table',
+        headers: tableResult.headers,
+        rows: tableResult.rows,
+      };
+      if (tableResult.caption) (tableBlock as { caption?: string }).caption = tableResult.caption;
+      blocks.push(tableBlock);
+    } else if (tag === 'fig') {
+      const figBlock: BlockElement = { type: 'figure' };
+      const figId = getAttr(child, 'id');
+      if (figId) figBlock.id = figId;
+      const figLabel = findChild(innerChildren, 'label');
+      if (figLabel) {
+        const labelText = extractAllText(figLabel.children);
+        if (labelText) figBlock.label = labelText;
       }
-    }
-  }
-
-  // Figures
-  const figNode = sectionNode['fig'];
-  if (figNode) {
-    const figs: unknown[] = Array.isArray(figNode) ? figNode : [figNode];
-    for (const fig of figs) {
-      if (typeof fig === 'object' && fig != null) {
-        const figObj = fig as Record<string, unknown>;
-        const figBlock: BlockElement = { type: 'figure' };
-        const figId = figObj['@_id'];
-        if (typeof figId === 'string') figBlock.id = figId;
-        const label = extractAllText(figObj['label']);
-        if (label) figBlock.label = label;
-        const caption = figObj['caption'];
-        if (caption) {
-          const captionText = extractAllText(caption);
-          if (captionText) figBlock.caption = captionText;
-        }
-        blocks.push(figBlock);
+      const figCaption = findChild(innerChildren, 'caption');
+      if (figCaption) {
+        const captionText = extractAllText(figCaption.children);
+        if (captionText) figBlock.caption = captionText;
       }
+      blocks.push(figBlock);
     }
+    // Skip title, sec, and other non-block elements
   }
 
   return blocks;
 }
 
+// ─── Section Parsing ─────────────────────────────────────────────────
+
 /**
  * Parse a <sec> element into a JatsSection, recursively handling subsections.
  */
-function parseSection(secNode: Record<string, unknown>, level: number): JatsSection {
-  const title = extractAllText(secNode['title']);
-  const content = parseBlockContent(secNode);
+function parseSection(secChildren: OrderedNode[], level: number): JatsSection {
+  const titleNode = findChild(secChildren, 'title');
+  const title = titleNode ? extractAllText(titleNode.children) : '';
+  const content = parseBlockContent(secChildren);
 
   // Nested sections
   const subsections: JatsSection[] = [];
-  const nestedSecs = secNode['sec'];
-  if (nestedSecs) {
-    const secs: Array<Record<string, unknown>> = Array.isArray(nestedSecs)
-      ? (nestedSecs as Array<Record<string, unknown>>)
-      : [nestedSecs as Record<string, unknown>];
-    for (const sub of secs) {
-      subsections.push(parseSection(sub, level + 1));
-    }
+  const nestedSecs = findChildren(secChildren, 'sec');
+  for (const sub of nestedSecs) {
+    subsections.push(parseSection(sub.children, level + 1));
   }
 
   return { title, level, content, subsections };
@@ -402,22 +472,23 @@ function parseSection(secNode: Record<string, unknown>, level: number): JatsSect
  * Parse JATS XML body to extract sections and content.
  */
 export function parseJatsBody(xml: string): JatsSection[] {
-  const parsed = parser.parse(xml);
-  const body = parsed.article?.body;
+  const parsed = parser.parse(xml) as OrderedNode[];
+  const article = findChild(parsed, 'article');
+  if (!article) return [];
+
+  const body = findChild(article.children, 'body');
   if (!body) return [];
 
   const sections: JatsSection[] = [];
-  const secs = body['sec'];
+  const secs = findChildren(body.children, 'sec');
 
-  if (secs && Array.isArray(secs) && secs.length > 0) {
+  if (secs.length > 0) {
     for (const sec of secs) {
-      if (typeof sec === 'object' && sec != null) {
-        sections.push(parseSection(sec as Record<string, unknown>, 2));
-      }
+      sections.push(parseSection(sec.children, 2));
     }
   } else {
     // Body has paragraphs without sections
-    const content = parseBlockContent(body as Record<string, unknown>);
+    const content = parseBlockContent(body.children);
     if (content.length > 0) {
       sections.push({ title: '', level: 2, content, subsections: [] });
     }
@@ -426,31 +497,34 @@ export function parseJatsBody(xml: string): JatsSection[] {
   return sections;
 }
 
+// ─── Reference Parsing ───────────────────────────────────────────────
+
 /**
  * Parse JATS XML back matter to extract references.
  */
 export function parseJatsReferences(xml: string): JatsReference[] {
-  const parsed = parser.parse(xml);
-  const back = parsed.article?.back;
+  const parsed = parser.parse(xml) as OrderedNode[];
+  const article = findChild(parsed, 'article');
+  if (!article) return [];
+
+  const back = findChild(article.children, 'back');
   if (!back) return [];
 
-  const refList = back['ref-list'];
+  const refList = findChild(back.children, 'ref-list');
   if (!refList) return [];
 
-  const refs: unknown[] = refList['ref'] ?? [];
+  const refs = findChildren(refList.children, 'ref');
   const references: JatsReference[] = [];
 
   for (const ref of refs) {
-    if (typeof ref === 'object' && ref != null) {
-      const refObj = ref as Record<string, unknown>;
-      const id = String(refObj['@_id'] ?? '');
-      // Try mixed-citation first, then element-citation, then any text
-      const mixedCitation = refObj['mixed-citation'];
-      const elementCitation = refObj['element-citation'];
-      const text = extractAllText(mixedCitation ?? elementCitation ?? refObj);
-      if (id && text) {
-        references.push({ id, text: text.trim() });
-      }
+    const id = ref.attrs['id'] ?? '';
+    // Try mixed-citation first, then element-citation, then any text
+    const mixedCitation = findChild(ref.children, 'mixed-citation');
+    const elementCitation = findChild(ref.children, 'element-citation');
+    const citationNode = mixedCitation ?? elementCitation;
+    const text = citationNode ? extractAllText(citationNode.children) : extractAllText(ref.children);
+    if (id && text) {
+      references.push({ id, text: text.trim() });
     }
   }
 
