@@ -11,19 +11,8 @@ import {
   getArticleDir,
   getMetaPath,
   getReadmePath,
-  getIndexPath,
 } from './paths.js';
-import {
-  createIndex,
-  saveIndex,
-  loadIndex,
-  addEntry,
-  findByDoi,
-  findByPmid,
-  updateEntry,
-} from './index-manager.js';
 import { generateReadme } from './readme.js';
-import type { FulltextIndexEntry } from './types.js';
 
 describe('Fulltext Foundation Integration', () => {
   let sessionDir: string;
@@ -85,62 +74,7 @@ describe('Fulltext Foundation Integration', () => {
     expect(readmeOnDisk).toContain('10.1234/test.2024');
   });
 
-  it('should add articles to index and verify lookups', async () => {
-    // 1. Create fulltext directory
-    const fulltextDir = getFulltextDir(sessionDir);
-    await mkdir(fulltextDir, { recursive: true });
-
-    // 2. Create index
-    let index = createIndex('session-001');
-
-    // 3. Add first article
-    const key1 = generateCitationKey('Smith, J.', '2024');
-    const dir1 = generateDirName(key1, 'aaaaaaaa-1111-2222-3333-444444444444');
-    const entry1: FulltextIndexEntry = {
-      dirName: dir1,
-      citationKey: key1,
-      doi: '10.1234/first',
-      pmid: '11111111',
-      hasFiles: { pdf: false, xml: false, markdown: false },
-    };
-    index = addEntry(index, entry1);
-
-    // 4. Add second article (with collision handling)
-    const key2 = generateCitationKey('Smith, R.', '2024', [key1]);
-    expect(key2).toBe('smith2024a');
-
-    const dir2 = generateDirName(key2, 'bbbbbbbb-5555-6666-7777-888888888888');
-    const entry2: FulltextIndexEntry = {
-      dirName: dir2,
-      citationKey: key2,
-      doi: '10.5678/second',
-      hasFiles: { pdf: true, xml: false, markdown: false },
-    };
-    index = addEntry(index, entry2);
-
-    // 5. Save and reload index
-    const indexPath = getIndexPath(sessionDir);
-    await saveIndex(indexPath, index);
-    const loaded = await loadIndex(indexPath);
-
-    // 6. Verify lookups
-    const foundByDoi = findByDoi(loaded, '10.1234/first');
-    expect(foundByDoi?.dirName).toBe(dir1);
-    expect(foundByDoi?.citationKey).toBe('smith2024');
-
-    const foundByPmid = findByPmid(loaded, '11111111');
-    expect(foundByPmid?.dirName).toBe(dir1);
-
-    const foundSecond = findByDoi(loaded, '10.5678/second');
-    expect(foundSecond?.citationKey).toBe('smith2024a');
-    expect(foundSecond?.hasFiles.pdf).toBe(true);
-
-    // 7. Verify unknown lookups return undefined
-    expect(findByDoi(loaded, '10.9999/unknown')).toBeUndefined();
-    expect(findByPmid(loaded, '99999999')).toBeUndefined();
-  });
-
-  it('should update meta with file info and reflect in index', async () => {
+  it('should update meta with file info', async () => {
     // 1. Set up article directory
     const uuid = 'cccccccc-9999-aaaa-bbbb-cccccccccccc';
     const citationKey = generateCitationKey('Jones, A.', '2023');
@@ -161,16 +95,7 @@ describe('Fulltext Foundation Integration', () => {
     });
     await saveMeta(metaPath, meta);
 
-    // 3. Create initial index with entry (no files)
-    let index = createIndex('session-002');
-    index = addEntry(index, {
-      dirName,
-      citationKey,
-      doi: '10.9876/nlp.2023',
-      hasFiles: { pdf: false, xml: false, markdown: false },
-    });
-
-    // 4. Simulate adding a PDF file — update meta
+    // 3. Simulate adding a PDF file — update meta
     const updatedMeta = updateMetaFiles(meta, {
       pdf: {
         filename: 'fulltext.pdf',
@@ -186,37 +111,15 @@ describe('Fulltext Foundation Integration', () => {
     // Save updated meta
     await saveMeta(metaPath, updatedMeta);
 
-    // 5. Update index entry to reflect file presence
-    index = updateEntry(index, dirName, {
-      hasFiles: { pdf: true, xml: false, markdown: false },
-    });
-
-    // Save and reload index
-    const indexPath = getIndexPath(sessionDir);
-    await saveIndex(indexPath, index);
-    const loadedIndex = await loadIndex(indexPath);
-
-    // 6. Verify updates persisted
+    // 4. Verify updates persisted
     const loadedMeta = await loadMeta(metaPath);
     expect(loadedMeta.files.pdf?.source).toBe('pmc');
-
-    const entry = loadedIndex.entries[dirName];
-    expect(entry?.hasFiles.pdf).toBe(true);
-    expect(entry?.hasFiles.xml).toBe(false);
-
-    // 7. Lookup by DOI still works after update
-    const found = findByDoi(loadedIndex, '10.9876/nlp.2023');
-    expect(found?.hasFiles.pdf).toBe(true);
   });
 
   it('should handle full workflow from key generation to file persistence', async () => {
     // End-to-end: simulate creating an article directory for a real use case
     const fulltextDir = getFulltextDir(sessionDir);
     await mkdir(fulltextDir, { recursive: true });
-
-    // Create index
-    let index = createIndex('my-session');
-    const indexPath = getIndexPath(sessionDir);
 
     // Add multiple articles
     const articles = [
@@ -226,6 +129,7 @@ describe('Fulltext Foundation Integration', () => {
     ];
 
     const existingKeys: string[] = [];
+    const createdDirNames: string[] = [];
 
     for (const article of articles) {
       const citationKey = generateCitationKey(article.author, article.year, existingKeys);
@@ -233,6 +137,7 @@ describe('Fulltext Foundation Integration', () => {
 
       const uuid = randomUUID();
       const dirName = generateDirName(citationKey, uuid);
+      createdDirNames.push(dirName);
       const articleDir = getArticleDir(sessionDir, dirName);
 
       // Create directory and files
@@ -249,14 +154,6 @@ describe('Fulltext Foundation Integration', () => {
       const readme = generateReadme(meta);
       const { writeFile } = await import('node:fs/promises');
       await writeFile(getReadmePath(sessionDir, dirName), readme, 'utf-8');
-
-      // Add to index
-      index = addEntry(index, {
-        dirName,
-        citationKey,
-        doi: article.doi,
-        hasFiles: { pdf: false, xml: false, markdown: false },
-      });
     }
 
     // Verify citation keys include transliterated names
@@ -264,17 +161,8 @@ describe('Fulltext Foundation Integration', () => {
     expect(existingKeys).toContain('unknown2023');
     expect(existingKeys).toContain('unknown0000');
 
-    // Save index and verify
-    await saveIndex(indexPath, index);
-    const loaded = await loadIndex(indexPath);
-
-    expect(Object.keys(loaded.entries)).toHaveLength(3);
-    expect(findByDoi(loaded, '10.1000/a')?.citationKey).toBe('muller2024');
-    expect(findByDoi(loaded, '10.2000/b')?.citationKey).toBe('unknown2023');
-    expect(findByDoi(loaded, '10.3000/c')?.citationKey).toBe('unknown0000');
-
     // Verify files on disk
-    for (const dirName of Object.keys(loaded.entries)) {
+    for (const dirName of createdDirNames) {
       const metaPath = getMetaPath(sessionDir, dirName);
       const metaStat = await stat(metaPath);
       expect(metaStat.isFile()).toBe(true);

@@ -70,11 +70,18 @@ export interface ArticleEntry {
 /**
  * Top-level structure of the reviews.yaml file
  */
+export interface ReviewerRecord {
+  name: string;
+  basis: ReviewBasis;
+}
+
 export interface ReviewFile {
   sessionId: string;
   /** Path to inclusion criteria file */
   criteria?: string;
   articles: ArticleEntry[];
+  /** Registry of reviewers who participated at each basis level */
+  reviewers?: ReviewerRecord[];
 }
 
 /**

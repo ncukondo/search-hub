@@ -234,8 +234,8 @@ process_implement_completion() {
       if [ -n "$pr_num" ]; then
         log "Branch $branch: Worker completed, PR #$pr_num ready. Transitioning to reviewer..."
 
-        # Kill current agent
-        "$SCRIPT_DIR/kill-agent.sh" "$pane_id" --keep-pane 2>/dev/null || true
+        # Kill current agent (pane is also removed; spawn-reviewer creates a new one)
+        "$SCRIPT_DIR/kill-agent.sh" "$pane_id" 2>/dev/null || true
         sleep 2
 
         # Spawn reviewer
@@ -350,6 +350,13 @@ main_loop() {
   log "Orchestrator started (interval: ${INTERVAL}s, main pane: ${MAIN_PANE:-none})"
 
   while true; do
+    # Main agent liveness check
+    if [ -n "$MAIN_PANE" ] && ! tmux has-session -t "$MAIN_PANE" 2>/dev/null; then
+      log "Main agent pane $MAIN_PANE no longer exists. Stopping orchestrator."
+      rm -f "$PID_FILE"
+      exit 0
+    fi
+
     for branch in $(get_active_branches); do
       process_branch "$branch"
     done

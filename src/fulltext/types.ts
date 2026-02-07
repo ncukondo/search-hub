@@ -89,41 +89,6 @@ export interface FulltextMeta {
 }
 
 /**
- * Entry in fulltext-index.json for fast lookup.
- */
-export interface FulltextIndexEntry {
-  /** Directory name: "{citationKey}-{uuid8}" */
-  dirName: string;
-  /** Citation key: e.g., "smith2024" */
-  citationKey: string;
-
-  // Identifiers for lookup
-  doi?: string;
-  pmid?: string;
-  pmcid?: string;
-  arxivId?: string;
-
-  /** Which file types are present */
-  hasFiles: {
-    pdf: boolean;
-    xml: boolean;
-    markdown: boolean;
-  };
-}
-
-/**
- * Central index for a session's fulltext directories (fulltext-index.json).
- */
-export interface FulltextIndex {
-  /** Session identifier */
-  sessionId: string;
-  /** ISO 8601 timestamp of last update */
-  updatedAt: string;
-  /** Map from dirName to index entry */
-  entries: Record<string, FulltextIndexEntry>;
-}
-
-/**
  * Fulltext reference stored in ArticleEntry (reviews.yaml extension).
  * Links an article in reviews.yaml to its fulltext directory.
  */

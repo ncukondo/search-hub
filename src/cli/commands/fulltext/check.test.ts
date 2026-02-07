@@ -67,20 +67,6 @@ articles:
     files: {},
   };
 
-  const sampleIndex = {
-    sessionId: 'test-session',
-    updatedAt: '2024-01-01T00:00:00.000Z',
-    entries: {
-      'smith2024-abcd1234': {
-        dirName: 'smith2024-abcd1234',
-        citationKey: 'smith2024',
-        doi: '10.1234/open',
-        pmid: '11111111',
-        hasFiles: { pdf: false, xml: false, markdown: false },
-      },
-    },
-  };
-
   beforeEach(() => {
     vi.resetAllMocks();
 
@@ -89,7 +75,6 @@ articles:
       const p = String(path);
       if (p.includes('reviews.yaml')) return reviewFileYaml;
       if (p.includes('meta.json')) return JSON.stringify(sampleMeta);
-      if (p.includes('fulltext-index.json')) return JSON.stringify(sampleIndex);
       throw new Error(`File not found: ${p}`);
     });
 

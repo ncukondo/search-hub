@@ -40,6 +40,13 @@ spec/tasks/ROADMAP.md を確認し、並列実装可能なタスクを分析し�
 
 ### 2. Spawn Workers
 
+**Pane limit: max 4 workers** (main + 4 workers = 5 panes).
+Before spawning, check current pane count:
+```bash
+tmux list-panes | wc -l  # Must be < 5
+```
+If 5+ tasks exist, spawn sequentially — wait for one to complete before spawning the next.
+
 ```bash
 # Spawn worker for each task
 ./scripts/spawn-worker.sh <branch-name> <task-keyword>

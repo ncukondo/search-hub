@@ -31,6 +31,14 @@ if [ -z "${TMUX:-}" ]; then
   exit 1
 fi
 
+# --- Pane limit check ---
+MAX_PANES="${MAX_PANES:-5}"
+CURRENT_PANES=$(tmux list-panes 2>/dev/null | wc -l)
+if [ "$CURRENT_PANES" -ge "$MAX_PANES" ]; then
+  echo "[$SCRIPT_NAME] ERROR: Pane limit reached ($CURRENT_PANES/$MAX_PANES). Kill an agent first."
+  exit 1
+fi
+
 # --- 1. Auto-permission settings (always overwrite) ---
 echo "[$SCRIPT_NAME] Setting up auto-permission..."
 mkdir -p "$WORKTREE_DIR/.claude"
