@@ -76,11 +76,11 @@ After the core `preserveOrder` refactor, several secondary issues remain:
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test with real efetch XML (includes `<pmc-articleset>` wrapper)
-- [ ] Verify Markdown output has decoded entities
-- [ ] Verify reference list is properly formatted
-- [ ] Verify PMCID appears in metadata
-- [ ] Run full test suite: `npm test`
+- [x] Write E2E test with real efetch XML (includes `<pmc-articleset>` wrapper)
+- [x] Verify Markdown output has decoded entities
+- [x] Verify reference list is properly formatted
+- [x] Verify PMCID appears in metadata
+- [x] Run full test suite: `npm test`
 
 ## Notes
 
