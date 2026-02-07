@@ -87,7 +87,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 78 | Improve JATS Table and Figure Rendering | 70 | ✅ Completed | [20260207-03](completed/20260207-03-jats-table-figure-rendering.md) |
 | 79 | Support Additional JATS Block Elements | 78 | 📋 Planned | [20260207-04](20260207-04-jats-additional-block-elements.md) |
 | 80 | Support Additional JATS Inline Elements | 78 | 📋 Planned | [20260207-05](20260207-05-jats-inline-elements.md) |
-| 81 | Support JATS Back Matter and Floats Group | 78 | 📋 Planned | [20260207-06](20260207-06-jats-back-matter-floats.md) |
+| 81 | Support JATS Back Matter and Floats Group | 78 | ✅ Completed | [20260207-06](completed/20260207-06-jats-back-matter-floats.md) |
 | 82 | Extract Extended JATS Metadata | 77 | 📋 Planned | [20260207-07](20260207-07-jats-extended-metadata.md) |
 
 ## Development Flow
