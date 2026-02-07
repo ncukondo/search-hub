@@ -95,51 +95,65 @@ articles:
     # No finalDecision → classifyStatus() computes "agreed-exclude"
 ```
 
-### Work File (extract with `--basis`)
+### Extracted File (unified format)
 
-For reviewers performing screening. Simplified format with one reviewer per file.
+All extracted files use the ReviewFile format. The mode determines what content is
+included and what fields are available for editing.
+
+#### Screening Mode (`--basis`)
+
+For reviewers performing screening at a specific basis level.
 
 ```yaml
+# yaml-language-server: $schema=../../schemas/review.schema.json
+# Screening file: mark each article's decision in reviews[0].decision
+# Valid decisions: include / exclude / uncertain
 sessionId: my-session
 basis: title                        # What information is shown
 reviewer: "ai:claude"               # Top-level reviewer (applied to all decisions)
 articles:
-  - id: "doi:10.1234/example1"
+  - doi: "10.1234/example1"
+    pmid: "12345678"
     title: "Machine learning in healthcare"
-    decision: uncertain              # Default: uncertain (not null)
-    comment: ""
-  - id: "doi:10.1234/example2"
+    reviews:
+      - decision: uncertain          # exclude / uncertain
+        comment: ""
+  - doi: "10.1234/example2"
     title: "Cooking recipes for beginners"
-    decision: exclude                # Reviewer changed: clearly irrelevant
-    comment: "off topic"
+    reviews:
+      - decision: exclude            # exclude / uncertain
+        comment: "off topic"
 ```
 
-#### Decision Values in Work File
-
-| Value | Meaning | Merge Behavior |
-|---|---|---|
-| `uncertain` | Reviewed but cannot decide (default) | Creates review with `decision: uncertain` |
-| `include` | Should be included | Creates review with `decision: include` |
-| `exclude` | Should be excluded | Creates review with `decision: exclude` |
-| `null` | Not yet reviewed | Skipped (no review created) |
-
-#### Basis-Dependent Content
+##### Basis-Dependent Content
 
 | `--basis` | Fields Included |
 |---|---|
-| `title` | `id`, `title` |
-| `abstract` | `id`, `title`, `abstract` |
-| `fulltext` | `id`, `title`, `abstract`, `fulltext` (dirName reference) |
+| `title` | identifiers, `title` |
+| `abstract` | identifiers, `title`, `abstract` |
+| `fulltext` | identifiers, `title`, `abstract`, `fulltext` (dirName reference) |
 
-### Review File (extract without `--basis`)
+##### Decision Inline Comments
 
-For responsible person's confirmation. Full article data with review history.
+| `--basis` | Comment on decision line |
+|---|---|
+| `title` | `# exclude / uncertain` |
+| `abstract` | `# include / exclude / uncertain` |
+| `fulltext` | `# include / exclude / uncertain` |
+
+#### Final Decision Mode (`--finalize`)
+
+For responsible person's confirmation. Includes review history and final decision field.
 
 ```yaml
+# yaml-language-server: $schema=../../schemas/review.schema.json
+# Final decision file: set finalDecision on each article
+# Valid decisions: include / exclude / null
 sessionId: my-session
 reviewer: "human:tanaka"            # Top-level reviewer (pre-filled by extract)
 articles:
   - doi: "10.1234/example1"
+    pmid: "12345678"
     title: "Machine learning in healthcare"
     abstract: "This paper reviews..."
     reviewHistory:                  # Existing reviews (read-only, for context)
@@ -153,15 +167,28 @@ articles:
         basis: title
         timestamp: "2026-02-06T11:00:00Z"
     reviews: []                     # New reviews only (write here)
-    finalDecision: null             # Set final decision here
+    finalDecision: null             # include / exclude / null
 ```
 
-#### Merge Behavior for Review File
+##### Content Scoping with `--basis`
+
+| Flags | Content Included |
+|---|---|
+| `--finalize` | identifiers, title, abstract, fulltext + reviewHistory + finalDecision |
+| `--finalize --basis title` | identifiers, title + reviewHistory + finalDecision |
+| `--finalize --basis abstract` | identifiers, title, abstract + reviewHistory + finalDecision |
+
+##### Backward Compatibility
+
+Extract without `--basis` and without `--finalize` behaves the same as `--finalize`
+(all content + reviewHistory + finalDecision).
+
+#### Merge Behavior for Extracted Files
 
 - `reviewHistory`: **Ignored** (read-only reference for the reviewer)
 - `reviews[]`: All entries are new. Each gets:
   - `reviewer` from top-level `reviewer` field
-  - `basis` auto-detected from article data (fulltext > abstract > title)
+  - `basis` from top-level `basis` field if present, otherwise auto-detected from article data (fulltext > abstract > title)
   - `timestamp` auto-assigned if not provided
 - `finalDecision`: Applied to master file if non-null
 - **No duplicate detection needed**: History is separated from new reviews
@@ -218,21 +245,26 @@ search-hub review list --session <id> [--filter <statuses>] [--json]
 
 ### `review extract`
 
-Extract articles for review. Output format depends on `--basis`:
+Extract articles for review. All modes produce the unified ReviewFile format.
 
 ```bash
-# Work file (for reviewer screening)
+# Screening (with basis)
 search-hub review extract --session <id> --name <name> \
   --basis <title|abstract|fulltext> --reviewer <id> \
   [--filter <statuses>] [--limit <n>] [--offset <n>] [--sort <method>] [--seed <n>]
 
-# Review file (for responsible person confirmation)
+# Final decision (all content)
 search-hub review extract --session <id> --name <name> \
-  --reviewer <id> \
+  --reviewer <id> --finalize \
+  [--filter <statuses>] [--limit <n>] [--offset <n>] [--sort <method>] [--seed <n>]
+
+# Final decision (scoped to specific content level)
+search-hub review extract --session <id> --name <name> \
+  --reviewer <id> --finalize --basis <title|abstract> \
   [--filter <statuses>] [--limit <n>] [--offset <n>] [--sort <method>] [--seed <n>]
 ```
 
-`--reviewer` is **required** in both modes.
+`--reviewer` is **required** in all modes.
 
 When `--limit` is specified and articles remain, Next Steps suggests the next batch
 with correct `--offset` and incremented `--name`.
@@ -313,7 +345,7 @@ search-hub review finalize --session S             # Execute
 # Extract finalize candidates with review history for confirmation
 search-hub review extract --session S \
   --filter agreed-include,agreed-exclude \
-  --reviewer "human:tanaka" --name finalize-check
+  --reviewer "human:tanaka" --finalize --name finalize-check
 # Responsible person reviews history, sets finalDecision
 search-hub review merge --session S --name finalize-check
 
@@ -381,3 +413,4 @@ and the hardcoded "AI Agent Workflow" section in `formatStatusOutput()` are all
 | Merge duplicate detection | `isDuplicateReview` (reviewer+timestamp) | Not needed (reviewHistory separation) |
 | `WorkflowGuidance` types | Static template in list.ts | Removed (dynamic Next Steps) |
 | Static AI Agent Workflow | Hardcoded in formatStatusOutput | Removed (dynamic Next Steps) |
+| Extracted file format | Work File (flat decision/comment) + Review File (reviews[]) | Unified ReviewFile (reviews[]) for both screening and final decision |

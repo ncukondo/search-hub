@@ -97,6 +97,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 88 | Review Basis Priority in Status Classification | 72, 74 | ✅ Completed | [20260207-13](completed/20260207-13-review-basis-priority-in-status.md) |
 | 89 | Review Merge Output Decision Breakdown | 44 | ✅ Completed | [20260207-14](completed/20260207-14-review-merge-output-decision-breakdown.md) |
 | 90 | Graceful Exit Code on Partial Search Success | 10 | ✅ Completed | [20260207-15](completed/20260207-15-search-partial-success-exit-code.md) |
+| 91 | Unify Review Extract Format | 73 | 🔲 Pending | [20260207-16](20260207-16-unify-extract-format.md) |
 
 ## Development Flow
 
