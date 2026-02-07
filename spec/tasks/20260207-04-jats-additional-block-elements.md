@@ -97,23 +97,23 @@ JATS XML specification includes several block-level elements that the current pa
 
 ### Step 4: Add `<preformat>` support
 
-- [ ] Add `'preformat'` type to `BlockElement` union: `{ type: 'preformat'; text: string }`
-- [ ] Write test: `<preformat>` element preserves whitespace
-- [ ] Verify test fails (Red)
-- [ ] Add handling in `parseBlockContent()` — extract text content preserving whitespace
-- [ ] Add `renderBlock()` case — render as fenced code block (triple backticks)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: preformatted text renders as code block
+- [x] Add `'preformat'` type to `BlockElement` union: `{ type: 'preformat'; text: string }`
+- [x] Write test: `<preformat>` element preserves whitespace
+- [x] Verify test fails (Red)
+- [x] Add handling in `parseBlockContent()` — extract text content preserving whitespace
+- [x] Add `renderBlock()` case — render as fenced code block (triple backticks)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: preformatted text renders as code block
 
 ### Step 5: Add `<supplementary-material>` support
 
-- [ ] Write test: `<supplementary-material>` with `<label>` and `<caption>` renders as a note
-- [ ] Verify test fails (Red)
-- [ ] Add handling in `parseBlockContent()` — extract label and caption as a paragraph
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: supplementary material references are visible in output
+- [x] Write test: `<supplementary-material>` with `<label>` and `<caption>` renders as a note
+- [x] Verify test fails (Red)
+- [x] Add handling in `parseBlockContent()` — extract label and caption as a paragraph
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: supplementary material references are visible in output
 
 ### Final Step: E2E Integration Tests
 
