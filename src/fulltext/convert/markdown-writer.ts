@@ -93,6 +93,10 @@ function renderBlock(block: BlockElement): string {
       if (block.headers.length > 0) {
         lines.push(`| ${block.headers.join(' | ')} |`);
         lines.push(`| ${block.headers.map(() => '---').join(' | ')} |`);
+      } else if (block.rows.length > 0) {
+        const colCount = block.rows[0]!.length;
+        lines.push(`| ${Array.from({ length: colCount }, () => '').join(' | ')} |`);
+        lines.push(`| ${Array.from({ length: colCount }, () => '---').join(' | ')} |`);
       }
       for (const row of block.rows) {
         lines.push(`| ${row.join(' | ')} |`);
