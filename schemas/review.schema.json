@@ -61,6 +61,11 @@
           "enum": ["include", "exclude", "uncertain"],
           "description": "Assessment decision"
         },
+        "basis": {
+          "type": "string",
+          "enum": ["title", "abstract", "fulltext"],
+          "description": "Basis of the decision (what information was used)"
+        },
         "comment": {
           "type": "string",
           "description": "Optional comment or reason"
