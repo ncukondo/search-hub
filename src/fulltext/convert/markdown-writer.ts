@@ -96,6 +96,18 @@ function renderBlock(block: BlockElement): string {
       return `![${altText}]()`;
     }
 
+    case 'def-list': {
+      const lines: string[] = [];
+      if (block.title) {
+        lines.push(`**${block.title}**`);
+        lines.push('');
+      }
+      for (const item of block.items) {
+        lines.push(`**${item.term}**: ${item.definition}`);
+      }
+      return lines.join('\n');
+    }
+
     case 'boxed-text': {
       const lines: string[] = [];
       if (block.title) {

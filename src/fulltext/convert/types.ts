@@ -34,7 +34,8 @@ export type BlockElement =
   | { type: 'list'; ordered: boolean; items: InlineContent[][] }
   | { type: 'table'; caption?: string; headers: string[]; rows: string[][] }
   | { type: 'figure'; id?: string; label?: string; caption?: string }
-  | { type: 'boxed-text'; title?: string; content: BlockElement[] };
+  | { type: 'boxed-text'; title?: string; content: BlockElement[] }
+  | { type: 'def-list'; title?: string; items: { term: string; definition: string }[] };
 
 /** A document section (may contain nested subsections). */
 export interface JatsSection {

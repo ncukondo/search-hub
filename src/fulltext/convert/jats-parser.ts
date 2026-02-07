@@ -485,6 +485,28 @@ function parseBoxedText(node: OrderedNode): BlockElement {
   return block;
 }
 
+/**
+ * Parse a <def-list> element into a def-list block.
+ * Extracts optional title and <def-item> pairs with <term> and <def>.
+ */
+function parseDefList(node: OrderedNode): BlockElement {
+  const children = getChildren(node);
+  const titleNode = findChild(children, 'title');
+  const title = titleNode ? extractAllText(titleNode.children) : undefined;
+  const defItems = findChildren(children, 'def-item');
+  const items: { term: string; definition: string }[] = [];
+  for (const item of defItems) {
+    const termNode = findChild(item.children, 'term');
+    const defNode = findChild(item.children, 'def');
+    const term = termNode ? extractAllText(termNode.children) : '';
+    const definition = defNode ? extractAllText(defNode.children) : '';
+    items.push({ term, definition });
+  }
+  const block: BlockElement = { type: 'def-list', items };
+  if (title) block.title = title;
+  return block;
+}
+
 /** Tags that represent block-level elements when nested inside <p>. */
 const BLOCK_TAGS = new Set(['table-wrap', 'fig', 'disp-quote', 'boxed-text']);
 
@@ -623,6 +645,8 @@ function parseBlockContent(sectionChildren: OrderedNode[]): BlockElement[] {
       blocks.push(parseDispQuote(child));
     } else if (tag === 'boxed-text') {
       blocks.push(parseBoxedText(child));
+    } else if (tag === 'def-list') {
+      blocks.push(parseDefList(child));
     }
     // Skip title, sec, and other non-block elements
   }

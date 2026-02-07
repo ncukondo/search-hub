@@ -1535,6 +1535,67 @@ describe('parseJatsBody - boxed-text', () => {
   });
 });
 
+describe('parseJatsBody - def-list', () => {
+  it('parses <def-list> with <def-item> containing <term> and <def> pairs', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Glossary</title>
+            <def-list>
+              <title>Abbreviations</title>
+              <def-item>
+                <term>RCT</term>
+                <def><p>Randomized controlled trial</p></def>
+              </def-item>
+              <def-item>
+                <term>CI</term>
+                <def><p>Confidence interval</p></def>
+              </def-item>
+            </def-list>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('def-list');
+    if (content[0]!.type === 'def-list') {
+      expect(content[0]!.title).toBe('Abbreviations');
+      expect(content[0]!.items).toHaveLength(2);
+      expect(content[0]!.items[0]).toEqual({ term: 'RCT', definition: 'Randomized controlled trial' });
+      expect(content[0]!.items[1]).toEqual({ term: 'CI', definition: 'Confidence interval' });
+    }
+  });
+
+  it('parses <def-list> without title', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Terms</title>
+            <def-list>
+              <def-item>
+                <term>API</term>
+                <def><p>Application Programming Interface</p></def>
+              </def-item>
+            </def-list>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('def-list');
+    if (content[0]!.type === 'def-list') {
+      expect(content[0]!.title).toBeUndefined();
+      expect(content[0]!.items).toHaveLength(1);
+    }
+  });
+});
+
 describe('E2E: multi-paragraph table cells in body', () => {
   it('parses XML with multi-paragraph table cells correctly', () => {
     const xml = `

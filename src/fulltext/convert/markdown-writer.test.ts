@@ -423,6 +423,55 @@ describe('writeMarkdown', () => {
     expect(md).toContain('> Point 2: Another finding.');
   });
 
+  it('renders def-list as definition-style list', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Glossary',
+          level: 2,
+          content: [
+            {
+              type: 'def-list',
+              title: 'Abbreviations',
+              items: [
+                { term: 'RCT', definition: 'Randomized controlled trial' },
+                { term: 'CI', definition: 'Confidence interval' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Abbreviations**');
+    expect(md).toContain('**RCT**: Randomized controlled trial');
+    expect(md).toContain('**CI**: Confidence interval');
+  });
+
+  it('renders def-list without title', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Terms',
+          level: 2,
+          content: [
+            {
+              type: 'def-list',
+              items: [
+                { term: 'API', definition: 'Application Programming Interface' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**API**: Application Programming Interface');
+    expect(md).not.toMatch(/^\*\*[A-Z].*\*\*\n\n\*\*/m); // No title line
+  });
+
   it('renders boxed-text without title', () => {
     const doc = makeDoc({
       sections: [
