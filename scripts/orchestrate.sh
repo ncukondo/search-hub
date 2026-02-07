@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Orchestrate all worker agents - monitor and auto-transition through workflow.
+# Orchestrate all worker agents - detect events and notify main agent.
 #
 # Usage: orchestrate.sh [options]
 #
@@ -10,21 +10,17 @@ set -euo pipefail
 #   --interval <sec>    Check interval in seconds (default: 15)
 #   --main-pane <id>    Main agent pane ID for notifications (auto-detect if omitted)
 #
-# Workflow:
-#   Worker (idle + PR created + CI pass) → kill → spawn Reviewer
-#   Reviewer (idle + review posted) → notify main agent with result
-#   Fixer (idle + push done) → notify main agent
-#
-# Unexpected situations are always reported to main agent:
-#   - CI failure
-#   - Agent error state
-#   - Timeout
-#   - Unknown states
+# Model: Detect + Notify only
+#   - Detects state changes in worker/reviewer agents
+#   - Writes event files to /tmp/claude-orchestrator/events/
+#   - Sends a short 1-line notification to main agent pane
+#   - Does NOT kill agents, spawn reviewers, or send fix instructions
+#   - Main agent reads event files and decides what actions to take
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 STATE_DIR="/tmp/claude-orchestrator"
+EVENTS_DIR="$STATE_DIR/events"
 LOG_FILE="$STATE_DIR/orchestrator.log"
-NOTIFY_FILE="$STATE_DIR/notifications"
 PID_FILE="$STATE_DIR/orchestrator.pid"
 WORKTREE_BASE="/workspaces/search-hub--worktrees"
 
@@ -60,6 +56,11 @@ while [[ $# -gt 0 ]]; do
     --status)
       if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
         echo "running (PID: $(cat "$PID_FILE"))"
+        echo "Events dir: $EVENTS_DIR"
+        if [ -d "$EVENTS_DIR" ]; then
+          local_count=$(ls -1 "$EVENTS_DIR" 2>/dev/null | wc -l)
+          echo "Event files: $local_count"
+        fi
       else
         echo "stopped"
       fi
@@ -73,7 +74,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Setup
-mkdir -p "$STATE_DIR"
+mkdir -p "$STATE_DIR" "$EVENTS_DIR"
 
 # Auto-detect main pane (the pane running in main worktree)
 if [ -z "$MAIN_PANE" ]; then
@@ -90,34 +91,54 @@ log() {
   fi
 }
 
-# Notify main agent about an event
-notify_main() {
-  local level="$1"  # info, warning, error
-  local message="$2"
+# Write an event file and notify main agent
+write_event() {
+  local branch="$1"
+  local event_type="$2"
+  local details="$3"
+  local next_steps="$4"
 
   local timestamp
-  timestamp=$(date '+%H:%M:%S')
+  timestamp=$(date '+%H%M%S')
+  local branch_dash
+  branch_dash=$(echo "$branch" | tr '/' '-')
 
-  # Append to notification file
-  echo "[$timestamp] [$level] $message" >> "$NOTIFY_FILE"
+  local pr_num="${5:-}"
+  local pane_id="${6:-}"
 
-  # Send to main pane if available
+  local event_file="$EVENTS_DIR/${timestamp}-${branch_dash}-${event_type}.md"
+
+  {
+    echo "## Event: ${event_type}"
+    echo "- **Branch**: ${branch}"
+    [ -n "$pr_num" ] && echo "- **PR**: #${pr_num}"
+    [ -n "$pane_id" ] && echo "- **Pane**: ${pane_id}"
+    echo "- **Time**: $(date '+%H:%M:%S')"
+    echo ""
+    echo "## Details"
+    echo "$details"
+    echo ""
+    echo "## Next Steps"
+    echo '```bash'
+    echo "$next_steps"
+    echo '```'
+  } > "$event_file"
+
+  log "EVENT: ${event_type} for ${branch} -> $(basename "$event_file")"
+
+  # Notify main pane with just the filename
+  notify_main "$event_file"
+}
+
+# Notify main agent about an event (short 1-line notification)
+notify_main() {
+  local event_file="$1"
+
   if [ -n "$MAIN_PANE" ] && tmux has-session -t "$MAIN_PANE" 2>/dev/null; then
-    # Use a visible notification format
-    local prefix=""
-    case "$level" in
-      error)   prefix="[ORCHESTRATOR ERROR]" ;;
-      warning) prefix="[ORCHESTRATOR WARNING]" ;;
-      info)    prefix="[ORCHESTRATOR]" ;;
-    esac
-
-    # Send notification as a comment (won't execute)
-    tmux send-keys -t "$MAIN_PANE" "# $prefix $message" 2>/dev/null || true
+    tmux send-keys -t "$MAIN_PANE" "# [ORCH] $(basename "$event_file")" 2>/dev/null || true
     sleep 0.5
     tmux send-keys -t "$MAIN_PANE" Enter 2>/dev/null || true
   fi
-
-  log "NOTIFY [$level]: $message"
 }
 
 # Get all active worktree branches (excluding main)
@@ -188,7 +209,17 @@ process_branch() {
   # Handle error state
   if [ "$agent_state" = "error" ]; then
     if [ "$prev_state" != "error" ]; then
-      notify_main "error" "Branch $branch ($role): Agent in error state"
+      local pr_num
+      pr_num=$(gh pr list --head "$branch" --json number --jq '.[0].number' 2>/dev/null || true)
+
+      write_event "$branch" "agent-error" \
+        "Agent in error state (role: $role)" \
+        "# Check agent state
+./scripts/check-agent-state.sh $pane_id
+# Restart if needed
+./scripts/kill-agent.sh $pane_id" \
+        "$pr_num" "$pane_id"
+
       BRANCH_STATES[$state_key]="error"
     fi
     return
@@ -243,27 +274,25 @@ process_implement_completion() {
       pr_num=$(gh pr list --head "$branch" --json number --jq '.[0].number' 2>/dev/null || true)
 
       if [ -n "$pr_num" ]; then
-        log "Branch $branch: Worker completed, PR #$pr_num ready. Transitioning to reviewer..."
+        log "Branch $branch: Worker completed, PR #$pr_num, CI passed."
 
-        # Mark as transitioning BEFORE spawn to prevent duplicate processing
-        BRANCH_STATES["${branch}:implement"]="transitioning"
+        write_event "$branch" "worker-completed" \
+          "Worker finished implementation. PR #$pr_num created and CI passed." \
+          "# 1. Kill worker and spawn reviewer
+./scripts/kill-agent.sh $pane_id && sleep 2 && ./scripts/spawn-reviewer.sh $branch $pr_num
+# 2. Or spawn reviewer while keeping worker alive
+./scripts/spawn-reviewer.sh $branch $pr_num" \
+          "$pr_num" "$pane_id"
 
-        # Kill current agent (pane is also removed; spawn-reviewer creates a new one)
-        "$SCRIPT_DIR/kill-agent.sh" "$pane_id" 2>/dev/null || true
-        sleep 2
-
-        # Spawn reviewer
-        "$SCRIPT_DIR/spawn-reviewer.sh" "$branch" "$pr_num" 2>/dev/null || {
-          notify_main "error" "Branch $branch: Failed to spawn reviewer for PR #$pr_num"
-          BRANCH_STATES["${branch}:implement"]="spawn-failed"
-          return
-        }
-
-        notify_main "info" "Branch $branch: Reviewer started for PR #$pr_num"
         BRANCH_STATES["${branch}:implement"]="transitioned"
       else
         if [ "${BRANCH_STATES["${branch}:implement"]:-}" != "no-pr-notified" ]; then
-          notify_main "warning" "Branch $branch: PR completed but could not find PR number"
+          write_event "$branch" "worker-completed" \
+            "Worker completed but could not find PR number for branch $branch." \
+            "# Check PR manually
+gh pr list --head $branch" \
+            "" "$pane_id"
+
           BRANCH_STATES["${branch}:implement"]="no-pr-notified"
         fi
       fi
@@ -276,7 +305,17 @@ process_implement_completion() {
     ci-failed)
       local state_key="${branch}:implement:ci-failed"
       if [ "${BRANCH_STATES[$state_key]:-}" != "notified" ]; then
-        notify_main "warning" "Branch $branch: CI failed. Worker may need to fix or manual intervention required."
+        local pr_num
+        pr_num=$(gh pr list --head "$branch" --json number --jq '.[0].number' 2>/dev/null || true)
+
+        write_event "$branch" "ci-failed" \
+          "CI checks failed for branch $branch." \
+          "# Send fix instruction to worker
+./scripts/send-to-agent.sh $pane_id \"CIが失敗しています。修正してpushしてください。\"
+# Or check CI status manually
+gh pr checks ${pr_num:-\"<pr-number>\"}" \
+          "$pr_num" "$pane_id"
+
         BRANCH_STATES[$state_key]="notified"
       fi
       ;;
@@ -287,7 +326,12 @@ process_implement_completion() {
 
     error|*)
       if [ "${BRANCH_STATES["${branch}:implement:error"]:-}" != "notified" ]; then
-        notify_main "error" "Branch $branch: Unexpected task status: $task_status"
+        write_event "$branch" "agent-error" \
+          "Unexpected task status for branch $branch: $task_status" \
+          "# Check agent state
+./scripts/check-agent-state.sh $pane_id" \
+          "" "$pane_id"
+
         BRANCH_STATES["${branch}:implement:error"]="notified"
       fi
       ;;
@@ -302,7 +346,11 @@ process_review_completion() {
   pr_num=$(gh pr list --head "$branch" --json number --jq '.[0].number' 2>/dev/null || true)
 
   if [ -z "$pr_num" ]; then
-    notify_main "error" "Branch $branch: Reviewer active but no PR found"
+    write_event "$branch" "agent-error" \
+      "Reviewer active but no PR found for branch $branch." \
+      "# Check PRs
+gh pr list --head $branch" \
+      "" "$pane_id"
     return
   fi
 
@@ -315,40 +363,35 @@ process_review_completion() {
     approved|fix-requested|commented) return ;;
   esac
 
+  local branch_dash
+  branch_dash=$(echo "$branch" | tr '/' '-')
+
   case "$review_status" in
     approved)
-      notify_main "info" "Branch $branch: PR #$pr_num APPROVED - Ready for merge"
-
-      # Kill reviewer agent
-      "$SCRIPT_DIR/kill-agent.sh" "$pane_id" 2>/dev/null || true
+      write_event "$branch" "review-approved" \
+        "PR #$pr_num has been approved by the reviewer." \
+        "# Kill reviewer and merge PR
+./scripts/kill-agent.sh $pane_id
+gh pr merge $pr_num --squash --delete-branch
+git worktree remove $WORKTREE_BASE/$branch_dash --force" \
+        "$pr_num" "$pane_id"
 
       BRANCH_STATES["${branch}:review"]="approved"
       ;;
 
     changes_requested)
-      # Get review body for the notification (truncated for main agent)
       local review_body
-      review_body=$(gh pr view "$pr_num" --json reviews --jq '.reviews[-1].body // "No details"' 2>/dev/null | head -c 200 || echo "")
+      review_body=$(gh pr view "$pr_num" --json reviews --jq '.reviews[-1].body // "No details"' 2>/dev/null | head -c 500 || echo "")
 
-      notify_main "info" "Branch $branch: PR #$pr_num CHANGES REQUESTED - $review_body"
+      write_event "$branch" "review-changes-requested" \
+        "PR #$pr_num has changes requested.
 
-      # Transition back to fixer
-      log "Branch $branch: Sending fix instructions to worker..."
-
-      local full_review
-      full_review=$(gh pr view "$pr_num" --json reviews --jq '.reviews[-1].body // "修正が必要です"' 2>/dev/null || echo "修正が必要です")
-
-      "$SCRIPT_DIR/send-to-agent.sh" "$pane_id" "レビューで修正が要求されました。以下のフィードバックに対応してください:
-
-$full_review
-
-修正が完了したらpushしてください。" 2>/dev/null || {
-        notify_main "error" "Branch $branch: Failed to send fix instructions"
-        return
-      }
-
-      # Update role to implement (fixer mode)
-      "$SCRIPT_DIR/set-role.sh" "$WORKTREE_BASE/$(echo "$branch" | tr '/' '-')" implement 2>/dev/null || true
+## Review Feedback
+$review_body" \
+        "# Switch role to implement and send fix instructions
+./scripts/set-role.sh $WORKTREE_BASE/$branch_dash implement
+./scripts/send-to-agent.sh $pane_id \"/pr-comments $pr_num\"" \
+        "$pr_num" "$pane_id"
 
       BRANCH_STATES["${branch}:review"]="fix-requested"
 
@@ -359,11 +402,18 @@ $full_review
       ;;
 
     commented)
-      # Review with comments only (no approve/reject)
       local review_body
-      review_body=$(gh pr view "$pr_num" --json reviews --jq '.reviews[-1].body // "No details"' 2>/dev/null | head -c 200 || echo "")
+      review_body=$(gh pr view "$pr_num" --json reviews --jq '.reviews[-1].body // "No details"' 2>/dev/null | head -c 500 || echo "")
 
-      notify_main "info" "Branch $branch: PR #$pr_num COMMENTED (no decision) - $review_body"
+      write_event "$branch" "review-commented" \
+        "PR #$pr_num has a comment-only review (no approve/reject).
+
+## Review Comment
+$review_body" \
+        "# Check comment details
+gh pr view $pr_num --comments" \
+        "$pr_num" "$pane_id"
+
       BRANCH_STATES["${branch}:review"]="commented"
       ;;
 
@@ -373,7 +423,12 @@ $full_review
 
     error|*)
       if [ "${BRANCH_STATES["${branch}:review:error"]:-}" != "notified" ]; then
-        notify_main "error" "Branch $branch: Unexpected review status: $review_status"
+        write_event "$branch" "agent-error" \
+          "Unexpected review status for branch $branch: $review_status" \
+          "# Check agent state
+./scripts/check-agent-state.sh $pane_id" \
+          "$pr_num" "$pane_id"
+
         BRANCH_STATES["${branch}:review:error"]="notified"
       fi
       ;;
@@ -382,7 +437,7 @@ $full_review
 
 # Main loop
 main_loop() {
-  log "Orchestrator started (interval: ${INTERVAL}s, main pane: ${MAIN_PANE:-none})"
+  log "Orchestrator started (interval: ${INTERVAL}s, main pane: ${MAIN_PANE:-none}, events: $EVENTS_DIR)"
 
   while true; do
     # Main agent liveness check
@@ -409,6 +464,7 @@ if [ "$BACKGROUND" = true ]; then
   disown
   echo "[orchestrate] Started in background (PID: $$)"
   echo "[orchestrate] Log: $LOG_FILE"
+  echo "[orchestrate] Events: $EVENTS_DIR"
   echo "[orchestrate] Stop: $0 --stop"
 else
   # Foreground
