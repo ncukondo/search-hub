@@ -37,7 +37,7 @@ Update user-facing documentation for the fulltext management feature:
 
 ### Step 2: Update docs/commands.md
 
-- [ ] Add `fulltext` command group section
+- [x] Add `fulltext` command group section
   - `fulltext init` - Create directories for manual download
   - `fulltext sync` - Detect manually added files
   - `fulltext check` - Check OA availability
@@ -46,9 +46,9 @@ Update user-facing documentation for the fulltext management feature:
   - `fulltext attach` - Attach to reference-manager
   - `fulltext status` - Show retrieval status
   - `fulltext pending` - List articles needing manual download
-- [ ] Document options for each command
-- [ ] Add examples
-- [ ] Acceptance: All fulltext commands documented
+- [x] Document options for each command
+- [x] Add examples
+- [x] Acceptance: All fulltext commands documented
 
 ### Step 3: Update docs/configuration.md
 
