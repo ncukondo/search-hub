@@ -2562,4 +2562,54 @@ describe('parseJatsBackMatter - notes', () => {
     const backMatter = parseJatsBackMatter(xml);
     expect(backMatter.notes).toBeUndefined();
   });
+
+  it('extracts nested <sec> elements within a <notes> wrapper (Declarations)', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes>
+            <title>Declarations</title>
+            <sec>
+              <title>Ethics approval and consent to participate</title>
+              <p>The study was approved by the IRB.</p>
+            </sec>
+            <sec>
+              <title>Competing interests</title>
+              <p>The authors declare no competing interests.</p>
+            </sec>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(2);
+    expect(backMatter.notes![0]!.title).toBe('Ethics approval and consent to participate');
+    expect(backMatter.notes![0]!.text).toBe('The study was approved by the IRB.');
+    expect(backMatter.notes![1]!.title).toBe('Competing interests');
+    expect(backMatter.notes![1]!.text).toBe('The authors declare no competing interests.');
+  });
+
+  it('handles mixed direct <notes> and wrapper <notes> with <sec>', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study.</p>
+          </notes>
+          <notes>
+            <title>Declarations</title>
+            <sec>
+              <title>Competing interests</title>
+              <p>None declared.</p>
+            </sec>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(2);
+    expect(backMatter.notes![0]!.title).toBe('Author contributions');
+    expect(backMatter.notes![1]!.title).toBe('Competing interests');
+  });
 });

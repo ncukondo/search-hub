@@ -1125,14 +1125,30 @@ export function parseJatsBackMatter(xml: string): BackMatterResult {
     if (notesElements.length > 0) {
       const notes: BackMatterNote[] = [];
       for (const note of notesElements) {
-        const titleNode = findChild(note.children, 'title');
-        const title = titleNode ? extractAllText(titleNode.children) : '';
-        const paragraphs = findChildren(note.children, 'p');
-        const text = paragraphs
-          .map((p) => extractAllText(p.children))
-          .join('\n\n');
-        if (title || text) {
-          notes.push({ title, text });
+        // Check if this <notes> contains <sec> children (e.g. Declarations wrapper)
+        const secs = findChildren(note.children, 'sec');
+        if (secs.length > 0) {
+          for (const sec of secs) {
+            const secTitleNode = findChild(sec.children, 'title');
+            const secTitle = secTitleNode ? extractAllText(secTitleNode.children) : '';
+            const secParagraphs = findChildren(sec.children, 'p');
+            const secText = secParagraphs
+              .map((p) => extractAllText(p.children))
+              .join('\n\n');
+            if (secTitle || secText) {
+              notes.push({ title: secTitle, text: secText });
+            }
+          }
+        } else {
+          const titleNode = findChild(note.children, 'title');
+          const title = titleNode ? extractAllText(titleNode.children) : '';
+          const paragraphs = findChildren(note.children, 'p');
+          const text = paragraphs
+            .map((p) => extractAllText(p.children))
+            .join('\n\n');
+          if (title || text) {
+            notes.push({ title, text });
+          }
         }
       }
       if (notes.length > 0) {
