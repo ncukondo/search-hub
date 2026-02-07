@@ -80,13 +80,13 @@ across any basis are still treated as `conflicting`.
 
 ### Step 4: Verify Finalize Works with Multi-Stage Screening
 
-- [ ] Write test: `src/cli/commands/review/finalize.test.ts`
+- [x] Write test: `src/cli/commands/review/finalize.test.ts`
   - Article with title `uncertain` + abstract `include` from same reviewer → finalized as include
   - Article with title `uncertain` + abstract `exclude` from different reviewer → finalized as exclude
   - Article with only title `uncertain` → not finalized (still uncertain)
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `finalize` correctly processes multi-stage reviewed articles
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `finalize` correctly processes multi-stage reviewed articles
 
 ### Final Step: E2E Integration Tests
 
