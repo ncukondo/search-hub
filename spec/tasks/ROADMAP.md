@@ -79,7 +79,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 70 | JATS Minor Fixes (Entities, Refs, PMCID) | 68 | ✅ Completed | [20260206-04](completed/20260206-04-jats-minor-fixes.md) |
 | 71 | Reviewer Registration in Review Merge | 44 | ✅ Completed | [20260206-05](completed/20260206-05-reviewer-registration.md) |
 | 72 | Review Status Model Expansion | 71 | ✅ Completed | [20260206-06](completed/20260206-06-review-status-model.md) |
-| 73 | Review Extract Format Enhancement | 72 | 🔲 Planned | [20260206-07](20260206-07-review-extract-format.md) |
+| 73 | Review Extract Format Enhancement | 72 | ✅ Completed | [20260206-07](completed/20260206-07-review-extract-format.md) |
 | 74 | Review Finalize Command | 72 | ✅ Completed | [20260206-08](completed/20260206-08-review-finalize.md) |
 | 75 | Dynamic Review Next Steps | 72, 73, 74 | 🔲 Planned | [20260206-09](20260206-09-review-dynamic-next-steps.md) |
 
