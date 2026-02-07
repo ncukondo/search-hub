@@ -10,7 +10,6 @@ import { stringify as stringifyYaml, parse as parseYaml } from 'yaml';
 import {
   executeReviewFinalize,
   formatFinalizeOutput,
-  type ReviewFinalizeOptions,
   type ReviewFinalizeResult,
 } from './finalize.js';
 import type { ReviewFile } from './types.js';
