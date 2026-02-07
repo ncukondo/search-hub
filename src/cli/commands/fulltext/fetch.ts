@@ -9,6 +9,7 @@ import type { ReviewFile } from '../review/types.js';
 import type { FulltextMeta } from '../../../fulltext/types.js';
 import { loadMeta } from '../../../fulltext/meta.js';
 import { fetchAllFulltexts, type FetchArticle } from '../../../fulltext/download/orchestrator.js';
+import { executeFulltextConvert } from './convert.js';
 export interface FulltextFetchOptions {
   sessionId: string;
   sessionsDir: string;
@@ -119,6 +120,17 @@ export async function executeFulltextFetch(
   if (source) fetchOpts.sourceFilter = source;
   const results = await fetchAllFulltexts(toFetch, sessionDir, fetchOpts);
 
+  // Auto-convert PMC XML to Markdown (unless --no-convert-markdown)
+  const convertMarkdown = options.convertMarkdown !== false;
+  if (convertMarkdown) {
+    const xmlArticles = results.filter(
+      (r) => r.status === 'downloaded' && r.filesDownloaded?.includes('fulltext.xml'),
+    );
+    for (const article of xmlArticles) {
+      await executeFulltextConvert({ sessionId, article: article.dirName }, sessionsDir);
+    }
+  }
+
   let downloadedCount = 0;
   let failedCount = 0;
   for (const result of results) {
@@ -183,7 +195,7 @@ async function updateReviews(
     if (changed) {
       await writeFile(reviewsPath, stringifyYaml(reviewFile), 'utf-8');
     }
-  } catch {
-    // reviews.yaml update is best-effort
+  } catch (e) {
+    console.error('Warning: failed to update reviews.yaml:', e);
   }
 }

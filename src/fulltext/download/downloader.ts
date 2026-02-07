@@ -24,6 +24,8 @@ const NON_RETRYABLE_STATUSES = new Set([400, 401, 403, 404, 405, 410]);
 /** Content types accepted as valid PDF responses */
 const VALID_CONTENT_TYPES = ['application/pdf', 'application/octet-stream'];
 
+const USER_AGENT = 'search-hub/0.8.0 (https://github.com/ncukondo/search-hub)';
+
 function isValidPdfContentType(contentType: string | null): boolean {
   if (!contentType) return false;
   const base = (contentType.split(';')[0] ?? '').trim().toLowerCase();
@@ -51,7 +53,9 @@ export async function downloadPdf(
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: { 'User-Agent': USER_AGENT },
+      });
 
       if (!response.ok) {
         const status = response.status;

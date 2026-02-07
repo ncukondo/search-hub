@@ -185,7 +185,7 @@ Examples:
     .description('Download available OA fulltexts')
     .argument('<session-id>', 'session ID')
     .option('--source <sources>', 'filter by source (comma-separated: pmc,arxiv,unpaywall,core)')
-    .option('--convert-markdown', 'convert downloaded PMC XML to Markdown', false)
+    .option('--no-convert-markdown', 'skip auto-conversion of PMC XML to Markdown')
     .option('--dry-run', 'show what would be downloaded without downloading', false)
     .action(async (sessionId: string, options: { source?: string; convertMarkdown: boolean; dryRun: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;

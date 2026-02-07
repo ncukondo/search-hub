@@ -359,8 +359,8 @@ search-hub fulltext fetch <session-id>
 # Fetch specific sources only
 search-hub fulltext fetch <session-id> --source pmc,arxiv
 
-# Include PMC XML -> Markdown conversion
-search-hub fulltext fetch <session-id> --convert-markdown
+# Skip auto-conversion of PMC XML to Markdown
+search-hub fulltext fetch <session-id> --no-convert-markdown
 
 # Dry run
 search-hub fulltext fetch <session-id> --dry-run
@@ -667,7 +667,7 @@ search-hub review init --session <id>
 
 # 2. Check and fetch OA fulltexts
 search-hub fulltext check <id>
-search-hub fulltext fetch <id> --convert-markdown
+search-hub fulltext fetch <id>
 
 # 3. Register to ref (auto-attaches fulltexts)
 search-hub register <id>
@@ -694,7 +694,7 @@ search-hub register <id>
 
 ```bash
 # 1. Fetch available OA articles
-search-hub fulltext fetch <id> --convert-markdown
+search-hub fulltext fetch <id>
 
 # 2. Create directories for remaining articles
 search-hub fulltext init <id>

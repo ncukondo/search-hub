@@ -34,7 +34,7 @@ Implement `fulltext fetch` command to automatically download OA fulltexts:
   - Test: Handles redirects
   - Test: Handles 403/404 errors gracefully
   - Test: Retries on network errors (3x with backoff)
-  - Test: Respects rate limit per source
+  - [ ] Test: Respects rate limit per source (deferred to follow-up task)
 - [x] Create stub: `src/fulltext/download/downloader.ts`
 - [x] Verify test fails (Red)
 - [x] Implement `downloadPdf(url, destPath, options)`
@@ -77,7 +77,7 @@ Implement `fulltext fetch` command to automatically download OA fulltexts:
 - [x] Write test: `src/cli/commands/fulltext/fetch.test.ts`
   - Test: Fetches all articles with OA locations
   - Test: --source filters by source (pmc, arxiv, unpaywall)
-  - Test: --convert-markdown triggers XML→MD conversion
+  - Test: --no-convert-markdown skips XML→MD auto-conversion
   - Test: --dry-run shows what would be downloaded
   - Test: Progress display during download
   - Test: Summary output (downloaded, failed, skipped)
@@ -119,8 +119,8 @@ search-hub fulltext fetch <session-id>
 # Fetch from specific sources
 search-hub fulltext fetch <session-id> --source pmc,arxiv
 
-# With Markdown conversion
-search-hub fulltext fetch <session-id> --convert-markdown
+# Skip auto-conversion of PMC XML to Markdown
+search-hub fulltext fetch <session-id> --no-convert-markdown
 
 # Dry run
 search-hub fulltext fetch <session-id> --dry-run

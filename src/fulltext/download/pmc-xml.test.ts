@@ -64,6 +64,7 @@ describe('downloadPmcXml', () => {
     );
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('eutils.ncbi.nlm.nih.gov'),
+      expect.objectContaining({ headers: expect.objectContaining({ 'User-Agent': expect.any(String) }) }),
     );
   });
 

@@ -11,7 +11,6 @@ import type { ReviewFile } from '../review/types';
 vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(),
   writeFile: vi.fn().mockResolvedValue(undefined),
-  readdir: vi.fn(),
   mkdir: vi.fn().mockResolvedValue(undefined),
   access: vi.fn().mockResolvedValue(undefined),
 }));
@@ -30,18 +29,23 @@ vi.mock('../../../fulltext/download/orchestrator', () => ({
   fetchAllFulltexts: vi.fn(),
 }));
 
-import { readFile, writeFile, readdir } from 'node:fs/promises';
+vi.mock('./convert', () => ({
+  executeFulltextConvert: vi.fn().mockResolvedValue({ success: true, converted: 1, skipped: 0, failed: 0, articles: [] }),
+}));
+
+import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { loadMeta } from '../../../fulltext/meta';
 import { fetchAllFulltexts } from '../../../fulltext/download/orchestrator';
+import { executeFulltextConvert } from './convert';
 
 const mockReadFile = vi.mocked(readFile);
 const mockWriteFile = vi.mocked(writeFile);
-const mockReaddir = vi.mocked(readdir);
 const mockParseYaml = vi.mocked(parseYaml);
 const mockStringifyYaml = vi.mocked(stringifyYaml);
 const mockLoadMeta = vi.mocked(loadMeta);
 const mockFetchAll = vi.mocked(fetchAllFulltexts);
+const mockConvert = vi.mocked(executeFulltextConvert);
 
 function createReviewFile(articles: Partial<ReviewFile['articles'][0]>[] = []): ReviewFile {
   return {
@@ -89,9 +93,6 @@ describe('executeFulltextFetch', () => {
 
     // Default: meta.json with OA locations
     mockLoadMeta.mockResolvedValue(createMeta());
-
-    // Default: fulltext directory has article dirs
-    mockReaddir.mockResolvedValue(['smith2024-a1b2c3d4'] as unknown as never);
 
     // Default: orchestrator returns success
     mockFetchAll.mockResolvedValue([
@@ -158,8 +159,6 @@ describe('executeFulltextFetch', () => {
         { source: 'unpaywall', url: 'https://oa/c', urlType: 'pdf', version: 'published' },
       ] }));
 
-    mockReaddir.mockResolvedValue(['art1-aaaa', 'art2-bbbb', 'art3-cccc'] as unknown as never);
-
     mockFetchAll.mockResolvedValue([
       { dirName: 'art1-aaaa', status: 'downloaded', filesDownloaded: ['fulltext.pdf'] },
       { dirName: 'art3-cccc', status: 'failed', error: 'HTTP 403' },
@@ -205,6 +204,51 @@ describe('executeFulltextFetch', () => {
 
     expect(result.summary.skipped).toBe(1);
     expect(mockFetchAll).toHaveBeenCalledWith([], expect.anything(), expect.anything());
+  });
+
+  describe('auto-convert XML to Markdown', () => {
+    it('auto-converts PMC XML to Markdown by default', async () => {
+      mockFetchAll.mockResolvedValue([
+        { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf', 'fulltext.xml'] },
+      ]);
+
+      await executeFulltextFetch({
+        sessionId: 'test-session',
+        sessionsDir: '/sessions',
+      });
+
+      expect(mockConvert).toHaveBeenCalledWith(
+        { sessionId: 'test-session', article: 'smith2024-a1b2c3d4' },
+        '/sessions',
+      );
+    });
+
+    it('skips conversion when --no-convert-markdown is passed', async () => {
+      mockFetchAll.mockResolvedValue([
+        { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf', 'fulltext.xml'] },
+      ]);
+
+      await executeFulltextFetch({
+        sessionId: 'test-session',
+        sessionsDir: '/sessions',
+        convertMarkdown: false,
+      });
+
+      expect(mockConvert).not.toHaveBeenCalled();
+    });
+
+    it('only converts articles that downloaded XML', async () => {
+      mockFetchAll.mockResolvedValue([
+        { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf'] },
+      ]);
+
+      await executeFulltextFetch({
+        sessionId: 'test-session',
+        sessionsDir: '/sessions',
+      });
+
+      expect(mockConvert).not.toHaveBeenCalled();
+    });
   });
 
   describe('reviews.yaml integration', () => {

@@ -10,6 +10,8 @@ const PMC_EFETCH_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcg
 /** Content types accepted as valid XML responses */
 const VALID_XML_TYPES = ['text/xml', 'application/xml'];
 
+const USER_AGENT = 'search-hub/0.8.0 (https://github.com/ncukondo/search-hub)';
+
 function isValidXmlContentType(contentType: string | null): boolean {
   if (!contentType) return false;
   const base = (contentType.split(';')[0] ?? '').trim().toLowerCase();
@@ -38,7 +40,9 @@ export async function downloadPmcXml(
   const url = `${PMC_EFETCH_URL}?db=pmc&id=${numericId}&rettype=xml`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT },
+    });
 
     if (!response.ok) {
       return {
