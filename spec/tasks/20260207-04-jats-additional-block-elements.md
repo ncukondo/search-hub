@@ -31,8 +31,8 @@ JATS XML specification includes several block-level elements that the current pa
 
 ### Step 1: Add `<boxed-text>` support
 
-- [ ] Add `'boxed-text'` type to `BlockElement` union in `types.ts`: `{ type: 'boxed-text'; title?: string; content: BlockElement[] }`
-- [ ] Write test: `<boxed-text>` with `<title>` and `<p>` children parses correctly
+- [x] Add `'boxed-text'` type to `BlockElement` union in `types.ts`: `{ type: 'boxed-text'; title?: string; content: BlockElement[] }`
+- [x] Write test: `<boxed-text>` with `<title>` and `<p>` children parses correctly
   ```xml
   <boxed-text>
     <title>Key Points</title>
@@ -40,13 +40,13 @@ JATS XML specification includes several block-level elements that the current pa
     <p>Point 2: Another finding.</p>
   </boxed-text>
   ```
-- [ ] Verify test fails (Red)
-- [ ] Add `parseBoxedText()` function in `jats-parser.ts` — extract title and recursively parse inner block content
-- [ ] Add `'boxed-text'` case to `parseBlockContent()`
-- [ ] Add `renderBlock()` case in `markdown-writer.ts` — render as blockquote with bold title: `> **Key Points**\n> \n> Point 1...`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: boxed-text content appears in Markdown as styled blockquote
+- [x] Verify test fails (Red)
+- [x] Add `parseBoxedText()` function in `jats-parser.ts` — extract title and recursively parse inner block content
+- [x] Add `'boxed-text'` case to `parseBlockContent()`
+- [x] Add `renderBlock()` case in `markdown-writer.ts` — render as blockquote with bold title: `> **Key Points**\n> \n> Point 1...`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: boxed-text content appears in Markdown as styled blockquote
 
 ### Step 2: Add `<def-list>` support
 
