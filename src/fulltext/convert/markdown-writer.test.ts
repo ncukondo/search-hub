@@ -525,6 +525,61 @@ describe('writeMarkdown', () => {
     expect(md).toContain('2. Jones A. Another. Nature. 2023.');
   });
 
+  it('renders reference DOI as clickable link', () => {
+    const doc = makeDoc({
+      references: [
+        { id: 'ref1', text: 'Smith J. Title. Journal. 2024.', doi: '10.1234/test' },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('[doi:10.1234/test](https://doi.org/10.1234/test)');
+  });
+
+  it('renders reference PMID as clickable link', () => {
+    const doc = makeDoc({
+      references: [
+        { id: 'ref1', text: 'Smith J. Title. Journal. 2024.', pmid: '12345678' },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('[pmid:12345678](https://pubmed.ncbi.nlm.nih.gov/12345678/)');
+  });
+
+  it('renders reference PMCID as clickable link', () => {
+    const doc = makeDoc({
+      references: [
+        { id: 'ref1', text: 'Smith J. Title. Journal. 2024.', pmcid: '9876543' },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('[pmcid:PMC9876543](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9876543/)');
+  });
+
+  it('renders multiple pub-ids on the same reference', () => {
+    const doc = makeDoc({
+      references: [
+        { id: 'ref1', text: 'Smith J. Title. Journal. 2024.', doi: '10.1234/test', pmid: '12345', pmcid: '9876543' },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('[doi:10.1234/test](https://doi.org/10.1234/test)');
+    expect(md).toContain('[pmid:12345](https://pubmed.ncbi.nlm.nih.gov/12345/)');
+    expect(md).toContain('[pmcid:PMC9876543](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9876543/)');
+  });
+
+  it('does not render pub-id links when none are present', () => {
+    const doc = makeDoc({
+      references: [
+        { id: 'ref1', text: 'Smith J. Title. Journal. 2024.' },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('1. Smith J. Title. Journal. 2024.');
+    expect(md).not.toContain('[doi:');
+    expect(md).not.toContain('[pmid:');
+    expect(md).not.toContain('[pmcid:');
+  });
+
   it('includes abstract from metadata', () => {
     const doc = makeDoc({
       metadata: {

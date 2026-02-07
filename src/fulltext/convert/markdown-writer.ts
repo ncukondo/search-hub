@@ -184,11 +184,27 @@ function renderSection(section: JatsSection): string {
 /**
  * Render references section.
  */
+function formatRefPubIds(ref: JatsReference): string {
+  const links: string[] = [];
+  if (ref.doi) {
+    links.push(`[doi:${ref.doi}](https://doi.org/${ref.doi})`);
+  }
+  if (ref.pmid) {
+    links.push(`[pmid:${ref.pmid}](https://pubmed.ncbi.nlm.nih.gov/${ref.pmid}/)`);
+  }
+  if (ref.pmcid) {
+    links.push(`[pmcid:PMC${ref.pmcid}](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC${ref.pmcid}/)`);
+  }
+  return links.join(' ');
+}
+
 function renderReferences(references: JatsReference[]): string {
   if (references.length === 0) return '';
   const lines: string[] = ['## References', ''];
   references.forEach((ref, i) => {
-    lines.push(`${i + 1}. ${ref.text}`);
+    const pubIdLinks = formatRefPubIds(ref);
+    const line = pubIdLinks ? `${i + 1}. ${ref.text} ${pubIdLinks}` : `${i + 1}. ${ref.text}`;
+    lines.push(line);
   });
   lines.push('');
   return lines.join('\n');
