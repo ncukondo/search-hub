@@ -8,6 +8,7 @@ import {
   refAddBulk,
   refUpdate,
   refExport,
+  refFulltextAttach,
   RefCliError,
 } from './ref-cli.js';
 
@@ -461,6 +462,102 @@ describe('ref-cli', () => {
       });
 
       await expect(refAddBulk('/path/to/import.json')).rejects.toThrow(RefCliError);
+    });
+  });
+
+  describe('refFulltextAttach', () => {
+    it('calls correct ref fulltext attach command', async () => {
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(null, 'Attached fulltext.pdf to smith2024', '');
+      });
+
+      await refFulltextAttach('smith2024', '/path/to/fulltext.pdf');
+      expect(mockExecFn).toHaveBeenCalledWith(
+        'ref fulltext attach "smith2024" "/path/to/fulltext.pdf"',
+        expect.any(Function)
+      );
+    });
+
+    it('passes library path option correctly', async () => {
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(null, 'Attached', '');
+      });
+
+      await refFulltextAttach('smith2024', '/path/to/fulltext.pdf', { libraryPath: '/path/to/library.json' });
+      expect(mockExecFn).toHaveBeenCalledWith(
+        'ref --library "/path/to/library.json" fulltext attach "smith2024" "/path/to/fulltext.pdf"',
+        expect.any(Function)
+      );
+    });
+
+    it('handles success response', async () => {
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(null, 'Attached fulltext.pdf to smith2024', '');
+      });
+
+      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf')).resolves.toBeUndefined();
+    });
+
+    it('handles "file already attached" as success (idempotent)', async () => {
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        // ref CLI returns exit code 0 with a message about already attached
+        callback(null, 'File already attached', '');
+      });
+
+      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf')).resolves.toBeUndefined();
+    });
+
+    it('throws RefCliError when ref not found', async () => {
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(new Error('Entry not found') as ExecException, '', 'Entry not found: smith2024');
+      });
+
+      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf'))
+        .rejects.toThrow(RefCliError);
+      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf'))
+        .rejects.toThrow(/ref fulltext attach failed/);
+    });
+
+    it('throws RefCliError when file not found', async () => {
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(new Error('File not found') as ExecException, '', 'File not found: /path/to/missing.pdf');
+      });
+
+      await expect(refFulltextAttach('smith2024', '/path/to/missing.pdf'))
+        .rejects.toThrow(RefCliError);
+    });
+
+    it('escapes special characters in arguments', async () => {
+      mockExecFn.mockImplementation((
+        _cmd: string,
+        callback: ExecCallback
+      ) => {
+        callback(null, 'Attached', '');
+      });
+
+      await refFulltextAttach('smith"2024', '/path/with "quotes"/file.pdf');
+      expect(mockExecFn).toHaveBeenCalledWith(
+        expect.stringContaining('ref fulltext attach'),
+        expect.any(Function)
+      );
     });
   });
 

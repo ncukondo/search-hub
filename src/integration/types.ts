@@ -94,6 +94,41 @@ const RegistrationFailedItemSchema = z.object({
 });
 
 /**
+ * Schema for fulltext attach results in registration record.
+ */
+const FulltextAttachSummarySchema = z.object({
+  total: z.number(),
+  attached: z.number(),
+  skipped: z.number(),
+  failed: z.number(),
+});
+
+const FulltextAttachedItemSchema = z.object({
+  refId: z.string(),
+  files: z.array(z.string()),
+});
+
+const FulltextSkippedItemSchema = z.object({
+  dirName: z.string(),
+  reason: z.enum(['not_in_ref', 'already_attached', 'no_files']),
+});
+
+const FulltextFailedItemSchema = z.object({
+  dirName: z.string(),
+  reason: z.string(),
+  error: z.string().optional(),
+});
+
+const FulltextAttachResultSchema = z.object({
+  summary: FulltextAttachSummarySchema,
+  attached: z.array(FulltextAttachedItemSchema),
+  skipped: z.array(FulltextSkippedItemSchema),
+  failed: z.array(FulltextFailedItemSchema),
+});
+
+export type FulltextAttachResult = z.infer<typeof FulltextAttachResultSchema>;
+
+/**
  * Schema for registration record.
  * This represents the result of registering search results with reference-manager.
  */
@@ -104,6 +139,7 @@ export const RegistrationRecordSchema = z.object({
   added: z.array(RegistrationAddedItemSchema),
   duplicates: z.array(RegistrationDuplicateItemSchema),
   failed: z.array(RegistrationFailedItemSchema),
+  fulltext: FulltextAttachResultSchema.optional(),
 });
 
 export type RegistrationRecord = z.infer<typeof RegistrationRecordSchema>;

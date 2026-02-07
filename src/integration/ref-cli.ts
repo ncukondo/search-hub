@@ -209,6 +209,37 @@ export async function refAddBulk(
 }
 
 /**
+ * Execute ref fulltext attach command to attach a file to a reference entry.
+ *
+ * Attaches a fulltext file (PDF, Markdown, etc.) to a reference entry.
+ * Idempotent: if the file is already attached, succeeds silently.
+ */
+export async function refFulltextAttach(
+  refId: string,
+  filePath: string,
+  options?: RefCliOptions
+): Promise<void> {
+  const escapedRefId = escapeShellArg(refId);
+  const escapedFilePath = escapeShellArg(filePath);
+  const libraryOpt = buildLibraryOption(options?.libraryPath);
+  const cmd = `ref ${libraryOpt}fulltext attach "${escapedRefId}" "${escapedFilePath}"`;
+
+  return new Promise((resolve, reject) => {
+    exec(cmd, (error, _stdout, stderr) => {
+      if (error) {
+        reject(new RefCliError(
+          `ref fulltext attach failed: ${stderr || error.message}`,
+          'REF_FULLTEXT_ATTACH_FAILED',
+          error
+        ));
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+/**
  * Execute ref update command to update a field.
  */
 export async function refUpdate(

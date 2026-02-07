@@ -536,7 +536,7 @@ Registration complete:
   ✓ 43 added
   ⚠ 2 duplicates (already in library)
 
-Attaching fulltexts...
+Fulltext attachment results:
   ✓ 30 articles attached (45 files)
      - 25 PDFs
      - 20 Markdowns
