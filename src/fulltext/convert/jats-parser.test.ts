@@ -1755,6 +1755,61 @@ describe('parseJatsReferences - structured pub-id extraction', () => {
     const refs = parseJatsReferences(xml);
     expect(refs[0]!.doi).toBe('10.4103/efh.EfH_20_18');
   });
+
+  it('extracts pub-ids from <element-citation>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <element-citation publication-type="journal">
+                <person-group person-group-type="author">
+                  <name><surname>Smith</surname><given-names>J</given-names></name>
+                </person-group>
+                <article-title>A study</article-title>
+                <source>Nature</source>
+                <year>2024</year>
+                <pub-id pub-id-type="doi">10.1038/s41586-024-0001</pub-id>
+                <pub-id pub-id-type="pmid">38000001</pub-id>
+              </element-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.doi).toBe('10.1038/s41586-024-0001');
+    expect(refs[0]!.pmid).toBe('38000001');
+  });
+
+  it('extracts pub-ids from <element-citation> inside <citation-alternatives>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <citation-alternatives>
+                <element-citation publication-type="journal">
+                  <person-group person-group-type="author">
+                    <name><surname>Doe</surname><given-names>A</given-names></name>
+                  </person-group>
+                  <article-title>Research</article-title>
+                  <source>Science</source>
+                  <year>2023</year>
+                  <pub-id pub-id-type="doi">10.1126/science.abc1234</pub-id>
+                  <pub-id pub-id-type="pmc">PMC7654321</pub-id>
+                </element-citation>
+              </citation-alternatives>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.doi).toBe('10.1126/science.abc1234');
+    expect(refs[0]!.pmcid).toBe('7654321');
+  });
 });
 
 describe('parseJatsBody - underline and sc', () => {
