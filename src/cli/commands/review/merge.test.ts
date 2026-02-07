@@ -1341,4 +1341,104 @@ describe('executeReviewMerge', () => {
       expect(output).toContain('Article not found: "Test"');
     });
   });
+
+  describe('unified screening format (ReviewFile with basis)', () => {
+    async function writeScreeningFile(
+      articles: ArticleEntry[],
+      name: string,
+      basis: string,
+      reviewer: string
+    ): Promise<void> {
+      const reviewFile = {
+        sessionId,
+        basis,
+        reviewer,
+        articles,
+      };
+
+      const content = stringifyYaml(reviewFile);
+      const dir = join(sessionsDir, sessionId, 'for-review', name);
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, 'review.yaml'), content);
+    }
+
+    it('merges screening ReviewFile with basis using top-level basis field', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeScreeningFile(
+        [
+          {
+            title: 'Article 1',
+            doi: '10.1234/test',
+            reviews: [{ decision: 'include', comment: 'relevant' } as any],
+          },
+        ],
+        'screening1',
+        'title',
+        'ai:claude'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'screening1' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[0]!.reviews[0]!.reviewer).toBe('ai:claude');
+      expect(merged.articles[0]!.reviews[0]!.basis).toBe('title');
+      expect(merged.articles[0]!.reviews[0]!.decision).toBe('include');
+      expect(merged.articles[0]!.reviews[0]!.comment).toBe('relevant');
+    });
+
+    it('registers reviewer from screening ReviewFile basis', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeScreeningFile(
+        [
+          {
+            title: 'Article 1',
+            doi: '10.1234/test',
+            reviews: [{ decision: 'include' } as any],
+          },
+        ],
+        'screening1',
+        'abstract',
+        'ai:claude'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'screening1' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.reviewers).toEqual([{ name: 'ai:claude', basis: 'abstract' }]);
+    });
+
+    it('old WorkFile format still works (backward compat)', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', doi: '10.1234/test', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      const workFile: WorkFile = {
+        sessionId,
+        basis: 'title',
+        reviewer: 'ai:claude',
+        articles: [
+          { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: '' },
+        ],
+      };
+      const dir = join(sessionsDir, sessionId, 'for-review', 'compat');
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, 'review.yaml'), stringifyYaml(workFile));
+
+      await executeReviewMerge({ sessionId, name: 'compat' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[0]!.reviews[0]!.decision).toBe('include');
+    });
+  });
 });
