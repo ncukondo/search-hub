@@ -49,10 +49,10 @@ For systematic reviews, ethics approval and competing interests information can 
 
 ### Step 2: Verify with real PMC XML
 
-- [ ] Write E2E test or manual verification using PMC11293181 XML
-- [ ] Confirm "Ethics approval and consent to participate", "Consent for publication", and "Competing interests" appear under "Declarations" in Markdown output
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All tests pass, Declarations sub-sections render correctly
+- [x] Write E2E test or manual verification using PMC11293181 XML
+- [x] Confirm "Ethics approval and consent to participate", "Consent for publication", and "Competing interests" appear under "Declarations" in Markdown output
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, Declarations sub-sections render correctly
 
 ## Notes
 
