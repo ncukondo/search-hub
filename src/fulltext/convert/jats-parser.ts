@@ -502,6 +502,68 @@ export function parseJatsBody(xml: string): JatsSection[] {
 // ─── Reference Parsing ───────────────────────────────────────────────
 
 /**
+ * Format a structured <element-citation> into a readable reference string.
+ * Produces: "Author1, Author2. Title. Source. Year;Volume:FirstPage-LastPage."
+ */
+function formatElementCitation(children: OrderedNode[]): string {
+  const parts: string[] = [];
+
+  // Authors from person-group
+  const personGroup = findChild(children, 'person-group');
+  if (personGroup) {
+    const names = findChildren(personGroup.children, 'name');
+    const authorParts: string[] = [];
+    for (const name of names) {
+      const surname = findChild(name.children, 'surname');
+      const givenNames = findChild(name.children, 'given-names');
+      const surnameText = surname ? extractAllText(surname.children) : '';
+      const givenText = givenNames ? extractAllText(givenNames.children) : '';
+      if (surnameText && givenText) {
+        authorParts.push(`${surnameText} ${givenText}`);
+      } else if (surnameText) {
+        authorParts.push(surnameText);
+      }
+    }
+    if (authorParts.length > 0) {
+      parts.push(authorParts.join(', '));
+    }
+  }
+
+  // Article title
+  const articleTitle = findChild(children, 'article-title');
+  if (articleTitle) {
+    parts.push(extractAllText(articleTitle.children));
+  }
+
+  // Source (journal name)
+  const source = findChild(children, 'source');
+  if (source) {
+    parts.push(extractAllText(source.children));
+  }
+
+  // Year, volume, pages
+  const year = findChild(children, 'year');
+  const volume = findChild(children, 'volume');
+  const fpage = findChild(children, 'fpage');
+  const lpage = findChild(children, 'lpage');
+
+  if (year) {
+    let yearStr = extractAllText(year.children);
+    if (volume) {
+      yearStr += `;${extractAllText(volume.children)}`;
+    }
+    if (fpage) {
+      const fpageText = extractAllText(fpage.children);
+      const lpageText = lpage ? extractAllText(lpage.children) : '';
+      yearStr += `:${fpageText}${lpageText ? `-${lpageText}` : ''}`;
+    }
+    parts.push(yearStr);
+  }
+
+  return parts.join('. ') + '.';
+}
+
+/**
  * Parse JATS XML back matter to extract references.
  */
 export function parseJatsReferences(xml: string): JatsReference[] {
@@ -520,13 +582,25 @@ export function parseJatsReferences(xml: string): JatsReference[] {
 
   for (const ref of refs) {
     const id = ref.attrs['id'] ?? '';
-    // Try mixed-citation first, then element-citation, then any text
+    // Try mixed-citation first (already formatted), then element-citation (structured)
     const mixedCitation = findChild(ref.children, 'mixed-citation');
+    if (mixedCitation) {
+      const text = extractAllText(mixedCitation.children).trim();
+      if (id && text) references.push({ id, text });
+      continue;
+    }
+
     const elementCitation = findChild(ref.children, 'element-citation');
-    const citationNode = mixedCitation ?? elementCitation;
-    const text = citationNode ? extractAllText(citationNode.children) : extractAllText(ref.children);
+    if (elementCitation) {
+      const text = formatElementCitation(elementCitation.children);
+      if (id && text) references.push({ id, text });
+      continue;
+    }
+
+    // Fallback: extract all text from ref, skipping <label>
+    const text = extractAllText(ref.children).trim();
     if (id && text) {
-      references.push({ id, text: text.trim() });
+      references.push({ id, text });
     }
   }
 

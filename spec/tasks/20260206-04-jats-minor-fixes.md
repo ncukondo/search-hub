@@ -42,7 +42,7 @@ After the core `preserveOrder` refactor, several secondary issues remain:
 
 ### Step 2: Improve Reference Formatting
 
-- [ ] Write test: `<element-citation>` with structured children produces spaced output
+- [x] Write test: `<element-citation>` with structured children produces spaced output
   ```xml
   <ref id="CR1">
     <label>1</label>
@@ -57,12 +57,12 @@ After the core `preserveOrder` refactor, several secondary issues remain:
   </ref>
   ```
   Expected: `Bowyer ER. Informal near-peer teaching. Educ Health. 2021;34:29.` (or similar structured format)
-- [ ] Improve `parseJatsReferences()` to handle `<element-citation>` with structured formatting
+- [x] Improve `parseJatsReferences()` to handle `<element-citation>` with structured formatting
   - Add spaces between author names, title, source, year, volume, pages
   - Avoid duplicating label numbers (skip `<label>` text if using list numbering)
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: references are human-readable with proper spacing
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: references are human-readable with proper spacing
 
 ### Step 3: Handle efetch `<pmc-articleset>` Wrapper for PMCID
 

@@ -645,6 +645,103 @@ describe('parseJatsReferences', () => {
   });
 });
 
+describe('parseJatsReferences - element-citation formatting', () => {
+  it('formats element-citation with structured children and proper spacing', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <label>1</label>
+              <element-citation publication-type="journal-article">
+                <person-group><name><surname>Bowyer</surname><given-names>ER</given-names></name></person-group>
+                <article-title>Informal near-peer teaching</article-title>
+                <source>Educ Health</source>
+                <year>2021</year>
+                <volume>34</volume>
+                <fpage>29</fpage>
+              </element-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.id).toBe('CR1');
+    // Should have proper spacing between elements
+    expect(refs[0]!.text).toBe('Bowyer ER. Informal near-peer teaching. Educ Health. 2021;34:29.');
+  });
+
+  it('formats element-citation with multiple authors', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR2">
+              <label>2</label>
+              <element-citation publication-type="journal-article">
+                <person-group>
+                  <name><surname>Smith</surname><given-names>J</given-names></name>
+                  <name><surname>Jones</surname><given-names>AB</given-names></name>
+                </person-group>
+                <article-title>Some title</article-title>
+                <source>Nature</source>
+                <year>2023</year>
+                <volume>10</volume>
+                <fpage>100</fpage>
+                <lpage>110</lpage>
+              </element-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toBe('Smith J, Jones AB. Some title. Nature. 2023;10:100-110.');
+  });
+
+  it('does not duplicate label numbers in reference text', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="CR1">
+              <label>1</label>
+              <element-citation publication-type="journal-article">
+                <person-group><name><surname>Test</surname><given-names>A</given-names></name></person-group>
+                <article-title>Title</article-title>
+                <source>J Test</source>
+                <year>2020</year>
+              </element-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    // Label "1" should not appear in the text
+    expect(refs[0]!.text).not.toMatch(/^1/);
+    expect(refs[0]!.text).toBe('Test A. Title. J Test. 2020.');
+  });
+
+  it('falls back to extractAllText for mixed-citation', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation>Smith J. Title of paper. Journal. 2024;1:1-10.</mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toBe('Smith J. Title of paper. Journal. 2024;1:1-10.');
+  });
+});
+
 describe('HTML numeric character reference decoding', () => {
   it('decodes numeric entities in title text', () => {
     const xml = `
