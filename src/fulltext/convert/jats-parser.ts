@@ -392,7 +392,16 @@ function parseTableRow(trChildren: OrderedNode[]): string[] {
   for (const child of trChildren) {
     const tag = getTagName(child);
     if (tag === 'th' || tag === 'td') {
-      cells.push(extractAllText(getChildren(child)));
+      const cellChildren = getChildren(child);
+      // Check if cell contains multiple <p> elements
+      const paragraphs = findChildren(cellChildren, 'p');
+      if (paragraphs.length > 1) {
+        cells.push(
+          paragraphs.map((p) => extractAllText(p.children)).join('<br>'),
+        );
+      } else {
+        cells.push(extractAllText(cellChildren));
+      }
     }
   }
   return cells;

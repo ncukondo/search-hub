@@ -471,6 +471,46 @@ describe('parseJatsTable', () => {
   });
 });
 
+describe('parseJatsTable - multi-paragraph cells', () => {
+  it('joins multiple <p> elements in <td> with <br> separator', () => {
+    const xml = `
+      <table-wrap>
+        <table>
+          <thead>
+            <tr><th>Topic</th><th>Instructions</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><p>Introduction</p><p>Explain that this interview has nothing to do with evaluation.</p></td>
+              <td><p>Simple cell</p></td>
+            </tr>
+          </tbody>
+        </table>
+      </table-wrap>
+    `;
+    const table = parseJatsTable(xml);
+    expect(table.rows[0]![0]).toBe('Introduction<br>Explain that this interview has nothing to do with evaluation.');
+    expect(table.rows[0]![1]).toBe('Simple cell');
+  });
+
+  it('handles <th> with multiple <p> elements', () => {
+    const xml = `
+      <table-wrap>
+        <table>
+          <thead>
+            <tr><th><p>Header Line 1</p><p>Header Line 2</p></th></tr>
+          </thead>
+          <tbody>
+            <tr><td>data</td></tr>
+          </tbody>
+        </table>
+      </table-wrap>
+    `;
+    const table = parseJatsTable(xml);
+    expect(table.headers[0]).toBe('Header Line 1<br>Header Line 2');
+  });
+});
+
 describe('parseJatsBody - figures', () => {
   it('extracts <fig> with caption', () => {
     const xml = `
@@ -1400,5 +1440,86 @@ describe('HTML numeric character reference decoding', () => {
     const refs = parseJatsReferences(xml);
     expect(refs[0]!.text).toContain('\u2019');
     expect(refs[0]!.text).not.toContain('&#8217;');
+  });
+
+  it('decodes hex entities &#xHHHH; in body text', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The value is &#x0003c;10 and &#x0003e;5.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const text = para.content.map(c => c.type === 'text' ? c.text : '').join('');
+      expect(text).toContain('<10');
+      expect(text).toContain('>5');
+      expect(text).not.toContain('&#x0003c;');
+      expect(text).not.toContain('&#x0003e;');
+    }
+  });
+
+  it('decodes hex entities in reference text', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation>Smith J. The &#x0003c;em&#x0003e;study&#x0003c;/em&#x0003e;. 2024.</mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toContain('<em>');
+    expect(refs[0]!.text).not.toContain('&#x0003c;');
+  });
+});
+
+describe('E2E: multi-paragraph table cells in body', () => {
+  it('parses XML with multi-paragraph table cells correctly', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Interview Guide</title>
+            <table-wrap id="Tab1">
+              <label>Table 1</label>
+              <caption><p>Interview topic guide</p></caption>
+              <table>
+                <thead>
+                  <tr><th>Topic</th><th>Prompts</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><p>Introduction</p><p>Explain that this interview has nothing to do with evaluation.</p></td>
+                    <td><p>Welcome the participant.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>Experience</p><p>Ask about their daily routine.</p><p>Follow up on specifics.</p></td>
+                    <td><p>Use open-ended questions.</p></td>
+                  </tr>
+                </tbody>
+              </table>
+            </table-wrap>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const table = sections[0]!.content[0]!;
+    expect(table.type).toBe('table');
+    if (table.type === 'table') {
+      expect(table.rows[0]![0]).toBe('Introduction<br>Explain that this interview has nothing to do with evaluation.');
+      expect(table.rows[0]![1]).toBe('Welcome the participant.');
+      expect(table.rows[1]![0]).toBe('Experience<br>Ask about their daily routine.<br>Follow up on specifics.');
+    }
   });
 });

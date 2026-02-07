@@ -92,8 +92,8 @@ function renderBlock(block: BlockElement): string {
 
     case 'figure': {
       const label = block.label ?? 'Figure';
-      const caption = block.caption ?? '';
-      return `![${label}](${caption})`;
+      const altText = block.caption ? `${label}. ${block.caption}` : label;
+      return `![${altText}]()`;
     }
   }
 }
@@ -105,7 +105,7 @@ function renderSection(section: JatsSection): string {
   const lines: string[] = [];
   const heading = '#'.repeat(section.level);
 
-  if (section.title) {
+  if (section.title.trim()) {
     lines.push(`${heading} ${section.title}`);
     lines.push('');
   }

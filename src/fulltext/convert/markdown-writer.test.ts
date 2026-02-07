@@ -170,7 +170,7 @@ describe('writeMarkdown', () => {
     expect(md).toContain('> Second paragraph.');
   });
 
-  it('converts figures to ![Figure N](caption)', () => {
+  it('converts figures with caption in alt text position', () => {
     const doc = makeDoc({
       sections: [
         {
@@ -184,7 +184,24 @@ describe('writeMarkdown', () => {
       ],
     });
     const md = writeMarkdown(doc);
-    expect(md).toContain('![Figure 1](Score distribution)');
+    expect(md).toContain('![Figure 1. Score distribution]()');
+  });
+
+  it('converts figures without caption using label only', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            { type: 'figure', label: 'Figure 2' },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('![Figure 2]()');
   });
 
   it('converts lists (ordered and unordered)', () => {
@@ -315,5 +332,108 @@ describe('writeMarkdown', () => {
     expect(md).toContain('> A notable *finding* from the study.');
     expect(md).toContain('| Metric | Value |');
     expect(md).toContain('Closing statement.');
+  });
+
+  it('skips heading line when section title is empty', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: '',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Content without heading.' }] },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Content without heading.');
+    expect(md).not.toMatch(/^## $/m);
+    expect(md).not.toContain('## \n');
+  });
+
+  it('skips heading line when section title is whitespace-only', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: '   ',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Content here.' }] },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Content here.');
+    expect(md).not.toMatch(/^##\s+$/m);
+  });
+
+  it('renders section with empty title but with subsections', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: '',
+          level: 2,
+          content: [],
+          subsections: [
+            {
+              title: 'Named Subsection',
+              level: 3,
+              content: [
+                { type: 'paragraph', content: [{ type: 'text', text: 'Sub content.' }] },
+              ],
+              subsections: [],
+            },
+          ],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('### Named Subsection');
+    expect(md).toContain('Sub content.');
+    expect(md).not.toMatch(/^## $/m);
+  });
+
+  it('E2E: renders document with table, figure, and empty section correctly', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'See table and figure below.' }] },
+            {
+              type: 'table',
+              caption: 'Table 1. Interview guide',
+              headers: ['Topic', 'Prompts'],
+              rows: [
+                ['Introduction<br>Explain purpose.', 'Welcome participant.'],
+              ],
+            },
+            { type: 'figure', label: 'Fig. 1', caption: 'Score distribution across groups' },
+          ],
+          subsections: [],
+        },
+        {
+          title: '',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Supplementary material.' }] },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    // Table renders correctly with <br> in cells
+    expect(md).toContain('| Introduction<br>Explain purpose. | Welcome participant. |');
+    // Figure caption is in alt text position
+    expect(md).toContain('![Fig. 1. Score distribution across groups]()');
+    // Empty section title is skipped
+    expect(md).not.toMatch(/^## $/m);
+    expect(md).toContain('Supplementary material.');
   });
 });

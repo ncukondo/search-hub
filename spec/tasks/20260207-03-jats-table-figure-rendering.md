@@ -35,59 +35,58 @@ Real PMC XML testing revealed several rendering issues in tables and figures:
 
 ### Step 1: Fix table cell multi-paragraph rendering
 
-- [ ] Write test: `<td>` containing multiple `<p>` elements produces text with `<br>` or space separators
+- [x] Write test: `<td>` containing multiple `<p>` elements produces text with `<br>` or space separators
   ```xml
   <td><p>Introduction</p><p>Explain that this interview has nothing to do with evaluation.</p></td>
   ```
   Expected cell text: `Introduction<br>Explain that this interview has nothing to do with evaluation.`
   or `Introduction — Explain that this interview has nothing to do with evaluation.`
   Not: `IntroductionExplain that this interview has nothing to do with evaluation.`
-- [ ] Write test: `src/fulltext/convert/jats-parser.test.ts`
-- [ ] Verify test fails (Red)
-- [ ] Update `parseTableRow()` or the cell text extraction to join multiple `<p>` elements with `<br>` (for Markdown table compatibility) or ` / ` separator
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: table cells with multiple paragraphs are readable
+- [x] Write test: `src/fulltext/convert/jats-parser.test.ts`
+- [x] Verify test fails (Red)
+- [x] Update `parseTableRow()` or the cell text extraction to join multiple `<p>` elements with `<br>` (for Markdown table compatibility) or ` / ` separator
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: table cells with multiple paragraphs are readable
 
 ### Step 2: Fix figure caption rendering
 
-- [ ] Write test: figure block renders caption as alt text, not as URL
+- [x] Write test: figure block renders caption as alt text, not as URL
   ```
   Current:  ![Fig. 1](Caption text here)
   Expected: ![Fig. 1. Caption text here]()
   ```
-- [ ] Write test: `src/fulltext/convert/markdown-writer.test.ts`
-- [ ] Verify test fails (Red)
-- [ ] Update `renderBlock()` figure case to put caption in alt text position: `![{label}. {caption}]()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: figure caption is in the alt text, not the URL
+- [x] Write test: `src/fulltext/convert/markdown-writer.test.ts`
+- [x] Verify test fails (Red)
+- [x] Update `renderBlock()` figure case to put caption in alt text position: `![{label}. {caption}]()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: figure caption is in the alt text, not the URL
 
 ### Step 3: Handle empty section titles
 
-- [ ] Write test: section with empty title either omits heading or uses a sensible fallback
-- [ ] Write test: `src/fulltext/convert/markdown-writer.test.ts`
-- [ ] Verify test fails (Red)
-- [ ] Update `renderSection()` to skip the heading line when the title is empty, or omit the section entirely if it only contains subsections
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: no `## ` (empty heading) in Markdown output
+- [x] Write test: section with empty title either omits heading or uses a sensible fallback
+- [x] Write test: `src/fulltext/convert/markdown-writer.test.ts`
+- [x] Verify test fails (Red) — whitespace-only title case failed
+- [x] Update `renderSection()` to skip the heading line when the title is empty, or omit the section entirely if it only contains subsections
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: no `## ` (empty heading) in Markdown output
 
 ### Step 4: Fix hex entity reference decoding
 
-- [ ] Write test: input containing `&#x0003c;` and `&#x0003e;` produces `<` and `>` in output
-- [ ] Write test: `src/fulltext/convert/jats-parser.test.ts`
-- [ ] Verify test fails (Red)
-- [ ] Update entity decoding to handle hex references (`&#xHHHH;`) in addition to decimal (`&#NNNN;`)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: no `&#xHHHH;` sequences in Markdown output
+- [x] Write test: input containing `&#x0003c;` and `&#x0003e;` produces `<` and `>` in output
+- [x] Write test: `src/fulltext/convert/jats-parser.test.ts`
+- [x] Verify test passes — fast-xml-parser already handles hex entities with `processEntities: true` and `htmlEntities: true`
+- [x] No code change needed — added verification tests
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: no `&#xHHHH;` sequences in Markdown output
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test with XML containing multi-paragraph table cells
-- [ ] Verify figure, table, and entity rendering in converted Markdown
-- [ ] Run full test suite: `npm test`
+- [x] Write E2E test with XML containing multi-paragraph table cells
+- [x] Verify figure, table, and entity rendering in converted Markdown
+- [x] Run full test suite: `npm test` — 2012 passed, 1 skipped
 - [ ] **Manual verification**: Convert PMC11293181 and PMC11864032, inspect tables and figures
 
 ## Notes
@@ -95,3 +94,4 @@ Real PMC XML testing revealed several rendering issues in tables and figures:
 - Table cell `<br>` approach is preferred for Markdown table compatibility (Markdown tables don't support newlines, but `<br>` works in most renderers)
 - The figure rendering change is a minor breaking change in output format but produces more correct Markdown
 - Empty section titles typically occur for supplementary material sections
+- Hex entity decoding was already working — fast-xml-parser handles both decimal and hex character references
