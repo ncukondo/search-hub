@@ -313,7 +313,7 @@ filters: {}
   });
 
   describe('search --dry-run command', () => {
-    it('should show dry-run output from file', async () => {
+    it('should show dry-run output from file', { timeout: 15000 }, async () => {
       const queryFile = join(tempDir, 'search-query.yaml');
       const queryContent = `name: test-query
 query:
@@ -337,7 +337,7 @@ filters: {}
 
       expect(process.exitCode).toBe(EXIT_CODES.SUCCESS);
       expect(capturedOutput.some((o) => o.includes('Translated'))).toBe(true);
-    }, 15000);
+    });
 
     it('should show dry-run output for direct query', async () => {
       const program = createProgram();

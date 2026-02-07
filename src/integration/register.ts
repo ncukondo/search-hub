@@ -9,6 +9,7 @@ import type { Article } from '../providers/base/types.js';
 import { RegistrationRecordSchema, type RegistrationRecord } from './types.js';
 import { refAddBulk } from './ref-cli.js';
 import { articlesToCslJson } from './csl-json.js';
+import { attachFulltexts } from './fulltext-attach.js';
 
 const REGISTRATION_FILE = 'registration.json';
 const BULK_IMPORT_FILE = '_bulk_import.json';
@@ -55,7 +56,10 @@ export interface RegisterOptions {
   sessionId: string;
   sessionDir: string;
   withAbstracts?: boolean;
+  /** Skip fulltext attach step */
+  noAttachFulltext?: boolean;
   onProgress?: (current: number, total: number) => void;
+  onAttachProgress?: (current: number, total: number) => void;
 }
 
 /**
@@ -82,7 +86,7 @@ export async function registerArticles(
   articles: Article[],
   options: RegisterOptions
 ): Promise<RegistrationRecord> {
-  const { sessionId, sessionDir, withAbstracts, onProgress } = options;
+  const { sessionId, sessionDir, withAbstracts, noAttachFulltext, onProgress, onAttachProgress } = options;
   const libraryPath = path.join(sessionDir, 'references.json');
 
   if (withAbstracts) {
@@ -179,6 +183,32 @@ export async function registerArticles(
   } finally {
     // Clean up temporary file
     await fs.unlink(tempFilePath).catch(() => {});
+  }
+
+  // Fulltext attach step (after successful import)
+  if (!noAttachFulltext) {
+    const addedRefs = record.added.map((item) => ({
+      id: item.id,
+      source: item.source,
+    }));
+    // Also include duplicates (already in library) — they may need fulltext attachment
+    const dupRefs = record.duplicates.map((item) => ({
+      id: item.existingId,
+      source: item.source,
+    }));
+    const allRefs = [...addedRefs, ...dupRefs];
+
+    if (allRefs.length > 0) {
+      const attachOptions = {
+        sessionDir,
+        libraryPath,
+        addedRefs: allRefs,
+        ...(onAttachProgress ? { onProgress: onAttachProgress } : {}),
+      };
+      const fulltextResult = await attachFulltexts(attachOptions);
+
+      record.fulltext = fulltextResult;
+    }
   }
 
   return record;
