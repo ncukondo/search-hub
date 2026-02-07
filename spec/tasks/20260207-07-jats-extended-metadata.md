@@ -110,10 +110,10 @@ The most impactful omissions:
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
+- [x] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
   - Test full conversion with comprehensive metadata
   - Verify all new metadata fields appear in Markdown output
-- [ ] Run full test suite: `npm test`
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Convert PMC11293181 and PMC11864032, verify metadata completeness
 
 ## Notes
