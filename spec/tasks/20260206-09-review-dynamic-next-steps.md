@@ -57,22 +57,22 @@ workflow by copy-pasting without needing to understand filter options.
 - [x] Write test: `src/cli/commands/review/merge.test.ts`
   - Merge output includes Next Steps section
   - After merge, suggests `review finalize` (if agreed articles exist) or `review status`
-- [ ] Update `formatMergeOutput` to accept optional next steps
-- [ ] Update `executeReviewMerge` caller in `index.ts` to compute and pass next steps
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `review merge` output shows contextual next steps
+- [x] Update `formatMergeOutput` to accept optional next steps
+- [x] Update `executeReviewMerge` caller in `index.ts` to compute and pass next steps
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `review merge` output shows contextual next steps
 
 ### Step 3: Integrate into `review finalize` Output
 
 - [x] Write test: `src/cli/commands/review/finalize.test.ts`
   - After finalize with remaining uncertain → suggests extract for next phase
   - After finalize with all finalized → suggests export
-- [ ] Update `formatFinalizeOutput` to accept optional next steps
-- [ ] Update finalize caller in `index.ts` to compute and pass next steps
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `review finalize` output shows contextual next steps
+- [x] Update `formatFinalizeOutput` to accept optional next steps
+- [x] Update finalize caller in `index.ts` to compute and pass next steps
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `review finalize` output shows contextual next steps
 
 ### Step 4: Integrate into `review extract` Output
 
@@ -80,21 +80,21 @@ workflow by copy-pasting without needing to understand filter options.
   - Extract output suggests merge command with correct `--name`
   - When `--limit` used with remaining articles, suggests next batch
   - Next batch suggestion has correct `--offset` and incremented `--name`
-- [ ] Update extract output in `index.ts` to include next steps
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `review extract` output shows merge and batch continuation hints
+- [x] Update extract output in `index.ts` to include next steps
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `review extract` output shows merge and batch continuation hints
 
 ### Step 5: Update `review status` Output
 
 - [x] Write test: `src/cli/commands/review/status.test.ts`
   - Status output includes dynamic Next Steps instead of static workflow guide
   - Next Steps logic matches `generateReviewNextSteps`
-- [ ] Update `formatStatusOutput` to use `generateReviewNextSteps`
-- [ ] Remove old static "AI Agent Workflow" block
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `review status` shows dynamic, context-aware next steps
+- [x] Update `formatStatusOutput` to use `generateReviewNextSteps`
+- [x] Remove old static "AI Agent Workflow" block
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `review status` shows dynamic, context-aware next steps
 
 ### Step 6: Update `suggestions.md` Spec and Suggestion Rules
 

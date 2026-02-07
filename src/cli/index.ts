@@ -1697,6 +1697,12 @@ Examples:
             console.log(JSON.stringify(result, null, 2));
           } else {
             console.log(formatStatusOutput(result));
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'review status',
+              sessionId: options.session,
+              reviewStatus: result,
+            }));
+            if (suggestion) console.log(suggestion);
           }
         }
         process.exitCode = EXIT_CODES.SUCCESS;
@@ -1830,6 +1836,16 @@ Examples:
         const result = await executeReviewExtract(extractOptions, sessionsDir);
         if (!globalOpts.quiet) {
           console.log(`Extracted ${result.extractedCount} of ${result.totalMatching} articles to ${result.outputPath}`);
+          const suggestion = formatSuggestion(getSuggestion({
+            command: 'review extract',
+            sessionId: options.session,
+            extractName: options.name,
+            extractedCount: result.extractedCount,
+            totalMatching: result.totalMatching,
+            extractLimit: extractOptions.limit,
+            extractOffset: extractOptions.offset,
+          }));
+          if (suggestion) console.log(suggestion);
         }
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
@@ -1858,6 +1874,15 @@ Examples:
         const result = await executeReviewMerge(mergeOptions, sessionsDir);
         if (!globalOpts.quiet) {
           console.log(formatMergeOutput(result, options.dryRun));
+          if (!options.dryRun) {
+            const statusResult = await executeReviewStatus({ sessionId: options.session }, sessionsDir);
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'review merge',
+              sessionId: options.session,
+              reviewStatus: statusResult,
+            }));
+            if (suggestion) console.log(suggestion);
+          }
         }
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
@@ -2002,6 +2027,15 @@ Examples:
         const result = await executeReviewFinalize(finalizeOptions, sessionsDir);
         if (!globalOpts.quiet) {
           console.log(formatFinalizeOutput(result, { dryRun: options.dryRun }));
+          if (!options.dryRun) {
+            const statusResult = await executeReviewStatus({ sessionId: options.session }, sessionsDir);
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'review finalize',
+              sessionId: options.session,
+              reviewStatus: statusResult,
+            }));
+            if (suggestion) console.log(suggestion);
+          }
         }
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
