@@ -659,50 +659,6 @@ summary:
       expect(abstractReview!.decision).toBe('include');
     });
 
-    it('handles batch marking via JSON input within for-review/', async () => {
-      await setupSessionWithResults();
-
-      await executeReviewInit({ sessionId }, sessionsDir);
-
-      const extractResult = await executeReviewExtract(
-        {
-          sessionId,
-          filter: ['pending'],
-          basis: 'title',
-          reviewer: 'ai:test',
-          limit: 5,
-          name: 'batch-mark-test',
-        },
-        sessionsDir
-      );
-
-      const workFileContent = await readFile(extractResult.outputPath, 'utf-8');
-      const workFile = parseYaml(workFileContent) as WorkFile;
-
-      // Create JSON input for batch marking
-      const decisions = [
-        { id: workFile.articles[0]!.id, decision: 'include', comment: 'Yes' },
-        { id: workFile.articles[1]!.id, decision: 'exclude', comment: 'No' },
-        { id: workFile.articles[2]!.id, decision: 'uncertain' },
-      ];
-      const inputPath = join(tempDir, 'decisions.json');
-      await writeFile(inputPath, JSON.stringify(decisions));
-
-      // Batch mark
-      const markResult = await executeReviewMark({
-        file: extractResult.outputPath,
-        input: inputPath,
-      });
-      expect(markResult.marked).toBe(3);
-
-      // Verify
-      const markedContent = await readFile(extractResult.outputPath, 'utf-8');
-      const markedFile = parseYaml(markedContent) as WorkFile;
-      expect(markedFile.articles[0]!.decision).toBe('include');
-      expect(markedFile.articles[1]!.decision).toBe('exclude');
-      expect(markedFile.articles[2]!.decision).toBe('uncertain');
-    });
-
     it('registers reviewer in reviewers array after work file merge', async () => {
       await setupSessionWithResults();
       await executeReviewInit({ sessionId }, sessionsDir);

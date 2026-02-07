@@ -7,26 +7,15 @@ import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewDecision, WorkFile } from './types.js';
 
 
-/**
- * Decision input for batch marking
- */
-interface DecisionInput {
-  id: string;
-  decision: ReviewDecision;
-  comment?: string;
-}
-
 export interface ReviewMarkOptions {
   /** Path to the work file */
   file: string;
-  /** Article ID to mark (for single marking) */
+  /** Article ID to mark */
   id?: string;
-  /** Decision to apply (for single marking) */
+  /** Decision to apply */
   decision?: ReviewDecision;
-  /** Optional comment (for single marking) */
+  /** Optional comment */
   comment?: string;
-  /** Path to JSON file with decisions (for batch marking) */
-  input?: string;
 }
 
 export interface ReviewMarkResult {
@@ -70,38 +59,20 @@ export async function executeReviewMark(options: ReviewMarkOptions): Promise<Rev
     warnings: [],
   };
 
-  if (options.input) {
-    // Batch marking from JSON input
-    const inputContent = await readFile(options.input, 'utf-8');
-    const decisions = JSON.parse(inputContent) as DecisionInput[];
-
-    for (const decision of decisions) {
-      const article = workFile.articles.find((a) => a.id === decision.id);
-      if (article) {
-        article.decision = decision.decision;
-        if (decision.comment !== undefined) {
-          article.comment = decision.comment;
-        }
-        result.marked++;
-      } else {
-        result.warnings.push(`Article not found: ${decision.id}`);
-      }
-    }
-  } else if (options.id && options.decision) {
-    // Single article marking
-    const article = workFile.articles.find((a) => a.id === options.id);
-    if (!article) {
-      throw new Error(`Article not found: ${options.id}`);
-    }
-
-    article.decision = options.decision;
-    if (options.comment !== undefined) {
-      article.comment = options.comment;
-    }
-    result.marked = 1;
-  } else {
-    throw new Error('Either --id with --decision, or --input must be specified');
+  if (!options.id || !options.decision) {
+    throw new Error('--id and --decision must be specified');
   }
+
+  const article = workFile.articles.find((a) => a.id === options.id);
+  if (!article) {
+    throw new Error(`Article not found: ${options.id}`);
+  }
+
+  article.decision = options.decision;
+  if (options.comment !== undefined) {
+    article.comment = options.comment;
+  }
+  result.marked = 1;
 
   await saveWorkFile(options.file, workFile);
 
