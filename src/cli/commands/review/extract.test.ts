@@ -359,7 +359,7 @@ describe('executeReviewExtract', () => {
       expect(workFile.articles[0]!.id).toBe('10.1234/test');
       expect(workFile.articles[0]!.title).toBe('Article with Abstract');
       expect(workFile.articles[0]!.abstract).toBeUndefined();
-      expect(workFile.articles[0]!.decision).toBeNull();
+      expect(workFile.articles[0]!.decision).toBe('uncertain');
       expect(workFile.articles[0]!.comment).toBe('');
     });
 
@@ -404,6 +404,28 @@ describe('executeReviewExtract', () => {
       expect(workFile.articles[0]!.id).toBe('10.1234/doi');
       expect(workFile.articles[1]!.id).toBe('2');
       expect(workFile.articles[2]!.id).toBe('S3');
+    });
+
+    it('defaults decision to uncertain in work file articles', async () => {
+      await writeReviewFile(articlesWithAbstracts);
+
+      const result = await executeReviewExtract(
+        {
+          sessionId,
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'default-decision',
+        },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const workFile = parseYaml(content) as WorkFile;
+
+      // All articles should default to 'uncertain' instead of null
+      for (const article of workFile.articles) {
+        expect(article.decision).toBe('uncertain');
+      }
     });
 
     it('combines filter with basis option', async () => {

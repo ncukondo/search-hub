@@ -498,7 +498,7 @@ summary:
       expect(workFile.basis).toBe('title');
       expect(workFile.reviewer).toBe('ai:claude');
       expect(workFile.articles).toHaveLength(5);
-      expect(workFile.articles[0]!.decision).toBeNull();
+      expect(workFile.articles[0]!.decision).toBe('uncertain');
       expect(workFile.articles[0]!.comment).toBe('');
       // Title-only basis should not include abstract
       expect(workFile.articles[0]!.abstract).toBeUndefined();
@@ -535,7 +535,7 @@ summary:
         { sessionId, name: 'title-screening' },
         sessionsDir
       );
-      expect(mergeResult.reviewsAdded).toBe(3); // Only marked articles are merged
+      expect(mergeResult.reviewsAdded).toBe(5); // All articles merged (default is uncertain, not null)
       expect(mergeResult.warnings).toHaveLength(0);
 
       // Step 5: Verify merged reviews have correct basis/reviewer/timestamp

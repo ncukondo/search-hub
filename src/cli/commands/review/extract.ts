@@ -161,7 +161,7 @@ export async function executeReviewExtract(
         const workArticle: WorkFileArticle = {
           id: getArticleId(article),
           title: article.title,
-          decision: null,
+          decision: 'uncertain',
           comment: '',
         };
         // Include abstract only for abstract basis
