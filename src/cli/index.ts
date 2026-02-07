@@ -128,6 +128,11 @@ import {
   type ExportFormat as ReviewExportFormat,
   type ExportFilter as ReviewExportFilter,
 } from './commands/review/export.js';
+import {
+  executeReviewFinalize,
+  formatFinalizeOutput,
+  type ReviewFinalizeOptions,
+} from './commands/review/finalize.js';
 import { type ReviewStatus } from './commands/review/types.js';
 import { registerFulltextCommands } from './commands/fulltext/index.js';
 
@@ -1969,6 +1974,37 @@ Examples:
         const result = await executeReviewExport(exportOptions, sessionsDir);
         if (!globalOpts.quiet) {
           console.log(formatExportOutput(result));
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
+      }
+    });
+
+  reviewCommand
+    .command('finalize')
+    .description('Auto-set finalDecision for articles with reviewer consensus')
+    .requiredOption('--session <id>', 'session ID')
+    .option('--dry-run', 'preview without changes', false)
+    .option('--min-reviewers <n>', 'minimum agreeing reviewers needed', '1')
+    .action(async (options: { session: string; dryRun: boolean; minReviewers: string }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+        const finalizeOptions: ReviewFinalizeOptions = {
+          sessionId: options.session,
+          ...(options.dryRun && { dryRun: options.dryRun }),
+        };
+        const minReviewers = parseInt(options.minReviewers, 10);
+        if (!Number.isNaN(minReviewers) && minReviewers > 1) {
+          finalizeOptions.minReviewers = minReviewers;
+        }
+        const result = await executeReviewFinalize(finalizeOptions, sessionsDir);
+        if (!globalOpts.quiet) {
+          console.log(formatFinalizeOutput(result, { dryRun: options.dryRun }));
         }
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
