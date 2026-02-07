@@ -305,10 +305,26 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
     }
   }
 
+  // Journal name (from <front>/<journal-meta>)
+  const journalMeta = findChild(front.children, 'journal-meta');
+  let journal: string | undefined;
+  if (journalMeta) {
+    const titleGroup = findChild(journalMeta.children, 'journal-title-group');
+    if (titleGroup) {
+      const jTitle = findChild(titleGroup.children, 'journal-title');
+      if (jTitle) journal = extractAllText(jTitle.children);
+    }
+    if (!journal) {
+      const jTitle = findChild(journalMeta.children, 'journal-title');
+      if (jTitle) journal = extractAllText(jTitle.children);
+    }
+  }
+
   const result: JatsMetadata = { title, authors };
   if (doi) result.doi = doi;
   if (pmcid) result.pmcid = pmcid;
   if (pmid) result.pmid = pmid;
+  if (journal) result.journal = journal;
   if (abstract) result.abstract = abstract;
   return result;
 }

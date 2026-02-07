@@ -166,7 +166,12 @@ export function writeMarkdown(doc: JatsDocument): string {
     lines.push(`**PMID**: ${doc.metadata.pmid}`);
   }
 
-  if (doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid) {
+  // Journal
+  if (doc.metadata.journal) {
+    lines.push(`**Journal**: ${doc.metadata.journal}`);
+  }
+
+  if (doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal) {
     lines.push('');
   }
 

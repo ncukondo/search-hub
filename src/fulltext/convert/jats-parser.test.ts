@@ -159,6 +159,46 @@ describe('parseJatsMetadata', () => {
     expect(metadata.pmcid).toBe('11293181');
   });
 
+  it('extracts journal name from <journal-title-group>', () => {
+    const xml = `
+      <article>
+        <front>
+          <journal-meta>
+            <journal-title-group>
+              <journal-title>BMJ Open</journal-title>
+            </journal-title-group>
+          </journal-meta>
+          <article-meta>
+            <title-group>
+              <article-title>Test</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.journal).toBe('BMJ Open');
+  });
+
+  it('extracts journal name from <journal-title> directly under <journal-meta> (fallback)', () => {
+    const xml = `
+      <article>
+        <front>
+          <journal-meta>
+            <journal-title>Nature Medicine</journal-title>
+          </journal-meta>
+          <article-meta>
+            <title-group>
+              <article-title>Test</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.journal).toBe('Nature Medicine');
+  });
+
   it('handles missing optional fields gracefully', () => {
     const xml = `
       <article>

@@ -16,6 +16,7 @@ export interface JatsMetadata {
   doi?: string;
   pmcid?: string;
   pmid?: string;
+  journal?: string;
   abstract?: string;
 }
 
