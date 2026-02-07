@@ -46,12 +46,12 @@ async function loadReviewFile(path: string): Promise<ReviewFile> {
 }
 
 /**
- * Check if two reviews are duplicates (same reviewer + timestamp)
- * Note: If incoming review has no timestamp, it's never considered a duplicate
+ * Auto-detect review basis from article data: fulltext > abstract > title
  */
-function isDuplicateReview(existing: Review, incoming: Review): boolean {
-  if (!incoming.timestamp) return false;
-  return existing.reviewer === incoming.reviewer && existing.timestamp === incoming.timestamp;
+function detectBasis(article: ArticleEntry): ReviewBasis {
+  if (article.fulltext) return 'fulltext';
+  if (article.abstract) return 'abstract';
+  return 'title';
 }
 
 /**
@@ -196,7 +196,7 @@ function processWorkFile(
 }
 
 /**
- * Process legacy review file format
+ * Process review file format (with reviewHistory separation)
  */
 function processReviewFile(
   extractedFile: ReviewFile,
@@ -210,6 +210,9 @@ function processReviewFile(
     warnings: [],
   };
 
+  const timestamp = new Date().toISOString();
+  const topLevelReviewer = extractedFile.reviewer;
+
   for (const extracted of extractedFile.articles) {
     const mainArticle = findMatchingArticle(extracted, mainFile.articles);
 
@@ -218,9 +221,8 @@ function processReviewFile(
       continue;
     }
 
-    // Merge reviews (reviews can be null from YAML parsing with only comments)
+    // Merge only reviews[] (reviewHistory is ignored)
     const extractedReviews = extracted.reviews ?? [];
-    const mainReviews = mainArticle.reviews ?? [];
 
     // Ensure mainArticle.reviews is an array
     if (!mainArticle.reviews) {
@@ -228,28 +230,24 @@ function processReviewFile(
     }
 
     for (const review of extractedReviews) {
-      const isDuplicate = mainReviews.some((existing) =>
-        isDuplicateReview(existing, review)
-      );
+      // Fill in reviewer from top-level field if not on individual review
+      const reviewer = review.reviewer ?? topLevelReviewer;
+      // Fill in basis from review or auto-detect from article data
+      const basis = review.basis ?? detectBasis(extracted);
 
-      if (isDuplicate) {
-        result.reviewsSkipped++;
-      } else {
-        if (!options.dryRun) {
-          // Auto-assign timestamp if not provided
-          const reviewWithTimestamp: Review = {
-            ...review,
-            timestamp: review.timestamp ?? new Date().toISOString(),
-          };
-          mainArticle.reviews.push(reviewWithTimestamp);
+      if (!options.dryRun) {
+        const mergedReview: Review = {
+          ...review,
+          reviewer,
+          basis,
+          timestamp: review.timestamp ?? timestamp,
+        };
+        mainArticle.reviews.push(mergedReview);
 
-          // Register reviewer if basis is present
-          if (review.basis) {
-            registerReviewer(mainFile, review.reviewer, review.basis);
-          }
-        }
-        result.reviewsAdded++;
+        // Register reviewer
+        registerReviewer(mainFile, reviewer, basis);
       }
+      result.reviewsAdded++;
     }
 
     // Overwrite finalDecision if set in extracted (null means unset)

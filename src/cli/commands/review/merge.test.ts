@@ -183,7 +183,7 @@ describe('executeReviewMerge', () => {
       );
     });
 
-    it('skips duplicate reviews (same reviewer+timestamp)', async () => {
+    it('adds all reviews without duplicate detection', async () => {
       const mainArticles: ArticleEntry[] = [
         {
           title: 'Article 1',
@@ -198,8 +198,8 @@ describe('executeReviewMerge', () => {
           title: 'Article 1',
           pmid: '1',
           reviews: [
-            { reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }, // duplicate
-            { reviewer: 'gpt-4o', decision: 'exclude', timestamp: '2024-01-02T00:00:00Z' }, // new
+            { reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
+            { reviewer: 'gpt-4o', decision: 'exclude', timestamp: '2024-01-02T00:00:00Z' },
           ],
         },
       ];
@@ -208,7 +208,8 @@ describe('executeReviewMerge', () => {
       await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
 
       const merged = await readMainReviewFile();
-      expect(merged.articles[0]!.reviews).toHaveLength(2);
+      // All reviews added (no duplicate detection): 1 existing + 2 new = 3
+      expect(merged.articles[0]!.reviews).toHaveLength(3);
     });
   });
 
@@ -519,6 +520,319 @@ describe('executeReviewMerge', () => {
       const merged = await readMainReviewFile();
       // Same reviewer+basis should appear only once
       expect(merged.reviewers).toHaveLength(1);
+    });
+  });
+
+  describe('ReviewFile new format (with reviewHistory)', () => {
+    async function writeExtractedReviewFile(
+      articles: ArticleEntry[],
+      name: string,
+      reviewer: string
+    ): Promise<void> {
+      const reviewFile: ReviewFile = {
+        sessionId,
+        reviewer,
+        articles,
+      };
+
+      const content = stringifyYaml(reviewFile);
+      const dir = join(sessionsDir, sessionId, 'for-review', name);
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, 'review.yaml'), content);
+    }
+
+    it('ignores reviewHistory and does not add it to master', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [
+              { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+            ],
+            reviews: [],
+            finalDecision: null,
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      // reviewHistory entries should NOT be added to main file reviews
+      expect(merged.articles[0]!.reviews).toHaveLength(0);
+    });
+
+    it('processes only reviews[] entries as new reviews', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [
+              { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+            ],
+            reviews: [
+              { reviewer: 'human:admin', decision: 'include', basis: 'abstract' },
+            ],
+            finalDecision: null,
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      // Only the review from reviews[] should be added
+      expect(merged.articles[0]!.reviews).toHaveLength(1);
+      expect(merged.articles[0]!.reviews[0]!.reviewer).toBe('human:admin');
+    });
+
+    it('takes reviewer from top-level field when not on individual review', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [],
+            reviews: [
+              { decision: 'include' } as any, // reviewer not specified on individual review
+            ],
+            finalDecision: null,
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews[0]!.reviewer).toBe('human:admin');
+    });
+
+    it('auto-detects basis from article data (abstract present)', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', abstract: 'Some abstract', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            abstract: 'Some abstract',
+            reviewHistory: [],
+            reviews: [
+              { reviewer: 'human:admin', decision: 'include' },
+            ],
+            finalDecision: null,
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews[0]!.basis).toBe('abstract');
+    });
+
+    it('auto-detects basis as title when no abstract or fulltext', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [],
+            reviews: [
+              { reviewer: 'human:admin', decision: 'include' },
+            ],
+            finalDecision: null,
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews[0]!.basis).toBe('title');
+    });
+
+    it('auto-assigns timestamp when not specified on review', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [],
+            reviews: [
+              { reviewer: 'human:admin', decision: 'include' },
+            ],
+            finalDecision: null,
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.reviews[0]!.timestamp).toBeDefined();
+    });
+
+    it('applies finalDecision when set (non-null)', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [],
+            reviews: [],
+            finalDecision: 'include',
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.articles[0]!.finalDecision).toBe('include');
+    });
+
+    it('does not apply finalDecision when null', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [], finalDecision: 'include' },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [],
+            reviews: [],
+            finalDecision: null,
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      // Should not overwrite existing finalDecision with null
+      expect(merged.articles[0]!.finalDecision).toBe('include');
+    });
+
+    it('adds all reviews without duplicate detection', async () => {
+      const mainArticles: ArticleEntry[] = [
+        {
+          title: 'Article 1',
+          pmid: '1',
+          reviews: [
+            { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+          ],
+        },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [
+              { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+            ],
+            reviews: [
+              // Same reviewer+timestamp as existing - should still be added (no duplicate detection)
+              { reviewer: 'human:admin', decision: 'include', basis: 'abstract', timestamp: '2024-02-01T00:00:00Z' },
+            ],
+            finalDecision: null,
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      // Original review + new review = 2
+      expect(merged.articles[0]!.reviews).toHaveLength(2);
+    });
+
+    it('registers reviewer from top-level field', async () => {
+      const mainArticles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeMainReviewFile(mainArticles);
+
+      await writeExtractedReviewFile(
+        [
+          {
+            title: 'Article 1',
+            pmid: '1',
+            reviewHistory: [],
+            reviews: [
+              { reviewer: 'human:admin', decision: 'include' },
+            ],
+            finalDecision: null,
+          },
+        ],
+        'confirm',
+        'human:admin'
+      );
+
+      await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
+
+      const merged = await readMainReviewFile();
+      expect(merged.reviewers).toBeDefined();
+      expect(merged.reviewers!.some((r) => r.name === 'human:admin')).toBe(true);
     });
   });
 

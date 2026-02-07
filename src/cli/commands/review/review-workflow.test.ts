@@ -187,11 +187,11 @@ summary:
     expect(mergeResult.decisionsSet).toBe(2); // Two finalDecisions set
 
     // Step 7: Status - Verify updated counts
+    // With reviewer registration from merge, reviewed articles missing a registered reviewer are "incomplete"
     const statusResult2 = await executeReviewStatus({ sessionId }, sessionsDir);
     expect(statusResult2.total).toBe(10);
-    expect(statusResult2.pending).toBe(6); // 10 - 4 reviewed
-    expect(statusResult2.conflicting).toBe(1);
-    expect(statusResult2.agreedInclude).toBe(1);
+    expect(statusResult2.pending).toBe(6); // Articles with no reviews at all
+    expect(statusResult2.incomplete).toBe(2); // Articles 2,3: have some reviews but missing a registered reviewer
     expect(statusResult2.finalized).toBe(2);
     expect(statusResult2.included).toBe(1);
     expect(statusResult2.excluded).toBe(1);
