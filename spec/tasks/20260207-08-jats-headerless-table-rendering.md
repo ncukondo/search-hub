@@ -36,20 +36,20 @@ Expected behavior — generate empty header cells + separator:
 
 ### Step 1: Fix headerless table rendering in markdown-writer
 
-- [ ] Write test: headerless table (empty headers, rows present) produces valid Markdown with
+- [x] Write test: headerless table (empty headers, rows present) produces valid Markdown with
   empty header row and separator line
-- [ ] Verify test fails (Red)
-- [ ] Update `renderBlock()` table case to generate empty header cells + separator when
+- [x] Verify test fails (Red)
+- [x] Update `renderBlock()` table case to generate empty header cells + separator when
   `headers.length === 0` and `rows.length > 0`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: headerless tables produce valid Markdown
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: headerless tables produce valid Markdown
 
 ### Step 2: E2E integration test
 
-- [ ] Write E2E test: JATS XML with headerless `<table-wrap>` converts to valid Markdown table
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: all tests pass
+- [x] Write E2E test: JATS XML with headerless `<table-wrap>` converts to valid Markdown table
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: all tests pass
 
 ## Notes
 
