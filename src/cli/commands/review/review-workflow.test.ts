@@ -1822,23 +1822,23 @@ summary:
       await executeReviewMerge({ sessionId, name: 'r2-abstract' }, sessionsDir);
 
       // Basis priority resolves: title uncertain from R1 is overridden by abstract decisions from R2
-      // However, the 2 articles excluded by R1 at title are now incomplete (R2 hasn't reviewed them)
+      // The 2 articles excluded by R1 at title are NOT incomplete — R2 is registered at abstract
+      // basis, but these articles only have title-level reviews, so R2 is not applicable yet
       const statusAfter = await executeReviewStatus({ sessionId }, sessionsDir);
       expect(statusAfter.agreedInclude).toBe(5);
-      expect(statusAfter.agreedExclude).toBe(3); // 3 from R2 abstract screening
-      expect(statusAfter.incomplete).toBe(2); // 2 from R1 title exclude, missing R2
+      expect(statusAfter.agreedExclude).toBe(5); // 2 from R1 title + 3 from R2 abstract
+      expect(statusAfter.incomplete).toBe(0); // Basis-aware: abstract reviewer doesn't apply to title-only articles
       expect(statusAfter.uncertain).toBe(0);
 
-      // Finalize: only agreed articles get finalized
+      // Finalize: all agreed articles get finalized
       const finalizeResult = await executeReviewFinalize({ sessionId }, sessionsDir);
       expect(finalizeResult.includedCount).toBe(5);
-      expect(finalizeResult.excludedCount).toBe(3);
-      expect(finalizeResult.skippedByStatus.incomplete).toBe(2);
+      expect(finalizeResult.excludedCount).toBe(5);
 
       // Verify
       const finalStatus = await executeReviewStatus({ sessionId }, sessionsDir);
-      expect(finalStatus.finalized).toBe(8);
-      expect(finalStatus.incomplete).toBe(2); // Still incomplete
+      expect(finalStatus.finalized).toBe(10);
+      expect(finalStatus.incomplete).toBe(0);
     });
   });
 });
