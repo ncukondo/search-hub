@@ -83,6 +83,8 @@ export interface ReviewFile {
   criteria?: string;
   /** Reviewer identifier (only in extracted ReviewFiles) */
   reviewer?: string;
+  /** Basis level for screening (only in extracted ReviewFiles) */
+  basis?: ReviewBasis;
   articles: ArticleEntry[];
   /** Registry of reviewers who participated at each basis level */
   reviewers?: ReviewerRecord[];
@@ -91,6 +93,7 @@ export interface ReviewFile {
 /**
  * Work file article entry for AI agent workflow
  */
+/** @deprecated Use ReviewFile format with reviews[] instead. Kept for backward compatibility. */
 export interface WorkFileArticle {
   id: string;
   title: string;
@@ -104,6 +107,7 @@ export interface WorkFileArticle {
 /**
  * Work file structure for AI agent workflow
  */
+/** @deprecated Use ReviewFile format with basis field instead. Kept for backward compatibility. */
 export interface WorkFile {
   sessionId: string;
   basis: ReviewBasis;
