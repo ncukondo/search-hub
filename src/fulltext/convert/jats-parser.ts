@@ -124,6 +124,20 @@ function getTextContent(child: OrderedNode): string | undefined {
   return undefined;
 }
 
+/**
+ * Find the <article> element, handling optional <pmc-articleset> wrapper
+ * that appears in efetch responses.
+ */
+function findArticle(
+  parsed: OrderedNode[],
+): { node: OrderedNode; children: OrderedNode[]; attrs: Record<string, string> } | undefined {
+  const direct = findChild(parsed, 'article');
+  if (direct) return direct;
+  const wrapper = findChild(parsed, 'pmc-articleset');
+  if (wrapper) return findChild(wrapper.children, 'article');
+  return undefined;
+}
+
 // ─── Text Extraction ─────────────────────────────────────────────────
 
 /**
@@ -161,7 +175,7 @@ function extractAllText(node: unknown): string {
  */
 export function parseJatsMetadata(xml: string): JatsMetadata {
   const parsed = parser.parse(xml) as OrderedNode[];
-  const article = findChild(parsed, 'article');
+  const article = findArticle(parsed);
   if (!article) return { title: '', authors: [] };
 
   const front = findChild(article.children, 'front');
@@ -475,7 +489,7 @@ function parseSection(secChildren: OrderedNode[], level: number): JatsSection {
  */
 export function parseJatsBody(xml: string): JatsSection[] {
   const parsed = parser.parse(xml) as OrderedNode[];
-  const article = findChild(parsed, 'article');
+  const article = findArticle(parsed);
   if (!article) return [];
 
   const body = findChild(article.children, 'body');
@@ -568,7 +582,7 @@ function formatElementCitation(children: OrderedNode[]): string {
  */
 export function parseJatsReferences(xml: string): JatsReference[] {
   const parsed = parser.parse(xml) as OrderedNode[];
-  const article = findChild(parsed, 'article');
+  const article = findArticle(parsed);
   if (!article) return [];
 
   const back = findChild(article.children, 'back');

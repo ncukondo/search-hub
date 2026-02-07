@@ -645,6 +645,85 @@ describe('parseJatsReferences', () => {
   });
 });
 
+describe('pmc-articleset wrapper handling', () => {
+  it('extracts metadata from efetch-wrapped XML (pmc-articleset)', () => {
+    const xml = `
+      <pmc-articleset>
+        <article>
+          <front>
+            <article-meta>
+              <article-id pub-id-type="pmc">9876543</article-id>
+              <article-id pub-id-type="doi">10.1234/test</article-id>
+              <title-group>
+                <article-title>Wrapped Article</article-title>
+              </title-group>
+            </article-meta>
+          </front>
+        </article>
+      </pmc-articleset>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.title).toBe('Wrapped Article');
+    expect(metadata.pmcid).toBe('9876543');
+    expect(metadata.doi).toBe('10.1234/test');
+  });
+
+  it('extracts body sections from efetch-wrapped XML', () => {
+    const xml = `
+      <pmc-articleset>
+        <article>
+          <body>
+            <sec>
+              <title>Introduction</title>
+              <p>Some text.</p>
+            </sec>
+          </body>
+        </article>
+      </pmc-articleset>
+    `;
+    const sections = parseJatsBody(xml);
+    expect(sections).toHaveLength(1);
+    expect(sections[0]!.title).toBe('Introduction');
+  });
+
+  it('extracts references from efetch-wrapped XML', () => {
+    const xml = `
+      <pmc-articleset>
+        <article>
+          <back>
+            <ref-list>
+              <ref id="ref1">
+                <mixed-citation>Smith J. A study. Nature. 2024.</mixed-citation>
+              </ref>
+            </ref-list>
+          </back>
+        </article>
+      </pmc-articleset>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.id).toBe('ref1');
+  });
+
+  it('still works with direct article XML (no wrapper)', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <article-id pub-id-type="pmc">1234567</article-id>
+            <title-group>
+              <article-title>Direct Article</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.title).toBe('Direct Article');
+    expect(metadata.pmcid).toBe('1234567');
+  });
+});
+
 describe('parseJatsReferences - element-citation formatting', () => {
   it('formats element-citation with structured children and proper spacing', () => {
     const xml = `

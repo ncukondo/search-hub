@@ -66,13 +66,13 @@ After the core `preserveOrder` refactor, several secondary issues remain:
 
 ### Step 3: Handle efetch `<pmc-articleset>` Wrapper for PMCID
 
-- [ ] Write test: XML wrapped in `<pmc-articleset><article>...</article></pmc-articleset>` extracts PMCID correctly
-- [ ] Update parser entry points (`parseJatsMetadata`, `parseJatsBody`, `parseJatsReferences`) to check for `pmc-articleset` wrapper
+- [x] Write test: XML wrapped in `<pmc-articleset><article>...</article></pmc-articleset>` extracts PMCID correctly
+- [x] Update parser entry points (`parseJatsMetadata`, `parseJatsBody`, `parseJatsReferences`) to check for `pmc-articleset` wrapper
   - Try `parsed.article` first (direct article XML)
   - Fall back to `parsed['pmc-articleset'].article` (efetch wrapper)
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: PMCID extracted correctly from both direct and efetch-wrapped XML
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: PMCID extracted correctly from both direct and efetch-wrapped XML
 
 ### Final Step: E2E Integration Tests
 
