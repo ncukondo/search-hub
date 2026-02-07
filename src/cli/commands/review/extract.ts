@@ -16,12 +16,14 @@ export interface ReviewExtractOptions {
   seed?: number;
   limit?: number;
   offset?: number;
-  /** Basis for the review (title, abstract). When specified, outputs work file format. */
+  /** Basis for the review (title, abstract, fulltext). When specified, outputs screening format. */
   basis?: ReviewBasis;
   /** Reviewer identifier (e.g., "ai:claude"). Required for all extract modes. */
   reviewer?: string;
   /** Name for the review subset (output goes to for-review/<name>/review.yaml) */
   name: string;
+  /** When true, outputs final decision format with reviewHistory and finalDecision fields. */
+  finalize?: boolean;
 }
 
 

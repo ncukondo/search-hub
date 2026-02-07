@@ -1803,8 +1803,9 @@ Examples:
     .option('--limit <n>', 'limit number of articles')
     .option('--offset <n>', 'skip first n articles')
     .option('--seed <n>', 'random seed for reproducible sorting')
-    .option('--basis <type>', 'basis for review: title or abstract (outputs work file format)')
+    .option('--basis <type>', 'basis for review: title, abstract, or fulltext')
     .option('--reviewer <id>', 'reviewer identifier (e.g., "ai:claude")')
+    .option('--finalize', 'extract for final decision (includes reviewHistory and finalDecision)')
     .action(async (options: {
       session: string;
       name: string;
@@ -1815,6 +1816,7 @@ Examples:
       seed?: string;
       basis?: string;
       reviewer?: string;
+      finalize?: boolean;
     }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -1869,6 +1871,10 @@ Examples:
             return;
           }
           extractOptions.basis = options.basis as 'title' | 'abstract' | 'fulltext';
+        }
+
+        if (options.finalize) {
+          extractOptions.finalize = true;
         }
 
         const result = await executeReviewExtract(extractOptions, sessionsDir);
