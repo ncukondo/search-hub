@@ -79,6 +79,21 @@ echo "[spawn-reviewer] PR: #$PR_NUMBER"
 BRANCH_DIR=$(echo "$BRANCH" | tr '/' '-')
 WORKTREE_DIR="$WORKTREE_BASE/$BRANCH_DIR"
 
+# --- 0. Duplicate reviewer check ---
+# Skip if a review-role agent is already running for this branch
+if [ -d "$WORKTREE_DIR" ]; then
+  CLAUDE_MD="$WORKTREE_DIR/CLAUDE.md"
+  if [ -f "$CLAUDE_MD" ] && grep -q '^<!-- role: review -->' "$CLAUDE_MD"; then
+    # Role is already review - check if an agent pane exists for this worktree
+    EXISTING_PANE=$(tmux list-panes -a -F "#{pane_id} #{pane_current_path}" 2>/dev/null | \
+      grep " ${WORKTREE_DIR}$" | head -1 | cut -d' ' -f1 || true)
+    if [ -n "$EXISTING_PANE" ] && tmux has-session -t "$EXISTING_PANE" 2>/dev/null; then
+      echo "[spawn-reviewer] WARNING: Review agent already running for branch $BRANCH in pane $EXISTING_PANE. Skipping."
+      exit 0
+    fi
+  fi
+fi
+
 # --- 1. Check/create worktree ---
 if [ ! -d "$WORKTREE_DIR" ]; then
   if [ "$CREATE_WORKTREE" = true ]; then

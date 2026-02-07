@@ -198,7 +198,7 @@ process_branch() {
   if [ "$agent_state" != "idle" ]; then
     # Don't overwrite terminal states (already processed)
     case "${BRANCH_STATES[$state_key]:-}" in
-      transitioned|approved|fix-requested|commented) ;;
+      transitioning|transitioned|approved|fix-requested|commented) ;;
       *) BRANCH_STATES[$state_key]="$agent_state" ;;
     esac
     BRANCH_LAST_ACTIVITY[$branch]=$(date +%s)
@@ -207,7 +207,7 @@ process_branch() {
 
   # Agent is idle - skip if already in terminal state
   case "${BRANCH_STATES[$state_key]:-}" in
-    transitioned|approved|fix-requested|commented)
+    transitioning|transitioned|approved|fix-requested|commented)
       return
       ;;
   esac
@@ -245,6 +245,9 @@ process_implement_completion() {
       if [ -n "$pr_num" ]; then
         log "Branch $branch: Worker completed, PR #$pr_num ready. Transitioning to reviewer..."
 
+        # Mark as transitioning BEFORE spawn to prevent duplicate processing
+        BRANCH_STATES["${branch}:implement"]="transitioning"
+
         # Kill current agent (pane is also removed; spawn-reviewer creates a new one)
         "$SCRIPT_DIR/kill-agent.sh" "$pane_id" 2>/dev/null || true
         sleep 2
@@ -252,6 +255,7 @@ process_implement_completion() {
         # Spawn reviewer
         "$SCRIPT_DIR/spawn-reviewer.sh" "$branch" "$pr_num" 2>/dev/null || {
           notify_main "error" "Branch $branch: Failed to spawn reviewer for PR #$pr_num"
+          BRANCH_STATES["${branch}:implement"]="spawn-failed"
           return
         }
 
