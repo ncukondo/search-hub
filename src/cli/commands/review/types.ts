@@ -224,12 +224,12 @@ export function classifyStatus(
     }
   }
 
-  // Collect effective decisions, excluding reviewers whose only decision is
-  // uncertain at a lower basis than the highest global definitive
+  // Collect effective decisions, excluding reviewers whose effective decision
+  // is at a lower basis than the highest global definitive
   const effectiveDecisions: ReviewDecision[] = [];
   for (const { decision, rank } of reviewerMap.values()) {
-    if (decision === 'uncertain' && rank < highestDefinitiveRank) {
-      // This reviewer's uncertainty was resolved by a higher-basis definitive — skip
+    if (rank < highestDefinitiveRank) {
+      // This reviewer's decision is at a lower basis than the highest definitive — skip
       continue;
     }
     effectiveDecisions.push(decision);

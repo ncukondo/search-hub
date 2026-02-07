@@ -430,7 +430,7 @@ describe('classifyStatus', () => {
       expect(classifyStatus(entry)).toBe('conflicting');
     });
 
-    it('A title include + B abstract exclude → conflicting (definitive vs definitive)', () => {
+    it('A title include + B abstract exclude → agreed-exclude (higher basis overrides all lower)', () => {
       const entry: ArticleEntry = {
         ...baseEntry,
         reviews: [
@@ -438,7 +438,7 @@ describe('classifyStatus', () => {
           { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'abstract' },
         ],
       };
-      expect(classifyStatus(entry)).toBe('conflicting');
+      expect(classifyStatus(entry)).toBe('agreed-exclude');
     });
 
     it('all reviews uncertain (no higher-basis definitive) → uncertain (unchanged)', () => {
@@ -488,7 +488,7 @@ describe('classifyStatus', () => {
       expect(classifyStatus(entry)).toBe('conflicting');
     });
 
-    it('A: title exclude, B: abstract include → conflicting (both definitive)', () => {
+    it('A: title exclude, B: abstract include → agreed-include (higher basis overrides all lower)', () => {
       const entry: ArticleEntry = {
         ...baseEntry,
         reviews: [
@@ -496,7 +496,7 @@ describe('classifyStatus', () => {
           { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
         ],
       };
-      expect(classifyStatus(entry)).toBe('conflicting');
+      expect(classifyStatus(entry)).toBe('agreed-include');
     });
 
     it('A: abstract uncertain, B: fulltext include → agreed-include', () => {
@@ -508,6 +508,40 @@ describe('classifyStatus', () => {
         ],
       };
       expect(classifyStatus(entry)).toBe('agreed-include');
+    });
+
+    // Task 92: Higher-basis definitive overrides ALL lower-basis decisions
+    it('A title:include + B abstract:exclude → agreed-exclude (higher basis wins)', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-exclude');
+    });
+
+    it('A title:exclude + B abstract:include → agreed-include (higher basis wins)', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'exclude', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
+
+    it('A title:include + B title:exclude → conflicting (same basis still conflicts)', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'title' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('conflicting');
     });
   });
 });
