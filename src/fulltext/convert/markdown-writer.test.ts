@@ -396,4 +396,44 @@ describe('writeMarkdown', () => {
     expect(md).toContain('Sub content.');
     expect(md).not.toMatch(/^## $/m);
   });
+
+  it('E2E: renders document with table, figure, and empty section correctly', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'See table and figure below.' }] },
+            {
+              type: 'table',
+              caption: 'Table 1. Interview guide',
+              headers: ['Topic', 'Prompts'],
+              rows: [
+                ['Introduction<br>Explain purpose.', 'Welcome participant.'],
+              ],
+            },
+            { type: 'figure', label: 'Fig. 1', caption: 'Score distribution across groups' },
+          ],
+          subsections: [],
+        },
+        {
+          title: '',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Supplementary material.' }] },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    // Table renders correctly with <br> in cells
+    expect(md).toContain('| Introduction<br>Explain purpose. | Welcome participant. |');
+    // Figure caption is in alt text position
+    expect(md).toContain('![Fig. 1. Score distribution across groups]()');
+    // Empty section title is skipped
+    expect(md).not.toMatch(/^## $/m);
+    expect(md).toContain('Supplementary material.');
+  });
 });

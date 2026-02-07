@@ -1246,3 +1246,44 @@ describe('HTML numeric character reference decoding', () => {
     expect(refs[0]!.text).not.toContain('&#x0003c;');
   });
 });
+
+describe('E2E: multi-paragraph table cells in body', () => {
+  it('parses XML with multi-paragraph table cells correctly', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Interview Guide</title>
+            <table-wrap id="Tab1">
+              <label>Table 1</label>
+              <caption><p>Interview topic guide</p></caption>
+              <table>
+                <thead>
+                  <tr><th>Topic</th><th>Prompts</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><p>Introduction</p><p>Explain that this interview has nothing to do with evaluation.</p></td>
+                    <td><p>Welcome the participant.</p></td>
+                  </tr>
+                  <tr>
+                    <td><p>Experience</p><p>Ask about their daily routine.</p><p>Follow up on specifics.</p></td>
+                    <td><p>Use open-ended questions.</p></td>
+                  </tr>
+                </tbody>
+              </table>
+            </table-wrap>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const table = sections[0]!.content[0]!;
+    expect(table.type).toBe('table');
+    if (table.type === 'table') {
+      expect(table.rows[0]![0]).toBe('Introduction<br>Explain that this interview has nothing to do with evaluation.');
+      expect(table.rows[0]![1]).toBe('Welcome the participant.');
+      expect(table.rows[1]![0]).toBe('Experience<br>Ask about their daily routine.<br>Follow up on specifics.');
+    }
+  });
+});
