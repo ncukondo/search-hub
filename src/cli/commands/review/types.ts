@@ -161,8 +161,8 @@ export function classifyStatus(
     .map((r) => r.decision!);
 
   if (decisions.length === 0) {
-    // All reviews lack a decision — treat as pending-like, but has reviews
-    return 'agreed-include'; // fallback: shouldn't normally happen
+    // All reviews lack a decision — treat as pending
+    return 'pending';
   }
 
   // 4. Check for conflicts: both include and exclude present
@@ -183,11 +183,6 @@ export function classifyStatus(
     return 'agreed-include';
   }
 
-  // 7. All exclude?
-  if (decisions.every((d) => d === 'exclude')) {
-    return 'agreed-exclude';
-  }
-
-  // Shouldn't reach here, but fallback
-  return 'uncertain';
+  // 7. All exclude (only remaining possibility after ruling out conflicts and uncertain)
+  return 'agreed-exclude';
 }

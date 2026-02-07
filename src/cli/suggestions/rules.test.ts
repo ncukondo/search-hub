@@ -393,7 +393,7 @@ describe('getSuggestion', () => {
         expect(result!.next[0]!.command).toContain('review finalize');
       });
 
-      it('should suggest resolving conflicts when conflicting > 0', () => {
+      it('should suggest abstract screening when conflicting > 0', () => {
         const ctx: SuggestionContext = {
           command: 'review status',
           sessionId: 'my-session',
@@ -414,11 +414,11 @@ describe('getSuggestion', () => {
         };
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
-        expect(result!.next[0]!.command).toContain('review list');
-        expect(result!.next[0]!.command).toContain('--filter conflicting');
+        expect(result!.next[0]!.command).toContain('--basis abstract');
+        expect(result!.next[0]!.command).toContain('--filter conflicting,uncertain,incomplete');
       });
 
-      it('should suggest abstract screening when uncertain > 0', () => {
+      it('should suggest abstract screening when uncertain or incomplete > 0', () => {
         const ctx: SuggestionContext = {
           command: 'review status',
           sessionId: 'my-session',
@@ -440,7 +440,7 @@ describe('getSuggestion', () => {
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
         expect(result!.next[0]!.command).toContain('--basis abstract');
-        expect(result!.next[0]!.command).toContain('--filter uncertain,incomplete');
+        expect(result!.next[0]!.command).toContain('--filter conflicting,uncertain,incomplete');
       });
 
       it('should suggest register when all finalized', () => {

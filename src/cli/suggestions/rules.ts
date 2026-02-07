@@ -249,26 +249,13 @@ const reviewStatusRule: SuggestionRule = (ctx) => {
     };
   }
 
-  // 3. conflicting > 0: resolve conflicts
-  if (rs.conflicting > 0) {
+  // 3. conflicting, uncertain, or incomplete > 0: suggest further review
+  if (rs.conflicting > 0 || rs.uncertain > 0 || rs.incomplete > 0) {
     return {
       next: [
         {
-          command: `search-hub review list --session ${sid} --filter conflicting`,
-          description: 'Resolve conflicting reviews',
-        },
-      ],
-      seeAlso: [],
-    };
-  }
-
-  // 4. uncertain or incomplete > 0: suggest further review
-  if (rs.uncertain > 0 || rs.incomplete > 0) {
-    return {
-      next: [
-        {
-          command: `search-hub review extract --session ${sid} --basis abstract --filter uncertain,incomplete --name abstract-screening`,
-          description: 'Start abstract screening for uncertain items',
+          command: `search-hub review extract --session ${sid} --basis abstract --filter conflicting,uncertain,incomplete --name abstract-screening`,
+          description: 'Start abstract screening for unresolved items',
         },
       ],
       seeAlso: [],

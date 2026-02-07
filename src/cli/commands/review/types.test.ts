@@ -252,6 +252,25 @@ describe('classifyStatus', () => {
     expect(classifyStatus(entry)).toBe('finalized');
   });
 
+  it('returns "pending" when all reviews lack a decision', () => {
+    const entry: ArticleEntry = {
+      ...baseEntry,
+      reviews: [
+        {
+          reviewer: 'human:tanaka',
+          // no decision
+          timestamp: '2024-01-15T10:00:00Z',
+        },
+        {
+          reviewer: 'human:suzuki',
+          // no decision
+          timestamp: '2024-01-15T11:00:00Z',
+        },
+      ],
+    };
+    expect(classifyStatus(entry)).toBe('pending');
+  });
+
   it('ignores reviews without decision when classifying', () => {
     const entry: ArticleEntry = {
       ...baseEntry,
