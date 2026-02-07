@@ -17,6 +17,7 @@ import { executeReviewExtract } from './extract.js';
 import { executeReviewMerge } from './merge.js';
 import { executeReviewExport } from './export.js';
 import { executeReviewMark } from './mark.js';
+import { executeReviewFinalize } from './finalize.js';
 import { getIncludedArticles } from '../register.js';
 import type { ReviewDecision, ReviewFile, WorkFile } from './types.js';
 
@@ -1334,6 +1335,250 @@ summary:
       expect(reviewedArticle!.reviews).toHaveLength(1);
       expect(reviewedArticle!.reviews[0]!.basis).toBe('fulltext');
       expect(reviewedArticle!.reviews[0]!.decision).toBe('include');
+    });
+  });
+
+  describe('review finalize E2E', () => {
+    it('full workflow: init → extract → mark → merge → finalize → verify finalDecisions', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Extract and mark articles
+      const extractResult = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'finalize-e2e',
+        },
+        sessionsDir
+      );
+      const workContent = await readFile(extractResult.outputPath, 'utf-8');
+      const workFile = parseYaml(workContent) as WorkFile;
+
+      // Mark first 3 as include, next 2 as exclude, rest as uncertain
+      for (let i = 0; i < workFile.articles.length; i++) {
+        let decision: ReviewDecision;
+        if (i < 3) decision = 'include';
+        else if (i < 5) decision = 'exclude';
+        else decision = 'uncertain';
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: workFile.articles[i]!.id,
+          decision,
+        });
+      }
+
+      await executeReviewMerge({ sessionId, name: 'finalize-e2e' }, sessionsDir);
+
+      // Finalize
+      const finalizeResult = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(finalizeResult.includedCount).toBe(3);
+      expect(finalizeResult.excludedCount).toBe(2);
+      expect(finalizeResult.skippedByStatus.uncertain).toBe(5);
+
+      // Verify finalDecisions were set in reviews.yaml
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8'
+      );
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+
+      const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
+      expect(finalized).toHaveLength(5);
+      const included = finalized.filter((a) => a.finalDecision === 'include');
+      expect(included).toHaveLength(3);
+      const excluded = finalized.filter((a) => a.finalDecision === 'exclude');
+      expect(excluded).toHaveLength(2);
+    });
+
+    it('two-reviewer workflow: both agree → finalized; one uncertain → not finalized', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Reviewer 1: all include
+      const r1Extract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:gpt-4o',
+          limit: 5,
+          name: 'r1-finalize',
+        },
+        sessionsDir
+      );
+      const r1Content = await readFile(r1Extract.outputPath, 'utf-8');
+      const r1File = parseYaml(r1Content) as WorkFile;
+      for (const article of r1File.articles) {
+        await executeReviewMark({
+          file: r1Extract.outputPath,
+          id: article.id,
+          decision: 'include',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'r1-finalize' }, sessionsDir);
+
+      // Reviewer 2: first 3 include, last 2 uncertain
+      const r2Extract = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['agreed-include'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 5,
+          name: 'r2-finalize',
+        },
+        sessionsDir
+      );
+      const r2Content = await readFile(r2Extract.outputPath, 'utf-8');
+      const r2File = parseYaml(r2Content) as WorkFile;
+      for (let i = 0; i < r2File.articles.length; i++) {
+        await executeReviewMark({
+          file: r2Extract.outputPath,
+          id: r2File.articles[i]!.id,
+          decision: i < 3 ? 'include' : 'uncertain',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'r2-finalize' }, sessionsDir);
+
+      // Finalize
+      const finalizeResult = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(finalizeResult.includedCount).toBe(3); // Both agreed on include
+      expect(finalizeResult.excludedCount).toBe(0);
+      expect(finalizeResult.skippedByStatus.uncertain).toBe(2); // One reviewer uncertain
+      expect(finalizeResult.skippedByStatus.pending).toBe(5); // Remaining 5
+    });
+
+    it('dry-run does not modify reviews.yaml', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Add reviews for all articles
+      const extractResult = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'dryrun-finalize',
+        },
+        sessionsDir
+      );
+      const workContent = await readFile(extractResult.outputPath, 'utf-8');
+      const workFile = parseYaml(workContent) as WorkFile;
+      for (const article of workFile.articles) {
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: article.id,
+          decision: 'include',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'dryrun-finalize' }, sessionsDir);
+
+      // Dry-run finalize
+      const dryResult = await executeReviewFinalize(
+        { sessionId, dryRun: true },
+        sessionsDir
+      );
+      expect(dryResult.includedCount).toBe(10);
+      expect(dryResult.excludedCount).toBe(0);
+
+      // Verify NO changes were made
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8'
+      );
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
+      expect(finalized).toHaveLength(0);
+    });
+
+    it('min-reviewers: with 1 reviewer and --min-reviewers 2 → nothing finalized', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Only one reviewer
+      const extractResult = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 5,
+          name: 'min-rev-finalize',
+        },
+        sessionsDir
+      );
+      const workContent = await readFile(extractResult.outputPath, 'utf-8');
+      const workFile = parseYaml(workContent) as WorkFile;
+      for (const article of workFile.articles) {
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: article.id,
+          decision: 'include',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'min-rev-finalize' }, sessionsDir);
+
+      // Finalize with min-reviewers 2
+      const result = await executeReviewFinalize(
+        { sessionId, minReviewers: 2 },
+        sessionsDir
+      );
+      expect(result.includedCount).toBe(0);
+      expect(result.excludedCount).toBe(0);
+      expect(result.skippedByStatus['agreed-include']).toBe(5);
+    });
+
+    it('idempotency: running finalize twice produces same result', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Add reviews
+      const extractResult = await executeReviewExtract(
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 5,
+          name: 'idem-finalize',
+        },
+        sessionsDir
+      );
+      const workContent = await readFile(extractResult.outputPath, 'utf-8');
+      const workFile = parseYaml(workContent) as WorkFile;
+      for (let i = 0; i < workFile.articles.length; i++) {
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: workFile.articles[i]!.id,
+          decision: i < 3 ? 'include' : 'exclude',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'idem-finalize' }, sessionsDir);
+
+      // First finalize
+      const result1 = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(result1.includedCount).toBe(3);
+      expect(result1.excludedCount).toBe(2);
+
+      // Second finalize - all should be already finalized, so 0 new
+      const result2 = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(result2.includedCount).toBe(0);
+      expect(result2.excludedCount).toBe(0);
+      expect(result2.skippedByStatus.finalized).toBe(5);
+      expect(result2.skippedByStatus.pending).toBe(5);
+
+      // Verify data is unchanged
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8'
+      );
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
+      expect(finalized).toHaveLength(5);
     });
   });
 });
