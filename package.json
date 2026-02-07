@@ -1,6 +1,6 @@
 {
   "name": "@ncukondo/search-hub",
-  "version": "0.9.4",
+  "version": "0.10.0",
   "description": "A CLI tool for systematic literature searching across multiple academic databases",
   "type": "module",
   "engines": {
