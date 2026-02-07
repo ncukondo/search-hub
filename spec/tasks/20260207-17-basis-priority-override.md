@@ -43,18 +43,18 @@ Each step follows the TDD cycle:
 
 ### Step 2: Make `incomplete` check basis-aware
 
-- [ ] Step 2: Filter registered reviewers by article's highest reviewed basis
-  - [ ] Write test: `src/cli/commands/review/types.test.ts`
+- [x] Step 2: Filter registered reviewers by article's highest reviewed basis
+  - [x] Write test: `src/cli/commands/review/types.test.ts`
     - Title-only article + abstract reviewer registered → NOT `incomplete`
     - Two title reviewers exclude + abstract reviewer registered but didn't review → `agreed-exclude`
     - Article with abstract review + abstract reviewer not yet reviewed → `incomplete` (unchanged)
-  - [ ] Verify test fails (Red)
-  - [ ] Implement: In `classifyStatus()`, line ~168-176: filter `registeredReviewers` to only those with `basisRank(reg.basis) <= highestReviewedRank` of the article
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Refactor if needed
-  - [ ] Verify test still passes
-  - [ ] Acceptance: `incomplete` only checks reviewers whose registered basis ≤ article's highest reviewed basis
+  - [x] Verify test fails (Red)
+  - [x] Implement: In `classifyStatus()`, line ~168-176: filter `registeredReviewers` to only those with `basisRank(reg.basis) <= highestReviewedRank` of the article
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Refactor if needed
+  - [x] Verify test still passes
+  - [x] Acceptance: `incomplete` only checks reviewers whose registered basis ≤ article's highest reviewed basis
 
 ### Final Step: E2E Multi-Stage Workflow Test (MANDATORY)
 
