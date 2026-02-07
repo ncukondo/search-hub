@@ -462,6 +462,53 @@ describe('classifyStatus', () => {
       };
       expect(classifyStatus(entry)).toBe('agreed-include');
     });
+
+    // Cross-reviewer basis priority (Step 3)
+    it('A: title uncertain, B: abstract include, C: abstract include → agreed-include', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
+          { reviewer: 'ai:gemini', decision: 'include', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
+
+    it('A: title uncertain, B: abstract include, C: abstract exclude → conflicting', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
+          { reviewer: 'ai:gemini', decision: 'exclude', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('conflicting');
+    });
+
+    it('A: title exclude, B: abstract include → conflicting (both definitive)', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'exclude', basis: 'title' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('conflicting');
+    });
+
+    it('A: abstract uncertain, B: fulltext include → agreed-include', () => {
+      const entry: ArticleEntry = {
+        ...baseEntry,
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'uncertain', basis: 'abstract' },
+          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'fulltext' },
+        ],
+      };
+      expect(classifyStatus(entry)).toBe('agreed-include');
+    });
   });
 });
 
