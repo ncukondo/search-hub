@@ -803,6 +803,166 @@ filters:
     });
   });
 
+  describe('partial success exit behavior', () => {
+    it('should return success=true when 3/4 providers succeed and 1 fails', async () => {
+      // Enable all 4 providers
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = true;
+      config.providers.scopus.enabled = true;
+      config.providers.scopus.api_key = 'test-key';
+
+      // Make scopus fail
+      const { ScopusProvider } = await import('../../providers/scopus/provider.js');
+      const mockedScopus = vi.mocked(ScopusProvider);
+      const originalScopusImpl = mockedScopus.getMockImplementation();
+      mockedScopus.mockImplementation(() => ({
+        name: 'scopus',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'scopus' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('Scopus API key expired');
+        }),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
+      }) as any);
+
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const result = await executeSearch(options, sessionsDir, config);
+
+      if (originalScopusImpl) { mockedScopus.mockImplementation(originalScopusImpl); }
+
+      expect(result.success).toBe(true);
+      expect(result.sessionStatus).toBe('partial');
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['eric']?.retrieved).toBe(1);
+      expect(result.results?.['arxiv']?.retrieved).toBe(1);
+      expect(result.results?.['scopus']?.error).toBe('Scopus API key expired');
+    });
+
+    it('should return success=false when all providers fail', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+      const mockedPubMed = vi.mocked(PubMedProvider);
+      const mockedEric = vi.mocked(ERICProvider);
+      const originalPubMedImpl = mockedPubMed.getMockImplementation();
+      const originalEricImpl = mockedEric.getMockImplementation();
+
+      mockedPubMed.mockImplementation(() => ({
+        name: 'pubmed',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('Network error');
+        }),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
+      }) as any);
+
+      mockedEric.mockImplementation(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('Timeout');
+        }),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
+      }) as any);
+
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const result = await executeSearch(options, sessionsDir, config);
+
+      if (originalPubMedImpl) { mockedPubMed.mockImplementation(originalPubMedImpl); }
+      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+
+      expect(result.success).toBe(false);
+      expect(result.sessionStatus).toBe('failed');
+    });
+
+    it('should return success=true and completed status when all providers succeed', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+      config.providers.arxiv.enabled = true;
+
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.sessionStatus).toBe('completed');
+      expect(result.results?.['pubmed']?.error).toBeUndefined();
+      expect(result.results?.['eric']?.error).toBeUndefined();
+      expect(result.results?.['arxiv']?.error).toBeUndefined();
+    });
+
+    it('should return success=false with strict mode when partial success', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+
+      // Make eric fail
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+      const mockedEric = vi.mocked(ERICProvider);
+      const originalEricImpl = mockedEric.getMockImplementation();
+      mockedEric.mockImplementation(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('ERIC unavailable');
+        }),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
+      }) as any);
+
+      const options: SearchCommandOptions = { queryFile: queryFilePath, strict: true };
+      const result = await executeSearch(options, sessionsDir, config);
+
+      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+
+      expect(result.success).toBe(false);
+      expect(result.sessionStatus).toBe('partial');
+      expect(result.results?.['pubmed']?.retrieved).toBe(2);
+      expect(result.results?.['eric']?.error).toBe('ERIC unavailable');
+    });
+
+    it('should return success=true with strict mode when all succeed', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+
+      const options: SearchCommandOptions = { queryFile: queryFilePath, strict: true };
+      const result = await executeSearch(options, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      expect(result.sessionStatus).toBe('completed');
+    });
+
+    it('should return success=true without strict mode when partial success (default)', async () => {
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = true;
+
+      // Make eric fail
+      const { ERICProvider } = await import('../../providers/eric/provider.js');
+      const mockedEric = vi.mocked(ERICProvider);
+      const originalEricImpl = mockedEric.getMockImplementation();
+      mockedEric.mockImplementation(() => ({
+        name: 'eric',
+        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+        search: vi.fn().mockImplementation(async function* () {
+          throw new Error('ERIC unavailable');
+        }),
+        testConnection: vi.fn().mockResolvedValue({ ok: true }),
+      }) as any);
+
+      const options: SearchCommandOptions = { queryFile: queryFilePath };
+      const result = await executeSearch(options, sessionsDir, config);
+
+      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+
+      expect(result.success).toBe(true);
+      expect(result.sessionStatus).toBe('partial');
+    });
+  });
+
   describe('auto-register', () => {
     it('should call registerArticles when auto_register is enabled', async () => {
       // Enable auto_register in config

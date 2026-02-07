@@ -14,6 +14,7 @@ export interface SearchCommandOptions {
   countOnly?: boolean;
   preview?: boolean;
   noResume?: boolean;
+  strict?: boolean;
 }
 
 export interface CommandLineOptions {
@@ -25,6 +26,7 @@ export interface CommandLineOptions {
   countOnly?: boolean | undefined;
   preview?: boolean | undefined;
   noResume?: boolean | undefined;
+  strict?: boolean | undefined;
 }
 
 export interface TranslationResult {
@@ -86,6 +88,10 @@ export function parseSearchOptions(
 
   if (options.noResume) {
     result.noResume = true;
+  }
+
+  if (options.strict) {
+    result.strict = true;
   }
 
   return result;
