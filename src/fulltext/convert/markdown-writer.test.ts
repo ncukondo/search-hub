@@ -397,6 +397,55 @@ describe('writeMarkdown', () => {
     expect(md).not.toMatch(/^## $/m);
   });
 
+  it('renders boxed-text as blockquote with bold title', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            {
+              type: 'boxed-text',
+              title: 'Key Points',
+              content: [
+                { type: 'paragraph', content: [{ type: 'text', text: 'Point 1: Important finding.' }] },
+                { type: 'paragraph', content: [{ type: 'text', text: 'Point 2: Another finding.' }] },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('> **Key Points**');
+    expect(md).toContain('> Point 1: Important finding.');
+    expect(md).toContain('> Point 2: Another finding.');
+  });
+
+  it('renders boxed-text without title', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            {
+              type: 'boxed-text',
+              content: [
+                { type: 'paragraph', content: [{ type: 'text', text: 'Some boxed content.' }] },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('> Some boxed content.');
+    expect(md).not.toContain('> **');
+  });
+
   it('E2E: renders document with table, figure, and empty section correctly', () => {
     const doc = makeDoc({
       sections: [

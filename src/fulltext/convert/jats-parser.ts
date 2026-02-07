@@ -471,8 +471,22 @@ export function parseJatsTable(xml: string): {
   return { headers: [], rows: [] };
 }
 
+/**
+ * Parse a <boxed-text> element into a boxed-text block.
+ * Extracts optional title and recursively parses inner block content.
+ */
+function parseBoxedText(node: OrderedNode): BlockElement {
+  const children = getChildren(node);
+  const titleNode = findChild(children, 'title');
+  const title = titleNode ? extractAllText(titleNode.children) : undefined;
+  const content = parseBlockContent(children);
+  const block: BlockElement = { type: 'boxed-text', content };
+  if (title) block.title = title;
+  return block;
+}
+
 /** Tags that represent block-level elements when nested inside <p>. */
-const BLOCK_TAGS = new Set(['table-wrap', 'fig', 'disp-quote']);
+const BLOCK_TAGS = new Set(['table-wrap', 'fig', 'disp-quote', 'boxed-text']);
 
 /**
  * Parse a <disp-quote> element into a blockquote block.
@@ -573,6 +587,9 @@ function parseParagraph(pChildren: OrderedNode[]): BlockElement[] {
     } else if (tag === 'disp-quote') {
       flushInline();
       blocks.push(parseDispQuote(child));
+    } else if (tag === 'boxed-text') {
+      flushInline();
+      blocks.push(parseBoxedText(child));
     } else {
       inlineBuffer.push(child);
     }
@@ -604,6 +621,8 @@ function parseBlockContent(sectionChildren: OrderedNode[]): BlockElement[] {
       blocks.push(parseFigBlock(child));
     } else if (tag === 'disp-quote') {
       blocks.push(parseDispQuote(child));
+    } else if (tag === 'boxed-text') {
+      blocks.push(parseBoxedText(child));
     }
     // Skip title, sec, and other non-block elements
   }

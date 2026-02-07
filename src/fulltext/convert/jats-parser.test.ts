@@ -1483,6 +1483,58 @@ describe('HTML numeric character reference decoding', () => {
   });
 });
 
+describe('parseJatsBody - boxed-text', () => {
+  it('parses <boxed-text> with <title> and <p> children', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <boxed-text>
+              <title>Key Points</title>
+              <p>Point 1: Important finding.</p>
+              <p>Point 2: Another finding.</p>
+            </boxed-text>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('boxed-text');
+    if (content[0]!.type === 'boxed-text') {
+      expect(content[0]!.title).toBe('Key Points');
+      expect(content[0]!.content).toHaveLength(2);
+      expect(content[0]!.content[0]!.type).toBe('paragraph');
+      expect(content[0]!.content[1]!.type).toBe('paragraph');
+    }
+  });
+
+  it('parses <boxed-text> without title', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <boxed-text>
+              <p>Some boxed content.</p>
+            </boxed-text>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('boxed-text');
+    if (content[0]!.type === 'boxed-text') {
+      expect(content[0]!.title).toBeUndefined();
+      expect(content[0]!.content).toHaveLength(1);
+    }
+  });
+});
+
 describe('E2E: multi-paragraph table cells in body', () => {
   it('parses XML with multi-paragraph table cells correctly', () => {
     const xml = `

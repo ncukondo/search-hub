@@ -33,7 +33,8 @@ export type BlockElement =
   | { type: 'blockquote'; content: InlineContent[] }
   | { type: 'list'; ordered: boolean; items: InlineContent[][] }
   | { type: 'table'; caption?: string; headers: string[]; rows: string[][] }
-  | { type: 'figure'; id?: string; label?: string; caption?: string };
+  | { type: 'figure'; id?: string; label?: string; caption?: string }
+  | { type: 'boxed-text'; title?: string; content: BlockElement[] };
 
 /** A document section (may contain nested subsections). */
 export interface JatsSection {

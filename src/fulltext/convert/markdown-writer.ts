@@ -95,6 +95,21 @@ function renderBlock(block: BlockElement): string {
       const altText = block.caption ? `${label}. ${block.caption}` : label;
       return `![${altText}]()`;
     }
+
+    case 'boxed-text': {
+      const lines: string[] = [];
+      if (block.title) {
+        lines.push(`> **${block.title}**`);
+        lines.push('>');
+      }
+      for (const inner of block.content) {
+        const rendered = renderBlock(inner);
+        rendered.split('\n').forEach((line) => {
+          lines.push(line === '' ? '>' : `> ${line}`);
+        });
+      }
+      return lines.join('\n');
+    }
   }
 }
 
