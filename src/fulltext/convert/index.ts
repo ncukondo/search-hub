@@ -43,6 +43,7 @@ export async function convertPmcXmlToMarkdown(
     if (backMatter.appendices) doc.appendices = backMatter.appendices;
     if (backMatter.footnotes) doc.footnotes = backMatter.footnotes;
     if (backMatter.floats) doc.floats = backMatter.floats;
+    if (backMatter.notes) doc.notes = backMatter.notes;
 
     // Write Markdown
     const md = writeMarkdown(doc);

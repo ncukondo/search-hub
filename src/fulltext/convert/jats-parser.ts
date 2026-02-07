@@ -15,6 +15,7 @@ import type {
   JatsSection,
   JatsReference,
   JatsFootnote,
+  BackMatterNote,
   BlockElement,
   InlineContent,
 } from './types.js';
@@ -1063,6 +1064,7 @@ export interface BackMatterResult {
   appendices?: JatsSection[];
   footnotes?: JatsFootnote[];
   floats?: BlockElement[];
+  notes?: BackMatterNote[];
 }
 
 /**
@@ -1104,12 +1106,61 @@ export function parseJatsBackMatter(xml: string): BackMatterResult {
     if (fnGroup) {
       const fns = findChildren(fnGroup.children, 'fn');
       if (fns.length > 0) {
-        result.footnotes = fns.map((fn) => ({
-          id: fn.attrs['id'] ?? '',
-          text: extractAllText(
-            findChildren(fn.children, 'p').flatMap((p) => p.children),
-          ),
-        }));
+        result.footnotes = fns.map((fn) => {
+          const parts: string[] = [];
+          // Include <title> if present
+          const titleNode = findChild(fn.children, 'title');
+          if (titleNode) {
+            const titleText = extractAllText(titleNode.children).trim();
+            if (titleText) parts.push(titleText);
+          }
+          // Extract text from each <p> separately and join with space
+          const paragraphs = findChildren(fn.children, 'p');
+          for (const p of paragraphs) {
+            const pText = extractAllText(p.children).trim();
+            if (pText) parts.push(pText);
+          }
+          return {
+            id: fn.attrs['id'] ?? '',
+            text: parts.join(' '),
+          };
+        });
+      }
+    }
+
+    // Notes: <notes> (author contributions, funding, data availability, etc.)
+    const notesElements = findChildren(back.children, 'notes');
+    if (notesElements.length > 0) {
+      const notes: BackMatterNote[] = [];
+      for (const note of notesElements) {
+        // Check if this <notes> contains <sec> children (e.g. Declarations wrapper)
+        const secs = findChildren(note.children, 'sec');
+        if (secs.length > 0) {
+          for (const sec of secs) {
+            const secTitleNode = findChild(sec.children, 'title');
+            const secTitle = secTitleNode ? extractAllText(secTitleNode.children) : '';
+            const secParagraphs = findChildren(sec.children, 'p');
+            const secText = secParagraphs
+              .map((p) => extractAllText(p.children))
+              .join('\n\n');
+            if (secTitle || secText) {
+              notes.push({ title: secTitle, text: secText });
+            }
+          }
+        } else {
+          const titleNode = findChild(note.children, 'title');
+          const title = titleNode ? extractAllText(titleNode.children) : '';
+          const paragraphs = findChildren(note.children, 'p');
+          const text = paragraphs
+            .map((p) => extractAllText(p.children))
+            .join('\n\n');
+          if (title || text) {
+            notes.push({ title, text });
+          }
+        }
+      }
+      if (notes.length > 0) {
+        result.notes = notes;
       }
     }
   }

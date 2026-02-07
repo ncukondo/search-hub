@@ -325,6 +325,16 @@ export function writeMarkdown(doc: JatsDocument): string {
     lines.push('');
   }
 
+  // Notes (between Acknowledgments and References)
+  if (doc.notes && doc.notes.length > 0) {
+    for (const note of doc.notes) {
+      lines.push(`## ${note.title}`);
+      lines.push('');
+      lines.push(note.text);
+      lines.push('');
+    }
+  }
+
   // References
   if (doc.references.length > 0) {
     lines.push(renderReferences(doc.references));

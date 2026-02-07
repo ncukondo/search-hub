@@ -2410,6 +2410,46 @@ describe('parseJatsBackMatter - footnotes', () => {
     expect(backMatter.footnotes![1]).toEqual({ id: 'fn2', text: 'Footnote two text.' });
   });
 
+  it('separates title and body text in footnotes with space', () => {
+    const xml = `
+      <article>
+        <back>
+          <fn-group>
+            <fn id="fn1">
+              <p><bold>Publisher's Note</bold></p>
+              <p>Springer Nature remains neutral with regard to jurisdictional claims.</p>
+            </fn>
+          </fn-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.footnotes).toHaveLength(1);
+    expect(backMatter.footnotes![0]!.text).toBe(
+      "Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims.",
+    );
+  });
+
+  it('handles footnote with <title> and <p> children', () => {
+    const xml = `
+      <article>
+        <back>
+          <fn-group>
+            <fn id="fn1">
+              <title>Publisher's Note</title>
+              <p>Springer Nature remains neutral with regard to jurisdictional claims.</p>
+            </fn>
+          </fn-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.footnotes).toHaveLength(1);
+    expect(backMatter.footnotes![0]!.text).toBe(
+      "Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims.",
+    );
+  });
+
   it('returns undefined footnotes when <fn-group> is absent', () => {
     const xml = `
       <article>
@@ -2468,5 +2508,148 @@ describe('parseJatsBackMatter - floats-group', () => {
     `;
     const backMatter = parseJatsBackMatter(xml);
     expect(backMatter.floats).toBeUndefined();
+  });
+});
+
+describe('parseJatsBackMatter - notes', () => {
+  it('extracts author contributions from <notes notes-type="author-contribution">', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study. AB collected data.</p>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(1);
+    expect(backMatter.notes![0]!.title).toBe('Author contributions');
+    expect(backMatter.notes![0]!.text).toBe('TK designed the study. AB collected data.');
+  });
+
+  it('extracts data availability from <notes notes-type="data-availability">', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="data-availability">
+            <title>Data availability</title>
+            <p>Available on request.</p>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(1);
+    expect(backMatter.notes![0]!.title).toBe('Data availability');
+    expect(backMatter.notes![0]!.text).toBe('Available on request.');
+  });
+
+  it('extracts multiple notes sections', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study.</p>
+          </notes>
+          <notes notes-type="data-availability">
+            <title>Data availability</title>
+            <p>Data available at DOI.</p>
+          </notes>
+          <notes notes-type="supported-by">
+            <title>Funding</title>
+            <p>NIH grant R01.</p>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(3);
+    expect(backMatter.notes![0]!.title).toBe('Author contributions');
+    expect(backMatter.notes![1]!.title).toBe('Data availability');
+    expect(backMatter.notes![2]!.title).toBe('Funding');
+  });
+
+  it('extracts notes with multiple paragraphs', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study.</p>
+            <p>AB collected data and performed analysis.</p>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(1);
+    expect(backMatter.notes![0]!.text).toBe(
+      'TK designed the study.\n\nAB collected data and performed analysis.',
+    );
+  });
+
+  it('returns undefined notes when no <notes> elements exist', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list><ref id="r1"><mixed-citation>Test</mixed-citation></ref></ref-list>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toBeUndefined();
+  });
+
+  it('extracts nested <sec> elements within a <notes> wrapper (Declarations)', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes>
+            <title>Declarations</title>
+            <sec>
+              <title>Ethics approval and consent to participate</title>
+              <p>The study was approved by the IRB.</p>
+            </sec>
+            <sec>
+              <title>Competing interests</title>
+              <p>The authors declare no competing interests.</p>
+            </sec>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(2);
+    expect(backMatter.notes![0]!.title).toBe('Ethics approval and consent to participate');
+    expect(backMatter.notes![0]!.text).toBe('The study was approved by the IRB.');
+    expect(backMatter.notes![1]!.title).toBe('Competing interests');
+    expect(backMatter.notes![1]!.text).toBe('The authors declare no competing interests.');
+  });
+
+  it('handles mixed direct <notes> and wrapper <notes> with <sec>', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study.</p>
+          </notes>
+          <notes>
+            <title>Declarations</title>
+            <sec>
+              <title>Competing interests</title>
+              <p>None declared.</p>
+            </sec>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(2);
+    expect(backMatter.notes![0]!.title).toBe('Author contributions');
+    expect(backMatter.notes![1]!.title).toBe('Competing interests');
   });
 });

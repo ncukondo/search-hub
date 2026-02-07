@@ -810,4 +810,128 @@ DEF456    98      0.87
     expect(md).toContain('Supplement 1');
     expect(md).toContain('Raw data tables');
   });
+
+  it('converts article with back matter <notes> sections (author contributions, funding, declarations)', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<article xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>Notes Sections Test Article</article-title>
+      </title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Introduction</title>
+      <p>Main body content.</p>
+    </sec>
+  </body>
+  <back>
+    <ack>
+      <title>Acknowledgements</title>
+      <p>The authors acknowledge the assistance of the study participants.</p>
+    </ack>
+    <notes notes-type="author-contribution">
+      <title>Author contributions</title>
+      <p>TK and SM designed the study. AB and CD collected data. TK performed analysis and wrote the manuscript.</p>
+    </notes>
+    <notes notes-type="supported-by">
+      <title>Funding</title>
+      <p>This work was supported by NIH Grant R01-AG12345 and the Alzheimer's Foundation.</p>
+    </notes>
+    <notes notes-type="data-availability">
+      <title>Data availability</title>
+      <p>The datasets generated and analysed during the current study are available from the corresponding author on reasonable request.</p>
+    </notes>
+    <notes>
+      <title>Declarations</title>
+      <sec>
+        <title>Ethics approval and consent to participate</title>
+        <p>The study was approved by the Institutional Review Board (Protocol #2024-001). Written informed consent was obtained from all participants.</p>
+      </sec>
+      <sec>
+        <title>Consent for publication</title>
+        <p>Not applicable.</p>
+      </sec>
+      <sec>
+        <title>Competing interests</title>
+        <p>The authors declare that they have no competing interests.</p>
+      </sec>
+    </notes>
+    <notes notes-type="COI-statement">
+      <title>Abbreviations</title>
+      <p>AD: Alzheimer's disease; MRI: Magnetic resonance imaging; PET: Positron emission tomography</p>
+    </notes>
+    <ref-list>
+      <ref id="ref1">
+        <mixed-citation>Smith J. A study. Nature. 2024.</mixed-citation>
+      </ref>
+    </ref-list>
+    <fn-group>
+      <fn id="fn1">
+        <title>Publisher's Note</title>
+        <p>Springer Nature remains neutral with regard to jurisdictional claims in published maps and institutional affiliations.</p>
+      </fn>
+    </fn-group>
+  </back>
+</article>`;
+
+    const xmlPath = join(tmpDir, 'notes-test.xml');
+    const mdPath = join(tmpDir, 'notes-test.md');
+    await writeFile(xmlPath, xml, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+    expect(result.success).toBe(true);
+
+    const md = await readFile(mdPath, 'utf-8');
+
+    // Body
+    expect(md).toContain('## Introduction');
+
+    // Acknowledgments
+    expect(md).toContain('## Acknowledgments');
+    expect(md).toContain('The authors acknowledge the assistance');
+
+    // Author contributions note
+    expect(md).toContain('## Author contributions');
+    expect(md).toContain('TK and SM designed the study');
+
+    // Funding note
+    expect(md).toContain('## Funding');
+    expect(md).toContain('NIH Grant R01-AG12345');
+
+    // Data availability note
+    expect(md).toContain('## Data availability');
+    expect(md).toContain('available from the corresponding author');
+
+    // Declarations sub-sections (expanded from nested <sec>)
+    expect(md).toContain('## Ethics approval and consent to participate');
+    expect(md).toContain('Institutional Review Board');
+    expect(md).toContain('## Consent for publication');
+    expect(md).toContain('Not applicable.');
+    expect(md).toContain('## Competing interests');
+    expect(md).toContain('no competing interests');
+
+    // Abbreviations note
+    expect(md).toContain('## Abbreviations');
+    expect(md).toContain('AD: Alzheimer');
+
+    // References
+    expect(md).toContain('## References');
+    expect(md).toContain('1. Smith J. A study. Nature. 2024.');
+
+    // Footnotes with proper spacing
+    expect(md).toContain('## Footnotes');
+    expect(md).toContain("Publisher's Note Springer Nature remains neutral");
+
+    // Ordering: Acknowledgments → Notes → References → Footnotes
+    const ackPos = md.indexOf('## Acknowledgments');
+    const authorContribPos = md.indexOf('## Author contributions');
+    const refPos = md.indexOf('## References');
+    const footnotesPos = md.indexOf('## Footnotes');
+    expect(ackPos).toBeLessThan(authorContribPos);
+    expect(authorContribPos).toBeLessThan(refPos);
+    expect(refPos).toBeLessThan(footnotesPos);
+  });
 });
