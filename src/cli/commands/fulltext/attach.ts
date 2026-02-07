@@ -62,7 +62,7 @@ async function buildRefLookupFromLibrary(
         }
       }
     } catch {
-      // No library available
+      console.warn('Warning: Could not read reference library. All articles will be skipped as "not_in_ref".');
     }
   }
 

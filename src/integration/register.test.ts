@@ -463,6 +463,41 @@ describe('registerArticles (bulk import)', () => {
       );
     });
 
+    it('should call attachFulltexts when all articles are duplicates', async () => {
+      const articles = [
+        createArticle({ pmid: '11111111', title: 'Dup1', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({ pmid: '22222222', title: 'Dup2', authors: [{ family: 'Jones' }], publicationDate: '2024' }),
+      ];
+
+      mockRefAddBulk.mockResolvedValueOnce(
+        createBulkOutput(
+          [],
+          [
+            { source: 'pmid:11111111', existingId: 'smith-2024', duplicateType: 'pmid' },
+            { source: 'pmid:22222222', existingId: 'jones-2024', duplicateType: 'pmid' },
+          ],
+        )
+      );
+
+      mockAttachFulltexts.mockResolvedValueOnce({
+        summary: { total: 0, attached: 0, skipped: 0, failed: 0 },
+        attached: [],
+        skipped: [],
+        failed: [],
+      });
+
+      await registerArticles(articles, createOptions());
+
+      expect(mockAttachFulltexts).toHaveBeenCalledWith(
+        expect.objectContaining({
+          addedRefs: expect.arrayContaining([
+            { id: 'smith-2024', source: 'pmid:11111111' },
+            { id: 'jones-2024', source: 'pmid:22222222' },
+          ]),
+        }),
+      );
+    });
+
     it('should not call attachFulltexts when no articles were added', async () => {
       const articles = [
         createArticle({ title: 'No ID' }),

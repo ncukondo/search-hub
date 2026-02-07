@@ -31,17 +31,7 @@ export function findRefId(meta: FulltextMeta, refLookup: Map<string, string>): s
 export interface ArticleEntry {
   dirName: string;
   articleDir: string;
-  meta: FulltextMeta;
-}
-
-/** Result for a single article's attach attempt. */
-export interface AttachAttemptResult {
-  status: 'attached' | 'skipped' | 'failed';
-  refId?: string;
-  files?: string[];
-  dirName: string;
-  reason?: string;
-  error?: string;
+  meta: FulltextMeta | null;
 }
 
 /**
@@ -68,7 +58,7 @@ export async function loadFulltextEntries(fulltextDir: string): Promise<ArticleE
       entries.push({ dirName, articleDir, meta });
     } catch {
       // Will be handled as a failed entry by the caller
-      entries.push({ dirName, articleDir, meta: null as unknown as FulltextMeta });
+      entries.push({ dirName, articleDir, meta: null });
     }
   }
   return entries;

@@ -186,7 +186,7 @@ export async function registerArticles(
   }
 
   // Fulltext attach step (after successful import)
-  if (!noAttachFulltext && record.added.length > 0) {
+  if (!noAttachFulltext) {
     const addedRefs = record.added.map((item) => ({
       id: item.id,
       source: item.source,
@@ -196,16 +196,19 @@ export async function registerArticles(
       id: item.existingId,
       source: item.source,
     }));
+    const allRefs = [...addedRefs, ...dupRefs];
 
-    const attachOptions = {
-      sessionDir,
-      libraryPath,
-      addedRefs: [...addedRefs, ...dupRefs],
-      ...(onAttachProgress ? { onProgress: onAttachProgress } : {}),
-    };
-    const fulltextResult = await attachFulltexts(attachOptions);
+    if (allRefs.length > 0) {
+      const attachOptions = {
+        sessionDir,
+        libraryPath,
+        addedRefs: allRefs,
+        ...(onAttachProgress ? { onProgress: onAttachProgress } : {}),
+      };
+      const fulltextResult = await attachFulltexts(attachOptions);
 
-    record.fulltext = fulltextResult;
+      record.fulltext = fulltextResult;
+    }
   }
 
   return record;
