@@ -175,31 +175,85 @@ export function classifyStatus(
     }
   }
 
-  // Get decisions from reviews that have them
-  const decisions = reviews
-    .filter((r) => r.decision !== undefined)
-    .map((r) => r.decision!);
+  // Get reviews that have decisions
+  const reviewsWithDecisions = reviews.filter((r) => r.decision !== undefined);
 
-  if (decisions.length === 0) {
+  if (reviewsWithDecisions.length === 0) {
     // All reviews lack a decision — treat as pending
     return 'pending';
   }
 
-  // 4. Check for conflicts: both include and exclude present
-  const hasInclude = decisions.includes('include');
-  const hasExclude = decisions.includes('exclude');
+  // Basis-priority resolution:
+  // "uncertain" at a lower basis means "need more info" (escalate).
+  // A definitive decision at a higher basis resolves that uncertainty.
+  //
+  // Algorithm:
+  // 1. Find the highest basis rank among all definitive (include/exclude) reviews
+  // 2. For each reviewer, compute their effective decision:
+  //    - Take their highest-basis definitive decision if they have one
+  //    - Otherwise, keep uncertain only if their uncertain rank >= highest definitive rank
+  //      (i.e., no higher-basis definitive exists globally to resolve it)
+  // 3. Reviewers whose only reviews are uncertain at a lower basis than the
+  //    highest global definitive are excluded from consensus (their uncertainty was resolved)
+
+  // Find highest definitive basis rank across ALL reviews
+  let highestDefinitiveRank = 0;
+  for (const r of reviewsWithDecisions) {
+    if (r.decision !== 'uncertain') {
+      highestDefinitiveRank = Math.max(highestDefinitiveRank, basisRank(r.basis));
+    }
+  }
+
+  // For each reviewer, compute effective decision
+  const reviewerMap = new Map<string, { decision: ReviewDecision; rank: number }>();
+  for (const r of reviewsWithDecisions) {
+    const rank = basisRank(r.basis);
+    const existing = reviewerMap.get(r.reviewer);
+    if (!existing) {
+      reviewerMap.set(r.reviewer, { decision: r.decision!, rank });
+    } else {
+      // Prefer definitive over uncertain
+      if (r.decision !== 'uncertain' && existing.decision === 'uncertain') {
+        reviewerMap.set(r.reviewer, { decision: r.decision!, rank });
+      } else if (r.decision !== 'uncertain' && existing.decision !== 'uncertain' && rank > existing.rank) {
+        // Higher-basis definitive overrides lower-basis definitive
+        reviewerMap.set(r.reviewer, { decision: r.decision!, rank });
+      } else if (r.decision === 'uncertain' && existing.decision === 'uncertain' && rank > existing.rank) {
+        reviewerMap.set(r.reviewer, { decision: r.decision!, rank });
+      }
+    }
+  }
+
+  // Collect effective decisions, excluding reviewers whose only decision is
+  // uncertain at a lower basis than the highest global definitive
+  const effectiveDecisions: ReviewDecision[] = [];
+  for (const { decision, rank } of reviewerMap.values()) {
+    if (decision === 'uncertain' && rank < highestDefinitiveRank) {
+      // This reviewer's uncertainty was resolved by a higher-basis definitive — skip
+      continue;
+    }
+    effectiveDecisions.push(decision);
+  }
+
+  if (effectiveDecisions.length === 0) {
+    return 'pending';
+  }
+
+  // 4. Check for conflicts: both include and exclude present among effective decisions
+  const hasInclude = effectiveDecisions.includes('include');
+  const hasExclude = effectiveDecisions.includes('exclude');
   if (hasInclude && hasExclude) {
     return 'conflicting';
   }
 
-  // 5. Any uncertain?
-  const hasUncertain = decisions.includes('uncertain');
+  // 5. Any effective uncertain?
+  const hasUncertain = effectiveDecisions.includes('uncertain');
   if (hasUncertain) {
     return 'uncertain';
   }
 
   // 6. All include?
-  if (decisions.every((d) => d === 'include')) {
+  if (effectiveDecisions.every((d) => d === 'include')) {
     return 'agreed-include';
   }
 
