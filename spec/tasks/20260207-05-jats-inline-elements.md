@@ -67,18 +67,18 @@ The most impactful gap is `<ext-link>`, which causes external URLs to be lost. O
 
 ### Step 3: Support `<inline-formula>` with TeX extraction
 
-- [ ] Add `'inline-formula'` type to `InlineContent` union: `{ type: 'inline-formula'; tex?: string; text: string }`
-- [ ] Write test: `<inline-formula>` with `<tex-math>` child
+- [x] Add `'inline-formula'` type to `InlineContent` union: `{ type: 'inline-formula'; tex?: string; text: string }`
+- [x] Write test: `<inline-formula>` with `<tex-math>` child
   ```xml
   <p>where <inline-formula><tex-math>p &lt; 0.05</tex-math></inline-formula> was significant</p>
   ```
-- [ ] Write test: `<inline-formula>` with `<alternatives>` containing `<tex-math>`
-- [ ] Verify test fails (Red)
-- [ ] Add `inline-formula` case to `parseInlineContent()` — extract `<tex-math>` content
-- [ ] Add `renderInline()` case: render as `$p < 0.05$` (inline LaTeX) or plain text fallback
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: inline formulas render as LaTeX notation
+- [x] Write test: `<inline-formula>` with `<alternatives>` containing `<tex-math>`
+- [x] Verify test fails (Red)
+- [x] Add `inline-formula` case to `parseInlineContent()` — extract `<tex-math>` content
+- [x] Add `renderInline()` case: render as `$p < 0.05$` (inline LaTeX) or plain text fallback
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: inline formulas render as LaTeX notation
 
 ### Step 4: Support `<underline>` and `<sc>` (pass-through)
 

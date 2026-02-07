@@ -341,6 +341,23 @@ function parseInlineContent(children: OrderedNode[]): InlineContent[] {
       result.push({ type: 'superscript', text: extractAllText(innerChildren) });
     } else if (tag === 'sub') {
       result.push({ type: 'subscript', text: extractAllText(innerChildren) });
+    } else if (tag === 'inline-formula') {
+      // Try to find <tex-math> directly or inside <alternatives>
+      let texMath = findChild(innerChildren, 'tex-math');
+      if (!texMath) {
+        const alternatives = findChild(innerChildren, 'alternatives');
+        if (alternatives) {
+          texMath = findChild(alternatives.children, 'tex-math');
+        }
+      }
+      const tex = texMath ? extractAllText(texMath.children) : undefined;
+      const text = tex || extractAllText(innerChildren);
+      const entry: { type: 'inline-formula'; tex?: string; text: string } = {
+        type: 'inline-formula',
+        text,
+      };
+      if (tex) entry.tex = tex;
+      result.push(entry);
     } else if (tag === 'monospace') {
       result.push({ type: 'code', text: extractAllText(innerChildren) });
     } else if (tag === 'ext-link') {

@@ -1385,6 +1385,77 @@ describe('parseJatsReferences - pub-id deduplication', () => {
   });
 });
 
+describe('parseJatsBody - inline-formula', () => {
+  it('parses <inline-formula> with <tex-math> child', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>where <inline-formula><tex-math>p &lt; 0.05</tex-math></inline-formula> was significant</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const formula = para.content.find((c) => c.type === 'inline-formula');
+      expect(formula).toBeDefined();
+      if (formula?.type === 'inline-formula') {
+        expect(formula.tex).toBe('p < 0.05');
+        expect(formula.text).toBe('p < 0.05');
+      }
+    }
+  });
+
+  it('parses <inline-formula> with <alternatives> containing <tex-math>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The value <inline-formula><alternatives><tex-math>\\alpha = 0.01</tex-math><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>alpha</mml:mi></mml:math></alternatives></inline-formula> was used.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const formula = para.content.find((c) => c.type === 'inline-formula');
+      expect(formula).toBeDefined();
+      if (formula?.type === 'inline-formula') {
+        expect(formula.tex).toBe('\\alpha = 0.01');
+      }
+    }
+  });
+
+  it('parses <inline-formula> without <tex-math> using text fallback', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The ratio <inline-formula>r = 2.5</inline-formula> was observed.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const formula = para.content.find((c) => c.type === 'inline-formula');
+      expect(formula).toBeDefined();
+      if (formula?.type === 'inline-formula') {
+        expect(formula.tex).toBeUndefined();
+        expect(formula.text).toBe('r = 2.5');
+      }
+    }
+  });
+});
+
 describe('parseJatsBody - monospace', () => {
   it('parses <monospace> as code inline element', () => {
     const xml = `
