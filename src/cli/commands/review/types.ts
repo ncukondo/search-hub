@@ -95,6 +95,8 @@ export interface WorkFileArticle {
   id: string;
   title: string;
   abstract?: string;
+  /** Fulltext directory name (only for fulltext basis) */
+  fulltext?: string;
   decision: ReviewDecision | null;
   comment: string;
 }

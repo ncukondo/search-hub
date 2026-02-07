@@ -515,6 +515,47 @@ describe('executeReviewExtract', () => {
       }
     });
 
+    it('extracts with --basis fulltext includes fulltext dirName and abstract', async () => {
+      const articlesWithFulltext: ArticleEntry[] = [
+        {
+          title: 'Article with Fulltext',
+          pmid: '200',
+          doi: '10.1234/ft',
+          abstract: 'Abstract text.',
+          fulltext: { dirName: 'smith2024-abcd1234', hasFiles: { pdf: true, xml: false, markdown: true } },
+          reviews: [],
+        },
+        {
+          title: 'Article without Fulltext',
+          pmid: '201',
+          abstract: 'Another abstract.',
+          reviews: [],
+        },
+      ];
+      await writeReviewFile(articlesWithFulltext);
+
+      const result = await executeReviewExtract(
+        {
+          sessionId,
+          basis: 'fulltext',
+          reviewer: 'ai:claude',
+          name: 'fulltext-phase',
+        },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const workFile = parseYaml(content) as WorkFile;
+
+      expect(workFile.basis).toBe('fulltext');
+      // Article with fulltext should have dirName and abstract
+      expect(workFile.articles[0]!.fulltext).toBe('smith2024-abcd1234');
+      expect(workFile.articles[0]!.abstract).toBe('Abstract text.');
+      // Article without fulltext should still be included but without fulltext
+      expect(workFile.articles[1]!.fulltext).toBeUndefined();
+      expect(workFile.articles[1]!.abstract).toBe('Another abstract.');
+    });
+
     it('combines filter with basis option', async () => {
       const mixedArticles: ArticleEntry[] = [
         { title: 'Pending 1', pmid: '10', reviews: [] },

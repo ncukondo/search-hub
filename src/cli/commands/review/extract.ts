@@ -164,9 +164,13 @@ export async function executeReviewExtract(
           decision: 'uncertain',
           comment: '',
         };
-        // Include abstract only for abstract basis
-        if (options.basis === 'abstract' && article.abstract) {
+        // Include abstract for abstract and fulltext basis
+        if ((options.basis === 'abstract' || options.basis === 'fulltext') && article.abstract) {
           workArticle.abstract = article.abstract;
+        }
+        // Include fulltext dirName for fulltext basis
+        if (options.basis === 'fulltext' && article.fulltext) {
+          workArticle.fulltext = article.fulltext.dirName;
         }
         return workArticle;
       }),

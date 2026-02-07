@@ -1811,7 +1811,7 @@ Examples:
 
         // Handle basis option
         if (options.basis) {
-          const validBasis = ['title', 'abstract'];
+          const validBasis = ['title', 'abstract', 'fulltext'];
           if (!validBasis.includes(options.basis)) {
             if (!globalOpts.quiet) {
               console.error(`Error: Invalid basis '${options.basis}'. Valid values: ${validBasis.join(', ')}`);
