@@ -644,3 +644,61 @@ describe('parseJatsReferences', () => {
     expect(refs).toEqual([]);
   });
 });
+
+describe('HTML numeric character reference decoding', () => {
+  it('decodes numeric entities in title text', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group>
+              <article-title>The &#8216;smart&#8217; approach &#8211; a new &#8212; method</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.title).toBe('The \u2018smart\u2019 approach \u2013 a new \u2014 method');
+  });
+
+  it('decodes numeric entities in body text', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Introduction</title>
+            <p>The patient&#8217;s condition improved &#8212; significantly.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const text = para.content.map(c => c.type === 'text' ? c.text : '').join('');
+      expect(text).toContain('\u2019');
+      expect(text).toContain('\u2014');
+      expect(text).not.toContain('&#8217;');
+      expect(text).not.toContain('&#8212;');
+    }
+  });
+
+  it('decodes numeric entities in reference text', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <mixed-citation>Smith J. The patient&#8217;s guide. 2024.</mixed-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs[0]!.text).toContain('\u2019');
+    expect(refs[0]!.text).not.toContain('&#8217;');
+  });
+});

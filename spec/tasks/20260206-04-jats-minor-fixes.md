@@ -31,14 +31,14 @@ After the core `preserveOrder` refactor, several secondary issues remain:
 
 ### Step 1: Decode HTML Numeric Character References
 
-- [ ] Write test: input containing `&#8217;` `&#8216;` `&#8212;` `&#8211;` produces decoded characters `'` `'` `—` `–`
-- [ ] Determine where to apply decoding:
+- [x] Write test: input containing `&#8217;` `&#8216;` `&#8212;` `&#8211;` produces decoded characters `'` `'` `—` `–`
+- [x] Determine where to apply decoding:
   - Option A: Configure `fast-xml-parser` to decode entities (check `htmlEntities`/`processEntities` options)
   - Option B: Post-process text nodes in `extractAllText` or at Markdown writer output
-- [ ] Implement entity decoding
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: no `&#NNNN;` sequences in Markdown output
+- [x] Implement entity decoding
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: no `&#NNNN;` sequences in Markdown output
 
 ### Step 2: Improve Reference Formatting
 

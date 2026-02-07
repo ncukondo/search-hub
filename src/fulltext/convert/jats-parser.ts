@@ -31,6 +31,8 @@ const parser = new XMLParser({
   textNodeName: '#text',
   trimValues: false,
   preserveOrder: true,
+  processEntities: true,
+  htmlEntities: true,
 });
 
 // ─── Navigation Helpers ──────────────────────────────────────────────
