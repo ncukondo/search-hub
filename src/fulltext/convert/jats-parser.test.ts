@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseJatsMetadata, parseJatsBody, parseJatsTable, parseJatsReferences } from './jats-parser.js';
+import { parseJatsMetadata, parseJatsBody, parseJatsTable, parseJatsReferences, parseJatsBackMatter } from './jats-parser.js';
 
 describe('parseJatsMetadata', () => {
   it('extracts title from <article-title>', () => {
@@ -1385,6 +1385,266 @@ describe('parseJatsReferences - pub-id deduplication', () => {
   });
 });
 
+describe('parseJatsBody - underline and sc', () => {
+  it('parses <underline> as plain text (no content loss)', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The <underline>key finding</underline> was significant.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const texts = para.content.filter((c) => c.type === 'text').map((c) => c.type === 'text' ? c.text : '');
+      const combined = texts.join('');
+      expect(combined).toContain('key finding');
+      expect(combined).toContain('The ');
+      expect(combined).toContain(' was significant.');
+    }
+  });
+
+  it('parses <sc> (small caps) as plain text (no content loss)', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>As described by <sc>Smith</sc> and colleagues.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const texts = para.content.filter((c) => c.type === 'text').map((c) => c.type === 'text' ? c.text : '');
+      const combined = texts.join('');
+      expect(combined).toContain('Smith');
+      expect(combined).toContain('As described by ');
+    }
+  });
+});
+
+describe('parseJatsBody - inline-formula', () => {
+  it('parses <inline-formula> with <tex-math> child', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>where <inline-formula><tex-math>p &lt; 0.05</tex-math></inline-formula> was significant</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const formula = para.content.find((c) => c.type === 'inline-formula');
+      expect(formula).toBeDefined();
+      if (formula?.type === 'inline-formula') {
+        expect(formula.tex).toBe('p < 0.05');
+        expect(formula.text).toBe('p < 0.05');
+      }
+    }
+  });
+
+  it('parses <inline-formula> with <alternatives> containing <tex-math>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The value <inline-formula><alternatives><tex-math>\\alpha = 0.01</tex-math><mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>alpha</mml:mi></mml:math></alternatives></inline-formula> was used.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const formula = para.content.find((c) => c.type === 'inline-formula');
+      expect(formula).toBeDefined();
+      if (formula?.type === 'inline-formula') {
+        expect(formula.tex).toBe('\\alpha = 0.01');
+      }
+    }
+  });
+
+  it('parses <inline-formula> without <tex-math> using text fallback', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The ratio <inline-formula>r = 2.5</inline-formula> was observed.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const formula = para.content.find((c) => c.type === 'inline-formula');
+      expect(formula).toBeDefined();
+      if (formula?.type === 'inline-formula') {
+        expect(formula.tex).toBeUndefined();
+        expect(formula.text).toBe('r = 2.5');
+      }
+    }
+  });
+});
+
+describe('parseJatsBody - monospace', () => {
+  it('parses <monospace> as code inline element', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>Run the <monospace>install.sh</monospace> script.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const code = para.content.find((c) => c.type === 'code');
+      expect(code).toBeDefined();
+      if (code?.type === 'code') {
+        expect(code.text).toBe('install.sh');
+      }
+    }
+  });
+
+  it('parses <monospace> for gene name', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The <monospace>BRCA1</monospace> gene was overexpressed.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const code = para.content.find((c) => c.type === 'code');
+      expect(code).toBeDefined();
+      if (code?.type === 'code') {
+        expect(code.text).toBe('BRCA1');
+      }
+    }
+  });
+});
+
+describe('parseJatsBody - ext-link and uri', () => {
+  it('parses <ext-link> with xlink:href as link', () => {
+    const xml = `
+      <article xmlns:xlink="http://www.w3.org/1999/xlink">
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>Software available at <ext-link ext-link-type="uri"
+              xlink:href="https://www.r-project.org/">https://www.r-project.org/</ext-link>.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const link = para.content.find((c) => c.type === 'link');
+      expect(link).toBeDefined();
+      if (link?.type === 'link') {
+        expect(link.url).toBe('https://www.r-project.org/');
+        expect(link.children).toEqual([{ type: 'text', text: 'https://www.r-project.org/' }]);
+      }
+    }
+  });
+
+  it('parses <ext-link> with different display text and URL', () => {
+    const xml = `
+      <article xmlns:xlink="http://www.w3.org/1999/xlink">
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>Visit <ext-link ext-link-type="uri"
+              xlink:href="https://example.com/tool">our analysis tool</ext-link> for details.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const link = para.content.find((c) => c.type === 'link');
+      expect(link).toBeDefined();
+      if (link?.type === 'link') {
+        expect(link.url).toBe('https://example.com/tool');
+        expect(link.children).toEqual([{ type: 'text', text: 'our analysis tool' }]);
+      }
+    }
+  });
+
+  it('parses <uri> element as link', () => {
+    const xml = `
+      <article xmlns:xlink="http://www.w3.org/1999/xlink">
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>Available at <uri xlink:href="https://example.com/data">https://example.com/data</uri>.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const link = para.content.find((c) => c.type === 'link');
+      expect(link).toBeDefined();
+      if (link?.type === 'link') {
+        expect(link.url).toBe('https://example.com/data');
+      }
+    }
+  });
+
+  it('parses <uri> without xlink:href using text content as URL', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Methods</title>
+            <p>See <uri>https://example.com/resource</uri>.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    if (para.type === 'paragraph') {
+      const link = para.content.find((c) => c.type === 'link');
+      expect(link).toBeDefined();
+      if (link?.type === 'link') {
+        expect(link.url).toBe('https://example.com/resource');
+      }
+    }
+  });
+});
+
 describe('HTML numeric character reference decoding', () => {
   it('decodes numeric entities in title text', () => {
     const xml = `
@@ -1784,5 +2044,187 @@ describe('E2E: multi-paragraph table cells in body', () => {
       expect(table.rows[0]![1]).toBe('Welcome the participant.');
       expect(table.rows[1]![0]).toBe('Experience<br>Ask about their daily routine.<br>Follow up on specifics.');
     }
+  });
+});
+
+describe('parseJatsBackMatter - acknowledgments', () => {
+  it('extracts acknowledgment text from <ack>', () => {
+    const xml = `
+      <article>
+        <back>
+          <ack><title>Acknowledgments</title><p>We thank Dr. Smith for assistance.</p></ack>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.acknowledgments).toBe('We thank Dr. Smith for assistance.');
+  });
+
+  it('extracts acknowledgment with multiple paragraphs', () => {
+    const xml = `
+      <article>
+        <back>
+          <ack>
+            <title>Acknowledgements</title>
+            <p>We thank Dr. Smith for assistance.</p>
+            <p>Funding was provided by NIH grant R01.</p>
+          </ack>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.acknowledgments).toContain('We thank Dr. Smith');
+    expect(backMatter.acknowledgments).toContain('Funding was provided');
+  });
+
+  it('returns undefined acknowledgments when <ack> is absent', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list><ref id="r1"><mixed-citation>Test</mixed-citation></ref></ref-list>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.acknowledgments).toBeUndefined();
+  });
+});
+
+describe('parseJatsBackMatter - appendices', () => {
+  it('extracts appendices from <app-group>/<app>', () => {
+    const xml = `
+      <article>
+        <back>
+          <app-group>
+            <app id="app1">
+              <title>Appendix A: Search Strategy</title>
+              <sec>
+                <title>PubMed Search</title>
+                <p>((systematic review) AND ...)</p>
+              </sec>
+            </app>
+          </app-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.appendices).toHaveLength(1);
+    expect(backMatter.appendices![0]!.title).toBe('Appendix A: Search Strategy');
+    expect(backMatter.appendices![0]!.subsections).toHaveLength(1);
+    expect(backMatter.appendices![0]!.subsections[0]!.title).toBe('PubMed Search');
+  });
+
+  it('extracts multiple appendices', () => {
+    const xml = `
+      <article>
+        <back>
+          <app-group>
+            <app id="app1">
+              <title>Appendix A</title>
+              <p>Content A</p>
+            </app>
+            <app id="app2">
+              <title>Appendix B</title>
+              <p>Content B</p>
+            </app>
+          </app-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.appendices).toHaveLength(2);
+    expect(backMatter.appendices![0]!.title).toBe('Appendix A');
+    expect(backMatter.appendices![1]!.title).toBe('Appendix B');
+  });
+
+  it('returns undefined appendices when <app-group> is absent', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list><ref id="r1"><mixed-citation>Test</mixed-citation></ref></ref-list>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.appendices).toBeUndefined();
+  });
+});
+
+describe('parseJatsBackMatter - footnotes', () => {
+  it('extracts footnotes from <fn-group>', () => {
+    const xml = `
+      <article>
+        <back>
+          <fn-group>
+            <fn id="fn1"><p>Footnote one text.</p></fn>
+            <fn id="fn2"><p>Footnote two text.</p></fn>
+          </fn-group>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.footnotes).toHaveLength(2);
+    expect(backMatter.footnotes![0]).toEqual({ id: 'fn1', text: 'Footnote one text.' });
+    expect(backMatter.footnotes![1]).toEqual({ id: 'fn2', text: 'Footnote two text.' });
+  });
+
+  it('returns undefined footnotes when <fn-group> is absent', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list><ref id="r1"><mixed-citation>Test</mixed-citation></ref></ref-list>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.footnotes).toBeUndefined();
+  });
+});
+
+describe('parseJatsBackMatter - floats-group', () => {
+  it('extracts figures and tables from <floats-group>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec><p>See <xref ref-type="fig" rid="fig1">Figure 1</xref>.</p></sec>
+        </body>
+        <floats-group>
+          <fig id="fig1">
+            <label>Figure 1</label>
+            <caption><title>Study flow diagram</title></caption>
+            <graphic xlink:href="fig1.jpg"/>
+          </fig>
+          <table-wrap id="tbl1">
+            <label>Table 1</label>
+            <caption><title>Baseline characteristics</title></caption>
+            <table>
+              <thead><tr><th>Age</th><th>Count</th></tr></thead>
+              <tbody><tr><td>30</td><td>50</td></tr></tbody>
+            </table>
+          </table-wrap>
+        </floats-group>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.floats).toHaveLength(2);
+    expect(backMatter.floats![0]!.type).toBe('figure');
+    if (backMatter.floats![0]!.type === 'figure') {
+      expect(backMatter.floats![0]!.label).toBe('Figure 1');
+      expect(backMatter.floats![0]!.caption).toBe('Study flow diagram');
+    }
+    expect(backMatter.floats![1]!.type).toBe('table');
+    if (backMatter.floats![1]!.type === 'table') {
+      expect(backMatter.floats![1]!.headers).toEqual(['Age', 'Count']);
+    }
+  });
+
+  it('returns undefined floats when <floats-group> is absent', () => {
+    const xml = `
+      <article>
+        <body><sec><p>No floats here.</p></sec></body>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.floats).toBeUndefined();
   });
 });

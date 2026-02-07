@@ -11,6 +11,10 @@ function makeDoc(overrides: Partial<JatsDocument> = {}): JatsDocument {
     },
     sections: overrides.sections ?? [],
     references: overrides.references ?? [],
+    ...(overrides.acknowledgments != null ? { acknowledgments: overrides.acknowledgments } : {}),
+    ...(overrides.appendices != null ? { appendices: overrides.appendices } : {}),
+    ...(overrides.footnotes != null ? { footnotes: overrides.footnotes } : {}),
+    ...(overrides.floats != null ? { floats: overrides.floats } : {}),
   };
 }
 
@@ -265,6 +269,126 @@ describe('writeMarkdown', () => {
     });
     const md = writeMarkdown(doc);
     expect(md).toContain('Normal **bold** and *italic* and ^2^ end.');
+  });
+
+  it('renders inline-formula with TeX as $...$', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Methods',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'where ' },
+                { type: 'inline-formula', tex: 'p < 0.05', text: 'p < 0.05' },
+                { type: 'text', text: ' was significant' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('where $p < 0.05$ was significant');
+  });
+
+  it('renders inline-formula without TeX as plain text', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Results',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'ratio ' },
+                { type: 'inline-formula', text: 'r = 2.5' },
+                { type: 'text', text: ' observed' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('ratio r = 2.5 observed');
+  });
+
+  it('renders code as backtick-quoted text', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Methods',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Run the ' },
+                { type: 'code', text: 'install.sh' },
+                { type: 'text', text: ' script.' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Run the `install.sh` script.');
+  });
+
+  it('renders link as Markdown link [text](url)', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Methods',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Visit ' },
+                { type: 'link', url: 'https://example.com/tool', children: [{ type: 'text', text: 'our tool' }] },
+                { type: 'text', text: ' for details.' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Visit [our tool](https://example.com/tool) for details.');
+  });
+
+  it('renders link as bare URL when display text equals URL', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Methods',
+          level: 2,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Available at ' },
+                { type: 'link', url: 'https://www.r-project.org/', children: [{ type: 'text', text: 'https://www.r-project.org/' }] },
+                { type: 'text', text: '.' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Available at https://www.r-project.org/.');
   });
 
   it('generates references section', () => {
@@ -586,5 +710,98 @@ describe('writeMarkdown', () => {
     // Empty section title is skipped
     expect(md).not.toMatch(/^## $/m);
     expect(md).toContain('Supplementary material.');
+  });
+});
+
+describe('writeMarkdown - acknowledgments', () => {
+  it('renders acknowledgments section before References', () => {
+    const doc = makeDoc({
+      acknowledgments: 'We thank Dr. Smith for assistance.',
+      references: [{ id: 'ref1', text: 'Smith J. Title. 2024.' }],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('## Acknowledgments');
+    expect(md).toContain('We thank Dr. Smith for assistance.');
+    const ackPos = md.indexOf('## Acknowledgments');
+    const refPos = md.indexOf('## References');
+    expect(ackPos).toBeLessThan(refPos);
+  });
+
+  it('does not render acknowledgments section when absent', () => {
+    const doc = makeDoc();
+    const md = writeMarkdown(doc);
+    expect(md).not.toContain('## Acknowledgments');
+  });
+});
+
+describe('writeMarkdown - appendices', () => {
+  it('renders appendices after References', () => {
+    const doc = makeDoc({
+      references: [{ id: 'ref1', text: 'Smith J. Title. 2024.' }],
+      appendices: [
+        {
+          title: 'Appendix A: Search Strategy',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Search details here.' }] },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('## Appendix A: Search Strategy');
+    expect(md).toContain('Search details here.');
+    const refPos = md.indexOf('## References');
+    const appPos = md.indexOf('## Appendix A');
+    expect(appPos).toBeGreaterThan(refPos);
+  });
+
+  it('does not render appendices section when absent', () => {
+    const doc = makeDoc();
+    const md = writeMarkdown(doc);
+    expect(md).not.toContain('Appendix');
+  });
+});
+
+describe('writeMarkdown - footnotes', () => {
+  it('renders footnotes as numbered list at end of document', () => {
+    const doc = makeDoc({
+      footnotes: [
+        { id: 'fn1', text: 'First footnote.' },
+        { id: 'fn2', text: 'Second footnote.' },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('## Footnotes');
+    expect(md).toContain('1. First footnote.');
+    expect(md).toContain('2. Second footnote.');
+  });
+
+  it('does not render footnotes section when absent', () => {
+    const doc = makeDoc();
+    const md = writeMarkdown(doc);
+    expect(md).not.toContain('## Footnotes');
+  });
+});
+
+describe('writeMarkdown - floats', () => {
+  it('renders floats as Figures and Tables section', () => {
+    const doc = makeDoc({
+      floats: [
+        { type: 'figure', id: 'fig1', label: 'Figure 1', caption: 'Study flow' },
+        { type: 'table', caption: 'Table 1. Demographics', headers: ['Age', 'N'], rows: [['30', '50']] },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('## Figures and Tables');
+    expect(md).toContain('![Figure 1. Study flow]()');
+    expect(md).toContain('| Age | N |');
+  });
+
+  it('does not render floats section when absent', () => {
+    const doc = makeDoc();
+    const md = writeMarkdown(doc);
+    expect(md).not.toContain('## Figures and Tables');
   });
 });

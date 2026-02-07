@@ -14,6 +14,7 @@ import type {
   JatsMetadata,
   JatsSection,
   JatsReference,
+  JatsFootnote,
   BlockElement,
   InlineContent,
 } from './types.js';
@@ -341,6 +342,44 @@ function parseInlineContent(children: OrderedNode[]): InlineContent[] {
       result.push({ type: 'superscript', text: extractAllText(innerChildren) });
     } else if (tag === 'sub') {
       result.push({ type: 'subscript', text: extractAllText(innerChildren) });
+    } else if (tag === 'inline-formula') {
+      // Try to find <tex-math> directly or inside <alternatives>
+      let texMath = findChild(innerChildren, 'tex-math');
+      if (!texMath) {
+        const alternatives = findChild(innerChildren, 'alternatives');
+        if (alternatives) {
+          texMath = findChild(alternatives.children, 'tex-math');
+        }
+      }
+      const tex = texMath ? extractAllText(texMath.children) : undefined;
+      const text = tex || extractAllText(innerChildren);
+      const entry: { type: 'inline-formula'; tex?: string; text: string } = {
+        type: 'inline-formula',
+        text,
+      };
+      if (tex) entry.tex = tex;
+      result.push(entry);
+    } else if (tag === 'monospace') {
+      result.push({ type: 'code', text: extractAllText(innerChildren) });
+    } else if (tag === 'ext-link') {
+      const href = getAttr(child, 'xlink:href');
+      if (href) {
+        result.push({ type: 'link', url: href, children: parseInlineContent(innerChildren) });
+      } else {
+        const linkText = extractAllText(innerChildren);
+        if (linkText) result.push({ type: 'text', text: linkText });
+      }
+    } else if (tag === 'uri') {
+      const href = getAttr(child, 'xlink:href');
+      const textContent = extractAllText(innerChildren);
+      const url = href || textContent;
+      if (url) {
+        result.push({ type: 'link', url, children: parseInlineContent(innerChildren) });
+      }
+    } else if (tag === 'underline' || tag === 'sc') {
+      // Pass-through: preserve text content without special formatting
+      const passText = extractAllText(innerChildren);
+      if (passText) result.push({ type: 'text', text: passText });
     } else if (tag === 'xref') {
       const refType = getAttr(child, 'ref-type');
       if (refType === 'bibr') {
@@ -901,4 +940,83 @@ export function parseJatsReferences(xml: string): JatsReference[] {
   }
 
   return references;
+}
+
+// ─── Back Matter & Floats Parsing ────────────────────────────────────
+
+/** Result of parsing back matter and floats-group. */
+export interface BackMatterResult {
+  acknowledgments?: string;
+  appendices?: JatsSection[];
+  footnotes?: JatsFootnote[];
+  floats?: BlockElement[];
+}
+
+/**
+ * Parse JATS XML back matter sections (ack, app-group, fn-group)
+ * and top-level floats-group.
+ */
+export function parseJatsBackMatter(xml: string): BackMatterResult {
+  const parsed = parser.parse(xml) as OrderedNode[];
+  const article = findArticle(parsed);
+  if (!article) return {};
+
+  const result: BackMatterResult = {};
+
+  // Parse <back> children
+  const back = findChild(article.children, 'back');
+  if (back) {
+    // Acknowledgments: <ack>
+    const ack = findChild(back.children, 'ack');
+    if (ack) {
+      const paragraphs = findChildren(ack.children, 'p');
+      if (paragraphs.length > 0) {
+        result.acknowledgments = paragraphs
+          .map((p) => extractAllText(p.children))
+          .join('\n\n');
+      }
+    }
+
+    // Appendices: <app-group>/<app>
+    const appGroup = findChild(back.children, 'app-group');
+    if (appGroup) {
+      const apps = findChildren(appGroup.children, 'app');
+      if (apps.length > 0) {
+        result.appendices = apps.map((app) => parseSection(app.children, 2));
+      }
+    }
+
+    // Footnotes: <fn-group>/<fn>
+    const fnGroup = findChild(back.children, 'fn-group');
+    if (fnGroup) {
+      const fns = findChildren(fnGroup.children, 'fn');
+      if (fns.length > 0) {
+        result.footnotes = fns.map((fn) => ({
+          id: fn.attrs['id'] ?? '',
+          text: extractAllText(
+            findChildren(fn.children, 'p').flatMap((p) => p.children),
+          ),
+        }));
+      }
+    }
+  }
+
+  // Floats-group: <floats-group> (sibling of <body> and <back>)
+  const floatsGroup = findChild(article.children, 'floats-group');
+  if (floatsGroup) {
+    const blocks: BlockElement[] = [];
+    for (const child of floatsGroup.children) {
+      const tag = getTagName(child);
+      if (tag === 'fig') {
+        blocks.push(parseFigBlock(child));
+      } else if (tag === 'table-wrap') {
+        blocks.push(parseTableBlock(child));
+      }
+    }
+    if (blocks.length > 0) {
+      result.floats = blocks;
+    }
+  }
+
+  return result;
 }

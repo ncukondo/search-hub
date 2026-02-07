@@ -7,6 +7,7 @@
 import type {
   JatsDocument,
   JatsSection,
+  JatsFootnote,
   BlockElement,
   InlineContent,
   JatsReference,
@@ -44,6 +45,15 @@ function renderInline(content: InlineContent[]): string {
           return `~${node.text}~`;
         case 'citation':
           return node.text;
+        case 'code':
+          return `\`${node.text}\``;
+        case 'inline-formula':
+          return node.tex ? `$${node.tex}$` : node.text;
+        case 'link': {
+          const linkText = renderInline(node.children);
+          if (linkText === node.url) return node.url;
+          return `[${linkText}](${node.url})`;
+        }
       }
     })
     .join('');
@@ -181,6 +191,32 @@ function renderReferences(references: JatsReference[]): string {
 }
 
 /**
+ * Render footnotes section.
+ */
+function renderFootnotes(footnotes: JatsFootnote[]): string {
+  if (footnotes.length === 0) return '';
+  const lines: string[] = ['## Footnotes', ''];
+  footnotes.forEach((fn, i) => {
+    lines.push(`${i + 1}. ${fn.text}`);
+  });
+  lines.push('');
+  return lines.join('\n');
+}
+
+/**
+ * Render floats (figures and tables) section.
+ */
+function renderFloats(floats: BlockElement[]): string {
+  if (floats.length === 0) return '';
+  const lines: string[] = ['## Figures and Tables', ''];
+  for (const block of floats) {
+    lines.push(renderBlock(block));
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+/**
  * Convert a parsed JATS document to Markdown string.
  */
 export function writeMarkdown(doc: JatsDocument): string {
@@ -223,9 +259,34 @@ export function writeMarkdown(doc: JatsDocument): string {
     lines.push(renderSection(section));
   }
 
+  // Acknowledgments (before References)
+  if (doc.acknowledgments) {
+    lines.push('## Acknowledgments');
+    lines.push('');
+    lines.push(doc.acknowledgments);
+    lines.push('');
+  }
+
   // References
   if (doc.references.length > 0) {
     lines.push(renderReferences(doc.references));
+  }
+
+  // Appendices (after References)
+  if (doc.appendices && doc.appendices.length > 0) {
+    for (const appendix of doc.appendices) {
+      lines.push(renderSection(appendix));
+    }
+  }
+
+  // Footnotes
+  if (doc.footnotes && doc.footnotes.length > 0) {
+    lines.push(renderFootnotes(doc.footnotes));
+  }
+
+  // Floats (Figures and Tables from floats-group)
+  if (doc.floats && doc.floats.length > 0) {
+    lines.push(renderFloats(doc.floats));
   }
 
   return lines.join('\n').trimEnd() + '\n';
