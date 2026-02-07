@@ -36,29 +36,29 @@ Merge Summary:
 
 ### Step 1: Extend `ReviewMergeResult` with Decision Breakdown
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts`
+- [x] Write test: `src/cli/commands/review/merge.test.ts`
   - Work file with 3 include, 2 exclude, 1 uncertain → breakdown counts match
   - Work file with all exclude → `includeCount: 0, excludeCount: N, uncertainCount: 0`
   - Review file with `finalDecision` set → `finalDecisionsSet` count correct
-- [ ] Add `includeCount`, `excludeCount`, `uncertainCount` to `ReviewMergeResult`
-- [ ] Verify test fails (Red)
-- [ ] Count decisions in `processWorkFile()` and `processReviewFile()`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Decision counts are accurate
+- [x] Add `includeCount`, `excludeCount`, `uncertainCount` to `ReviewMergeResult`
+- [x] Verify test fails (Red)
+- [x] Count decisions in `processWorkFile()` and `processReviewFile()`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Decision counts are accurate
 
 ### Step 2: Update `formatMergeOutput`
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts`
+- [x] Write test: `src/cli/commands/review/merge.test.ts`
   - Work file merge output: `Reviews added: 93 (53 exclude, 36 include, 4 uncertain)`
   - Review file merge output with finalDecisions: shows both reviews and final decisions
   - Zero reviews: `Reviews added: 0`
   - Omit zero-count categories: if no uncertain, don't show it in breakdown
-- [ ] Update `formatMergeOutput()` to render breakdown
-- [ ] Remove or rename the confusing `Decisions set: 0` line for work file merges
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Output is clear and informative
+- [x] Update `formatMergeOutput()` to render breakdown
+- [x] Remove or rename the confusing `Decisions set: 0` line for work file merges
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Output is clear and informative
 
 ### Final Step: E2E Integration Tests
 
