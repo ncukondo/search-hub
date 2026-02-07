@@ -25,6 +25,7 @@ describe('writeMarkdown', () => {
         ],
         doi: '10.1234/example',
         pmcid: '1234567',
+        pmid: '38654321',
       },
     });
     const md = writeMarkdown(doc);
@@ -32,6 +33,7 @@ describe('writeMarkdown', () => {
     expect(md).toContain('**Authors**: Smith J, Jones A');
     expect(md).toContain('**DOI**: 10.1234/example');
     expect(md).toContain('**PMC**: PMC1234567');
+    expect(md).toContain('**PMID**: 38654321');
   });
 
   it('converts sections to ## headings', () => {

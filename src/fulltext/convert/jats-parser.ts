@@ -240,6 +240,7 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   const articleIds = findChildren(metaChildren, 'article-id');
   let doi: string | undefined;
   let pmcid: string | undefined;
+  let pmid: string | undefined;
   for (const idEntry of articleIds) {
     const idType = idEntry.attrs['pub-id-type'];
     const idText = extractAllText(idEntry.children);
@@ -247,6 +248,7 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
     if (idType === 'pmc' || idType === 'pmcid') {
       pmcid = idText.replace(/^PMC/, '');
     }
+    if (idType === 'pmid') pmid = idText;
   }
 
   // Authors
@@ -306,6 +308,7 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   const result: JatsMetadata = { title, authors };
   if (doi) result.doi = doi;
   if (pmcid) result.pmcid = pmcid;
+  if (pmid) result.pmid = pmid;
   if (abstract) result.abstract = abstract;
   return result;
 }

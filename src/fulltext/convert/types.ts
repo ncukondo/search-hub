@@ -15,6 +15,7 @@ export interface JatsMetadata {
   authors: JatsAuthor[];
   doi?: string;
   pmcid?: string;
+  pmid?: string;
   abstract?: string;
 }
 

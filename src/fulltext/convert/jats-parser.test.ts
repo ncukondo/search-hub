@@ -179,6 +179,23 @@ describe('parseJatsMetadata', () => {
     expect(metadata.abstract).toBeUndefined();
   });
 
+  it('extracts PMID from <article-id pub-id-type="pmid">', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <article-id pub-id-type="pmid">12345678</article-id>
+            <title-group>
+              <article-title>Test</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.pmid).toBe('12345678');
+  });
+
   it('handles multiple article-id elements', () => {
     const xml = `
       <article>
@@ -197,6 +214,7 @@ describe('parseJatsMetadata', () => {
     const metadata = parseJatsMetadata(xml);
     expect(metadata.doi).toBe('10.1234/example');
     expect(metadata.pmcid).toBe('7654321');
+    expect(metadata.pmid).toBe('12345678');
   });
 
   it('skips non-author contributors', () => {
