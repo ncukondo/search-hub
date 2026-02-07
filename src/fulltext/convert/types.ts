@@ -49,9 +49,19 @@ export interface JatsReference {
   text: string;
 }
 
+/** A footnote from back matter fn-group. */
+export interface JatsFootnote {
+  id: string;
+  text: string;
+}
+
 /** Complete parsed JATS document. */
 export interface JatsDocument {
   metadata: JatsMetadata;
   sections: JatsSection[];
   references: JatsReference[];
+  acknowledgments?: string;
+  appendices?: JatsSection[];
+  footnotes?: JatsFootnote[];
+  floats?: BlockElement[];
 }

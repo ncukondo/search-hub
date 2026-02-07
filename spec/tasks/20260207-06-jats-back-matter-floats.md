@@ -32,7 +32,7 @@ The current parser only extracts `<ref-list>` from `<back>` matter. Other back m
 
 ### Step 1: Add back matter sections to `JatsDocument`
 
-- [ ] Extend `JatsDocument` interface with optional back matter fields:
+- [x] Extend `JatsDocument` interface with optional back matter fields:
   ```typescript
   export interface JatsDocument {
     metadata: JatsMetadata;
@@ -43,22 +43,22 @@ The current parser only extracts `<ref-list>` from `<back>` matter. Other back m
     footnotes?: { id: string; text: string }[];
   }
   ```
-- [ ] Run `npm run typecheck` to identify affected call sites
+- [x] Run `npm run typecheck` to identify affected call sites
 
 ### Step 2: Parse `<ack>` (Acknowledgments)
 
-- [ ] Write test: XML with `<back><ack><title>Acknowledgments</title><p>We thank...</p></ack></back>` extracts acknowledgment text
-- [ ] Verify test fails (Red)
-- [ ] Add `parseJatsAcknowledgments(xml)` or extend existing parsing to extract `<ack>` from `<back>`
-- [ ] Verify test passes (Green)
-- [ ] Add `writeMarkdown()` rendering: output as `## Acknowledgments` section before References
-- [ ] Write markdown-writer test
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: acknowledgments section appears in Markdown
+- [x] Write test: XML with `<back><ack><title>Acknowledgments</title><p>We thank...</p></ack></back>` extracts acknowledgment text
+- [x] Verify test fails (Red)
+- [x] Add `parseJatsAcknowledgments(xml)` or extend existing parsing to extract `<ack>` from `<back>`
+- [x] Verify test passes (Green)
+- [x] Add `writeMarkdown()` rendering: output as `## Acknowledgments` section before References
+- [x] Write markdown-writer test
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: acknowledgments section appears in Markdown
 
 ### Step 3: Parse `<app-group>` / `<app>` (Appendices)
 
-- [ ] Write test: XML with appendix containing sections, paragraphs, and tables
+- [x] Write test: XML with appendix containing sections, paragraphs, and tables
   ```xml
   <back>
     <app-group>
@@ -72,27 +72,27 @@ The current parser only extracts `<ref-list>` from `<back>` matter. Other back m
     </app-group>
   </back>
   ```
-- [ ] Verify test fails (Red)
-- [ ] Add appendix parsing — reuse `parseSection()` for each `<app>` (appendices have the same internal structure as body sections)
-- [ ] Verify test passes (Green)
-- [ ] Add `writeMarkdown()` rendering: output each appendix as a section after References
-- [ ] Write markdown-writer test
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: appendix content appears in Markdown with proper headings
+- [x] Verify test fails (Red)
+- [x] Add appendix parsing — reuse `parseSection()` for each `<app>` (appendices have the same internal structure as body sections)
+- [x] Verify test passes (Green)
+- [x] Add `writeMarkdown()` rendering: output each appendix as a section after References
+- [x] Write markdown-writer test
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: appendix content appears in Markdown with proper headings
 
 ### Step 4: Parse `<fn-group>` (Footnotes)
 
-- [ ] Write test: XML with `<fn-group>` containing `<fn id="fn1"><p>Footnote text</p></fn>`
-- [ ] Verify test fails (Red)
-- [ ] Add footnote extraction from `<back>/<fn-group>`
-- [ ] Add `writeMarkdown()` rendering: output as numbered footnote list at end of document
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: footnotes appear at end of Markdown document
+- [x] Write test: XML with `<fn-group>` containing `<fn id="fn1"><p>Footnote text</p></fn>`
+- [x] Verify test fails (Red)
+- [x] Add footnote extraction from `<back>/<fn-group>`
+- [x] Add `writeMarkdown()` rendering: output as numbered footnote list at end of document
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: footnotes appear at end of Markdown document
 
 ### Step 5: Parse `<floats-group>` figures and tables
 
-- [ ] Write test: XML where figures are in `<floats-group>` instead of inline in `<body>`
+- [x] Write test: XML where figures are in `<floats-group>` instead of inline in `<body>`
   ```xml
   <article>
     <body>
@@ -112,22 +112,22 @@ The current parser only extracts `<ref-list>` from `<back>` matter. Other back m
     </floats-group>
   </article>
   ```
-- [ ] Verify test fails (Red)
-- [ ] Add `<floats-group>` parsing — extract `<fig>` and `<table-wrap>` elements using existing parsers
-- [ ] Extend `JatsDocument` with `floats?: BlockElement[]` or append to a dedicated section
-- [ ] Add `writeMarkdown()` rendering: output floats as an appendix-like section or inline where referenced
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: figures and tables from `<floats-group>` appear in Markdown output
+- [x] Verify test fails (Red)
+- [x] Add `<floats-group>` parsing — extract `<fig>` and `<table-wrap>` elements using existing parsers
+- [x] Extend `JatsDocument` with `floats?: BlockElement[]` or append to a dedicated section
+- [x] Add `writeMarkdown()` rendering: output floats as an appendix-like section or inline where referenced
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: figures and tables from `<floats-group>` appear in Markdown output
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
+- [x] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
   - Test full conversion with back matter sections
   - Test with `<floats-group>` containing figures
-- [ ] Verify Markdown output contains acknowledgments, appendices, and floats
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Convert PMC articles with substantial appendices
+- [x] Verify Markdown output contains acknowledgments, appendices, and floats
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Convert PMC articles with substantial appendices
 
 ## Notes
 
