@@ -612,7 +612,8 @@ export function parseJatsReferences(xml: string): JatsReference[] {
     }
 
     // Fallback: extract all text from ref, skipping <label>
-    const text = extractAllText(ref.children).trim();
+    const childrenWithoutLabel = ref.children.filter((c) => !('label' in c));
+    const text = extractAllText(childrenWithoutLabel).trim();
     if (id && text) {
       references.push({ id, text });
     }

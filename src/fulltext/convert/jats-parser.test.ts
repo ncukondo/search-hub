@@ -804,6 +804,27 @@ describe('parseJatsReferences - element-citation formatting', () => {
     expect(refs[0]!.text).toBe('Test A. Title. J Test. 2020.');
   });
 
+  it('falls back to extractAllText when ref has no mixed-citation or element-citation, skipping label', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list>
+            <ref id="ref1">
+              <label>1.</label>
+              <nlm-citation>Smith J. Some paper. Journal. 2024;1:1-10.</nlm-citation>
+            </ref>
+          </ref-list>
+        </back>
+      </article>
+    `;
+    const refs = parseJatsReferences(xml);
+    expect(refs).toHaveLength(1);
+    expect(refs[0]!.id).toBe('ref1');
+    // Label "1." should not appear in the extracted text
+    expect(refs[0]!.text).not.toMatch(/^1\./);
+    expect(refs[0]!.text).toBe('Smith J. Some paper. Journal. 2024;1:1-10.');
+  });
+
   it('falls back to extractAllText for mixed-citation', () => {
     const xml = `
       <article>
