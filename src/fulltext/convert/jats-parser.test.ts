@@ -159,6 +159,230 @@ describe('parseJatsMetadata', () => {
     expect(metadata.pmcid).toBe('11293181');
   });
 
+  it('extracts journal name from <journal-title-group>', () => {
+    const xml = `
+      <article>
+        <front>
+          <journal-meta>
+            <journal-title-group>
+              <journal-title>BMJ Open</journal-title>
+            </journal-title-group>
+          </journal-meta>
+          <article-meta>
+            <title-group>
+              <article-title>Test</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.journal).toBe('BMJ Open');
+  });
+
+  it('extracts journal name from <journal-title> directly under <journal-meta> (fallback)', () => {
+    const xml = `
+      <article>
+        <front>
+          <journal-meta>
+            <journal-title>Nature Medicine</journal-title>
+          </journal-meta>
+          <article-meta>
+            <title-group>
+              <article-title>Test</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.journal).toBe('Nature Medicine');
+  });
+
+  it('extracts publication date from <pub-date pub-type="epub">', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <pub-date pub-type="epub"><year>2024</year><month>03</month><day>15</day></pub-date>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.publicationDate).toBeDefined();
+    expect(metadata.publicationDate!.year).toBe('2024');
+    expect(metadata.publicationDate!.month).toBeDefined();
+    expect(metadata.publicationDate!.day).toBeDefined();
+  });
+
+  it('prefers epub over ppub over collection for publication date', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <pub-date pub-type="collection"><year>2023</year></pub-date>
+            <pub-date pub-type="ppub"><year>2024</year><month>06</month></pub-date>
+            <pub-date pub-type="epub"><year>2024</year><month>03</month><day>15</day></pub-date>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.publicationDate).toBeDefined();
+    // epub should be preferred (year 2024, month 3, day 15)
+    expect(metadata.publicationDate!.year).toBe('2024');
+    expect(metadata.publicationDate!.day).toBeDefined();
+  });
+
+  it('supports JATS 1.2+ date-type attribute for publication date', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <pub-date date-type="pub" publication-format="electronic"><year>2024</year><month>05</month></pub-date>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.publicationDate).toBeDefined();
+    expect(metadata.publicationDate!.year).toBe('2024');
+    expect(metadata.publicationDate!.month).toBeDefined();
+    expect(metadata.publicationDate!.day).toBeUndefined();
+  });
+
+  it('extracts volume, issue, and pages from article-meta', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <volume>10</volume>
+            <issue>2</issue>
+            <fpage>100</fpage>
+            <lpage>110</lpage>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.volume).toBe('10');
+    expect(metadata.issue).toBe('2');
+    expect(metadata.pages).toBe('100-110');
+  });
+
+  it('extracts elocation-id as pages when no fpage/lpage', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <volume>89</volume>
+            <elocation-id>e102945</elocation-id>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.volume).toBe('89');
+    expect(metadata.pages).toBe('e102945');
+  });
+
+  it('extracts keywords from <kwd-group>', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <kwd-group>
+              <kwd>systematic review</kwd>
+              <kwd>meta-analysis</kwd>
+            </kwd-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.keywords).toEqual(['systematic review', 'meta-analysis']);
+  });
+
+  it('merges keywords from multiple <kwd-group> elements', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <kwd-group kwd-group-type="author">
+              <kwd>deep learning</kwd>
+              <kwd>imaging</kwd>
+            </kwd-group>
+            <kwd-group kwd-group-type="MeSH">
+              <kwd>Alzheimer Disease</kwd>
+            </kwd-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.keywords).toEqual(['deep learning', 'imaging', 'Alzheimer Disease']);
+  });
+
+  it('extracts article-type from root <article> element', () => {
+    const xml = `
+      <article article-type="research-article">
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.articleType).toBe('research-article');
+  });
+
+  it('extracts license from <permissions>/<license> using @xlink:href', () => {
+    const xml = `
+      <article xmlns:xlink="http://www.w3.org/1999/xlink">
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <permissions>
+              <license xlink:href="https://creativecommons.org/licenses/by/4.0/">
+                <license-p>This is an open access article distributed under the CC-BY license.</license-p>
+              </license>
+            </permissions>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.license).toBe('https://creativecommons.org/licenses/by/4.0/');
+  });
+
+  it('extracts license text from <license-p> when no @xlink:href', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <permissions>
+              <license>
+                <license-p>This is an open access article.</license-p>
+              </license>
+            </permissions>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.license).toBe('This is an open access article.');
+  });
+
   it('handles missing optional fields gracefully', () => {
     const xml = `
       <article>
@@ -179,6 +403,23 @@ describe('parseJatsMetadata', () => {
     expect(metadata.abstract).toBeUndefined();
   });
 
+  it('extracts PMID from <article-id pub-id-type="pmid">', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <article-id pub-id-type="pmid">12345678</article-id>
+            <title-group>
+              <article-title>Test</article-title>
+            </title-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.pmid).toBe('12345678');
+  });
+
   it('handles multiple article-id elements', () => {
     const xml = `
       <article>
@@ -197,6 +438,7 @@ describe('parseJatsMetadata', () => {
     const metadata = parseJatsMetadata(xml);
     expect(metadata.doi).toBe('10.1234/example');
     expect(metadata.pmcid).toBe('7654321');
+    expect(metadata.pmid).toBe('12345678');
   });
 
   it('skips non-author contributors', () => {

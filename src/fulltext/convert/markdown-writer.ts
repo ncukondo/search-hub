@@ -197,7 +197,61 @@ export function writeMarkdown(doc: JatsDocument): string {
     lines.push(`**PMC**: PMC${doc.metadata.pmcid}`);
   }
 
-  if (doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid) {
+  // PMID
+  if (doc.metadata.pmid) {
+    lines.push(`**PMID**: ${doc.metadata.pmid}`);
+  }
+
+  // Journal
+  if (doc.metadata.journal) {
+    lines.push(`**Journal**: ${doc.metadata.journal}`);
+  }
+
+  // Published date
+  if (doc.metadata.publicationDate) {
+    const d = doc.metadata.publicationDate;
+    let dateStr = d.year;
+    if (d.month) {
+      dateStr += `-${d.month.padStart(2, '0')}`;
+      if (d.day) dateStr += `-${d.day.padStart(2, '0')}`;
+    }
+    lines.push(`**Published**: ${dateStr}`);
+  }
+
+  // Citation (volume/issue/pages)
+  if (doc.metadata.volume || doc.metadata.issue || doc.metadata.pages) {
+    const parts: string[] = [];
+    if (doc.metadata.volume) parts.push(`Vol. ${doc.metadata.volume}`);
+    if (doc.metadata.issue) parts.push(`(${doc.metadata.issue})`);
+    if (doc.metadata.pages) parts.push(`pp. ${doc.metadata.pages}`);
+    // Join: "Vol. 10(2), pp. 100-110" or similar
+    let citation = '';
+    if (doc.metadata.volume && doc.metadata.issue) {
+      citation = `Vol. ${doc.metadata.volume}(${doc.metadata.issue})`;
+      if (doc.metadata.pages) citation += `, pp. ${doc.metadata.pages}`;
+    } else {
+      citation = parts.join(', ');
+    }
+    lines.push(`**Citation**: ${citation}`);
+  }
+
+  // Article type
+  if (doc.metadata.articleType) {
+    lines.push(`**Article Type**: ${doc.metadata.articleType}`);
+  }
+
+  // Keywords
+  if (doc.metadata.keywords && doc.metadata.keywords.length > 0) {
+    lines.push(`**Keywords**: ${doc.metadata.keywords.join(', ')}`);
+  }
+
+  // License
+  if (doc.metadata.license) {
+    lines.push(`**License**: ${doc.metadata.license}`);
+  }
+
+  const hasMetaLines = doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal || doc.metadata.publicationDate || doc.metadata.volume || doc.metadata.pages || (doc.metadata.keywords && doc.metadata.keywords.length > 0) || doc.metadata.articleType || doc.metadata.license;
+  if (hasMetaLines) {
     lines.push('');
   }
 
