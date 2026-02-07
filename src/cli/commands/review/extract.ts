@@ -5,7 +5,7 @@
 import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir, copyFile, access } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { classifyStatus, type ReviewFile, type ArticleEntry, type ReviewStatus, type ReviewBasis, type WorkFile, type WorkFileArticle } from './types.js';
+import { classifyStatus, type ReviewFile, type ArticleEntry, type ReviewStatus, type ReviewBasis } from './types.js';
 
 export type SortOption = 'year' | 'title' | 'random' | 'none';
 
@@ -77,9 +77,11 @@ function getArticleId(article: ArticleEntry): string {
 }
 
 function getBasisGuidanceComment(basis: ReviewBasis): string {
+  const schemaLine = '# yaml-language-server: $schema=./review.schema.json';
   switch (basis) {
     case 'title':
       return [
+        schemaLine,
         '# Screening by title only.',
         '# Mark clearly irrelevant items as "exclude" with a comment explaining the reason.',
         '# Leave everything else as "uncertain".',
@@ -87,6 +89,7 @@ function getBasisGuidanceComment(basis: ReviewBasis): string {
       ].join('\n');
     case 'abstract':
       return [
+        schemaLine,
         '# Screening by title and abstract.',
         '# You should be able to decide "include" or "exclude" for most items at this stage.',
         '# Mark remaining ambiguous items as "uncertain" with a comment explaining why.',
@@ -94,12 +97,49 @@ function getBasisGuidanceComment(basis: ReviewBasis): string {
       ].join('\n');
     case 'fulltext':
       return [
+        schemaLine,
         '# Screening by full text. This is the final decision stage.',
         '# Decide "include" or "exclude" for each item.',
         '# Use "uncertain" only when absolutely unavoidable, with a comment explaining why.',
         '',
       ].join('\n');
   }
+}
+
+function getDecisionInlineComment(basis: ReviewBasis): string {
+  switch (basis) {
+    case 'title':
+      return '# exclude / uncertain';
+    case 'abstract':
+    case 'fulltext':
+      return '# include / exclude / uncertain';
+  }
+}
+
+/** Build a screening article for --basis mode: only include fields relevant to the basis */
+function buildScreeningArticle(article: ArticleEntry, basis: ReviewBasis): ArticleEntry {
+  // Start with identifiers
+  const result: ArticleEntry = { title: article.title, reviews: [] };
+  if (article.doi) result.doi = article.doi;
+  if (article.pmid) result.pmid = article.pmid;
+  if (article.scopusId) result.scopusId = article.scopusId;
+  if (article.arxivId) result.arxivId = article.arxivId;
+  if (article.ericId) result.ericId = article.ericId;
+
+  // Include abstract for abstract and fulltext basis
+  if ((basis === 'abstract' || basis === 'fulltext') && article.abstract) {
+    result.abstract = article.abstract;
+  }
+
+  // Include fulltext ref for fulltext basis
+  if (basis === 'fulltext' && article.fulltext) {
+    result.fulltext = article.fulltext;
+  }
+
+  // Pre-populate reviews (reviewer omitted; filled from top-level field on merge)
+  result.reviews = [{ decision: 'uncertain' as const, comment: '' } as ArticleEntry['reviews'][0]];
+
+  return result;
 }
 
 /**
@@ -177,48 +217,37 @@ export async function executeReviewExtract(
     paginated = paginated.slice(0, options.limit);
   }
 
+  if (!options.reviewer) {
+    throw new Error('--reviewer is required for review file extract');
+  }
+
   let finalContent: string;
 
-  // If basis is specified, output work file format
-  if (options.basis && options.reviewer) {
-    const workFile: WorkFile = {
+  if (options.basis) {
+    // Screening mode: basis-scoped content with pre-populated reviews
+    const outputFile: ReviewFile = {
       sessionId: options.sessionId,
       basis: options.basis,
       reviewer: options.reviewer,
-      articles: paginated.map((article) => {
-        const workArticle: WorkFileArticle = {
-          id: getArticleId(article),
-          title: article.title,
-          decision: 'uncertain',
-          comment: '',
-        };
-        // Include abstract for abstract and fulltext basis
-        if ((options.basis === 'abstract' || options.basis === 'fulltext') && article.abstract) {
-          workArticle.abstract = article.abstract;
-        }
-        // Include fulltext dirName for fulltext basis
-        if (options.basis === 'fulltext' && article.fulltext) {
-          workArticle.fulltext = article.fulltext.dirName;
-        }
-        return workArticle;
-      }),
+      articles: paginated.map((article) => buildScreeningArticle(article, options.basis!)),
     };
 
-    const yamlContent = stringifyYaml(workFile, {
-      lineWidth: 0,
-    });
+    const yamlContent = stringifyYaml(outputFile, { lineWidth: 0 });
 
-    // Add basis-specific guidance comment at the top
+    // Add decision inline comments
+    const decisionComment = getDecisionInlineComment(options.basis);
+    const yamlWithComments = yamlContent.replace(
+      /^(\s*-?\s*)decision: uncertain$/gm,
+      `$1decision: uncertain          ${decisionComment}`
+    );
+
     const guidanceComment = getBasisGuidanceComment(options.basis);
-    finalContent = guidanceComment + yamlContent;
+    finalContent = guidanceComment + yamlWithComments;
   } else {
-    if (!options.reviewer) {
-      throw new Error('--reviewer is required for review file extract');
-    }
-    // Build output review file with reviewHistory separation
+    // Final decision mode (or no basis): all content + reviewHistory + finalDecision
     const outputFile: ReviewFile = {
       sessionId: options.sessionId,
-      ...(options.reviewer && { reviewer: options.reviewer }),
+      reviewer: options.reviewer,
       articles: paginated.map((article) => ({
         ...article,
         reviewHistory: article.reviews ?? [],
@@ -227,10 +256,7 @@ export async function executeReviewExtract(
       })),
     };
 
-    // Generate YAML with schema reference
-    const yamlContent = stringifyYaml(outputFile, {
-      lineWidth: 0,
-    });
+    const yamlContent = stringifyYaml(outputFile, { lineWidth: 0 });
 
     // Replace finalDecision: null with a commented placeholder for user guidance
     const yamlWithComments = yamlContent.replace(
@@ -238,7 +264,6 @@ export async function executeReviewExtract(
       '$1finalDecision: # include / exclude'
     );
 
-    // Schema reference pointing to adjacent file
     const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
     finalContent = schemaComment + yamlWithComments;
   }
