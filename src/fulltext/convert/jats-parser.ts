@@ -1057,12 +1057,19 @@ export function parseJatsReferences(xml: string): JatsReference[] {
 
 // ─── Back Matter & Floats Parsing ────────────────────────────────────
 
+/** A notes section from back matter (e.g., author contributions, funding). */
+export interface BackMatterNote {
+  title: string;
+  text: string;
+}
+
 /** Result of parsing back matter and floats-group. */
 export interface BackMatterResult {
   acknowledgments?: string;
   appendices?: JatsSection[];
   footnotes?: JatsFootnote[];
   floats?: BlockElement[];
+  notes?: BackMatterNote[];
 }
 
 /**
@@ -1110,6 +1117,26 @@ export function parseJatsBackMatter(xml: string): BackMatterResult {
             findChildren(fn.children, 'p').flatMap((p) => p.children),
           ),
         }));
+      }
+    }
+
+    // Notes: <notes> (author contributions, funding, data availability, etc.)
+    const notesElements = findChildren(back.children, 'notes');
+    if (notesElements.length > 0) {
+      const notes: BackMatterNote[] = [];
+      for (const note of notesElements) {
+        const titleNode = findChild(note.children, 'title');
+        const title = titleNode ? extractAllText(titleNode.children) : '';
+        const paragraphs = findChildren(note.children, 'p');
+        const text = paragraphs
+          .map((p) => extractAllText(p.children))
+          .join('\n\n');
+        if (title || text) {
+          notes.push({ title, text });
+        }
+      }
+      if (notes.length > 0) {
+        result.notes = notes;
       }
     }
   }

@@ -2470,3 +2470,96 @@ describe('parseJatsBackMatter - floats-group', () => {
     expect(backMatter.floats).toBeUndefined();
   });
 });
+
+describe('parseJatsBackMatter - notes', () => {
+  it('extracts author contributions from <notes notes-type="author-contribution">', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study. AB collected data.</p>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(1);
+    expect(backMatter.notes![0]!.title).toBe('Author contributions');
+    expect(backMatter.notes![0]!.text).toBe('TK designed the study. AB collected data.');
+  });
+
+  it('extracts data availability from <notes notes-type="data-availability">', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="data-availability">
+            <title>Data availability</title>
+            <p>Available on request.</p>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(1);
+    expect(backMatter.notes![0]!.title).toBe('Data availability');
+    expect(backMatter.notes![0]!.text).toBe('Available on request.');
+  });
+
+  it('extracts multiple notes sections', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study.</p>
+          </notes>
+          <notes notes-type="data-availability">
+            <title>Data availability</title>
+            <p>Data available at DOI.</p>
+          </notes>
+          <notes notes-type="supported-by">
+            <title>Funding</title>
+            <p>NIH grant R01.</p>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(3);
+    expect(backMatter.notes![0]!.title).toBe('Author contributions');
+    expect(backMatter.notes![1]!.title).toBe('Data availability');
+    expect(backMatter.notes![2]!.title).toBe('Funding');
+  });
+
+  it('extracts notes with multiple paragraphs', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study.</p>
+            <p>AB collected data and performed analysis.</p>
+          </notes>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(1);
+    expect(backMatter.notes![0]!.text).toBe(
+      'TK designed the study.\n\nAB collected data and performed analysis.',
+    );
+  });
+
+  it('returns undefined notes when no <notes> elements exist', () => {
+    const xml = `
+      <article>
+        <back>
+          <ref-list><ref id="r1"><mixed-citation>Test</mixed-citation></ref></ref-list>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toBeUndefined();
+  });
+});
