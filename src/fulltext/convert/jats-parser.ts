@@ -344,6 +344,17 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
     }
   }
 
+  // Keywords (from all <kwd-group> elements)
+  const kwdGroups = findChildren(metaChildren, 'kwd-group');
+  const keywords: string[] = [];
+  for (const kwdGroup of kwdGroups) {
+    const kwds = findChildren(kwdGroup.children, 'kwd');
+    for (const kwd of kwds) {
+      const text = extractAllText(kwd.children).trim();
+      if (text) keywords.push(text);
+    }
+  }
+
   // Volume, issue, pages
   const volumeNode = findChild(metaChildren, 'volume');
   const volume = volumeNode ? extractAllText(volumeNode.children) : undefined;
@@ -385,6 +396,7 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   if (volume) result.volume = volume;
   if (issue) result.issue = issue;
   if (pages) result.pages = pages;
+  if (keywords.length > 0) result.keywords = keywords;
   if (abstract) result.abstract = abstract;
   return result;
 }

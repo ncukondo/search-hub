@@ -292,6 +292,45 @@ describe('parseJatsMetadata', () => {
     expect(metadata.pages).toBe('e102945');
   });
 
+  it('extracts keywords from <kwd-group>', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <kwd-group>
+              <kwd>systematic review</kwd>
+              <kwd>meta-analysis</kwd>
+            </kwd-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.keywords).toEqual(['systematic review', 'meta-analysis']);
+  });
+
+  it('merges keywords from multiple <kwd-group> elements', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <kwd-group kwd-group-type="author">
+              <kwd>deep learning</kwd>
+              <kwd>imaging</kwd>
+            </kwd-group>
+            <kwd-group kwd-group-type="MeSH">
+              <kwd>Alzheimer Disease</kwd>
+            </kwd-group>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.keywords).toEqual(['deep learning', 'imaging', 'Alzheimer Disease']);
+  });
+
   it('handles missing optional fields gracefully', () => {
     const xml = `
       <article>

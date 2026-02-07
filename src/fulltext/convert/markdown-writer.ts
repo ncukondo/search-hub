@@ -199,7 +199,12 @@ export function writeMarkdown(doc: JatsDocument): string {
     lines.push(`**Citation**: ${citation}`);
   }
 
-  const hasMetaLines = doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal || doc.metadata.publicationDate || doc.metadata.volume || doc.metadata.pages;
+  // Keywords
+  if (doc.metadata.keywords && doc.metadata.keywords.length > 0) {
+    lines.push(`**Keywords**: ${doc.metadata.keywords.join(', ')}`);
+  }
+
+  const hasMetaLines = doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal || doc.metadata.publicationDate || doc.metadata.volume || doc.metadata.pages || (doc.metadata.keywords && doc.metadata.keywords.length > 0);
   if (hasMetaLines) {
     lines.push('');
   }

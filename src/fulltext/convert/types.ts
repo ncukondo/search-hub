@@ -21,6 +21,7 @@ export interface JatsMetadata {
   volume?: string;
   issue?: string;
   pages?: string;
+  keywords?: string[];
   abstract?: string;
 }
 

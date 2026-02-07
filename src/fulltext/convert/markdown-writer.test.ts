@@ -87,6 +87,18 @@ describe('writeMarkdown', () => {
     expect(md).toContain('**Citation**: Vol. 89, pp. e102945');
   });
 
+  it('renders keywords list', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        keywords: ['systematic review', 'meta-analysis', 'deep learning'],
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Keywords**: systematic review, meta-analysis, deep learning');
+  });
+
   it('converts sections to ## headings', () => {
     const doc = makeDoc({
       sections: [
