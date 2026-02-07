@@ -108,6 +108,51 @@ auto_register = false
 
 - No API key required
 
+## Fulltext Settings
+
+### General
+
+```toml
+[fulltext]
+enabled = true                     # Enable fulltext management
+auto_convert_markdown = true       # Auto-convert PMC XML to Markdown on fetch
+auto_attach_on_register = true     # Auto-attach fulltexts on register command
+```
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `enabled` | boolean | `true` | Enable fulltext features |
+| `auto_convert_markdown` | boolean | `true` | Automatically convert PMC XML to Markdown after download |
+| `auto_attach_on_register` | boolean | `true` | Attach fulltexts when running `register` |
+
+### Data Sources
+
+```toml
+[fulltext.sources]
+unpaywall_email = "user@example.com"                    # Required for Unpaywall API
+core_api_key = ""                                       # Optional, for CORE API
+prefer_sources = ["pmc", "arxiv", "unpaywall", "core"]  # Source priority order
+```
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `unpaywall_email` | string | `""` | Email for Unpaywall API (required for OA checks) |
+| `core_api_key` | string | `""` | API key for CORE API (free registration) |
+| `prefer_sources` | string[] | `["pmc", "arxiv", "unpaywall", "core"]` | Preferred source order for downloads |
+
+### Download Settings
+
+```toml
+[fulltext.download]
+concurrent_downloads = 3
+retry_attempts = 3
+```
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `concurrent_downloads` | integer | `3` | Number of parallel downloads |
+| `retry_attempts` | integer | `3` | Retry count for failed downloads |
+
 ## Project-Specific Config
 
 Create `./search-hub.config.toml` in your project directory to override global settings:

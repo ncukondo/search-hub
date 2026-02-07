@@ -52,19 +52,19 @@ Update user-facing documentation for the fulltext management feature:
 
 ### Step 3: Update docs/configuration.md
 
-- [ ] Add `[fulltext]` section
+- [x] Add `[fulltext]` section
   - `enabled`
   - `auto_convert_markdown`
   - `auto_attach_on_register`
-- [ ] Add `[fulltext.sources]` section
+- [x] Add `[fulltext.sources]` section
   - `unpaywall_email`
   - `core_api_key`
   - `prefer_sources`
-- [ ] Add `[fulltext.download]` section
+- [x] Add `[fulltext.download]` section
   - `concurrent_downloads`
   - `retry_attempts`
-- [ ] Add environment variable alternatives
-- [ ] Acceptance: All fulltext config options documented
+- [x] Add environment variable alternatives
+- [x] Acceptance: All fulltext config options documented
 
 ### Step 4: Create docs/fulltext.md Guide
 
