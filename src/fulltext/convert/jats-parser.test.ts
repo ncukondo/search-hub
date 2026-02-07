@@ -594,6 +594,95 @@ describe('parseJatsBody - preserveOrder inline interleaving', () => {
   });
 });
 
+describe('parseJatsBody - blockquotes', () => {
+  it('parses <disp-quote> as blockquote block', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Interview</title>
+            <disp-quote>
+              <p>This is a quoted passage.</p>
+            </disp-quote>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('blockquote');
+    if (content[0]!.type === 'blockquote') {
+      const text = content[0]!.content.find((c) => c.type === 'text');
+      expect(text).toBeDefined();
+    }
+  });
+
+  it('parses <disp-quote> with multiple <p> children', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Interview</title>
+            <disp-quote>
+              <p>First quoted paragraph.</p>
+              <p>Second quoted paragraph.</p>
+            </disp-quote>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content).toHaveLength(1);
+    expect(content[0]!.type).toBe('blockquote');
+    if (content[0]!.type === 'blockquote') {
+      // Should contain inline content from both paragraphs
+      const texts = content[0]!.content.filter((c) => c.type === 'text');
+      expect(texts.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('handles <disp-quote> nested inside <p>', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>The participant said: <disp-quote><p>I felt relieved.</p></disp-quote></p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    // Should split: paragraph "The participant said: " + blockquote "I felt relieved."
+    expect(content.length).toBe(2);
+    expect(content[0]!.type).toBe('paragraph');
+    expect(content[1]!.type).toBe('blockquote');
+  });
+
+  it('preserves ordering with <disp-quote> among other blocks', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Discussion</title>
+            <p>Introduction text.</p>
+            <disp-quote>
+              <p>A famous quote.</p>
+            </disp-quote>
+            <p>Conclusion text.</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content.map((b) => b.type)).toEqual(['paragraph', 'blockquote', 'paragraph']);
+  });
+});
+
 describe('parseJatsReferences', () => {
   it('extracts <ref-list> references', () => {
     const xml = `

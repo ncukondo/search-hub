@@ -125,6 +125,51 @@ describe('writeMarkdown', () => {
     expect(md).toContain('| B | 2 |');
   });
 
+  it('converts blockquotes to > prefixed lines', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Interview',
+          level: 2,
+          content: [
+            {
+              type: 'blockquote',
+              content: [{ type: 'text', text: 'This is a quoted passage.' }],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('> This is a quoted passage.');
+  });
+
+  it('converts multi-paragraph blockquotes with > prefix on each paragraph', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: 'Interview',
+          level: 2,
+          content: [
+            {
+              type: 'blockquote',
+              content: [
+                { type: 'text', text: 'First paragraph.' },
+                { type: 'text', text: '\n\n' },
+                { type: 'text', text: 'Second paragraph.' },
+              ],
+            },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('> First paragraph.');
+    expect(md).toContain('> Second paragraph.');
+  });
+
   it('converts figures to ![Figure N](caption)', () => {
     const doc = makeDoc({
       sections: [
