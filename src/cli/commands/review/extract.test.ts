@@ -72,7 +72,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'title-screening' },
+        { sessionId, name: 'title-screening', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -122,7 +122,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], name: 'batch' },
+        { sessionId, filter: ['pending'], name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -136,7 +136,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending', 'conflicting'], name: 'batch' },
+        { sessionId, filter: ['pending', 'conflicting'], name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -147,7 +147,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'batch' },
+        { sessionId, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -160,7 +160,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'year', name: 'batch' },
+        { sessionId, filter: ['pending'], sort: 'year', name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -174,7 +174,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'title', name: 'batch' },
+        { sessionId, filter: ['pending'], sort: 'title', name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -188,11 +188,11 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result1 = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch1' },
+        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch1', reviewer: 'human:admin' },
         sessionsDir
       );
       const result2 = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch2' },
+        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch2', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -210,7 +210,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'none', name: 'batch' },
+        { sessionId, filter: ['pending'], sort: 'none', name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -226,7 +226,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], limit: 2, name: 'batch' },
+        { sessionId, filter: ['pending'], limit: 2, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -237,7 +237,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], offset: 1, name: 'batch' },
+        { sessionId, filter: ['pending'], offset: 1, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -251,7 +251,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], offset: 1, limit: 1, name: 'batch' },
+        { sessionId, filter: ['pending'], offset: 1, limit: 1, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -267,7 +267,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'new-review' },
+        { sessionId, name: 'new-review', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -279,7 +279,7 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'batch' },
+        { sessionId, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -300,7 +300,7 @@ describe('executeReviewExtract', () => {
       );
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'batch' },
+        { sessionId, name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
@@ -318,6 +318,127 @@ describe('executeReviewExtract', () => {
     await expect(
       executeReviewExtract({ sessionId, name: 'batch' }, sessionsDir)
     ).rejects.toThrow();
+  });
+
+  describe('ReviewFile extract with reviewHistory', () => {
+    it('separates existing reviews into reviewHistory', async () => {
+      const articlesWithReviews: ArticleEntry[] = [
+        {
+          title: 'Reviewed Article',
+          pmid: '1',
+          reviews: [
+            { reviewer: 'gpt-4o', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+            { reviewer: 'claude', decision: 'include', basis: 'abstract', timestamp: '2024-01-02T00:00:00Z' },
+          ],
+        },
+        {
+          title: 'Unreviewed Article',
+          pmid: '2',
+          reviews: [],
+        },
+      ];
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'confirm', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile & { articles: Array<ArticleEntry & { reviewHistory?: import('./types.js').Review[] }> };
+
+      // reviews should be empty
+      expect(extracted.articles[0]!.reviews).toEqual([]);
+      expect(extracted.articles[1]!.reviews).toEqual([]);
+
+      // reviewHistory should contain original reviews
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+      expect(extracted.articles[0]!.reviewHistory![0]!.reviewer).toBe('gpt-4o');
+      expect(extracted.articles[0]!.reviewHistory![1]!.reviewer).toBe('claude');
+
+      // Unreviewed article should have empty reviewHistory
+      expect(extracted.articles[1]!.reviewHistory).toEqual([]);
+    });
+
+    it('includes top-level reviewer field in extracted ReviewFile', async () => {
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeReviewFile(articles);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'confirm', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile & { reviewer?: string };
+
+      expect(extracted.reviewer).toBe('human:admin');
+    });
+
+    it('replaces finalDecision: null preserving indentation', async () => {
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeReviewFile(articles);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'indent-test', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      // Should NOT contain literal "finalDecision: null"
+      expect(content).not.toContain('finalDecision: null');
+      // Should contain the comment placeholder
+      expect(content).toContain('finalDecision: # include / exclude');
+    });
+
+    it('sets finalDecision to null in extracted ReviewFile', async () => {
+      const articlesWithDecision: ArticleEntry[] = [
+        {
+          title: 'Decided Article',
+          pmid: '1',
+          reviews: [{ reviewer: 'human', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
+          finalDecision: 'include',
+        },
+        {
+          title: 'Undecided Article',
+          pmid: '2',
+          reviews: [],
+        },
+      ];
+      await writeReviewFile(articlesWithDecision);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'confirm', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      // finalDecision should be null in extracted file
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
+      expect(extracted.articles[1]!.finalDecision).toBeNull();
+    });
+  });
+
+  describe('reviewer validation for ReviewFile mode', () => {
+    it('throws when --reviewer is not specified for review file extract (no basis)', async () => {
+      const articles: ArticleEntry[] = [
+        { title: 'Article 1', pmid: '1', reviews: [] },
+      ];
+      await writeReviewFile(articles);
+
+      await expect(
+        executeReviewExtract(
+          { sessionId, name: 'no-reviewer' },
+          sessionsDir
+        )
+      ).rejects.toThrow('--reviewer is required for review file extract');
+    });
   });
 
   describe('--basis and --reviewer options', () => {
@@ -359,7 +480,7 @@ describe('executeReviewExtract', () => {
       expect(workFile.articles[0]!.id).toBe('10.1234/test');
       expect(workFile.articles[0]!.title).toBe('Article with Abstract');
       expect(workFile.articles[0]!.abstract).toBeUndefined();
-      expect(workFile.articles[0]!.decision).toBeNull();
+      expect(workFile.articles[0]!.decision).toBe('uncertain');
       expect(workFile.articles[0]!.comment).toBe('');
     });
 
@@ -404,6 +525,69 @@ describe('executeReviewExtract', () => {
       expect(workFile.articles[0]!.id).toBe('10.1234/doi');
       expect(workFile.articles[1]!.id).toBe('2');
       expect(workFile.articles[2]!.id).toBe('S3');
+    });
+
+    it('defaults decision to uncertain in work file articles', async () => {
+      await writeReviewFile(articlesWithAbstracts);
+
+      const result = await executeReviewExtract(
+        {
+          sessionId,
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'default-decision',
+        },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const workFile = parseYaml(content) as WorkFile;
+
+      // All articles should default to 'uncertain' instead of null
+      for (const article of workFile.articles) {
+        expect(article.decision).toBe('uncertain');
+      }
+    });
+
+    it('extracts with --basis fulltext includes fulltext dirName and abstract', async () => {
+      const articlesWithFulltext: ArticleEntry[] = [
+        {
+          title: 'Article with Fulltext',
+          pmid: '200',
+          doi: '10.1234/ft',
+          abstract: 'Abstract text.',
+          fulltext: { dirName: 'smith2024-abcd1234', hasFiles: { pdf: true, xml: false, markdown: true } },
+          reviews: [],
+        },
+        {
+          title: 'Article without Fulltext',
+          pmid: '201',
+          abstract: 'Another abstract.',
+          reviews: [],
+        },
+      ];
+      await writeReviewFile(articlesWithFulltext);
+
+      const result = await executeReviewExtract(
+        {
+          sessionId,
+          basis: 'fulltext',
+          reviewer: 'ai:claude',
+          name: 'fulltext-phase',
+        },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const workFile = parseYaml(content) as WorkFile;
+
+      expect(workFile.basis).toBe('fulltext');
+      // Article with fulltext should have dirName and abstract
+      expect(workFile.articles[0]!.fulltext).toBe('smith2024-abcd1234');
+      expect(workFile.articles[0]!.abstract).toBe('Abstract text.');
+      // Article without fulltext should still be included but without fulltext
+      expect(workFile.articles[1]!.fulltext).toBeUndefined();
+      expect(workFile.articles[1]!.abstract).toBe('Another abstract.');
     });
 
     it('combines filter with basis option', async () => {

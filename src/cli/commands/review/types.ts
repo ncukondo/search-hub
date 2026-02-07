@@ -61,7 +61,9 @@ export interface ArticleEntry {
 
   // Review data
   reviews: Review[];
-  finalDecision?: 'include' | 'exclude';
+  /** Historical reviews (only in extracted ReviewFiles, never in master file) */
+  reviewHistory?: Review[];
+  finalDecision?: 'include' | 'exclude' | null;
 
   // Fulltext reference (set by fulltext init/sync)
   fulltext?: ArticleFulltextRef;
@@ -79,6 +81,8 @@ export interface ReviewFile {
   sessionId: string;
   /** Path to inclusion criteria file */
   criteria?: string;
+  /** Reviewer identifier (only in extracted ReviewFiles) */
+  reviewer?: string;
   articles: ArticleEntry[];
   /** Registry of reviewers who participated at each basis level */
   reviewers?: ReviewerRecord[];
@@ -91,6 +95,8 @@ export interface WorkFileArticle {
   id: string;
   title: string;
   abstract?: string;
+  /** Fulltext directory name (only for fulltext basis) */
+  fulltext?: string;
   decision: ReviewDecision | null;
   comment: string;
 }
@@ -134,7 +140,7 @@ export function classifyStatus(
   registeredReviewers?: ReviewerRecord[]
 ): ReviewStatus {
   // 1. Finalized takes precedence
-  if (entry.finalDecision !== undefined) {
+  if (entry.finalDecision !== undefined && entry.finalDecision !== null) {
     return 'finalized';
   }
 

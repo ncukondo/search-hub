@@ -1804,9 +1804,19 @@ Examples:
           extractOptions.seed = parseInt(options.seed, 10);
         }
 
-        // Handle basis and reviewer options
+        // Reviewer is required for all extract modes
+        if (!options.reviewer) {
+          if (!globalOpts.quiet) {
+            console.error('Error: --reviewer is required');
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
+        extractOptions.reviewer = options.reviewer;
+
+        // Handle basis option
         if (options.basis) {
-          const validBasis = ['title', 'abstract'];
+          const validBasis = ['title', 'abstract', 'fulltext'];
           if (!validBasis.includes(options.basis)) {
             if (!globalOpts.quiet) {
               console.error(`Error: Invalid basis '${options.basis}'. Valid values: ${validBasis.join(', ')}`);
@@ -1814,17 +1824,7 @@ Examples:
             process.exitCode = EXIT_CODES.GENERAL_ERROR;
             return;
           }
-          extractOptions.basis = options.basis as 'title' | 'abstract';
-
-          // Reviewer is required when basis is specified
-          if (!options.reviewer) {
-            if (!globalOpts.quiet) {
-              console.error('Error: --reviewer is required when --basis is specified');
-            }
-            process.exitCode = EXIT_CODES.GENERAL_ERROR;
-            return;
-          }
-          extractOptions.reviewer = options.reviewer;
+          extractOptions.basis = options.basis as 'title' | 'abstract' | 'fulltext';
         }
 
         const result = await executeReviewExtract(extractOptions, sessionsDir);
@@ -1875,13 +1875,11 @@ Examples:
     .option('--id <id>', 'article ID to mark')
     .option('--decision <decision>', 'decision: include, exclude, or uncertain')
     .option('--comment <text>', 'optional comment')
-    .option('--input <path>', 'path to JSON file with decisions for batch marking')
     .action(async (options: {
       file: string;
       id?: string;
       decision?: string;
       comment?: string;
-      input?: string;
     }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -1895,10 +1893,10 @@ Examples:
           return;
         }
 
-        // Validate options
-        if (!options.input && (!options.id || !options.decision)) {
+        // Validate required options
+        if (!options.id || !options.decision) {
           if (!globalOpts.quiet) {
-            console.error('Error: Either --id with --decision, or --input must be specified');
+            console.error('Error: --id and --decision must be specified');
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
           return;
@@ -1906,12 +1904,11 @@ Examples:
 
         const markOptions: ReviewMarkOptions = {
           file: options.file,
+          id: options.id,
+          decision: options.decision as 'include' | 'exclude' | 'uncertain',
         };
 
-        if (options.id) markOptions.id = options.id;
-        if (options.decision) markOptions.decision = options.decision as 'include' | 'exclude' | 'uncertain';
         if (options.comment) markOptions.comment = options.comment;
-        if (options.input) markOptions.input = options.input;
 
         const result = await executeReviewMark(markOptions);
         if (!globalOpts.quiet) {

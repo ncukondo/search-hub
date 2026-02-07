@@ -18,7 +18,7 @@ export interface ReviewExtractOptions {
   offset?: number;
   /** Basis for the review (title, abstract). When specified, outputs work file format. */
   basis?: ReviewBasis;
-  /** Reviewer identifier (e.g., "ai:claude"). Required when basis is specified. */
+  /** Reviewer identifier (e.g., "ai:claude"). Required for all extract modes. */
   reviewer?: string;
   /** Name for the review subset (output goes to for-review/<name>/review.yaml) */
   name: string;
@@ -161,12 +161,16 @@ export async function executeReviewExtract(
         const workArticle: WorkFileArticle = {
           id: getArticleId(article),
           title: article.title,
-          decision: null,
+          decision: 'uncertain',
           comment: '',
         };
-        // Include abstract only for abstract basis
-        if (options.basis === 'abstract' && article.abstract) {
+        // Include abstract for abstract and fulltext basis
+        if ((options.basis === 'abstract' || options.basis === 'fulltext') && article.abstract) {
           workArticle.abstract = article.abstract;
+        }
+        // Include fulltext dirName for fulltext basis
+        if (options.basis === 'fulltext' && article.fulltext) {
+          workArticle.fulltext = article.fulltext.dirName;
         }
         return workArticle;
       }),
@@ -177,10 +181,19 @@ export async function executeReviewExtract(
     });
     finalContent = yamlContent;
   } else {
-    // Build output review file (legacy format)
+    if (!options.reviewer) {
+      throw new Error('--reviewer is required for review file extract');
+    }
+    // Build output review file with reviewHistory separation
     const outputFile: ReviewFile = {
       sessionId: options.sessionId,
-      articles: paginated,
+      ...(options.reviewer && { reviewer: options.reviewer }),
+      articles: paginated.map((article) => ({
+        ...article,
+        reviewHistory: article.reviews ?? [],
+        reviews: [],
+        finalDecision: null,
+      })),
     };
 
     // Generate YAML with schema reference
@@ -188,9 +201,15 @@ export async function executeReviewExtract(
       lineWidth: 0,
     });
 
+    // Replace finalDecision: null with a commented placeholder for user guidance
+    const yamlWithComments = yamlContent.replace(
+      /^(\s*)finalDecision: null$/gm,
+      '$1finalDecision: # include / exclude'
+    );
+
     // Schema reference pointing to adjacent file
     const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
-    finalContent = schemaComment + yamlContent;
+    finalContent = schemaComment + yamlWithComments;
   }
 
   // Ensure output directory exists
