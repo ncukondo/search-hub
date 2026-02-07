@@ -110,15 +110,15 @@ Enhance the extract command to support the progressive screening workflow:
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
+- [x] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
   - Full title screening workflow with default `uncertain`:
     extract → edit YAML (change some to exclude) → merge → verify reviews
   - Responsible person confirmation workflow:
     extract (no basis) → verify reviewHistory → add finalDecision → merge → verify
   - Fulltext workflow: extract --basis fulltext → verify fulltext field present
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All tests pass, new extract formats work end-to-end
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, new extract formats work end-to-end
 
 ## Notes
 
