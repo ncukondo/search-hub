@@ -177,10 +177,15 @@ export async function executeReviewExtract(
     });
     finalContent = yamlContent;
   } else {
-    // Build output review file (legacy format)
+    // Build output review file with reviewHistory separation
     const outputFile: ReviewFile = {
       sessionId: options.sessionId,
-      articles: paginated,
+      articles: paginated.map((article) => ({
+        ...article,
+        reviewHistory: article.reviews ?? [],
+        reviews: [],
+        finalDecision: null,
+      })),
     };
 
     // Generate YAML with schema reference

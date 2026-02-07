@@ -252,8 +252,8 @@ function processReviewFile(
       }
     }
 
-    // Overwrite finalDecision if set in extracted
-    if (extracted.finalDecision !== undefined) {
+    // Overwrite finalDecision if set in extracted (null means unset)
+    if (extracted.finalDecision !== undefined && extracted.finalDecision !== null) {
       if (!options.dryRun) {
         mainArticle.finalDecision = extracted.finalDecision;
       }

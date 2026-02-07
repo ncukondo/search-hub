@@ -320,6 +320,76 @@ describe('executeReviewExtract', () => {
     ).rejects.toThrow();
   });
 
+  describe('ReviewFile extract with reviewHistory', () => {
+    it('separates existing reviews into reviewHistory', async () => {
+      const articlesWithReviews: ArticleEntry[] = [
+        {
+          title: 'Reviewed Article',
+          pmid: '1',
+          reviews: [
+            { reviewer: 'gpt-4o', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+            { reviewer: 'claude', decision: 'include', basis: 'abstract', timestamp: '2024-01-02T00:00:00Z' },
+          ],
+        },
+        {
+          title: 'Unreviewed Article',
+          pmid: '2',
+          reviews: [],
+        },
+      ];
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'confirm', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile & { articles: Array<ArticleEntry & { reviewHistory?: import('./types.js').Review[] }> };
+
+      // reviews should be empty
+      expect(extracted.articles[0]!.reviews).toEqual([]);
+      expect(extracted.articles[1]!.reviews).toEqual([]);
+
+      // reviewHistory should contain original reviews
+      expect(extracted.articles[0]!.reviewHistory).toHaveLength(2);
+      expect(extracted.articles[0]!.reviewHistory![0]!.reviewer).toBe('gpt-4o');
+      expect(extracted.articles[0]!.reviewHistory![1]!.reviewer).toBe('claude');
+
+      // Unreviewed article should have empty reviewHistory
+      expect(extracted.articles[1]!.reviewHistory).toEqual([]);
+    });
+
+    it('sets finalDecision to null in extracted ReviewFile', async () => {
+      const articlesWithDecision: ArticleEntry[] = [
+        {
+          title: 'Decided Article',
+          pmid: '1',
+          reviews: [{ reviewer: 'human', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
+          finalDecision: 'include',
+        },
+        {
+          title: 'Undecided Article',
+          pmid: '2',
+          reviews: [],
+        },
+      ];
+      await writeReviewFile(articlesWithDecision);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'confirm', reviewer: 'human:admin' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      const extracted = parseYaml(content) as ReviewFile;
+
+      // finalDecision should be null in extracted file
+      expect(extracted.articles[0]!.finalDecision).toBeNull();
+      expect(extracted.articles[1]!.finalDecision).toBeNull();
+    });
+  });
+
   describe('--basis and --reviewer options', () => {
     const articlesWithAbstracts: ArticleEntry[] = [
       {

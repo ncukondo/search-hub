@@ -61,7 +61,9 @@ export interface ArticleEntry {
 
   // Review data
   reviews: Review[];
-  finalDecision?: 'include' | 'exclude';
+  /** Historical reviews (only in extracted ReviewFiles, never in master file) */
+  reviewHistory?: Review[];
+  finalDecision?: 'include' | 'exclude' | null;
 
   // Fulltext reference (set by fulltext init/sync)
   fulltext?: ArticleFulltextRef;

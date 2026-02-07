@@ -150,10 +150,17 @@
             "$ref": "#/definitions/Review"
           }
         },
+        "reviewHistory": {
+          "type": "array",
+          "description": "Historical reviews (only in extracted ReviewFiles, never in master file)",
+          "items": {
+            "$ref": "#/definitions/Review"
+          }
+        },
         "finalDecision": {
-          "type": "string",
-          "enum": ["include", "exclude"],
-          "description": "Final inclusion/exclusion decision"
+          "type": ["string", "null"],
+          "enum": ["include", "exclude", null],
+          "description": "Final inclusion/exclusion decision (null in extracted files)"
         }
       },
       "additionalProperties": false
