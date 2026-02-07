@@ -36,17 +36,49 @@ Each article is classified into one of 7 statuses, computed on-the-fly by
 ### Classification Logic
 
 ```
-1. finalDecision set?           → finalized
-2. No reviews?                  → pending
-3. Registered reviewer missing? → incomplete
-4. include AND exclude present? → conflicting
-5. Any uncertain?               → uncertain
-6. All include?                 → agreed-include
-7. All exclude?                 → agreed-exclude
+1. finalDecision set?                    → finalized
+2. No reviews?                           → pending
+3. Registered reviewer missing?          → incomplete (basis-aware, see below)
+4. Compute effective decisions            (basis-priority override, see below)
+5. include AND exclude in effective?     → conflicting
+6. Any effective uncertain?              → uncertain
+7. All effective include?                → agreed-include
+8. All effective exclude?                → agreed-exclude
 ```
 
 The `incomplete` status requires the reviewer registry (Task 71). When no reviewers
 are registered, step 3 is skipped (backward-compatible behavior).
+
+#### Basis-Priority Override (Step 4)
+
+Higher-basis definitive decisions override ALL lower-basis decisions (not just
+uncertain). This enables the 3-stage screening workflow without requiring
+finalization between stages.
+
+```
+title:exclude + abstract:include → agreed-include  (abstract wins)
+title:include + abstract:exclude → agreed-exclude  (abstract wins)
+abstract:include + abstract:exclude → conflicting  (same basis)
+title:uncertain + abstract:include → agreed-include (already worked)
+```
+
+Algorithm:
+1. Find the highest basis rank among all definitive (include/exclude) reviews
+2. Drop ALL reviews at a lower basis rank than the highest definitive
+3. Among remaining reviews, compute per-reviewer effective decisions
+4. Feed effective decisions into conflict/uncertain/agreed checks
+
+#### Basis-Aware Incomplete Check (Step 3)
+
+The `incomplete` check only considers registered reviewers whose basis is at or
+below the article's highest reviewed basis. This prevents an abstract-level
+reviewer from making title-only articles `incomplete`.
+
+```
+Registered abstract reviewer + title-only article  → NOT incomplete
+Registered abstract reviewer + abstract-level article → incomplete (if missing)
+Registered title reviewer + title-only article      → incomplete (if missing)
+```
 
 ### Type Definition
 
