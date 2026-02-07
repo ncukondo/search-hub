@@ -1028,6 +1028,37 @@ function extractPubIds(children: OrderedNode[]): {
 }
 
 /**
+ * Strip extracted pub-id values from reference text to avoid duplication
+ * when pub-ids are rendered separately as links.
+ */
+function stripPubIdValues(
+  text: string,
+  pubIds: { doi?: string; pmid?: string; pmcid?: string },
+): string {
+  let result = text;
+  const values = [pubIds.doi, pubIds.pmid, pubIds.pmcid].filter(Boolean) as string[];
+  for (const val of values) {
+    // Strip common label prefixes (e.g. "doi: ", "PMID: ", "DOI:", "pmid:") followed by the value
+    const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(`(?:doi|PMID|pmid|PMC|pmc)[:\\s]*${escaped}`, 'gi'), '');
+    // Also strip the bare value itself
+    result = result.replace(new RegExp(escaped, 'g'), '');
+  }
+  // Also strip PMC-prefixed form of pmcid
+  if (pubIds.pmcid) {
+    const pmcFull = `PMC${pubIds.pmcid}`;
+    const escaped = pmcFull.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(`(?:pmc|pmcid)[:\\s]*${escaped}`, 'gi'), '');
+    result = result.replace(new RegExp(escaped, 'g'), '');
+  }
+  // Clean up trailing/leading whitespace and extra spaces
+  result = result.replace(/\s{2,}/g, ' ').trim();
+  // Clean up trailing period after stripped content (e.g. "Title. ." -> "Title.")
+  result = result.replace(/\.\s*\.$/, '.');
+  return result;
+}
+
+/**
  * Parse JATS XML back matter to extract references.
  */
 export function parseJatsReferences(xml: string): JatsReference[] {
@@ -1055,16 +1086,18 @@ export function parseJatsReferences(xml: string): JatsReference[] {
     // Try mixed-citation first (already formatted), then element-citation (structured)
     const mixedCitation = findChild(searchChildren, 'mixed-citation');
     if (mixedCitation) {
-      const text = extractMixedCitationText(mixedCitation.children);
+      const rawText = extractMixedCitationText(mixedCitation.children);
       const pubIds = extractPubIds(mixedCitation.children);
+      const text = stripPubIdValues(rawText, pubIds);
       if (id && text) references.push({ id, text, ...pubIds });
       continue;
     }
 
     const elementCitation = findChild(searchChildren, 'element-citation');
     if (elementCitation) {
-      const text = formatElementCitation(elementCitation.children);
+      const rawText = formatElementCitation(elementCitation.children);
       const pubIds = extractPubIds(elementCitation.children);
+      const text = stripPubIdValues(rawText, pubIds);
       if (id && text) references.push({ id, text, ...pubIds });
       continue;
     }
