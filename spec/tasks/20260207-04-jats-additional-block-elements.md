@@ -75,8 +75,8 @@ JATS XML specification includes several block-level elements that the current pa
 
 ### Step 3: Add `<disp-formula>` support
 
-- [ ] Add `'formula'` type to `BlockElement` union: `{ type: 'formula'; id?: string; label?: string; tex?: string; text?: string }`
-- [ ] Write test: `<disp-formula>` with `<tex-math>` child
+- [x] Add `'formula'` type to `BlockElement` union: `{ type: 'formula'; id?: string; label?: string; tex?: string; text?: string }`
+- [x] Write test: `<disp-formula>` with `<tex-math>` child
   ```xml
   <disp-formula id="eq1">
     <label>(1)</label>
@@ -86,14 +86,14 @@ JATS XML specification includes several block-level elements that the current pa
     </alternatives>
   </disp-formula>
   ```
-- [ ] Write test: `<disp-formula>` with direct `<tex-math>` (no `<alternatives>` wrapper)
-- [ ] Verify test fails (Red)
-- [ ] Add `parseDispFormula()` — extract `<tex-math>` content preferentially, fall back to `extractAllText`
-- [ ] Add `'disp-formula'` case to `parseBlockContent()`
-- [ ] Add `renderBlock()` case — render as `$$E = mc^2$$` (LaTeX block) or fenced code block with label
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: formulas appear as LaTeX or readable text in Markdown
+- [x] Write test: `<disp-formula>` with direct `<tex-math>` (no `<alternatives>` wrapper)
+- [x] Verify test fails (Red)
+- [x] Add `parseDispFormula()` — extract `<tex-math>` content preferentially, fall back to `extractAllText`
+- [x] Add `'disp-formula'` case to `parseBlockContent()`
+- [x] Add `renderBlock()` case — render as `$$E = mc^2$$` (LaTeX block) or fenced code block with label
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: formulas appear as LaTeX or readable text in Markdown
 
 ### Step 4: Add `<preformat>` support
 
