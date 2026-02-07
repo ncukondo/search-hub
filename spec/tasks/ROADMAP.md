@@ -95,7 +95,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 86 | Fix JATS Nested `<notes>` in Declarations | 85 | ✅ Completed | [20260207-11](completed/20260207-11-jats-nested-notes-in-declarations.md) |
 | 87 | Support JATS `<glossary>` (Abbreviations) | 85 | ✅ Completed | [20260207-12](completed/20260207-12-jats-glossary-support.md) |
 | 88 | Review Basis Priority in Status Classification | 72, 74 | 📋 Todo | [20260207-13](20260207-13-review-basis-priority-in-status.md) |
-| 89 | Review Merge Output Decision Breakdown | 44 | 📋 Todo | [20260207-14](20260207-14-review-merge-output-decision-breakdown.md) |
+| 89 | Review Merge Output Decision Breakdown | 44 | ✅ Completed | [20260207-14](completed/20260207-14-review-merge-output-decision-breakdown.md) |
 | 90 | Graceful Exit Code on Partial Search Success | 10 | 📋 Todo | [20260207-15](20260207-15-search-partial-success-exit-code.md) |
 
 ## Development Flow
