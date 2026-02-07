@@ -56,15 +56,15 @@ Enhance the extract command to support the progressive screening workflow:
 
 ### Step 3: Add Top-Level `reviewer` to ReviewFile Extract
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - ReviewFile extract includes top-level `reviewer` field
   - `--reviewer` is required for ReviewFile mode (no `--basis`)
-- [ ] Update `ReviewFile` or create extracted variant with `reviewer` field
-- [ ] Update `executeReviewExtract` to include `reviewer` in ReviewFile output
-- [ ] Update CLI: make `--reviewer` required (not just when `--basis` is specified)
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `--reviewer` is required for all extract modes
+- [x] Update `ReviewFile` or create extracted variant with `reviewer` field
+- [x] Update `executeReviewExtract` to include `reviewer` in ReviewFile output
+- [x] Update CLI: make `--reviewer` required (not just when `--basis` is specified)
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `--reviewer` is required for all extract modes
 
 ### Step 4: Update `processReviewFile` for New Format
 
