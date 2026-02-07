@@ -98,7 +98,7 @@ workflow by copy-pasting without needing to understand filter options.
 
 ### Step 6: Update `suggestions.md` Spec and Suggestion Rules
 
-- [ ] Update `spec/cli/suggestions.md` Phase 4 section to reference dynamic generation
+- [x] Update `spec/cli/suggestions.md` Phase 4 section to reference dynamic generation
 - [x] Update `src/cli/suggestions/rules.ts` review-related rules to use new logic
 - [x] Verify existing suggestion tests still pass
 - [x] Run `npm run lint && npm run typecheck`
@@ -106,15 +106,15 @@ workflow by copy-pasting without needing to understand filter options.
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
+- [x] Write E2E test: `src/cli/commands/review/review-workflow.test.ts`
   - Full workflow progression: verify each command's output suggests the correct next step
   - After merge → finalize suggestion appears
   - After finalize → extract for next phase suggestion appears
   - After all finalized → export suggestion appears
   - Batch continuation: extract with limit → next batch suggested with correct offset
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: All tests pass, users can follow Next Steps through entire workflow
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, users can follow Next Steps through entire workflow
 
 ## Notes
 

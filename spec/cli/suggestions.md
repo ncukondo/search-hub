@@ -279,7 +279,7 @@ sessions/<session-id>/
 
 #### Dynamic Next Steps Logic
 
-Implemented by `reviewStatusRule()`. Evaluated top-to-bottom:
+Implemented by `generateReviewNextSteps()` in `src/cli/commands/review/next-steps.ts`. Evaluated top-to-bottom:
 
 **1. pending > 0 (initial screening)**:
 ```
