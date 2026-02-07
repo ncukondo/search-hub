@@ -41,7 +41,7 @@ across any basis are still treated as `conflicting`.
 
 ### Step 2: Update `classifyStatus` to Consider Basis Priority
 
-- [ ] Write test: `src/cli/commands/review/types.test.ts`
+- [x] Write test: `src/cli/commands/review/types.test.ts`
   - Same reviewer, title `uncertain` + abstract `include` → `agreed-include`
   - Same reviewer, title `uncertain` + abstract `exclude` → `agreed-exclude`
   - Same reviewer, title `uncertain` + fulltext `include` → `agreed-include`
@@ -52,15 +52,15 @@ across any basis are still treated as `conflicting`.
   - Reviewer A title `include` + reviewer B abstract `exclude` → `conflicting` (definitive vs definitive)
   - All reviews `uncertain` (no higher-basis definitive) → `uncertain` (unchanged)
   - Only title reviews, no `uncertain` conflict → existing behavior unchanged
-- [ ] Modify `classifyStatus()` to:
+- [x] Modify `classifyStatus()` to:
   1. For each reviewer, find their highest-basis review with a definitive decision
   2. If a reviewer has only `uncertain` at lower basis and a definitive decision at higher basis, use the definitive decision
   3. Collect effective decisions (after basis resolution) and apply existing conflict/agreement logic
-- [ ] Verify test fails (Red)
-- [ ] Implement the basis-priority logic
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Multi-stage screening `uncertain` → `include/exclude` works correctly
+- [x] Verify test fails (Red)
+- [x] Implement the basis-priority logic
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Multi-stage screening `uncertain` → `include/exclude` works correctly
 
 ### Step 3: Handle Cross-Reviewer Basis Priority
 
