@@ -5,9 +5,17 @@
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { parse as parseYaml } from 'yaml';
-import { classifyStatus, type ReviewFile, type ReviewStatus } from './types.js';
+import { classifyStatus, type ReviewFile, type ReviewStatus, type ReviewerRecord } from './types.js';
 
-export type ListFilter = 'pending' | 'conflicting' | 'needs-final' | 'finalized' | 'all';
+export type ListFilter =
+  | 'pending'
+  | 'incomplete'
+  | 'uncertain'
+  | 'agreed-include'
+  | 'agreed-exclude'
+  | 'conflicting'
+  | 'finalized'
+  | 'all';
 
 export interface ReviewListOptions {
   sessionId: string;
@@ -27,49 +35,10 @@ export interface ArticleListItem {
   finalDecision?: 'include' | 'exclude';
 }
 
-/**
- * Workflow phase commands for AI agent
- */
-export interface WorkflowPhase {
-  basis: 'title' | 'abstract';
-  extract: string;
-  mark: string;
-  merge: string;
-}
-
-/**
- * Workflow guidance for AI agent
- */
-export interface WorkflowGuidance {
-  phase1: WorkflowPhase;
-  phase2: WorkflowPhase;
-}
-
 export interface ReviewListResult {
   sessionId: string;
   filter: ListFilter;
   articles: ArticleListItem[];
-  workflow?: WorkflowGuidance;
-}
-
-/**
- * Generate workflow guidance for AI agent
- */
-function generateWorkflow(sessionId: string): WorkflowGuidance {
-  return {
-    phase1: {
-      basis: 'title',
-      extract: `search-hub review extract --session ${sessionId} --basis title --reviewer "ai:name" -o phase1.yaml`,
-      mark: 'search-hub review mark --file phase1.yaml --input decisions.json',
-      merge: `search-hub review merge --session ${sessionId} phase1.yaml`,
-    },
-    phase2: {
-      basis: 'abstract',
-      extract: `search-hub review extract --session ${sessionId} --basis abstract --filter uncertain --reviewer "ai:name" -o phase2.yaml`,
-      mark: 'search-hub review mark --file phase2.yaml --input decisions.json',
-      merge: `search-hub review merge --session ${sessionId} phase2.yaml`,
-    },
-  };
 }
 
 /**
@@ -94,8 +63,9 @@ export async function executeReviewList(
 
   const articles: ArticleListItem[] = [];
 
+  const reviewers = reviewFile.reviewers;
   for (const article of reviewFile.articles) {
-    const status = classifyStatus(article);
+    const status = classifyStatus(article, reviewers);
 
     // Apply filter
     if (filter !== 'all' && status !== filter) {
@@ -124,7 +94,6 @@ export async function executeReviewList(
     sessionId: options.sessionId,
     filter,
     articles,
-    workflow: generateWorkflow(options.sessionId),
   };
 }
 

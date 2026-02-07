@@ -352,13 +352,15 @@ describe('getSuggestion', () => {
             sessionId: 'my-session',
             total: 100,
             pending: 50,
+            incomplete: 0,
+            uncertain: 0,
+            agreedInclude: 0,
+            agreedExclude: 0,
             conflicting: 0,
-            needsFinal: 0,
             finalized: 0,
             included: 0,
             excluded: 0,
-            titleReviewed: 0,
-            abstractReviewed: 0,
+            reviewers: [],
           },
         };
         const result = getSuggestion(ctx);
@@ -367,7 +369,7 @@ describe('getSuggestion', () => {
         expect(result!.next[0]!.command).toContain('--filter pending');
       });
 
-      it('should suggest abstract screening when title done, no abstract', () => {
+      it('should suggest finalization when agreed > 0', () => {
         const ctx: SuggestionContext = {
           command: 'review status',
           sessionId: 'my-session',
@@ -375,19 +377,20 @@ describe('getSuggestion', () => {
             sessionId: 'my-session',
             total: 100,
             pending: 0,
+            incomplete: 0,
+            uncertain: 0,
+            agreedInclude: 60,
+            agreedExclude: 40,
             conflicting: 0,
-            needsFinal: 100,
             finalized: 0,
             included: 0,
             excluded: 0,
-            titleReviewed: 0,
-            abstractReviewed: 0,
+            reviewers: [],
           },
         };
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
-        expect(result!.next[0]!.command).toContain('--basis abstract');
-        expect(result!.next[0]!.command).toContain('--filter uncertain');
+        expect(result!.next[0]!.command).toContain('review finalize');
       });
 
       it('should suggest resolving conflicts when conflicting > 0', () => {
@@ -398,13 +401,15 @@ describe('getSuggestion', () => {
             sessionId: 'my-session',
             total: 100,
             pending: 0,
+            incomplete: 0,
+            uncertain: 0,
+            agreedInclude: 0,
+            agreedExclude: 0,
             conflicting: 5,
-            needsFinal: 10,
             finalized: 85,
             included: 50,
             excluded: 35,
-            titleReviewed: 0,
-            abstractReviewed: 0,
+            reviewers: [],
           },
         };
         const result = getSuggestion(ctx);
@@ -413,7 +418,7 @@ describe('getSuggestion', () => {
         expect(result!.next[0]!.command).toContain('--filter conflicting');
       });
 
-      it('should suggest finalizing when needs-final > 0 and no conflicts', () => {
+      it('should suggest abstract screening when uncertain > 0', () => {
         const ctx: SuggestionContext = {
           command: 'review status',
           sessionId: 'my-session',
@@ -421,19 +426,21 @@ describe('getSuggestion', () => {
             sessionId: 'my-session',
             total: 100,
             pending: 0,
+            incomplete: 5,
+            uncertain: 10,
+            agreedInclude: 0,
+            agreedExclude: 0,
             conflicting: 0,
-            needsFinal: 10,
-            finalized: 90,
+            finalized: 85,
             included: 50,
-            excluded: 40,
-            titleReviewed: 0,
-            abstractReviewed: 0,
+            excluded: 35,
+            reviewers: [],
           },
         };
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
-        expect(result!.next[0]!.command).toContain('review list');
-        expect(result!.next[0]!.command).toContain('--filter needs-final');
+        expect(result!.next[0]!.command).toContain('--basis abstract');
+        expect(result!.next[0]!.command).toContain('--filter uncertain,incomplete');
       });
 
       it('should suggest register when all finalized', () => {
@@ -444,13 +451,15 @@ describe('getSuggestion', () => {
             sessionId: 'my-session',
             total: 100,
             pending: 0,
+            incomplete: 0,
+            uncertain: 0,
+            agreedInclude: 0,
+            agreedExclude: 0,
             conflicting: 0,
-            needsFinal: 0,
             finalized: 100,
             included: 60,
             excluded: 40,
-            titleReviewed: 0,
-            abstractReviewed: 0,
+            reviewers: [],
           },
         };
         const result = getSuggestion(ctx);

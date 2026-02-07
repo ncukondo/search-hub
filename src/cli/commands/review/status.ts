@@ -5,7 +5,7 @@
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { parse as parseYaml } from 'yaml';
-import { classifyStatus, type ReviewFile } from './types.js';
+import { classifyStatus, type ReviewFile, type ReviewerRecord } from './types.js';
 
 export interface ReviewStatusOptions {
   sessionId: string;
@@ -15,15 +15,16 @@ export interface ReviewStatusResult {
   sessionId: string;
   total: number;
   pending: number;
+  incomplete: number;
+  uncertain: number;
+  agreedInclude: number;
+  agreedExclude: number;
   conflicting: number;
-  needsFinal: number;
   finalized: number;
   included: number;
   excluded: number;
-  /** Number of articles with at least one title-basis review */
-  titleReviewed: number;
-  /** Number of articles with at least one abstract-basis review */
-  abstractReviewed: number;
+  /** Registered reviewers from the review file */
+  reviewers: ReviewerRecord[];
 }
 
 /**
@@ -45,29 +46,40 @@ export async function executeReviewStatus(
   const sessionDir = join(sessionsDir, options.sessionId);
   const reviewFile = await loadReviewFile(sessionDir);
 
+  const reviewers = reviewFile.reviewers ?? [];
   const counts = {
     pending: 0,
+    incomplete: 0,
+    uncertain: 0,
+    agreedInclude: 0,
+    agreedExclude: 0,
     conflicting: 0,
-    needsFinal: 0,
     finalized: 0,
     included: 0,
     excluded: 0,
-    titleReviewed: 0,
-    abstractReviewed: 0,
   };
 
   for (const article of reviewFile.articles) {
-    const status = classifyStatus(article);
+    const status = classifyStatus(article, reviewers);
 
     switch (status) {
       case 'pending':
         counts.pending++;
         break;
+      case 'incomplete':
+        counts.incomplete++;
+        break;
+      case 'uncertain':
+        counts.uncertain++;
+        break;
+      case 'agreed-include':
+        counts.agreedInclude++;
+        break;
+      case 'agreed-exclude':
+        counts.agreedExclude++;
+        break;
       case 'conflicting':
         counts.conflicting++;
-        break;
-      case 'needs-final':
-        counts.needsFinal++;
         break;
       case 'finalized':
         counts.finalized++;
@@ -78,20 +90,12 @@ export async function executeReviewStatus(
         }
         break;
     }
-
-    // Count basis-level reviews
-    const reviews = article.reviews ?? [];
-    if (reviews.some((r) => r.basis === 'title')) {
-      counts.titleReviewed++;
-    }
-    if (reviews.some((r) => r.basis === 'abstract')) {
-      counts.abstractReviewed++;
-    }
   }
 
   return {
     sessionId: options.sessionId,
     total: reviewFile.articles.length,
+    reviewers,
     ...counts,
   };
 }
@@ -101,28 +105,25 @@ export async function executeReviewStatus(
  */
 export function formatStatusOutput(result: ReviewStatusResult): string {
   const id = result.sessionId;
-  const reviewed = result.total - result.pending;
+  const agreed = result.agreedInclude + result.agreedExclude;
   const lines = [
     `Review Progress: ${id}`,
-    `  Total:        ${result.total}`,
-    `  Pending:      ${result.pending}  (no reviews)`,
-    `  Reviewed:     ${reviewed}  (title: ${result.titleReviewed}, abstract: ${result.abstractReviewed})`,
-    `  Conflicting:  ${result.conflicting}  (reviewers disagree)`,
-    `  Needs Final:  ${result.needsFinal}  (reviewed but no finalDecision)`,
-    `  Finalized:    ${result.finalized}  (include: ${result.included}, exclude: ${result.excluded})`,
-    '',
-    '────────────────────────────────────────────────',
-    'AI Agent Workflow:',
-    '  Phase 1 (title screening):',
-    `    extract:  search-hub review extract --session ${id} --name title-screening --basis title --reviewer "ai:name"`,
-    `    mark:     search-hub review mark --file <session>/for-review/title-screening/review.yaml --input decisions.json`,
-    `    merge:    search-hub review merge --session ${id} --name title-screening`,
-    '',
-    '  Phase 2 (abstract screening):',
-    `    extract:  search-hub review extract --session ${id} --name abstract-screening --basis abstract --filter uncertain --reviewer "ai:name"`,
-    `    mark:     search-hub review mark --file <session>/for-review/abstract-screening/review.yaml --input decisions.json`,
-    `    merge:    search-hub review merge --session ${id} --name abstract-screening`,
-    '────────────────────────────────────────────────',
+    `  Total:         ${result.total}`,
+    `  Pending:       ${result.pending}`,
+    `  Incomplete:    ${result.incomplete}`,
+    `  Uncertain:     ${result.uncertain}`,
+    `  Agreed:        ${agreed}  (include: ${result.agreedInclude}, exclude: ${result.agreedExclude})`,
+    `  Conflicting:   ${result.conflicting}`,
+    `  Finalized:     ${result.finalized}  (include: ${result.included}, exclude: ${result.excluded})`,
   ];
+
+  if (result.reviewers.length > 0) {
+    lines.push('');
+    lines.push('Reviewers:');
+    for (const r of result.reviewers) {
+      lines.push(`  ${r.name}  (${r.basis})`);
+    }
+  }
+
   return lines.join('\n');
 }

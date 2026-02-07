@@ -110,7 +110,8 @@ summary:
     expect(statusResult1.total).toBe(10);
     expect(statusResult1.pending).toBe(10);
     expect(statusResult1.conflicting).toBe(0);
-    expect(statusResult1.needsFinal).toBe(0);
+    expect(statusResult1.agreedInclude).toBe(0);
+    expect(statusResult1.agreedExclude).toBe(0);
     expect(statusResult1.finalized).toBe(0);
 
     // Step 3: List - Verify pending articles
@@ -171,7 +172,7 @@ summary:
       decision: 'include',
       timestamp: '2024-01-02T00:00:00Z',
     });
-    // Leave as needs-final (review but no finalDecision)
+    // Leave as agreed-include (review but no finalDecision)
 
     // Write edited file back to for-review/ path
     const editedContent = stringifyYaml(extractedFile);
@@ -190,7 +191,7 @@ summary:
     expect(statusResult2.total).toBe(10);
     expect(statusResult2.pending).toBe(6); // 10 - 4 reviewed
     expect(statusResult2.conflicting).toBe(1);
-    expect(statusResult2.needsFinal).toBe(1);
+    expect(statusResult2.agreedInclude).toBe(1);
     expect(statusResult2.finalized).toBe(2);
     expect(statusResult2.included).toBe(1);
     expect(statusResult2.excluded).toBe(1);
@@ -592,15 +593,15 @@ summary:
       // Merge phase 1
       await executeReviewMerge({ sessionId, name: 'title-screening' }, sessionsDir);
 
-      // Verify status shows needs-final (reviewed but uncertain)
+      // Verify status shows uncertain (all marked as uncertain)
       const statusAfterPhase1 = await executeReviewStatus({ sessionId }, sessionsDir);
-      expect(statusAfterPhase1.needsFinal).toBe(10); // All marked as uncertain
+      expect(statusAfterPhase1.uncertain).toBe(10); // All marked as uncertain
 
       // Phase 2: Abstract screening for uncertain articles
       const phase2Extract = await executeReviewExtract(
         {
           sessionId,
-          filter: ['needs-final'], // Gets articles with reviews but no finalDecision
+          filter: ['uncertain'], // Gets articles with uncertain reviews
           basis: 'abstract',
           reviewer: 'ai:claude',
           name: 'abstract-screening',
@@ -768,7 +769,7 @@ summary:
       const phase2Extract = await executeReviewExtract(
         {
           sessionId,
-          filter: ['needs-final'],
+          filter: ['uncertain'],
           basis: 'abstract',
           reviewer: 'ai:claude',
           name: 'phase2-reg',

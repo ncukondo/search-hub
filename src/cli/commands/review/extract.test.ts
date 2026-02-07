@@ -50,7 +50,7 @@ describe('executeReviewExtract', () => {
         { reviewer: 'claude', decision: 'exclude', timestamp: '2024-01-01T01:00:00Z' },
       ],
     },
-    // needs-final
+    // agreed-include (single reviewer, no registry)
     {
       title: 'Needs Final Article',
       pmid: '5',
