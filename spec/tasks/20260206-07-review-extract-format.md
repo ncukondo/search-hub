@@ -42,17 +42,17 @@ Enhance the extract command to support the progressive screening workflow:
 
 ### Step 2: Add `reviewHistory` to ReviewFile Extract
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - ReviewFile extract (no `--basis`) separates existing reviews into `reviewHistory`
   - `reviews` array is empty `[]` in extracted ReviewFile
   - `finalDecision` is `null` in extracted ReviewFile
   - Articles with existing reviews have them in `reviewHistory`
   - Articles with no reviews have empty `reviewHistory`
-- [ ] Add `reviewHistory?: Review[]` to `ArticleEntry` (optional, only in extracted files)
-- [ ] Update `executeReviewExtract` ReviewFile mode: move `article.reviews` to `reviewHistory`, set `reviews: []`
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Extracted ReviewFile has correct `reviewHistory`/`reviews` separation
+- [x] Add `reviewHistory?: Review[]` to `ArticleEntry` (optional, only in extracted files)
+- [x] Update `executeReviewExtract` ReviewFile mode: move `article.reviews` to `reviewHistory`, set `reviews: []`
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Extracted ReviewFile has correct `reviewHistory`/`reviews` separation
 
 ### Step 3: Add Top-Level `reviewer` to ReviewFile Extract
 
