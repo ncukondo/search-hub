@@ -74,6 +74,32 @@ function getArticleId(article: ArticleEntry): string {
   return article.title;
 }
 
+function getBasisGuidanceComment(basis: ReviewBasis): string {
+  switch (basis) {
+    case 'title':
+      return [
+        '# Screening by title only.',
+        '# Mark clearly irrelevant items as "exclude" with a comment explaining the reason.',
+        '# Leave everything else as "uncertain".',
+        '',
+      ].join('\n');
+    case 'abstract':
+      return [
+        '# Screening by title and abstract.',
+        '# You should be able to decide "include" or "exclude" for most items at this stage.',
+        '# Mark remaining ambiguous items as "uncertain" with a comment explaining why.',
+        '',
+      ].join('\n');
+    case 'fulltext':
+      return [
+        '# Screening by full text. This is the final decision stage.',
+        '# Decide "include" or "exclude" for each item.',
+        '# Use "uncertain" only when absolutely unavoidable, with a comment explaining why.',
+        '',
+      ].join('\n');
+  }
+}
+
 /**
  * Sort articles based on sort option
  */
@@ -179,7 +205,10 @@ export async function executeReviewExtract(
     const yamlContent = stringifyYaml(workFile, {
       lineWidth: 0,
     });
-    finalContent = yamlContent;
+
+    // Add basis-specific guidance comment at the top
+    const guidanceComment = getBasisGuidanceComment(options.basis);
+    finalContent = guidanceComment + yamlContent;
   } else {
     if (!options.reviewer) {
       throw new Error('--reviewer is required for review file extract');
