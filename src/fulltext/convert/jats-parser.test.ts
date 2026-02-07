@@ -255,6 +255,43 @@ describe('parseJatsMetadata', () => {
     expect(metadata.publicationDate!.day).toBeUndefined();
   });
 
+  it('extracts volume, issue, and pages from article-meta', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <volume>10</volume>
+            <issue>2</issue>
+            <fpage>100</fpage>
+            <lpage>110</lpage>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.volume).toBe('10');
+    expect(metadata.issue).toBe('2');
+    expect(metadata.pages).toBe('100-110');
+  });
+
+  it('extracts elocation-id as pages when no fpage/lpage', () => {
+    const xml = `
+      <article>
+        <front>
+          <article-meta>
+            <title-group><article-title>Test</article-title></title-group>
+            <volume>89</volume>
+            <elocation-id>e102945</elocation-id>
+          </article-meta>
+        </front>
+      </article>
+    `;
+    const metadata = parseJatsMetadata(xml);
+    expect(metadata.volume).toBe('89');
+    expect(metadata.pages).toBe('e102945');
+  });
+
   it('handles missing optional fields gracefully', () => {
     const xml = `
       <article>

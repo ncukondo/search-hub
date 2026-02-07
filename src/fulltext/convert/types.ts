@@ -18,6 +18,9 @@ export interface JatsMetadata {
   pmid?: string;
   journal?: string;
   publicationDate?: { year: string; month?: string; day?: string };
+  volume?: string;
+  issue?: string;
+  pages?: string;
   abstract?: string;
 }
 

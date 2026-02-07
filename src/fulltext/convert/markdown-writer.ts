@@ -182,7 +182,24 @@ export function writeMarkdown(doc: JatsDocument): string {
     lines.push(`**Published**: ${dateStr}`);
   }
 
-  const hasMetaLines = doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal || doc.metadata.publicationDate;
+  // Citation (volume/issue/pages)
+  if (doc.metadata.volume || doc.metadata.issue || doc.metadata.pages) {
+    const parts: string[] = [];
+    if (doc.metadata.volume) parts.push(`Vol. ${doc.metadata.volume}`);
+    if (doc.metadata.issue) parts.push(`(${doc.metadata.issue})`);
+    if (doc.metadata.pages) parts.push(`pp. ${doc.metadata.pages}`);
+    // Join: "Vol. 10(2), pp. 100-110" or similar
+    let citation = '';
+    if (doc.metadata.volume && doc.metadata.issue) {
+      citation = `Vol. ${doc.metadata.volume}(${doc.metadata.issue})`;
+      if (doc.metadata.pages) citation += `, pp. ${doc.metadata.pages}`;
+    } else {
+      citation = parts.join(', ');
+    }
+    lines.push(`**Citation**: ${citation}`);
+  }
+
+  const hasMetaLines = doc.metadata.authors.length > 0 || doc.metadata.doi || doc.metadata.pmcid || doc.metadata.pmid || doc.metadata.journal || doc.metadata.publicationDate || doc.metadata.volume || doc.metadata.pages;
   if (hasMetaLines) {
     lines.push('');
   }

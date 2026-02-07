@@ -344,6 +344,23 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
     }
   }
 
+  // Volume, issue, pages
+  const volumeNode = findChild(metaChildren, 'volume');
+  const volume = volumeNode ? extractAllText(volumeNode.children) : undefined;
+  const issueNode = findChild(metaChildren, 'issue');
+  const issue = issueNode ? extractAllText(issueNode.children) : undefined;
+  let pages: string | undefined;
+  const fpageNode = findChild(metaChildren, 'fpage');
+  const lpageNode = findChild(metaChildren, 'lpage');
+  if (fpageNode) {
+    const fp = extractAllText(fpageNode.children);
+    const lp = lpageNode ? extractAllText(lpageNode.children) : '';
+    pages = lp ? `${fp}-${lp}` : fp;
+  } else {
+    const elocationNode = findChild(metaChildren, 'elocation-id');
+    if (elocationNode) pages = extractAllText(elocationNode.children);
+  }
+
   // Journal name (from <front>/<journal-meta>)
   const journalMeta = findChild(front.children, 'journal-meta');
   let journal: string | undefined;
@@ -365,6 +382,9 @@ export function parseJatsMetadata(xml: string): JatsMetadata {
   if (pmid) result.pmid = pmid;
   if (journal) result.journal = journal;
   if (publicationDate) result.publicationDate = publicationDate;
+  if (volume) result.volume = volume;
+  if (issue) result.issue = issue;
+  if (pages) result.pages = pages;
   if (abstract) result.abstract = abstract;
   return result;
 }

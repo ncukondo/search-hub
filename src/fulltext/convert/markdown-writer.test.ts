@@ -60,6 +60,33 @@ describe('writeMarkdown', () => {
     expect(md).toContain('**Published**: 2024-11');
   });
 
+  it('renders citation with volume, issue, and pages', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        volume: '10',
+        issue: '2',
+        pages: '100-110',
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Citation**: Vol. 10(2), pp. 100-110');
+  });
+
+  it('renders citation with volume and elocation-id only', () => {
+    const doc = makeDoc({
+      metadata: {
+        title: 'Test',
+        authors: [],
+        volume: '89',
+        pages: 'e102945',
+      },
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('**Citation**: Vol. 89, pp. e102945');
+  });
+
   it('converts sections to ## headings', () => {
     const doc = makeDoc({
       sections: [
