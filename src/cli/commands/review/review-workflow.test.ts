@@ -1873,14 +1873,14 @@ summary:
         sessionsDir
       );
       const titleContent = await readFile(titleExtract.outputPath, 'utf-8');
-      const titleFile = parseYaml(titleContent) as WorkFile;
+      const titleFile = parseYaml(titleContent) as ReviewFile;
       expect(titleFile.articles).toHaveLength(10);
 
       // Mark first 2 as exclude, remaining 8 as uncertain
       for (let i = 0; i < titleFile.articles.length; i++) {
         await executeReviewMark({
           file: titleExtract.outputPath,
-          id: titleFile.articles[i]!.id,
+          id: getArticleId(titleFile.articles[i]!),
           decision: i < 2 ? 'exclude' : 'uncertain',
         });
       }
@@ -1904,14 +1904,14 @@ summary:
         sessionsDir
       );
       const abstractContent = await readFile(abstractExtract.outputPath, 'utf-8');
-      const abstractFile = parseYaml(abstractContent) as WorkFile;
+      const abstractFile = parseYaml(abstractContent) as ReviewFile;
       expect(abstractFile.articles).toHaveLength(8);
 
       // Mark all 8 as include based on abstract
       for (const article of abstractFile.articles) {
         await executeReviewMark({
           file: abstractExtract.outputPath,
-          id: article.id,
+          id: getArticleId(article),
           decision: 'include',
           comment: 'Relevant after reading abstract',
         });
