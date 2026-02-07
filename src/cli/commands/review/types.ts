@@ -112,6 +112,20 @@ export interface WorkFile {
 }
 
 /**
+ * Basis priority rank: fulltext > abstract > title > undefined
+ */
+const BASIS_RANK: Record<string, number> = {
+  title: 1,
+  abstract: 2,
+  fulltext: 3,
+};
+
+export function basisRank(basis: ReviewBasis | undefined): number {
+  if (basis === undefined) return 0;
+  return BASIS_RANK[basis] ?? 0;
+}
+
+/**
  * Review status classification (7-state model)
  */
 export type ReviewStatus =

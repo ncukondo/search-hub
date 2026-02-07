@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  basisRank,
   classifyStatus,
   type ArticleEntry,
   type Review,
@@ -7,6 +8,23 @@ import {
   type ReviewFile,
   type ReviewerRecord,
 } from './types.js';
+
+describe('basisRank', () => {
+  it('returns 0 for undefined', () => {
+    expect(basisRank(undefined)).toBe(0);
+  });
+
+  it('title < abstract < fulltext', () => {
+    expect(basisRank('title')).toBeLessThan(basisRank('abstract'));
+    expect(basisRank('abstract')).toBeLessThan(basisRank('fulltext'));
+  });
+
+  it('returns positive numbers for all basis values', () => {
+    expect(basisRank('title')).toBeGreaterThan(0);
+    expect(basisRank('abstract')).toBeGreaterThan(0);
+    expect(basisRank('fulltext')).toBeGreaterThan(0);
+  });
+});
 
 describe('classifyStatus', () => {
   const baseEntry: Omit<ArticleEntry, 'reviews' | 'finalDecision'> = {
