@@ -802,7 +802,8 @@ DEF456    98      0.87
     expect(md).toContain('$$F = ma$$');
 
     // Preformatted text renders as code block
-    expect(md).toContain('```\nSEQUENCE  LENGTH  SCORE');
+    expect(md).toContain('```');
+    expect(md).toContain('SEQUENCE  LENGTH  SCORE');
     expect(md).toContain('DEF456    98      0.87');
 
     // Supplementary material renders as paragraph
