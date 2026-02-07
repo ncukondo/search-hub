@@ -333,4 +333,67 @@ describe('writeMarkdown', () => {
     expect(md).toContain('| Metric | Value |');
     expect(md).toContain('Closing statement.');
   });
+
+  it('skips heading line when section title is empty', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: '',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Content without heading.' }] },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Content without heading.');
+    expect(md).not.toMatch(/^## $/m);
+    expect(md).not.toContain('## \n');
+  });
+
+  it('skips heading line when section title is whitespace-only', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: '   ',
+          level: 2,
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Content here.' }] },
+          ],
+          subsections: [],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('Content here.');
+    expect(md).not.toMatch(/^##\s+$/m);
+  });
+
+  it('renders section with empty title but with subsections', () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          title: '',
+          level: 2,
+          content: [],
+          subsections: [
+            {
+              title: 'Named Subsection',
+              level: 3,
+              content: [
+                { type: 'paragraph', content: [{ type: 'text', text: 'Sub content.' }] },
+              ],
+              subsections: [],
+            },
+          ],
+        },
+      ],
+    });
+    const md = writeMarkdown(doc);
+    expect(md).toContain('### Named Subsection');
+    expect(md).toContain('Sub content.');
+    expect(md).not.toMatch(/^## $/m);
+  });
 });

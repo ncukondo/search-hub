@@ -105,7 +105,7 @@ function renderSection(section: JatsSection): string {
   const lines: string[] = [];
   const heading = '#'.repeat(section.level);
 
-  if (section.title) {
+  if (section.title.trim()) {
     lines.push(`${heading} ${section.title}`);
     lines.push('');
   }
