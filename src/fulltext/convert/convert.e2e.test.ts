@@ -501,4 +501,90 @@ describe('PMC XML to Markdown E2E conversion', () => {
     expect(md).not.toContain('McGuireN');
     expect(md).not.toContain('AcaiA');
   });
+
+  it('converts boxed-text, def-list, disp-formula, preformat, and supplementary-material', async () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>Block Elements Test</article-title>
+      </title-group>
+    </article-meta>
+  </front>
+  <body>
+    <sec>
+      <title>Methods</title>
+      <boxed-text>
+        <title>Key Points</title>
+        <p>Point 1: Early screening is essential.</p>
+        <p>Point 2: Biomarkers improve accuracy.</p>
+      </boxed-text>
+      <def-list>
+        <title>Abbreviations</title>
+        <def-item>
+          <term>RCT</term>
+          <def><p>Randomized controlled trial</p></def>
+        </def-item>
+        <def-item>
+          <term>CI</term>
+          <def><p>Confidence interval</p></def>
+        </def-item>
+      </def-list>
+      <disp-formula id="eq1">
+        <label>(1)</label>
+        <alternatives>
+          <tex-math>E = mc^2</tex-math>
+        </alternatives>
+      </disp-formula>
+      <disp-formula id="eq2">
+        <tex-math>F = ma</tex-math>
+      </disp-formula>
+      <preformat>
+SEQUENCE  LENGTH  SCORE
+ABC123    142     0.95
+DEF456    98      0.87
+      </preformat>
+      <supplementary-material>
+        <label>Supplement 1</label>
+        <caption><p>Raw data tables</p></caption>
+      </supplementary-material>
+    </sec>
+  </body>
+</article>`;
+
+    const xmlPath = join(tmpDir, 'block-elements.xml');
+    const mdPath = join(tmpDir, 'block-elements.md');
+    await writeFile(xmlPath, xml, 'utf-8');
+
+    const result = await convertPmcXmlToMarkdown(xmlPath, mdPath);
+    expect(result.success).toBe(true);
+
+    const md = await readFile(mdPath, 'utf-8');
+
+    // Boxed text renders as blockquote with bold title
+    expect(md).toContain('> **Key Points**');
+    expect(md).toContain('> Point 1: Early screening is essential.');
+    expect(md).toContain('> Point 2: Biomarkers improve accuracy.');
+
+    // Definition list renders with bold terms
+    expect(md).toContain('**Abbreviations**');
+    expect(md).toContain('**RCT**: Randomized controlled trial');
+    expect(md).toContain('**CI**: Confidence interval');
+
+    // Formula with alternatives renders as LaTeX
+    expect(md).toContain('$$E = mc^2$$');
+    expect(md).toContain('(1)');
+
+    // Formula with direct tex-math
+    expect(md).toContain('$$F = ma$$');
+
+    // Preformatted text renders as code block
+    expect(md).toContain('```\nSEQUENCE  LENGTH  SCORE');
+    expect(md).toContain('DEF456    98      0.87');
+
+    // Supplementary material renders as paragraph
+    expect(md).toContain('Supplement 1');
+    expect(md).toContain('Raw data tables');
+  });
 });

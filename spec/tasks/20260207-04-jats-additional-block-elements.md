@@ -117,11 +117,11 @@ JATS XML specification includes several block-level elements that the current pa
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
+- [x] Write E2E test: `src/fulltext/convert/convert.e2e.test.ts`
   - Test with XML containing `<boxed-text>`, `<def-list>`, `<disp-formula>`, `<preformat>`
-- [ ] Verify converted Markdown contains all block elements
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Convert a PMC article known to contain these elements
+- [x] Verify converted Markdown contains all block elements
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Convert a PMC article known to contain these elements
 
 ## Notes
 
