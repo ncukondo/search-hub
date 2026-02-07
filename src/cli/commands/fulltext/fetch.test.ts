@@ -30,17 +30,10 @@ vi.mock('../../../fulltext/download/orchestrator', () => ({
   fetchAllFulltexts: vi.fn(),
 }));
 
-vi.mock('../../../fulltext/index-manager', () => ({
-  loadIndex: vi.fn(),
-  saveIndex: vi.fn().mockResolvedValue(undefined),
-  updateEntry: vi.fn(),
-}));
-
 import { readFile, writeFile, readdir } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { loadMeta } from '../../../fulltext/meta';
 import { fetchAllFulltexts } from '../../../fulltext/download/orchestrator';
-import { loadIndex, saveIndex, updateEntry } from '../../../fulltext/index-manager';
 
 const mockReadFile = vi.mocked(readFile);
 const mockWriteFile = vi.mocked(writeFile);
@@ -49,9 +42,6 @@ const mockParseYaml = vi.mocked(parseYaml);
 const mockStringifyYaml = vi.mocked(stringifyYaml);
 const mockLoadMeta = vi.mocked(loadMeta);
 const mockFetchAll = vi.mocked(fetchAllFulltexts);
-const mockLoadIndex = vi.mocked(loadIndex);
-const mockSaveIndex = vi.mocked(saveIndex);
-const mockUpdateEntry = vi.mocked(updateEntry);
 
 function createReviewFile(articles: Partial<ReviewFile['articles'][0]>[] = []): ReviewFile {
   return {
@@ -108,19 +98,6 @@ describe('executeFulltextFetch', () => {
       { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf'] },
     ]);
 
-    // Default: index
-    mockLoadIndex.mockResolvedValue({
-      sessionId: 'test-session',
-      updatedAt: new Date().toISOString(),
-      entries: {
-        'smith2024-a1b2c3d4': {
-          dirName: 'smith2024-a1b2c3d4',
-          citationKey: 'smith2024',
-          doi: '10.1234/test',
-          hasFiles: { pdf: false, xml: false, markdown: false },
-        },
-      },
-    });
   });
 
   it('fetches all articles with OA locations', async () => {
@@ -301,44 +278,6 @@ describe('executeFulltextFetch', () => {
       // art2 failed → hasFiles NOT updated
       const art2 = writtenReview.articles.find((a) => a.fulltext?.dirName === 'art2-bbbb');
       expect(art2?.fulltext?.hasFiles.pdf).toBe(false);
-    });
-
-    it('updates fulltext-index.json after successful fetch', async () => {
-      const updatedIndex = {
-        sessionId: 'test-session',
-        updatedAt: new Date().toISOString(),
-        entries: {
-          'smith2024-a1b2c3d4': {
-            dirName: 'smith2024-a1b2c3d4',
-            citationKey: 'smith2024',
-            doi: '10.1234/test',
-            hasFiles: { pdf: true, xml: true, markdown: false },
-          },
-        },
-      };
-      mockUpdateEntry.mockReturnValue(updatedIndex);
-
-      mockFetchAll.mockResolvedValue([
-        { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf', 'fulltext.xml'] },
-      ]);
-
-      await executeFulltextFetch({
-        sessionId: 'test-session',
-        sessionsDir: '/sessions',
-      });
-
-      expect(mockUpdateEntry).toHaveBeenCalledWith(
-        expect.anything(),
-        'smith2024-a1b2c3d4',
-        {
-          hasFiles: {
-            pdf: true,
-            xml: true,
-            markdown: false,
-          },
-        },
-      );
-      expect(mockSaveIndex).toHaveBeenCalled();
     });
 
     it('does not update reviews.yaml when no articles were downloaded', async () => {

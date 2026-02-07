@@ -9,8 +9,6 @@ import type { ReviewFile } from '../review/types.js';
 import type { FulltextMeta } from '../../../fulltext/types.js';
 import { loadMeta } from '../../../fulltext/meta.js';
 import { fetchAllFulltexts, type FetchArticle } from '../../../fulltext/download/orchestrator.js';
-import { loadIndex, saveIndex, updateEntry } from '../../../fulltext/index-manager.js';
-
 export interface FulltextFetchOptions {
   sessionId: string;
   sessionsDir: string;
@@ -133,8 +131,8 @@ export async function executeFulltextFetch(
     }
   }
 
-  // Update reviews.yaml and index with download results
-  await updateReviewsAndIndex(sessionDir, results);
+  // Update reviews.yaml with download results
+  await updateReviews(sessionDir, results);
 
   return {
     summary: {
@@ -148,9 +146,9 @@ export async function executeFulltextFetch(
 }
 
 /**
- * Update reviews.yaml fulltext.hasFiles and fulltext-index.json after downloads.
+ * Update reviews.yaml fulltext.hasFiles after downloads.
  */
-async function updateReviewsAndIndex(
+async function updateReviews(
   sessionDir: string,
   results: Array<{ dirName: string; status: string; filesDownloaded?: string[] }>,
 ): Promise<void> {
@@ -162,7 +160,6 @@ async function updateReviewsAndIndex(
 
   if (downloadedDirs.size === 0) return;
 
-  // Update reviews.yaml
   try {
     const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
     const content = await readFile(reviewsPath, 'utf-8');
@@ -188,31 +185,5 @@ async function updateReviewsAndIndex(
     }
   } catch {
     // reviews.yaml update is best-effort
-  }
-
-  // Update fulltext-index.json
-  try {
-    const indexPath = join(sessionDir, 'fulltext', 'fulltext-index.json');
-    let index = await loadIndex(indexPath);
-
-    for (const result of results) {
-      if (result.status === 'downloaded' && result.filesDownloaded) {
-        try {
-          index = updateEntry(index, result.dirName, {
-            hasFiles: {
-              pdf: result.filesDownloaded.includes('fulltext.pdf'),
-              xml: result.filesDownloaded.includes('fulltext.xml'),
-              markdown: result.filesDownloaded.includes('fulltext.md'),
-            },
-          });
-        } catch {
-          // Entry not in index - skip
-        }
-      }
-    }
-
-    await saveIndex(indexPath, index);
-  } catch {
-    // index update is best-effort
   }
 }
