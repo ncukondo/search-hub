@@ -26,15 +26,15 @@ workflow by copy-pasting without needing to understand filter options.
 
 ### Step 1: Create `generateReviewNextSteps` Common Function
 
-- [ ] Write test: `src/cli/commands/review/next-steps.test.ts`
+- [x] Write test: `src/cli/commands/review/next-steps.test.ts`
   - `agreed > 0` → suggests `review finalize`
   - `agreed = 0, uncertain + conflicting + incomplete > 0` → suggests `review extract` with next basis
   - All finalized → suggests `review export`
   - `--limit` used with remaining → suggests next batch with correct offset
   - Next basis detection: no abstract reviews → abstract; has abstract → fulltext
   - Session ID is embedded in suggested commands
-- [ ] Create `src/cli/commands/review/next-steps.ts` with `generateReviewNextSteps()`
-- [ ] Define `ReviewNextStepsContext` interface:
+- [x] Create `src/cli/commands/review/next-steps.ts` with `generateReviewNextSteps()`
+- [x] Define `ReviewNextStepsContext` interface:
   ```typescript
   interface ReviewNextStepsContext {
     sessionId: string;
@@ -46,11 +46,11 @@ workflow by copy-pasting without needing to understand filter options.
     offset?: number;            // for batch continuation
   }
   ```
-- [ ] Verify test fails (Red)
-- [ ] Implement `generateReviewNextSteps`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Correct next steps generated for all scenarios
+- [x] Verify test fails (Red)
+- [x] Implement `generateReviewNextSteps`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Correct next steps generated for all scenarios
 
 ### Step 2: Integrate into `review merge` Output
 
