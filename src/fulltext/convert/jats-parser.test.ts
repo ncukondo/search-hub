@@ -2922,3 +2922,109 @@ describe('parseJatsBackMatter - notes', () => {
     expect(backMatter.notes![1]!.title).toBe('Competing interests');
   });
 });
+
+describe('parseJatsBackMatter - glossary', () => {
+  it('extracts glossary with def-list as a note', () => {
+    const xml = `
+      <article>
+        <back>
+          <glossary>
+            <title>Abbreviations</title>
+            <def-list>
+              <def-item>
+                <term>PGY1</term>
+                <def><p>a post-graduate year 1 resident</p></def>
+              </def-item>
+              <def-item>
+                <term>PGY2</term>
+                <def><p>a post-graduate year 2 resident</p></def>
+              </def-item>
+            </def-list>
+          </glossary>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(1);
+    expect(backMatter.notes![0]!.title).toBe('Abbreviations');
+    expect(backMatter.notes![0]!.text).toContain('PGY1');
+    expect(backMatter.notes![0]!.text).toContain('a post-graduate year 1 resident');
+    expect(backMatter.notes![0]!.text).toContain('PGY2');
+    expect(backMatter.notes![0]!.text).toContain('a post-graduate year 2 resident');
+  });
+
+  it('extracts glossary without title', () => {
+    const xml = `
+      <article>
+        <back>
+          <glossary>
+            <def-list>
+              <def-item>
+                <term>API</term>
+                <def><p>Application Programming Interface</p></def>
+              </def-item>
+            </def-list>
+          </glossary>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(1);
+    expect(backMatter.notes![0]!.title).toBe('Glossary');
+    expect(backMatter.notes![0]!.text).toContain('API');
+    expect(backMatter.notes![0]!.text).toContain('Application Programming Interface');
+  });
+
+  it('combines glossary with existing notes', () => {
+    const xml = `
+      <article>
+        <back>
+          <notes notes-type="author-contribution">
+            <title>Author contributions</title>
+            <p>TK designed the study.</p>
+          </notes>
+          <glossary>
+            <title>Abbreviations</title>
+            <def-list>
+              <def-item>
+                <term>PGY1</term>
+                <def><p>a post-graduate year 1 resident</p></def>
+              </def-item>
+            </def-list>
+          </glossary>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes).toHaveLength(2);
+    expect(backMatter.notes![0]!.title).toBe('Author contributions');
+    expect(backMatter.notes![1]!.title).toBe('Abbreviations');
+    expect(backMatter.notes![1]!.text).toContain('PGY1');
+  });
+
+  it('formats def-list items as term-definition pairs', () => {
+    const xml = `
+      <article>
+        <back>
+          <glossary>
+            <title>Abbreviations</title>
+            <def-list>
+              <def-item>
+                <term>PGY1</term>
+                <def><p>a post-graduate year 1 resident</p></def>
+              </def-item>
+              <def-item>
+                <term>PGY2</term>
+                <def><p>a post-graduate year 2 resident</p></def>
+              </def-item>
+            </def-list>
+          </glossary>
+        </back>
+      </article>
+    `;
+    const backMatter = parseJatsBackMatter(xml);
+    expect(backMatter.notes![0]!.text).toBe(
+      'PGY1: a post-graduate year 1 resident\nPGY2: a post-graduate year 2 resident',
+    );
+  });
+});

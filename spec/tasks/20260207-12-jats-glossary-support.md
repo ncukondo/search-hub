@@ -42,12 +42,12 @@ The abbreviations section is completely missing from the Markdown output. While 
 
 ### Step 1: Parse `<glossary>` in `parseJatsBackMatter()`
 
-- [ ] Write test: XML with `<back><glossary><title>Abbreviations</title><def-list><def-item><term>PGY1</term><def><p>a post-graduate year 1 resident</p></def></def-item></def-list></glossary></back>` should extract glossary content
-- [ ] Verify test fails (Red)
-- [ ] Add `<glossary>` handling in `parseJatsBackMatter()` — extract title and `<def-list>` as a section or note
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Glossary with def-list is extracted from back matter
+- [x] Write test: XML with `<back><glossary><title>Abbreviations</title><def-list><def-item><term>PGY1</term><def><p>a post-graduate year 1 resident</p></def></def-item></def-list></glossary></back>` should extract glossary content
+- [x] Verify test fails (Red)
+- [x] Add `<glossary>` handling in `parseJatsBackMatter()` — extract title and `<def-list>` as a section or note
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Glossary with def-list is extracted from back matter
 
 ### Step 2: Render glossary in Markdown output
 
