@@ -68,7 +68,7 @@ Enhance the extract command to support the progressive screening workflow:
 
 ### Step 4: Update `processReviewFile` for New Format
 
-- [ ] Write test: `src/cli/commands/review/merge.test.ts`
+- [x] Write test: `src/cli/commands/review/merge.test.ts`
   - Merge ignores `reviewHistory` (not added to master)
   - Merge processes only `reviews[]` (all treated as new)
   - `reviewer` is taken from top-level field
@@ -76,12 +76,12 @@ Enhance the extract command to support the progressive screening workflow:
   - `timestamp` is auto-assigned when not specified
   - `finalDecision` is applied when set
   - No duplicate detection: all reviews in `reviews[]` are added
-- [ ] Update `processReviewFile` to use new format
-- [ ] Remove `isDuplicateReview` function (no longer needed)
-- [ ] Add `detectBasis(article)` helper: fulltext > abstract > title
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Merge correctly processes ReviewFile with reviewHistory separation
+- [x] Update `processReviewFile` to use new format
+- [x] Remove `isDuplicateReview` function (no longer needed)
+- [x] Add `detectBasis(article)` helper: fulltext > abstract > title
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Merge correctly processes ReviewFile with reviewHistory separation
 
 ### Step 5: Add `--basis fulltext` Support
 
