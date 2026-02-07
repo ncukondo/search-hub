@@ -512,6 +512,88 @@ describe('parseJatsBody - citations', () => {
   });
 });
 
+describe('parseJatsBody - preserveOrder inline interleaving', () => {
+  it('preserves order of interleaved text and <xref> citations', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Introduction</title>
+            <p>The adage [<xref ref-type="bibr" rid="CR1">1</xref>]. Several studies
+[<xref ref-type="bibr" rid="CR2">2</xref>,<xref ref-type="bibr" rid="CR3">3</xref>].</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      const types = para.content.map((c) => c.type);
+      // Must be interleaved: text, citation, text, citation, text, citation, text
+      expect(types).toEqual(['text', 'citation', 'text', 'citation', 'text', 'citation', 'text']);
+
+      // Verify text positions
+      expect(para.content[0]).toEqual({ type: 'text', text: 'The adage [' });
+      expect(para.content[1]).toEqual({ type: 'citation', refId: 'CR1', text: '1' });
+      expect(para.content[2]).toEqual({ type: 'text', text: ']. Several studies\n[' });
+      expect(para.content[3]).toEqual({ type: 'citation', refId: 'CR2', text: '2' });
+      expect(para.content[4]).toEqual({ type: 'text', text: ',' });
+      expect(para.content[5]).toEqual({ type: 'citation', refId: 'CR3', text: '3' });
+      expect(para.content[6]).toEqual({ type: 'text', text: '].' });
+    }
+  });
+
+  it('preserves order of interleaved text and <italic> formatting', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Test</title>
+            <p>this is the <italic>yanegawara</italic> system. Under the <italic>yanegawara</italic> system</p>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const para = sections[0]!.content[0]!;
+    expect(para.type).toBe('paragraph');
+    if (para.type === 'paragraph') {
+      expect(para.content).toEqual([
+        { type: 'text', text: 'this is the ' },
+        { type: 'italic', children: [{ type: 'text', text: 'yanegawara' }] },
+        { type: 'text', text: ' system. Under the ' },
+        { type: 'italic', children: [{ type: 'text', text: 'yanegawara' }] },
+        { type: 'text', text: ' system' },
+      ]);
+    }
+  });
+
+  it('preserves block element ordering (p, list, table-wrap, fig)', () => {
+    const xml = `
+      <article>
+        <body>
+          <sec>
+            <title>Results</title>
+            <p>First paragraph.</p>
+            <table-wrap>
+              <table><thead><tr><th>A</th></tr></thead><tbody><tr><td>1</td></tr></tbody></table>
+            </table-wrap>
+            <p>Second paragraph.</p>
+            <list list-type="bullet">
+              <list-item><p>Item one</p></list-item>
+            </list>
+            <fig id="fig1"><label>Figure 1</label></fig>
+          </sec>
+        </body>
+      </article>
+    `;
+    const sections = parseJatsBody(xml);
+    const content = sections[0]!.content;
+    expect(content.map((b) => b.type)).toEqual(['paragraph', 'table', 'paragraph', 'list', 'figure']);
+  });
+});
+
 describe('parseJatsReferences', () => {
   it('extracts <ref-list> references', () => {
     const xml = `
