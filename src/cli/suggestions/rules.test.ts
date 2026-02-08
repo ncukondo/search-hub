@@ -325,6 +325,20 @@ describe('getSuggestion', () => {
         expect(result!.seeAlso[0]!.command).toContain('results');
       });
     });
+
+    describe('merge', () => {
+      it('should suggest results and summary', () => {
+        const ctx: SuggestionContext = {
+          command: 'merge',
+          sessionId: 'merged-session',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(2);
+        expect(result!.next[0]!.command).toContain('results');
+        expect(result!.next[1]!.command).toContain('summary');
+      });
+    });
   });
 
   describe('Phase 4: Review Workflow', () => {

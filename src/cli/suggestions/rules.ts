@@ -201,6 +201,18 @@ const diffRule: SuggestionRule = (ctx) => {
   };
 };
 
+const mergeRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'merge') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  return {
+    next: [
+      { command: `search-hub results ${sid}`, description: 'View merged results' },
+      { command: `search-hub summary ${sid}`, description: 'View merge statistics' },
+    ],
+    seeAlso: [],
+  };
+};
+
 // Phase 4: Review Workflow rules
 
 const reviewInitRule: SuggestionRule = (ctx) => {
@@ -390,6 +402,7 @@ const rules: SuggestionRule[] = [
   resultsRule,
   summaryRule,
   diffRule,
+  mergeRule,
   // Phase 4
   reviewInitRule,
   reviewStatusRule,
