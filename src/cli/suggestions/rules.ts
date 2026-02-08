@@ -195,10 +195,21 @@ const summaryRule: SuggestionRule = (ctx) => {
 const diffRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'diff') return null;
   const sid = ctx.sessionId ?? '<session-id>';
-  return {
-    next: [],
-    seeAlso: [{ command: `search-hub results ${sid}`, description: 'View detailed results' }],
-  };
+  const seeAlso: SuggestionResult['seeAlso'] = [];
+
+  // Suggest merge when both sessions have unique articles
+  if (ctx.diffAddedCount !== undefined && ctx.diffAddedCount > 0 &&
+      ctx.diffRemovedCount !== undefined && ctx.diffRemovedCount > 0) {
+    const sid1 = ctx.diffSession1Id ?? '<session-id-1>';
+    seeAlso.push({
+      command: `search-hub merge ${sid1} ${sid}`,
+      description: 'Combine results from both sessions',
+    });
+  }
+
+  seeAlso.push({ command: `search-hub results ${sid}`, description: 'View detailed results' });
+
+  return { next: [], seeAlso };
 };
 
 const mergeRule: SuggestionRule = (ctx) => {

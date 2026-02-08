@@ -324,6 +324,40 @@ describe('getSuggestion', () => {
         expect(result!.seeAlso).toHaveLength(1);
         expect(result!.seeAlso[0]!.command).toContain('results');
       });
+
+      it('should suggest merge when Added > 0 and Removed > 0', () => {
+        const ctx: SuggestionContext = {
+          command: 'diff',
+          sessionId: 'session-v2',
+          diffSession1Id: 'session-v1',
+          diffAddedCount: 3,
+          diffRemovedCount: 2,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        // merge should be in seeAlso
+        const mergeSuggestion = result!.seeAlso.find((s) => s.command.includes('merge'));
+        expect(mergeSuggestion).toBeDefined();
+        expect(mergeSuggestion!.command).toContain('session-v1');
+        expect(mergeSuggestion!.command).toContain('session-v2');
+        // results should also be in seeAlso
+        const resultsSuggestion = result!.seeAlso.find((s) => s.command.includes('results'));
+        expect(resultsSuggestion).toBeDefined();
+      });
+
+      it('should NOT suggest merge when Removed = 0', () => {
+        const ctx: SuggestionContext = {
+          command: 'diff',
+          sessionId: 'session-v2',
+          diffSession1Id: 'session-v1',
+          diffAddedCount: 5,
+          diffRemovedCount: 0,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        const mergeSuggestion = result!.seeAlso.find((s) => s.command.includes('merge'));
+        expect(mergeSuggestion).toBeUndefined();
+      });
     });
 
     describe('merge', () => {

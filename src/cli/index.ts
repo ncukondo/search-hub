@@ -1429,6 +1429,18 @@ Query Refinement Workflow:
           } else {
             if (!globalOpts.quiet) {
               console.log(formatDiff(diff, sessionId1, sessionId2, showFilter, formatOptions));
+
+              // Show suggestions
+              const suggestion = formatSuggestion(getSuggestion({
+                command: 'diff',
+                sessionId: sessionId2,
+                diffSession1Id: sessionId1,
+                diffAddedCount: diff.added.length,
+                diffRemovedCount: diff.removed.length,
+              }));
+              if (suggestion) {
+                console.log(suggestion);
+              }
             }
           }
 
