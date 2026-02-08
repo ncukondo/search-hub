@@ -24,6 +24,73 @@ Default location is `<data-dir>/sessions/` (platform-specific, see [config.md](c
     └── log.jsonl                 # Event log
 ```
 
+## Merged Session
+
+`search-hub merge` により作成されるセッション。複数の検索戦略の結果を統合する。
+
+### Directory Structure
+
+```
+<data-dir>/sessions/
+└── {session-id}/
+    ├── session.yaml              # type: merge, sources参照
+    ├── {provider}_results.jsonl  # 統合・重複除去済みの結果
+    ├── {provider}_results.yaml
+    └── sources/                  # ソースセッションの出自情報コピー
+        ├── {source-session-id-1}/
+        │   ├── session.yaml
+        │   ├── query_common.yaml
+        │   └── {provider}_query.txt
+        └── {source-session-id-2}/
+            ├── session.yaml
+            ├── query_common.yaml
+            └── {provider}_query.txt
+```
+
+### session.yaml Schema (type: merge)
+
+通常セッションとの差異:
+- `type: merge` フィールドが追加される (通常セッションは `type` フィールドなし or `type: search`)
+- `query` フィールドは存在しない
+- `sources` フィールドでソースセッションIDを参照
+- `resume` 不可
+
+```yaml
+version: 1
+id: "20260208_wba-merged_abc123"
+name: "wba-merged"
+type: merge
+createdAt: "2026-02-08T..."
+updatedAt: "2026-02-08T..."
+sources:
+  - id: "20260208_wba-v4_ff6c52"
+    name: "wba-v4"
+  - id: "20260208_wba-v9_251b24"
+    name: "wba-v9"
+databases:
+  pubmed:
+    status: completed
+    files:
+      results: pubmed_results.jsonl
+      resultsYaml: pubmed_results.yaml
+    retrievedCount: 95    # 統合後のユニーク件数
+  scopus:
+    status: completed
+    files:
+      results: scopus_results.jsonl
+      resultsYaml: scopus_results.yaml
+    retrievedCount: 60
+summary:
+  totalRetrieved: 155
+  status: completed
+```
+
+### 制約
+
+- mergedセッションを `merge` のソースにすることはできない（エラー + 元ソースを展開したコマンドを提案）
+- `resume` は不可（セッションエラーとして報告）
+- `sources/` には結果ファイル（JSONL）はコピーしない（クエリと出自情報のみ）
+
 ## Session ID Format
 
 `{date}_{name}_{hash}`

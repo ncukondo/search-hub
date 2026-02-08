@@ -240,14 +240,26 @@ Next:                                              # reviews.yaml が存在す�
 
 #### `diff`
 
-**分類**: Static
+**分類**: Conditional
 
-`diff` はクエリ反復ループ内で使用される。比較結果を見た後のアクションは
-ユーザーの判断次第（改善続行 or 決定）のため、強い Next は出さない。
+Added > 0 かつ Removed > 0 の場合（双方に固有の論文がある場合）、merge を提案。
 
 ```
 See also:
-  search-hub results <session-id>                 # 各セッションの結果を詳しく見る
+  search-hub merge <session-id-1> <session-id-2>   # 両セッションの結果を統合
+  search-hub results <session-id>                   # 各セッションの結果を詳しく見る
+```
+
+Added > 0 かつ Removed = 0 の場合（session-2 が session-1 の上位集合）は merge 不要のため提案しない。
+
+#### `merge`
+
+**分類**: Static
+
+```
+Next:
+  search-hub results <merged-session-id>            # 統合結果を確認
+  search-hub summary <merged-session-id>            # 統計を確認
 ```
 
 ### Phase 4: Review Workflow
@@ -412,6 +424,7 @@ Workflow:
   5. register / export                               Output
 
   Iterate: search v1 → search v2 → diff             Query refinement
+  Combine: merge v1 + v2                             Multi-strategy union
 ```
 
 ### サブコマンドの `--help`

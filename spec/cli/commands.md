@@ -14,6 +14,8 @@ Commands:
   summary     Show session result statistics
   config      View/edit configuration
   init        Initialize configuration
+  diff        Compare results between sessions
+  merge       Merge results from multiple sessions
   query       Query utilities (init, validate, translate)
 ```
 
@@ -73,6 +75,18 @@ search-hub search ./query.yaml --dry-run
 
 # Limit results
 search-hub search ./query.yaml --max-results 100
+```
+
+### Help Text Enhancement
+
+`search --help` の末尾に以下を追加:
+
+```
+Query features (use "query init" to see full template):
+  filters:    year_from, year_to, language, publication_types
+  exclude:    NOT terms per block (terms.exclude)
+  mesh/eric:  controlled vocabulary (terms.mesh, terms.eric)
+  overrides:  per-database settings (pubmed, scopus, eric, arxiv)
 ```
 
 ---
@@ -401,6 +415,68 @@ Systematic review workflow commands. See [review.md](review.md) for full specifi
 | `review merge` | Merge reviewed file back into master |
 | `review finalize` | Auto-set finalDecision for consensus articles |
 | `review export` | Export finalized articles |
+
+---
+
+## merge
+
+Merge results from multiple search sessions into a single session.
+
+### Syntax
+
+```bash
+search-hub merge <session-id>... [options]
+```
+
+### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `session-id...` | Two or more session IDs to merge |
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--name <string>` | Name for merged session (default: auto-generated) |
+| `--dry-run` | Show what would be merged without creating session |
+| `--json` | Output as JSON |
+
+### Behavior
+
+1. Validate all source sessions exist and are completed
+2. Reject merged sessions as sources (suggest expanded command with original sources)
+3. Load articles from all source sessions
+4. Deduplicate across sessions using identifier matching (DOI, PMID, etc.)
+5. Create new session directory with `type: merge`
+6. Copy source session provenance to `sources/` subdirectory
+7. Write merged results per database
+
+### Examples
+
+```bash
+# Merge two sessions
+search-hub merge 20260208_wba-v4_ff6c52 20260208_wba-v9_251b24
+
+# Merge with custom name
+search-hub merge session-v4 session-v9 --name wba-combined
+
+# Merge three sessions
+search-hub merge session-a session-b session-c
+
+# Dry run
+search-hub merge session-v4 session-v9 --dry-run
+```
+
+### Error Cases
+
+```
+# Merged session as source
+$ search-hub merge merged-session new-session
+Error: Session 'merged-session' is a merged session (sources: v4, v9).
+  Merge the original sources directly:
+  search-hub merge v4 v9 new-session
+```
 
 ---
 
