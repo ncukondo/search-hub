@@ -53,6 +53,12 @@ export interface SuggestionContext {
   outputFile?: string | undefined;
   /** Whether validation succeeded (for query validate) */
   validationSuccess?: boolean | undefined;
+  /** Number of added articles in diff result */
+  diffAddedCount?: number | undefined;
+  /** Number of removed articles in diff result */
+  diffRemovedCount?: number | undefined;
+  /** Session 1 ID for diff command */
+  diffSession1Id?: string | undefined;
 }
 
 /**

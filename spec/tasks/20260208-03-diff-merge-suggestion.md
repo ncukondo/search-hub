@@ -23,25 +23,25 @@ Each step follows the TDD cycle:
 2. **Green**: Write minimal implementation to pass
 3. **Refactor**: Clean up, pass lint/typecheck, verify tests still pass
 
-- [ ] Step 1: Update diff suggestion to propose merge conditionally
-  - [ ] Write test: verify merge suggestion appears when Added > 0 and Removed > 0
-  - [ ] Write test: verify merge suggestion does NOT appear when Removed = 0
-  - [ ] Update diff command to pass added/removed counts to suggestion context
-  - [ ] Verify test fails (Red)
-  - [ ] Implement conditional merge suggestion in diff rules
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `diff` output shows merge suggestion only when both sessions have unique articles
+- [x] Step 1: Update diff suggestion to propose merge conditionally
+  - [x] Write test: verify merge suggestion appears when Added > 0 and Removed > 0
+  - [x] Write test: verify merge suggestion does NOT appear when Removed = 0
+  - [x] Update diff command to pass added/removed counts to suggestion context
+  - [x] Verify test fails (Red)
+  - [x] Implement conditional merge suggestion in diff rules
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `diff` output shows merge suggestion only when both sessions have unique articles
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: verify diff output includes merge suggestion in appropriate conditions
+- [x] Write E2E test: verify diff output includes merge suggestion in appropriate conditions
   - **Use real file I/O** - Test with actual session directories
   - **Follow user flows** - Test the same paths users will take
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Run diff on sessions with mutual differences and verify suggestion
-- [ ] Acceptance: All tests pass, suggestion appears correctly in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Run diff on sessions with mutual differences and verify suggestion
+- [x] Acceptance: All tests pass, suggestion appears correctly in real usage
 
 ## Dependencies
 
