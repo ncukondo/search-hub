@@ -24,6 +24,8 @@ import {
 } from './diff.js';
 import { deduplicateArticles } from './export.js';
 import { loadSessionQuery } from './session-utils.js';
+import { getSuggestion } from '../suggestions/rules.js';
+import { formatSuggestion } from '../suggestions/index.js';
 import type { Article } from '../../providers/base/types.js';
 
 describe('search-hub diff E2E', () => {
@@ -563,6 +565,82 @@ filters:
 
       expect(output).not.toContain('Query changes:');
       expect(output).not.toContain('Result changes:');
+    });
+  });
+
+  describe('diff merge suggestion with real sessions', () => {
+    it('should suggest merge when both sessions have unique articles', async () => {
+      await createTestSession('wba-genai-v5', session1Articles, ['pubmed', 'eric', 'arxiv']);
+      await createTestSession('wba-genai-v6', session2Articles, ['pubmed']);
+
+      const articles1 = await loadArticlesFromSession('wba-genai-v5', ['pubmed', 'eric', 'arxiv']);
+      const articles2 = await loadArticlesFromSession('wba-genai-v6', ['pubmed']);
+
+      const dedup1 = deduplicateArticles(articles1);
+      const dedup2 = deduplicateArticles(articles2);
+      const diff = computeDiff(dedup1.articles, dedup2.articles);
+
+      // Both added (1) and removed (3) are > 0
+      expect(diff.added.length).toBeGreaterThan(0);
+      expect(diff.removed.length).toBeGreaterThan(0);
+
+      const suggestion = getSuggestion({
+        command: 'diff',
+        sessionId: 'wba-genai-v6',
+        diffSession1Id: 'wba-genai-v5',
+        diffAddedCount: diff.added.length,
+        diffRemovedCount: diff.removed.length,
+      });
+
+      const output = formatSuggestion(suggestion);
+
+      expect(output).toContain('See also:');
+      expect(output).toContain('search-hub merge wba-genai-v5 wba-genai-v6');
+      expect(output).toContain('search-hub results wba-genai-v6');
+    });
+
+    it('should NOT suggest merge when session-2 is a superset', async () => {
+      // session-2 contains all articles from session-1 plus more
+      const supersetArticles: Article[] = [
+        ...session1Articles,
+        {
+          title: 'Extra article only in superset',
+          authors: [{ family: 'New', given: 'Author' }],
+          pmid: '99999999',
+          source: 'pubmed',
+          publicationDate: '2025-01-01',
+          retrievedAt: new Date().toISOString(),
+        },
+      ];
+
+      await createTestSession('base-session', session1Articles, ['pubmed', 'eric', 'arxiv']);
+      await createTestSession('superset-session', supersetArticles, ['pubmed', 'eric', 'arxiv']);
+
+      const articles1 = await loadArticlesFromSession('base-session', ['pubmed', 'eric', 'arxiv']);
+      const articles2 = await loadArticlesFromSession('superset-session', ['pubmed', 'eric', 'arxiv']);
+
+      const dedup1 = deduplicateArticles(articles1);
+      const dedup2 = deduplicateArticles(articles2);
+      const diff = computeDiff(dedup1.articles, dedup2.articles);
+
+      // Added > 0 but Removed = 0 (session-2 is superset)
+      expect(diff.added.length).toBeGreaterThan(0);
+      expect(diff.removed.length).toBe(0);
+
+      const suggestion = getSuggestion({
+        command: 'diff',
+        sessionId: 'superset-session',
+        diffSession1Id: 'base-session',
+        diffAddedCount: diff.added.length,
+        diffRemovedCount: diff.removed.length,
+      });
+
+      const output = formatSuggestion(suggestion);
+
+      // Should NOT contain merge
+      expect(output).not.toContain('merge');
+      // Should still contain results
+      expect(output).toContain('search-hub results superset-session');
     });
   });
 });
