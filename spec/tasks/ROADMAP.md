@@ -100,7 +100,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 91 | Unify Review Extract Format | 73 | ✅ Completed | [20260207-16](completed/20260207-16-unify-extract-format.md) |
 | 92 | Basis Priority Override in classifyStatus | 88 | ✅ Completed | [20260207-17](completed/20260207-17-basis-priority-override.md) |
 | 93 | Session Merge Command | - | 🔲 Pending | [20260208-01](20260208-01-session-merge-command.md) |
-| 94 | Search Help Query Features | - | 🔲 Pending | [20260208-02](20260208-02-search-help-query-features.md) |
+| 94 | Search Help Query Features | - | ✅ Completed | [20260208-02](completed/20260208-02-search-help-query-features.md) |
 | 95 | Diff Merge Suggestion | 93 | 🔲 Pending | [20260208-03](20260208-03-diff-merge-suggestion.md) |
 
 ## Development Flow
