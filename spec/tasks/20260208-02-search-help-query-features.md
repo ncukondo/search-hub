@@ -33,12 +33,12 @@ Each step follows the TDD cycle:
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test verifying `search --help` output
+- [x] Write E2E test verifying `search --help` output
   - **Execute real commands** - Test actual CLI help output
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Run `search-hub search --help` and verify Query features section appears
-- [ ] Acceptance: All tests pass, help text is visible in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Run `search-hub search --help` and verify Query features section appears
+- [x] Acceptance: All tests pass, help text is visible in real usage
 
 ## Dependencies
 
