@@ -207,6 +207,35 @@ describe('resume command', () => {
       expect(result.error).toContain('not found');
     });
 
+    it('should reject merged sessions', async () => {
+      const mergedSession: SessionFile = {
+        version: 1,
+        id: '20260208_merged_abc123',
+        name: 'merged',
+        type: 'merge',
+        createdAt: '2026-02-08T10:00:00Z',
+        updatedAt: '2026-02-08T10:00:00Z',
+        sources: [
+          { id: 'session-a', name: 'a' },
+          { id: 'session-b', name: 'b' },
+        ],
+        databases: {},
+        summary: { totalHits: 0, totalRetrieved: 50, status: 'completed' },
+      };
+
+      vi.mocked(loadSession).mockResolvedValue(mergedSession);
+
+      const result = await getResumableProvidersForCommand(
+        '20260208_merged_abc123',
+        '/sessions',
+        {}
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('merged session');
+      expect(result.error).toContain('Cannot resume');
+    });
+
     it('should return empty providers when nothing to resume', async () => {
       const mockSession = createMockSession({
         pubmed: {

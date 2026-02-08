@@ -1,5 +1,6 @@
 import { loadSession, getResumableProviders } from '../../session/manager.js';
 import type { ProviderName, ResumableProvider } from '../../session/types.js';
+import { isMergedSession } from '../../session/types.js';
 import { parseProviderNames } from '../utils/validation.js';
 
 export interface ResumeCommandOptions {
@@ -61,6 +62,15 @@ export async function getResumableProvidersForCommand(
 ): Promise<ResumeResult> {
   try {
     const session = await loadSession(sessionId, sessionsDir);
+
+    // Reject merged sessions
+    if (isMergedSession(session)) {
+      return {
+        success: false,
+        error: `Cannot resume merged session '${sessionId}'. Merged sessions are created from other sessions and cannot be resumed.`,
+      };
+    }
+
     let resumable = getResumableProviders(session);
 
     // Filter by specific providers if requested
