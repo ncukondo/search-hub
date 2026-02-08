@@ -91,6 +91,13 @@ import {
   formatDiffJson,
   type ShowFilter,
 } from './commands/diff.js';
+import {
+  mergeArticles,
+  validateMergeSources,
+  createMergedSession,
+  formatMergeOutput as formatSessionMergeOutput,
+  formatMergeJson as formatSessionMergeJson,
+} from './commands/merge.js';
 
 import {
   executeReviewInit,
@@ -1422,6 +1429,163 @@ Query Refinement Workflow:
           } else {
             if (!globalOpts.quiet) {
               console.log(formatDiff(diff, sessionId1, sessionId2, showFilter, formatOptions));
+            }
+          }
+
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error(
+              'Error:',
+              error instanceof Error ? error.message : error
+            );
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+        }
+      }
+    );
+
+  // Register merge command
+  program
+    .command('merge')
+    .description('Merge results from multiple search sessions')
+    .argument('<session-ids...>', 'two or more session IDs to merge')
+    .option('--name <string>', 'name for merged session')
+    .option('--dry-run', 'show what would be merged without creating session')
+    .option('--json', 'output as JSON')
+    .addHelpText('after', `
+Examples:
+  $ search-hub merge session-v4 session-v9                  # Merge two sessions
+  $ search-hub merge session-v4 session-v9 --name combined  # Merge with custom name
+  $ search-hub merge session-a session-b session-c          # Merge three sessions
+  $ search-hub merge session-v4 session-v9 --dry-run        # Preview merge`)
+    .action(
+      async (
+        sessionIds: string[],
+        options?: { name?: string; dryRun?: boolean; json?: boolean }
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          if (sessionIds.length < 2) {
+            if (!globalOpts.quiet) {
+              console.error('Error: At least two session IDs are required for merge');
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          }
+
+          const sessionsDir = await getSessionsDir(globalOpts);
+
+          // Load all source sessions
+          const sessions = new Map<string, ReturnType<typeof loadSession> extends Promise<infer T> ? T : never>();
+          for (const sessionId of sessionIds) {
+            try {
+              const session = await loadSession(sessionId, sessionsDir);
+              sessions.set(sessionId, session);
+            } catch (error) {
+              if (!globalOpts.quiet) {
+                console.error(
+                  `Error loading session '${sessionId}': ${error instanceof Error ? error.message : 'Failed to load session'}`
+                );
+              }
+              process.exitCode = EXIT_CODES.SESSION_ERROR;
+              return;
+            }
+          }
+
+          // Validate sources
+          const validation = validateMergeSources(sessions);
+          if (!validation.valid) {
+            if (!globalOpts.quiet) {
+              console.error(`Error: ${validation.error}`);
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          // Load articles from all sessions
+          const sessionArticles = new Map<string, Awaited<ReturnType<typeof loadSessionArticles>>>();
+          for (const [sessionId, session] of sessions) {
+            const articles = await loadSessionArticles(session, sessionId, sessionsDir);
+            sessionArticles.set(sessionId, articles);
+          }
+
+          // Merge articles
+          const mergeResult = mergeArticles(sessionArticles);
+
+          // Build output data
+          const sources = [...sessions.entries()].map(([id, session]) => ({
+            id,
+            name: session.name,
+            count: mergeResult.perSession.get(id) ?? 0,
+          }));
+
+          const byProviderCounts = new Map<string, number>();
+          for (const [provider, articles] of mergeResult.byProvider) {
+            byProviderCounts.set(provider, articles.length);
+          }
+
+          // Auto-generate name if not provided
+          const firstSession = sessions.values().next().value;
+          const mergeName = options?.name ?? (firstSession ? firstSession.name + '-merged' : 'merged');
+
+          if (options?.dryRun) {
+            // Dry run - show preview without creating session
+            const outputData = {
+              sessionId: '(dry-run)',
+              totalBefore: mergeResult.totalBefore,
+              totalAfter: mergeResult.totalAfter,
+              duplicatesRemoved: mergeResult.duplicatesRemoved,
+              sources,
+              byProvider: byProviderCounts,
+            };
+            if (options.json) {
+              console.log(formatSessionMergeJson(outputData));
+            } else if (!globalOpts.quiet) {
+              console.log(formatSessionMergeOutput(outputData));
+            }
+            process.exitCode = EXIT_CODES.SUCCESS;
+            return;
+          }
+
+          // Create merged session
+          const sessionSources = [...sessions.entries()].map(([id, session]) => ({
+            id,
+            name: session.name,
+          }));
+
+          const mergedSession = await createMergedSession({
+            name: mergeName,
+            sources: sessionSources,
+            byProvider: mergeResult.byProvider,
+            totalRetrieved: mergeResult.totalAfter,
+            sessionsDir,
+            sourceSessionIds: sessionIds,
+          });
+
+          // Format output
+          const outputData = {
+            sessionId: mergedSession.id,
+            totalBefore: mergeResult.totalBefore,
+            totalAfter: mergeResult.totalAfter,
+            duplicatesRemoved: mergeResult.duplicatesRemoved,
+            sources,
+            byProvider: byProviderCounts,
+          };
+
+          if (options?.json) {
+            console.log(formatSessionMergeJson(outputData));
+          } else if (!globalOpts.quiet) {
+            console.log(formatSessionMergeOutput(outputData));
+
+            // Show suggestions
+            const suggestion = getSuggestion({
+              command: 'merge',
+              sessionId: mergedSession.id,
+            });
+            const suggestionText = formatSuggestion(suggestion);
+            if (suggestionText) {
+              console.log(suggestionText);
             }
           }
 

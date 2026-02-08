@@ -106,7 +106,7 @@ export async function getSessionDetails(
       status: session.summary.status,
       createdAt: session.createdAt,
       updatedAt: session.updatedAt,
-      queryFile: session.query.file,
+      queryFile: session.query?.file ?? '',
       totalHits: session.summary.totalHits,
       totalRetrieved: session.summary.totalRetrieved,
       databases,
