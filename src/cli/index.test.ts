@@ -201,6 +201,17 @@ describe('CLI Entry Point', () => {
       expect(helpOutput).toContain('database-native');
       expect(helpOutput).toContain('prefer YAML');
     });
+
+    it('should include Query features section in help output', () => {
+      const program = createProgram();
+      const helpOutput = captureSubcommandHelp(program, 'search');
+      expect(helpOutput).toContain('Query features');
+      expect(helpOutput).toContain('filters:');
+      expect(helpOutput).toContain('exclude:');
+      expect(helpOutput).toContain('mesh/eric:');
+      expect(helpOutput).toContain('overrides:');
+      expect(helpOutput).toContain('query init');
+    });
   });
 
   describe('command ordering', () => {

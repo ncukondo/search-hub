@@ -100,6 +100,21 @@ describe('CLI Help Discoverability E2E', () => {
       expect(helpOutput).toContain('Workflow position:');
       expect(helpOutput).toContain('results');
     });
+
+    it('should include Query features section', () => {
+      const program = createProgram();
+      const helpOutput = captureSubcommandHelp(program, 'search');
+
+      expect(helpOutput).toContain('Query features (use "query init" to see full template):');
+      expect(helpOutput).toContain('filters:');
+      expect(helpOutput).toContain('year_from, year_to, language, publication_types');
+      expect(helpOutput).toContain('exclude:');
+      expect(helpOutput).toContain('terms.exclude');
+      expect(helpOutput).toContain('mesh/eric:');
+      expect(helpOutput).toContain('terms.mesh, terms.eric');
+      expect(helpOutput).toContain('overrides:');
+      expect(helpOutput).toContain('pubmed, scopus, eric, arxiv');
+    });
   });
 
   describe('diff command help', () => {
