@@ -22,14 +22,14 @@ Each step follows the TDD cycle:
 2. **Green**: Write minimal implementation to pass
 3. **Refactor**: Clean up, pass lint/typecheck, verify tests still pass
 
-- [ ] Step 1: Add Query features section to search --help
-  - [ ] Write test: verify help output contains "Query features" section
-  - [ ] Update addHelpText in `src/cli/index.ts` for search command
-  - [ ] Verify test fails (Red)
-  - [ ] Implement help text addition
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: `search --help` shows Query features with filters, exclude, mesh/eric, overrides
+- [x] Step 1: Add Query features section to search --help
+  - [x] Write test: verify help output contains "Query features" section
+  - [x] Update addHelpText in `src/cli/index.ts` for search command
+  - [x] Verify test fails (Red)
+  - [x] Implement help text addition
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: `search --help` shows Query features with filters, exclude, mesh/eric, overrides
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 

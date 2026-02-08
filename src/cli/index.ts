@@ -522,7 +522,13 @@ Examples:
   $ search-hub search --db pubmed --query "diabetes[tiab]"  # Direct query
   $ search-hub search ./query.yaml --dry-run            # Preview translations
   $ search-hub search ./query.yaml --count-only         # Get hit counts only
-  $ search-hub search ./query.yaml --max-results 100    # Limit results`)
+  $ search-hub search ./query.yaml --max-results 100    # Limit results
+
+Query features (use "query init" to see full template):
+  filters:    year_from, year_to, language, publication_types
+  exclude:    NOT terms per block (terms.exclude)
+  mesh/eric:  controlled vocabulary (terms.mesh, terms.eric)
+  overrides:  per-database settings (pubmed, scopus, eric, arxiv)`)
     .action(
       async (
         queryFile?: string,
