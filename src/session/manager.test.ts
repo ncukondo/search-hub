@@ -146,9 +146,9 @@ describe('Session Manager', () => {
       expect(sessionFile.version).toBe(1);
       expect(sessionFile.id).toBe(session.id);
       expect(sessionFile.name).toBe('Test Query');
-      expect(sessionFile.query.file).toBe('/path/to/query.yaml');
-      expect(sessionFile.query.hash).toBe('abc123def456');
-      expect(sessionFile.query.targets).toEqual(['pubmed', 'eric']);
+      expect(sessionFile.query!.file).toBe('/path/to/query.yaml');
+      expect(sessionFile.query!.hash).toBe('abc123def456');
+      expect(sessionFile.query!.targets).toEqual(['pubmed', 'eric']);
       expect(sessionFile.summary.status).toBe('created');
       expect(sessionFile.summary.totalHits).toBe(0);
       expect(sessionFile.summary.totalRetrieved).toBe(0);
@@ -272,7 +272,7 @@ describe('Session Manager', () => {
       const loaded = await loadSession(created.id, testDir);
 
       expect(loaded.description).toBe('Test description');
-      expect(loaded.query.targets).toEqual(['pubmed', 'eric', 'arxiv']);
+      expect(loaded.query!.targets).toEqual(['pubmed', 'eric', 'arxiv']);
       expect(loaded.databases.pubmed?.status).toBe('pending');
       expect(loaded.databases.eric?.status).toBe('pending');
       expect(loaded.databases.arxiv?.status).toBe('pending');

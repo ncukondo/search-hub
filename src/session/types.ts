@@ -69,6 +69,14 @@ export interface DatabaseStatus {
 }
 
 /**
+ * Source session reference for merged sessions.
+ */
+export interface SessionSource {
+  id: string;
+  name: string;
+}
+
+/**
  * Session file structure (session.yaml).
  */
 export interface SessionFile {
@@ -76,19 +84,28 @@ export interface SessionFile {
   id: string;
   name: string;
   description?: string;
+  type?: 'search' | 'merge';
   createdAt: string;
   updatedAt: string;
-  query: {
+  query?: {
     file: string;
     hash: string;
     targets: ProviderName[];
   };
+  sources?: SessionSource[];
   databases: Partial<Record<ProviderName, DatabaseStatus>>;
   summary: {
     totalHits: number;
     totalRetrieved: number;
     status: SessionStatus;
   };
+}
+
+/**
+ * Check if a session is a merged session.
+ */
+export function isMergedSession(session: SessionFile): boolean {
+  return session.type === 'merge';
 }
 
 /**

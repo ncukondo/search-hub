@@ -7,7 +7,9 @@ import type {
   DatabaseError,
   LogEvent,
   ProviderName,
+  SessionSource,
 } from './types';
+import { isMergedSession } from './types';
 
 describe('Session Types', () => {
   describe('SessionStatus', () => {
@@ -171,7 +173,7 @@ describe('Session Types', () => {
         },
       };
       expect(session.version).toBe(1);
-      expect(session.query.targets).toContain('pubmed');
+      expect(session.query!.targets).toContain('pubmed');
     });
 
     it('should allow optional description', () => {
@@ -195,6 +197,133 @@ describe('Session Types', () => {
         },
       };
       expect(session.description).toBe('A test session');
+    });
+  });
+
+  describe('SessionSource', () => {
+    it('should allow valid session source structure', () => {
+      const source: SessionSource = {
+        id: '20260208_wba-v4_ff6c52',
+        name: 'wba-v4',
+      };
+      expect(source.id).toBe('20260208_wba-v4_ff6c52');
+      expect(source.name).toBe('wba-v4');
+    });
+  });
+
+  describe('Merged SessionFile', () => {
+    it('should allow merged session with type and sources', () => {
+      const session: SessionFile = {
+        version: 1,
+        id: '20260208_wba-merged_abc123',
+        name: 'wba-merged',
+        type: 'merge',
+        createdAt: '2026-02-08T10:00:00Z',
+        updatedAt: '2026-02-08T10:00:00Z',
+        sources: [
+          { id: '20260208_wba-v4_ff6c52', name: 'wba-v4' },
+          { id: '20260208_wba-v9_251b24', name: 'wba-v9' },
+        ],
+        databases: {
+          pubmed: {
+            status: 'completed',
+            retrievedCount: 95,
+            files: {
+              query: '',
+              results: 'pubmed_results.jsonl',
+              resultsYaml: 'pubmed_results.yaml',
+            },
+          },
+        },
+        summary: {
+          totalHits: 0,
+          totalRetrieved: 95,
+          status: 'completed',
+        },
+      };
+      expect(session.type).toBe('merge');
+      expect(session.sources).toHaveLength(2);
+      expect(session.sources![0]!.id).toBe('20260208_wba-v4_ff6c52');
+    });
+
+    it('should allow search session without type field', () => {
+      const session: SessionFile = {
+        version: 1,
+        id: '20240115_test_abc123',
+        name: 'test',
+        createdAt: '2024-01-15T10:00:00Z',
+        updatedAt: '2024-01-15T10:00:00Z',
+        query: {
+          file: '/path/to/query.yaml',
+          hash: 'abc123',
+          targets: ['pubmed'],
+        },
+        databases: {},
+        summary: {
+          totalHits: 0,
+          totalRetrieved: 0,
+          status: 'created',
+        },
+      };
+      expect(session.type).toBeUndefined();
+      expect(session.sources).toBeUndefined();
+    });
+  });
+
+  describe('isMergedSession', () => {
+    it('should return true for merged sessions', () => {
+      const session: SessionFile = {
+        version: 1,
+        id: '20260208_merged_abc123',
+        name: 'merged',
+        type: 'merge',
+        createdAt: '2026-02-08T10:00:00Z',
+        updatedAt: '2026-02-08T10:00:00Z',
+        sources: [
+          { id: 'session-a', name: 'a' },
+          { id: 'session-b', name: 'b' },
+        ],
+        databases: {},
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'completed' },
+      };
+      expect(isMergedSession(session)).toBe(true);
+    });
+
+    it('should return false for regular search sessions', () => {
+      const session: SessionFile = {
+        version: 1,
+        id: '20240115_test_abc123',
+        name: 'test',
+        createdAt: '2024-01-15T10:00:00Z',
+        updatedAt: '2024-01-15T10:00:00Z',
+        query: {
+          file: '/path/to/query.yaml',
+          hash: 'abc123',
+          targets: ['pubmed'],
+        },
+        databases: {},
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'created' },
+      };
+      expect(isMergedSession(session)).toBe(false);
+    });
+
+    it('should return false for sessions with type search', () => {
+      const session: SessionFile = {
+        version: 1,
+        id: '20240115_test_abc123',
+        name: 'test',
+        type: 'search',
+        createdAt: '2024-01-15T10:00:00Z',
+        updatedAt: '2024-01-15T10:00:00Z',
+        query: {
+          file: '/path/to/query.yaml',
+          hash: 'abc123',
+          targets: ['pubmed'],
+        },
+        databases: {},
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'created' },
+      };
+      expect(isMergedSession(session)).toBe(false);
     });
   });
 
