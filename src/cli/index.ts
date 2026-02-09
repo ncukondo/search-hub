@@ -2326,6 +2326,14 @@ Examples:
           return;
         }
 
+        if (!(await sessionExists(sessionId, sessionsDir))) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: session '${sessionId}' not found`);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
         // List notes for a specific session
         const sessionDir = join(sessionsDir, sessionId);
         const notes = await loadNotes(sessionDir);
