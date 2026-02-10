@@ -3,6 +3,7 @@ import {
   validateQueryCommand,
   validateVocabCommand,
   formatVocabValidationOutput,
+  hasVocabErrors,
 } from './validate.js';
 import * as fs from 'node:fs/promises';
 import type { MeSHLookupClient } from '../../../query/mesh-lookup.js';
@@ -185,6 +186,43 @@ query:
       expect(result.vocabResult).toBeDefined();
       expect(result.vocabResult!.valid).toHaveLength(0);
       expect(result.vocabResult!.invalid).toHaveLength(0);
+    });
+  });
+
+  describe('hasVocabErrors', () => {
+    it('should return true when there are invalid vocab terms', () => {
+      const result = {
+        success: true,
+        vocabResult: {
+          valid: [{ term: 'Diabetes Mellitus', vocabulary: 'mesh' as const, found: true }],
+          invalid: [{ term: 'Not A Term', vocabulary: 'mesh' as const, found: false }],
+        },
+      };
+      expect(hasVocabErrors(result)).toBe(true);
+    });
+
+    it('should return false when all vocab terms are valid', () => {
+      const result = {
+        success: true,
+        vocabResult: {
+          valid: [{ term: 'Diabetes Mellitus', vocabulary: 'mesh' as const, found: true }],
+          invalid: [],
+        },
+      };
+      expect(hasVocabErrors(result)).toBe(false);
+    });
+
+    it('should return false when no vocabResult', () => {
+      const result = { success: true };
+      expect(hasVocabErrors(result)).toBe(false);
+    });
+
+    it('should return false when vocabResult has no terms', () => {
+      const result = {
+        success: true,
+        vocabResult: { valid: [], invalid: [] },
+      };
+      expect(hasVocabErrors(result)).toBe(false);
     });
   });
 

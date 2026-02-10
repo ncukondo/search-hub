@@ -22,6 +22,7 @@ import {
   validateVocabCommand,
   formatValidateResult,
   formatVocabValidationOutput,
+  hasVocabErrors,
 } from './commands/query/validate.js';
 import { MeSHLookupClient } from '../query/mesh-lookup.js';
 import {
@@ -376,9 +377,10 @@ Examples:
             }
             console.log(output);
           }
-          process.exitCode = result.success
-            ? EXIT_CODES.SUCCESS
-            : EXIT_CODES.QUERY_ERROR;
+          process.exitCode =
+            !result.success || hasVocabErrors(result)
+              ? EXIT_CODES.QUERY_ERROR
+              : EXIT_CODES.SUCCESS;
         } else {
           const result = await validateQueryCommand(file);
           if (!globalOpts.quiet) {

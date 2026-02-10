@@ -117,6 +117,13 @@ export function formatValidateResult(
 }
 
 /**
+ * Check if a validation result contains invalid controlled vocabulary terms.
+ */
+export function hasVocabErrors(result: ValidateResult): boolean {
+  return (result.vocabResult?.invalid.length ?? 0) > 0;
+}
+
+/**
  * Validate a query YAML file with controlled vocabulary checking.
  *
  * First validates the query structure, then validates controlled vocab
