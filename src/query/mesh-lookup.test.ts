@@ -67,17 +67,17 @@ describe('MeSHLookupClient', () => {
       vi.unstubAllGlobals();
     });
 
-    it('should return found=false with no suggestions when startswith also returns empty', async () => {
+    it('should return found=false with no suggestions when all fallbacks return empty', async () => {
       const mockFetch = vi
         .fn()
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [],
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [],
-        });
+        // exact: no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startsWith (full): no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains (full): no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startsWith (first word): no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] });
       vi.stubGlobal('fetch', mockFetch);
 
       const result = await client.lookupTerm('Xyzzy Not A Term');
@@ -221,6 +221,160 @@ describe('MeSHLookupClient', () => {
 
       const result = await clientNoLimiter.lookupTerm('Test Term');
       expect(result.found).toBe(true);
+
+      vi.unstubAllGlobals();
+    });
+  });
+
+  describe('fuzzy suggestion fallback strategies', () => {
+    it('should return suggestions via contains match for typos (e.g. "Artificial Intelligense")', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact: no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startsWith (full term): no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains (full term): match found
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'http://id.nlm.nih.gov/mesh/T000612', label: 'Artificial Intelligence' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Artificial Intelligense');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Artificial Intelligence']);
+
+      // Verify the contains call was made
+      const containsCall = mockFetch.mock.calls[2]!;
+      const url = new URL(containsCall[0] as string);
+      expect(url.searchParams.get('match')).toBe('contains');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should return suggestions via startsWith first words for plural differences (e.g. "Drug Therapies")', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact: no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startsWith (full term): no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains (full term): no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startsWith (first word "Drug"): match found
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'http://id.nlm.nih.gov/mesh/T000001', label: 'Drug Therapy' },
+            { resource: 'http://id.nlm.nih.gov/mesh/T000002', label: 'Drug Interactions' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Drug Therapies');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Drug Therapy', 'Drug Interactions']);
+
+      // Verify the startsWith call with first word
+      const startsWithCall = mockFetch.mock.calls[3]!;
+      const url = new URL(startsWithCall[0] as string);
+      expect(url.searchParams.get('match')).toBe('startswith');
+      expect(url.searchParams.get('label')).toBe('Drug');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should return suggestions via contains for spacing differences (e.g. "Cardio Vascular Disease")', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact: no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startsWith (full term): no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains (full term): no match ("Cardio Vascular Disease" not in any label)
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startsWith (first word "Cardio"): finds suggestions
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'http://id.nlm.nih.gov/mesh/T000003', label: 'Cardiovascular Diseases' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Cardio Vascular Disease');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Cardiovascular Diseases']);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should still return found=true for exact matches (no extra calls)', async () => {
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          { resource: 'http://id.nlm.nih.gov/mesh/T011730', label: 'Diabetes Mellitus' },
+        ],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Diabetes Mellitus');
+
+      expect(result.found).toBe(true);
+      expect(result.suggestions).toBeUndefined();
+      // Only one fetch call (exact match)
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should still return suggestions from startsWith without trying further fallbacks', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact: no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startsWith (full term): match found
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'http://id.nlm.nih.gov/mesh/T011730', label: 'Diabetes Mellitus' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Diabetes Melli');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Diabetes Mellitus']);
+      // Only two fetch calls (exact + startsWith), no contains or first-word fallback
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should not try first-word fallback for single-word terms', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact: no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startsWith: no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains: no match
+        .mockResolvedValueOnce({ ok: true, json: async () => [] });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Xyzzy');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toBeUndefined();
+      // 3 calls: exact, startsWith, contains — no first-word fallback for single words
+      expect(mockFetch).toHaveBeenCalledTimes(3);
 
       vi.unstubAllGlobals();
     });

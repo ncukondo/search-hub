@@ -44,30 +44,61 @@ export class MeSHLookupClient {
   /**
    * Look up a single MeSH term.
    *
-   * First tries an exact match. If not found, tries a startswith match
-   * to provide suggestions.
+   * Tries multiple match strategies in order:
+   * 1. exact — exact match
+   * 2. startsWith (full term) — prefix match
+   * 3. contains (full term) — substring match
+   * 4. startsWith (first word) — for multi-word terms with plural/spelling diffs
+   *
+   * Returns on the first strategy that produces results.
    */
   async lookupTerm(term: string): Promise<MeSHLookupResult> {
     if (this.rateLimiter) {
       await this.rateLimiter.acquire();
     }
 
-    // Try exact match first
+    // 1. Try exact match first
     const exactResults = await this.fetchLookup(term, 'exact', 1);
 
     if (exactResults.length > 0) {
       return { term, found: true };
     }
 
-    // Not found — try startswith for suggestions
-    const suggestions = await this.fetchLookup(term, 'startswith', 5);
+    // 2. Try startsWith (full term) for suggestions
+    const startsWithResults = await this.fetchLookup(term, 'startswith', 5);
 
-    if (suggestions.length > 0) {
+    if (startsWithResults.length > 0) {
       return {
         term,
         found: false,
-        suggestions: suggestions.map((s) => s.label),
+        suggestions: startsWithResults.map((s) => s.label),
       };
+    }
+
+    // 3. Try contains (full term) for typos and variant spellings
+    const containsResults = await this.fetchLookup(term, 'contains', 5);
+
+    if (containsResults.length > 0) {
+      return {
+        term,
+        found: false,
+        suggestions: containsResults.map((s) => s.label),
+      };
+    }
+
+    // 4. Try startsWith with first word only (for multi-word terms)
+    const words = term.split(/\s+/);
+    if (words.length > 1) {
+      const firstWord = words[0]!;
+      const firstWordResults = await this.fetchLookup(firstWord, 'startswith', 5);
+
+      if (firstWordResults.length > 0) {
+        return {
+          term,
+          found: false,
+          suggestions: firstWordResults.map((s) => s.label),
+        };
+      }
     }
 
     return { term, found: false };
@@ -86,7 +117,7 @@ export class MeSHLookupClient {
 
   private async fetchLookup(
     label: string,
-    match: 'exact' | 'startswith',
+    match: 'exact' | 'startswith' | 'contains',
     limit: number
   ): Promise<MeSHApiEntry[]> {
     const params = new URLSearchParams({
