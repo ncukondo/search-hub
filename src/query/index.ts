@@ -36,3 +36,16 @@ export {
   overrideBlockSchema,
   queryFileSchema,
 } from './validator.js';
+
+// Vocabulary validation exports
+export { MeSHLookupClient } from './mesh-lookup.js';
+export type { MeSHLookupResult } from './mesh-lookup.js';
+export {
+  extractControlledVocabTerms,
+  validateControlledVocab,
+} from './vocab-validator.js';
+export type {
+  VocabTerm,
+  VocabTermResult,
+  VocabValidationResult,
+} from './vocab-validator.js';

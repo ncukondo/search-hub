@@ -3,7 +3,7 @@
  *
  * Tests query file validation functionality.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
 import {
   setupE2EContext,
@@ -13,7 +13,13 @@ import {
   queryFixtures,
   invalidQueryFixtures,
 } from '../../e2e-helpers.js';
-import { validateQueryCommand, formatValidateResult } from './validate.js';
+import {
+  validateQueryCommand,
+  validateVocabCommand,
+  formatValidateResult,
+  formatVocabValidationOutput,
+} from './validate.js';
+import type { MeSHLookupClient } from '../../../query/mesh-lookup.js';
 
 describe('search-hub query validate E2E', () => {
   let ctx: E2EContext;
@@ -355,6 +361,174 @@ overrides:
 
       expect(result.success).toBe(true);
       expect(result.queryName).toBe('override-query');
+    });
+  });
+
+  describe('validate --vocab (controlled vocabulary)', () => {
+    function createMockMeSHClient(
+      results: Map<string, { found: boolean; suggestions?: string[] }>
+    ): MeSHLookupClient {
+      return {
+        lookupTerm: vi.fn(async (term: string) => {
+          const result = results.get(term);
+          if (result) {
+            return { term, found: result.found, suggestions: result.suggestions };
+          }
+          return { term, found: false };
+        }),
+        lookupTerms: vi.fn(),
+      } as unknown as MeSHLookupClient;
+    }
+
+    it('should validate MeSH terms in real query file', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: mesh-vocab-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+        - "Diabetes Mellitus, Type 2"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          ['Diabetes Mellitus', { found: true }],
+          ['Diabetes Mellitus, Type 2', { found: true }],
+        ])
+      );
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(2);
+      expect(result.vocabResult!.invalid).toHaveLength(0);
+    });
+
+    it('should report invalid MeSH terms with suggestions', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: invalid-mesh-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitis"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          [
+            'Diabetes Mellitis',
+            {
+              found: false,
+              suggestions: [
+                'Diabetes Mellitus',
+                'Diabetes Mellitus, Type 2',
+              ],
+            },
+          ],
+        ])
+      );
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
+        'Diabetes Mellitus'
+      );
+    });
+
+    it('should format vocab validation output correctly', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: format-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - AI
+      mesh:
+        - "Artificial Intelligence"
+        - "Not A Real Term"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          ['Artificial Intelligence', { found: true }],
+          ['Not A Real Term', { found: false, suggestions: ['Artificial Intelligence'] }],
+        ])
+      );
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.vocabResult).toBeDefined();
+      const output = formatVocabValidationOutput(result.vocabResult!);
+
+      expect(output).toContain('Controlled vocabulary:');
+      expect(output).toContain('✓ mesh: "Artificial Intelligence"');
+      expect(output).toContain('✗ mesh: "Not A Real Term"');
+      expect(output).toContain('Did you mean: "Artificial Intelligence"');
+    });
+
+    it('should skip vocab validation for invalid query files', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+query: not_valid
+`
+      );
+
+      const client = createMockMeSHClient(new Map());
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.success).toBe(false);
+      expect(result.vocabResult).toBeUndefined();
+    });
+
+    it('should handle query with no controlled vocab terms', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: no-vocab-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(new Map());
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(0);
+      expect(result.vocabResult!.invalid).toHaveLength(0);
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toBe('');
     });
   });
 });

@@ -27,6 +27,14 @@ import {
   filtersSchema,
   overrideBlockSchema,
   queryFileSchema,
+  // Vocabulary validation
+  MeSHLookupClient,
+  type MeSHLookupResult,
+  extractControlledVocabTerms,
+  validateControlledVocab,
+  type VocabTerm,
+  type VocabTermResult,
+  type VocabValidationResult,
 } from './index.js';
 
 describe('Query Module Exports', () => {
@@ -115,6 +123,34 @@ describe('Query Module Exports', () => {
     it('should export ValidationError', () => {
       expect(ValidationError).toBeDefined();
       expect(typeof ValidationError).toBe('function');
+    });
+  });
+
+  describe('Vocabulary validation exports', () => {
+    it('should export MeSHLookupClient', () => {
+      expect(MeSHLookupClient).toBeDefined();
+      expect(typeof MeSHLookupClient).toBe('function');
+    });
+
+    it('should export extractControlledVocabTerms', () => {
+      expect(extractControlledVocabTerms).toBeDefined();
+      expect(typeof extractControlledVocabTerms).toBe('function');
+    });
+
+    it('should export validateControlledVocab', () => {
+      expect(validateControlledVocab).toBeDefined();
+      expect(typeof validateControlledVocab).toBe('function');
+    });
+
+    it('should export vocabulary types', () => {
+      const term: VocabTerm = { term: 'Test', vocabulary: 'mesh' };
+      const result: VocabTermResult = { term: 'Test', vocabulary: 'mesh', found: true };
+      const lookupResult: MeSHLookupResult = { term: 'Test', found: true };
+      const validationResult: VocabValidationResult = { valid: [result], invalid: [] };
+
+      expect(term.vocabulary).toBe('mesh');
+      expect(validationResult.valid).toHaveLength(1);
+      expect(lookupResult.found).toBe(true);
     });
   });
 
