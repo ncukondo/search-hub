@@ -112,6 +112,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 103 | Improve MeSH Suggestion Accuracy for Suffix Typos | 100 | 📋 Planned | [20260210-08](20260210-08-mesh-suggestion-suffix-typo.md) |
 | 104 | Make `keywords` Optional in Term Block Schema | 3 | 📋 Planned | [20260210-09](20260210-09-optional-keywords-in-term-block.md) |
 | 105 | Wire Next Step Suggestions to `query validate` | 57 | 📋 Planned | [20260210-10](20260210-10-wire-validate-suggestions.md) |
+| 106 | Remove Deprecated `--vocab` Flag | 100 | 📋 Planned | [20260210-11](20260210-11-remove-deprecated-vocab-flag.md) |
 
 ## Development Flow
 
