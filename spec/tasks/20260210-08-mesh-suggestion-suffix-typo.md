@@ -76,12 +76,12 @@ Each step follows the TDD cycle:
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
+- [x] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
   - 末尾タイポの MeSH term で suggestion に正解が含まれることを確認
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: "Artificial Intelligencee" 等のタイポで validate を実行し suggestion を確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: "Artificial Intelligencee" 等のタイポで validate を実行し suggestion を確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
