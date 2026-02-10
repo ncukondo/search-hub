@@ -7,9 +7,16 @@ This document specifies the fulltext retrieval and management features for searc
 Extend search-hub with capabilities to:
 1. **Discover** fulltext availability (OA status, URLs)
 2. **Retrieve** fulltext automatically where legally available (OA)
-3. **Convert** PMC XML to Markdown for text analysis
+3. **Convert** PMC XML / arXiv HTML to Markdown for text analysis
 4. **Manage** manually downloaded files (PDF)
 5. **Integrate** with reference-manager (`ref fulltext attach`)
+
+### Implementation
+
+Core fulltext logic (discovery, download, conversion, metadata) is provided by the
+[`@ncukondo/academic-fulltext`](https://www.npmjs.com/package/@ncukondo/academic-fulltext) package.
+search-hub owns only the CLI layer (`src/cli/commands/fulltext/`) and the search-hub–specific
+`attach-shared.ts` integration module (`src/integration/attach-shared.ts`).
 
 ## Scope
 
@@ -18,8 +25,10 @@ Extend search-hub with capabilities to:
 | Feature | Description |
 |---------|-------------|
 | OA Discovery | Check OA status via Unpaywall, PMC, CORE |
-| OA Auto-Retrieval | Download legally available OA PDFs and XMLs |
+| DOI→PMCID Resolution | Resolve DOI to PMCID via NCBI ID Converter, enabling PMC retrieval for DOI-only articles |
+| OA Auto-Retrieval | Download legally available OA PDFs, XMLs, and arXiv HTML |
 | PMC XML to Markdown | Convert PMC JATS XML to readable Markdown |
+| arXiv HTML to Markdown | Download arXiv LaTeXML HTML and convert to Markdown |
 | arXiv PDF | Direct PDF download from arXiv |
 | Manual PDF Management | Init directories, sync manually added files |
 | Download URL Hints | Show URLs for manual download in README |
@@ -54,10 +63,16 @@ Extend search-hub with capabilities to:
   - PDF: `https://www.ncbi.nlm.nih.gov/pmc/articles/PMC{id}/pdf/`
   - XML (JATS): `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id={pmcid}`
 - **Advantage**: Structured XML for Markdown conversion
+- **DOI→PMCID Resolution**: When an article has only a DOI (no PMCID), the NCBI ID Converter API
+  (`https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/`) is used to resolve DOI→PMCID/PMID,
+  enabling PMC PDF/XML retrieval. Batch resolution is supported (up to 200 IDs per request).
+  Requires `ncbi_email` and `ncbi_tool` configuration.
 
 ### 3. arXiv (Direct)
 
-- **URL Pattern**: `https://arxiv.org/pdf/{id}.pdf`
+- **URL Patterns**:
+  - PDF: `https://arxiv.org/pdf/{id}.pdf`
+  - HTML (LaTeXML): `https://arxiv.org/html/{id}` (for Markdown conversion)
 - **Auth**: None
 - **Coverage**: All arXiv preprints
 - **Rate Limit**: Respect robots.txt (3 seconds between requests)
@@ -89,6 +104,7 @@ sessions/<session-id>/
     │   ├── README.md         # Human-readable info with URLs
     │   ├── fulltext.pdf      # Downloaded or imported PDF
     │   ├── fulltext.xml      # PMC JATS XML (if available)
+    │   ├── fulltext.html     # arXiv LaTeXML HTML (if available)
     │   └── fulltext.md       # Converted Markdown
     ├── jones2023-e5f6g7h8/
     │   ├── meta.json
@@ -107,6 +123,7 @@ Files within each article directory use fixed names:
 - `README.md` - Human-readable info (title, DOI, URLs, instructions)
 - `fulltext.pdf` - PDF file
 - `fulltext.xml` - PMC XML file
+- `fulltext.html` - arXiv LaTeXML HTML file
 - `fulltext.md` - Markdown conversion
 
 ### meta.json Schema
@@ -138,6 +155,7 @@ interface FulltextMeta {
   files: {
     pdf?: FileInfo;
     xml?: FileInfo;
+    html?: FileInfo;
     markdown?: FileInfo;
   };
 
@@ -216,6 +234,7 @@ interface ArticleEntry {
     hasFiles: {
       pdf: boolean;
       xml: boolean;
+      html: boolean;
       markdown: boolean;
     };
   };
@@ -298,7 +317,7 @@ search-hub fulltext sync <session-id> --dry-run
 
 **Behavior**:
 1. Scan all directories in `fulltext/`
-2. Detect new files: `fulltext.pdf`, `fulltext.md`, `fulltext.xml`
+2. Detect new files: `fulltext.pdf`, `fulltext.md`, `fulltext.xml`, `fulltext.html`
 3. Update `meta.json` with file info
 4. Update `reviews.yaml` fulltext references
 
@@ -411,15 +430,19 @@ search-hub fulltext import <session-id> --file paper.pdf --doi 10.1234/example
 
 ### `fulltext convert`
 
-Convert PMC XML to Markdown.
+Convert PMC XML or arXiv HTML to Markdown.
 
 ```bash
-# Convert all XML files in session
+# Convert all convertible files (XML and HTML) in session
 search-hub fulltext convert <session-id>
 
 # Convert specific article
 search-hub fulltext convert <session-id> --article smith2024-a1b2c3d4
 ```
+
+**Conversion sources** (in priority order):
+1. `fulltext.xml` (PMC JATS XML) → `fulltext.md` via `convertPmcXmlToMarkdown`
+2. `fulltext.html` (arXiv LaTeXML HTML) → `fulltext.md` via `convertArxivHtmlToMarkdown`
 
 ### `fulltext attach`
 
@@ -545,9 +568,9 @@ Fulltext attachment results:
 Results saved to: sessions/<id>/registration.json
 ```
 
-## PMC XML to Markdown Conversion
+## Fulltext to Markdown Conversion
 
-### JATS XML Structure
+### PMC JATS XML → Markdown
 
 PMC uses JATS (Journal Article Tag Suite) XML:
 
@@ -605,7 +628,7 @@ Discussion text...
 2. Reference 2
 ```
 
-### Conversion Features
+### PMC Conversion Features
 
 - Preserve section hierarchy (h2, h3, h4)
 - Convert tables to Markdown tables
@@ -613,6 +636,19 @@ Discussion text...
 - Convert inline citations to `[N]` format
 - Handle special characters and basic math
 - Strip non-essential markup (styling)
+
+### arXiv LaTeXML HTML → Markdown
+
+arXiv provides LaTeXML-rendered HTML versions of papers at `https://arxiv.org/html/{id}`.
+
+**Conversion**: `convertArxivHtmlToMarkdown(htmlPath, mdPath)` (provided by `@ncukondo/academic-fulltext`)
+
+**Features**:
+- Parse arXiv LaTeXML HTML structure
+- Preserve document hierarchy (sections, headings)
+- Extract and format references/bibliography
+- Handle math notation
+- Output clean Markdown compatible with the existing fulltext format
 
 ## Configuration
 
@@ -625,6 +661,8 @@ auto_attach_on_register = true  # Auto-attach fulltext on register
 [fulltext.sources]
 unpaywall_email = "user@example.com"   # Required for Unpaywall
 core_api_key = ""                       # Optional, for CORE API
+ncbi_email = "user@example.com"        # Required for NCBI ID Converter (DOI→PMCID)
+ncbi_tool = "search-hub"               # Tool name for NCBI API identification
 prefer_sources = ["pmc", "arxiv", "unpaywall", "core"]
 
 [fulltext.download]

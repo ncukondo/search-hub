@@ -102,6 +102,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 93 | Session Merge Command | - | ✅ Completed | [20260208-01](completed/20260208-01-session-merge-command.md) |
 | 94 | Search Help Query Features | - | ✅ Completed | [20260208-02](completed/20260208-02-search-help-query-features.md) |
 | 95 | Diff Merge Suggestion | 93 | ✅ Completed | [20260208-03](completed/20260208-03-diff-merge-suggestion.md) |
+| 96 | Migrate Fulltext Module to `@ncukondo/academic-fulltext` Package | 59-66 | 📋 Planned | [20260210-01](20260210-01-migrate-fulltext-to-package.md) |
 
 ## Development Flow
 
