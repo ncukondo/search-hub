@@ -62,23 +62,41 @@ Next:
 
 #### `query validate` (成功時)
 
-**分類**: Static
+**分類**: State-dependent（`$schema` リンクの有無で分岐）
 
-validate は構文チェックのみ（API不要）。成功したら、翻訳確認かプレビューへ進む。
+validate 成功後は翻訳確認かプレビューへ進む。`$schema` リンクがない場合は `query init` を info レベルで推奨。
 
+**`$schema` リンクあり:**
 ```
 Next:
   search-hub search <query-file> --dry-run        # DB別の翻訳を確認
   search-hub search <query-file> --preview        # ヒット数+サンプルタイトルを確認
 ```
 
+**`$schema` リンクなし:**
+```
+Next:
+  search-hub search <query-file> --dry-run        # DB別の翻訳を確認
+  search-hub search <query-file> --preview        # ヒット数+サンプルタイトルを確認
+See also:
+  search-hub query init -o <query-file>           # テンプレートで再作成（エディタ補完が有効に）
+```
+
 #### `query validate` (失敗時)
 
-**分類**: Static
+**分類**: State-dependent（`$schema` リンクの有無で分岐）
 
+**`$schema` リンクあり:**
 ```
 Next:
   $EDITOR <query-file>                            # エラーを修正して再検証
+```
+
+**`$schema` リンクなし:**
+```
+Next:
+  search-hub query init -o <query-file>           # テンプレートから再作成（推奨）
+  $EDITOR <query-file>                            # エラーを手動修正
 ```
 
 #### `query translate`
@@ -471,6 +489,7 @@ interface SuggestionContext {
   sessionCount?: number;             // 既存セッション数
   hasReviews?: boolean;              // reviews.yaml の存否
   queryFile?: string;                // クエリファイルパス
+  hasSchemaLink?: boolean;           // query YAML に $schema リンクがあるか
   extractName?: string;              // extract の --name 値
 }
 ```

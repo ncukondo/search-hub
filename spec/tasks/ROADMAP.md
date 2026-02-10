@@ -108,6 +108,10 @@ This file tracks high-level progress. For implementation details, see individual
 | 99 | ~~Vocab Suggestion Improvements~~ | 98 | ❌ Deleted (superseded by #100) | ~~20260210-04~~ |
 | 100 | Default Vocab Validation with File-Based Cache | 98 | ✅ Completed | [20260210-05](completed/20260210-05-default-vocab-validation-with-cache.md) |
 | 101 | Unify Review Schema to Local Copy Pattern | 44 | ✅ Completed | [20260210-06](completed/20260210-06-review-schema-path-local-copy.md) |
+| 102 | Query YAML JSON Schema & `query init` Schema Link | 18, 100 | 📋 Planned | [20260210-07](20260210-07-query-yaml-json-schema.md) |
+| 103 | Improve MeSH Suggestion Accuracy for Suffix Typos | 100 | 📋 Planned | [20260210-08](20260210-08-mesh-suggestion-suffix-typo.md) |
+| 104 | Make `keywords` Optional in Term Block Schema | 3 | 📋 Planned | [20260210-09](20260210-09-optional-keywords-in-term-block.md) |
+| 105 | Wire Next Step Suggestions to `query validate` | 57 | 📋 Planned | [20260210-10](20260210-10-wire-validate-suggestions.md) |
 
 ## Development Flow
 

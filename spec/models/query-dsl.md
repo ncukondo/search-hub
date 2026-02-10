@@ -41,25 +41,38 @@ overrides:                        # Optional: DB-specific customizations
 
 ## Term Block
 
-Terms can include keywords, controlled vocabularies, and exclusions:
+Terms can include keywords, controlled vocabularies, and exclusions.
+At least one of `keywords`, `mesh`, `emtree`, or `eric` is required per block:
 
 ```yaml
 terms:
-  keywords:                       # Free-text terms (all DBs)
+  keywords:                       # Free-text terms (all DBs, optional)
     - diabetes
     - "type 2 diabetes"           # Phrase search
     - diabet*                     # Wildcard (where supported)
 
-  mesh:                           # MeSH terms (PubMed only)
+  mesh:                           # MeSH terms (PubMed only, optional)
     - "Diabetes Mellitus, Type 2"
     - "Diabetes Mellitus"
 
-  emtree:                         # Emtree terms (Embase only)
+  emtree:                         # Emtree terms (Embase only, optional)
     - "non insulin dependent diabetes mellitus"
 
   exclude:                        # Terms to exclude (NOT operator)
     - "environmental protection"  # Use when terms are ambiguous
     - "pollution"
+```
+
+A block with only controlled vocabulary (no keywords) is valid:
+
+```yaml
+# MeSH-only block — common in systematic reviews
+- field: title_abstract
+  terms:
+    mesh:
+      - "Artificial Intelligence"
+      - "Machine Learning"
+  operator: OR
 ```
 
 ### Exclude Terms
