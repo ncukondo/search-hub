@@ -8,6 +8,7 @@
  */
 
 import type { RateLimiter } from '../providers/base/rate-limiter.js';
+import type { VocabCache } from './vocab-cache.js';
 
 const MESH_LOOKUP_BASE_URL = 'https://id.nlm.nih.gov/mesh/lookup/term';
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -35,46 +36,68 @@ interface MeSHApiEntry {
 export class MeSHLookupClient {
   private readonly rateLimiter: RateLimiter | undefined;
   private readonly timeoutMs: number;
+  private readonly cache: VocabCache | undefined;
 
-  constructor(options?: { rateLimiter?: RateLimiter; timeoutMs?: number }) {
+  constructor(options?: { rateLimiter?: RateLimiter; timeoutMs?: number; cache?: VocabCache }) {
     this.rateLimiter = options?.rateLimiter;
     this.timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.cache = options?.cache;
   }
 
   /**
    * Look up a single MeSH term.
    *
-   * First tries an exact match. If not found, tries a startswith match
-   * to provide suggestions.
+   * Tries multiple match strategies in order:
+   * 1. exact — exact match
+   * 2. startsWith (full term) — prefix match
+   * 3. contains (full term) — substring match
+   * 4. startsWith (first word) — for multi-word terms with plural/spelling diffs
+   *
+   * Returns on the first strategy that produces results.
+   * Results are cached when a VocabCache is provided.
    */
   async lookupTerm(term: string): Promise<MeSHLookupResult> {
+    // Check cache first
+    if (this.cache) {
+      const cached = this.cache.get('mesh', term);
+      if (cached) {
+        return cached;
+      }
+    }
+
     // 1. Try exact match first
     const exactResults = await this.fetchLookup(term, 'exact', 1);
 
     if (exactResults.length > 0) {
-      return { term, found: true };
+      const result: MeSHLookupResult = { term, found: true };
+      this.cache?.set('mesh', term, result);
+      return result;
     }
 
     // 2. Try startsWith (full term) for suggestions
     const startsWithResults = await this.fetchLookup(term, 'startswith', 5);
 
     if (startsWithResults.length > 0) {
-      return {
+      const result: MeSHLookupResult = {
         term,
         found: false,
         suggestions: startsWithResults.map((s) => s.label),
       };
+      this.cache?.set('mesh', term, result);
+      return result;
     }
 
     // 3. Try contains (full term) for typos and variant spellings
     const containsResults = await this.fetchLookup(term, 'contains', 5);
 
     if (containsResults.length > 0) {
-      return {
+      const result: MeSHLookupResult = {
         term,
         found: false,
         suggestions: containsResults.map((s) => s.label),
       };
+      this.cache?.set('mesh', term, result);
+      return result;
     }
 
     // 4. Try startsWith with first word only (for multi-word terms)
@@ -84,15 +107,19 @@ export class MeSHLookupClient {
       const firstWordResults = await this.fetchLookup(firstWord, 'startswith', 5);
 
       if (firstWordResults.length > 0) {
-        return {
+        const result: MeSHLookupResult = {
           term,
           found: false,
           suggestions: firstWordResults.map((s) => s.label),
         };
+        this.cache?.set('mesh', term, result);
+        return result;
       }
     }
 
-    return { term, found: false };
+    const result: MeSHLookupResult = { term, found: false };
+    this.cache?.set('mesh', term, result);
+    return result;
   }
 
   /**

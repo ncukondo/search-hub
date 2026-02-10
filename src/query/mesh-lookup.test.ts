@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MeSHLookupClient } from './mesh-lookup.js';
 import type { RateLimiter } from '../providers/base/rate-limiter.js';
+import type { VocabCache } from './vocab-cache.js';
 
 describe('MeSHLookupClient', () => {
   let client: MeSHLookupClient;
@@ -400,6 +401,71 @@ describe('MeSHLookupClient', () => {
       await expect(client.lookupTerm('Test')).rejects.toThrow(
         'MeSH lookup failed'
       );
+
+      vi.unstubAllGlobals();
+    });
+  });
+
+  describe('VocabCache integration', () => {
+    it('should skip fetchLookup when cache hits', async () => {
+      const mockCache = {
+        get: vi.fn().mockReturnValue({ term: 'Diabetes Mellitus', found: true }),
+        set: vi.fn(),
+      } as unknown as VocabCache;
+
+      const clientWithCache = new MeSHLookupClient({ cache: mockCache });
+
+      const mockFetch = vi.fn();
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await clientWithCache.lookupTerm('Diabetes Mellitus');
+
+      expect(result.found).toBe(true);
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockCache.get).toHaveBeenCalledWith('mesh', 'Diabetes Mellitus');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should call API and write to cache on cache miss', async () => {
+      const mockCache = {
+        get: vi.fn().mockReturnValue(undefined),
+        set: vi.fn(),
+      } as unknown as VocabCache;
+
+      const clientWithCache = new MeSHLookupClient({ cache: mockCache });
+
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Diabetes Mellitus' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await clientWithCache.lookupTerm('Diabetes Mellitus');
+
+      expect(result.found).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockCache.set).toHaveBeenCalledWith(
+        'mesh',
+        'Diabetes Mellitus',
+        { term: 'Diabetes Mellitus', found: true }
+      );
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should work without cache (undefined)', async () => {
+      const clientNoCache = new MeSHLookupClient();
+
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Test' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await clientNoCache.lookupTerm('Test');
+      expect(result.found).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
 
       vi.unstubAllGlobals();
     });
