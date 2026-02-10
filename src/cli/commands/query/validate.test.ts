@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { validateQueryCommand } from './validate.js';
+import {
+  validateQueryCommand,
+  validateVocabCommand,
+  formatVocabValidationOutput,
+} from './validate.js';
 import * as fs from 'node:fs/promises';
+import type { MeSHLookupClient } from '../../../query/mesh-lookup.js';
 
 vi.mock('node:fs/promises');
 
@@ -95,6 +100,143 @@ describe('query validate command', () => {
       const result = await validateQueryCommand('/path/to/query.yaml');
 
       expect(result.blockCount).toBe(1);
+    });
+  });
+
+  describe('validateVocabCommand', () => {
+    const yamlWithMesh = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+        - "Not A Real Term"
+    operator: OR
+`;
+
+    function createMockClient(
+      results: Map<string, { found: boolean; suggestions?: string[] }>
+    ): MeSHLookupClient {
+      return {
+        lookupTerm: vi.fn(async (term: string) => {
+          const result = results.get(term);
+          if (result) {
+            return { term, found: result.found, suggestions: result.suggestions };
+          }
+          return { term, found: false };
+        }),
+        lookupTerms: vi.fn(),
+      } as unknown as MeSHLookupClient;
+    }
+
+    it('should validate MeSH terms when vocab flag is set', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = createMockClient(
+        new Map([
+          ['Diabetes Mellitus', { found: true }],
+          ['Not A Real Term', { found: false, suggestions: ['Diabetes'] }],
+        ])
+      );
+
+      const result = await validateVocabCommand('/path/to/query.yaml', client);
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+    });
+
+    it('should return file read errors without attempting vocab validation', async () => {
+      vi.mocked(fs.readFile).mockRejectedValue(
+        new Error('ENOENT: no such file')
+      );
+
+      const client = createMockClient(new Map());
+
+      const result = await validateVocabCommand('/nonexistent.yaml', client);
+
+      expect(result.success).toBe(false);
+      expect(result.vocabResult).toBeUndefined();
+    });
+
+    it('should return schema errors without attempting vocab validation', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(invalidYaml);
+
+      const client = createMockClient(new Map());
+
+      const result = await validateVocabCommand('/invalid.yaml', client);
+
+      expect(result.success).toBe(false);
+      expect(result.vocabResult).toBeUndefined();
+    });
+
+    it('should return empty vocab result when no controlled vocab terms', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(validYaml);
+
+      const client = createMockClient(new Map());
+
+      const result = await validateVocabCommand('/path/to/query.yaml', client);
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(0);
+      expect(result.vocabResult!.invalid).toHaveLength(0);
+    });
+  });
+
+  describe('formatVocabValidationOutput', () => {
+    it('should format valid terms with checkmark', () => {
+      const output = formatVocabValidationOutput({
+        valid: [{ term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true }],
+        invalid: [],
+      });
+
+      expect(output).toContain('✓');
+      expect(output).toContain('Diabetes Mellitus');
+    });
+
+    it('should format invalid terms with cross and suggestions', () => {
+      const output = formatVocabValidationOutput({
+        valid: [],
+        invalid: [
+          {
+            term: 'Not A Term',
+            vocabulary: 'mesh',
+            found: false,
+            suggestions: ['Diabetes Mellitus'],
+          },
+        ],
+      });
+
+      expect(output).toContain('✗');
+      expect(output).toContain('Not A Term');
+      expect(output).toContain('Diabetes Mellitus');
+    });
+
+    it('should format invalid terms without suggestions', () => {
+      const output = formatVocabValidationOutput({
+        valid: [],
+        invalid: [
+          { term: 'Xyz', vocabulary: 'mesh', found: false },
+        ],
+      });
+
+      expect(output).toContain('✗');
+      expect(output).toContain('Xyz');
+      expect(output).not.toContain('Did you mean');
+    });
+
+    it('should return empty string when no controlled vocab terms', () => {
+      const output = formatVocabValidationOutput({
+        valid: [],
+        invalid: [],
+      });
+
+      expect(output).toBe('');
     });
   });
 });

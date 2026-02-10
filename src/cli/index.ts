@@ -19,8 +19,11 @@ import {
 } from './commands/config.js';
 import {
   validateQueryCommand,
+  validateVocabCommand,
   formatValidateResult,
+  formatVocabValidationOutput,
 } from './commands/query/validate.js';
+import { MeSHLookupClient } from '../query/mesh-lookup.js';
 import {
   translateQueryCommand,
   formatTranslateResult,
@@ -355,19 +358,36 @@ Use "search-hub query init" to generate a template.`);
     .command('validate')
     .description('Validate query YAML file')
     .argument('<file>', 'path to query YAML file')
+    .option('--vocab', 'validate controlled vocabulary terms (MeSH) against external APIs')
     .addHelpText('after', `
 Examples:
-  $ search-hub query validate ./diabetes-ai.yaml`)
-    .action(async (file: string) => {
+  $ search-hub query validate ./diabetes-ai.yaml
+  $ search-hub query validate ./diabetes-ai.yaml --vocab   # Check MeSH terms`)
+    .action(async (file: string, opts: { vocab?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
-        const result = await validateQueryCommand(file);
-        if (!globalOpts.quiet) {
-          console.log(formatValidateResult(result, file));
+        if (opts.vocab) {
+          const meshClient = new MeSHLookupClient();
+          const result = await validateVocabCommand(file, meshClient);
+          if (!globalOpts.quiet) {
+            let output = formatValidateResult(result, file);
+            if (result.vocabResult) {
+              output += formatVocabValidationOutput(result.vocabResult);
+            }
+            console.log(output);
+          }
+          process.exitCode = result.success
+            ? EXIT_CODES.SUCCESS
+            : EXIT_CODES.QUERY_ERROR;
+        } else {
+          const result = await validateQueryCommand(file);
+          if (!globalOpts.quiet) {
+            console.log(formatValidateResult(result, file));
+          }
+          process.exitCode = result.success
+            ? EXIT_CODES.SUCCESS
+            : EXIT_CODES.QUERY_ERROR;
         }
-        process.exitCode = result.success
-          ? EXIT_CODES.SUCCESS
-          : EXIT_CODES.QUERY_ERROR;
       } catch (error) {
         if (!globalOpts.quiet) {
           console.error(

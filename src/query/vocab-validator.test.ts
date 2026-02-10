@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   extractControlledVocabTerms,
   validateControlledVocab,
-  type VocabTerm,
 } from './vocab-validator.js';
 import type { QueryAST } from './types.js';
 import type { MeSHLookupClient } from './mesh-lookup.js';
