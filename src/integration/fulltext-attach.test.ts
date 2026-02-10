@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import type { FulltextMeta } from '../fulltext/types.js';
+import type { FulltextMeta } from '@ncukondo/academic-fulltext';
 
 // Mock ref-cli module
 vi.mock('./ref-cli.js', () => ({
