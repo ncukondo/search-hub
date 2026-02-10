@@ -174,6 +174,77 @@ query:
     });
   });
 
+  describe('hasControlledVocab in validateQueryCommand', () => {
+    it('should return hasControlledVocab: true when query contains mesh terms', async () => {
+      const yamlWithMesh = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+    operator: OR
+`;
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const result = await validateQueryCommand('/path/to/query.yaml');
+
+      expect(result.success).toBe(true);
+      expect(result.hasControlledVocab).toBe(true);
+    });
+
+    it('should return hasControlledVocab: false when query has only keywords', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(validYaml);
+
+      const result = await validateQueryCommand('/path/to/query.yaml');
+
+      expect(result.success).toBe(true);
+      expect(result.hasControlledVocab).toBe(false);
+    });
+
+    it('should return hasControlledVocab: true when query contains emtree terms', async () => {
+      const yamlWithEmtree = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      emtree:
+        - "diabetes mellitus"
+    operator: OR
+`;
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithEmtree);
+
+      const result = await validateQueryCommand('/path/to/query.yaml');
+
+      expect(result.success).toBe(true);
+      expect(result.hasControlledVocab).toBe(true);
+    });
+
+    it('should return hasControlledVocab: true when query contains eric terms', async () => {
+      const yamlWithEric = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - education
+      eric:
+        - "Higher Education"
+    operator: OR
+`;
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithEric);
+
+      const result = await validateQueryCommand('/path/to/query.yaml');
+
+      expect(result.success).toBe(true);
+      expect(result.hasControlledVocab).toBe(true);
+    });
+  });
+
   describe('hasVocabErrors', () => {
     it('should return true when there are invalid vocab terms', () => {
       const result = {

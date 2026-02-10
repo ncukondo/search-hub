@@ -28,6 +28,8 @@ export interface ValidateResult {
   blockCount?: number;
   /** Controlled vocabulary validation results (when --vocab is used) */
   vocabResult?: VocabValidationResult;
+  /** Whether the query contains controlled vocabulary terms (mesh/emtree/eric) */
+  hasControlledVocab?: boolean;
 }
 
 /**
@@ -70,6 +72,22 @@ async function parseQueryFile(
 }
 
 /**
+ * Check if a QueryAST contains controlled vocabulary terms (mesh/emtree/eric).
+ */
+function detectControlledVocab(ast: QueryAST): boolean {
+  for (const block of ast.blocks) {
+    if (
+      (block.terms.mesh && block.terms.mesh.length > 0) ||
+      (block.terms.emtree && block.terms.emtree.length > 0) ||
+      (block.terms.eric && block.terms.eric.length > 0)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Validate a query YAML file.
  *
  * @param filePath - Path to the query file
@@ -88,6 +106,7 @@ export async function validateQueryCommand(
     success: true,
     queryName: parsed.ast.name,
     blockCount: parsed.ast.blocks.length,
+    hasControlledVocab: detectControlledVocab(parsed.ast),
   };
 }
 
