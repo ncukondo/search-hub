@@ -23,12 +23,21 @@ const queryValidateRule: SuggestionRule = (ctx) => {
     };
   }
 
+  const seeAlso: SuggestionResult['seeAlso'] = [];
+
+  if (ctx.hasControlledVocab && !ctx.vocabChecked) {
+    seeAlso.push({
+      command: `search-hub query validate ${file} --vocab`,
+      description: 'Validate controlled vocabulary terms',
+    });
+  }
+
   return {
     next: [
       { command: `search-hub search ${file} --dry-run`, description: 'Check DB translations' },
       { command: `search-hub search ${file} --preview`, description: 'Preview hit counts + sample titles' },
     ],
-    seeAlso: [],
+    seeAlso,
   };
 };
 

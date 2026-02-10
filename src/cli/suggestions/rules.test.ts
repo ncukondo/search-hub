@@ -36,6 +36,47 @@ describe('getSuggestion', () => {
       });
     });
 
+    describe('query validate (success with controlled vocab)', () => {
+      it('should suggest --vocab in seeAlso when hasControlledVocab and not vocabChecked', () => {
+        const ctx: SuggestionContext = {
+          command: 'query validate',
+          queryFile: 'query.yaml',
+          validationSuccess: true,
+          hasControlledVocab: true,
+          vocabChecked: false,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso.length).toBeGreaterThanOrEqual(1);
+        expect(result!.seeAlso.some((s) => s.command.includes('--vocab'))).toBe(true);
+      });
+
+      it('should NOT suggest --vocab when hasControlledVocab is false', () => {
+        const ctx: SuggestionContext = {
+          command: 'query validate',
+          queryFile: 'query.yaml',
+          validationSuccess: true,
+          hasControlledVocab: false,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso.every((s) => !s.command.includes('--vocab'))).toBe(true);
+      });
+
+      it('should NOT suggest --vocab when vocabChecked is true', () => {
+        const ctx: SuggestionContext = {
+          command: 'query validate',
+          queryFile: 'query.yaml',
+          validationSuccess: true,
+          hasControlledVocab: true,
+          vocabChecked: true,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso.every((s) => !s.command.includes('--vocab'))).toBe(true);
+      });
+    });
+
     describe('query validate (failure)', () => {
       it('should suggest editing the query file', () => {
         const ctx: SuggestionContext = {
