@@ -107,7 +107,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 98 | Vocab Validator Improvements (Rate Limit, Timeout, Refactor) | 97 | ✅ Completed | [20260210-03](completed/20260210-03-vocab-validator-improvements.md) |
 | 99 | ~~Vocab Suggestion Improvements~~ | 98 | ❌ Deleted (superseded by #100) | ~~20260210-04~~ |
 | 100 | Default Vocab Validation with File-Based Cache | 98 | 🔲 Pending | [20260210-05](20260210-05-default-vocab-validation-with-cache.md) |
-| 101 | Unify Review Schema to Local Copy Pattern | 44 | 🔲 Pending | [20260210-06](20260210-06-review-schema-path-local-copy.md) |
+| 101 | Unify Review Schema to Local Copy Pattern | 44 | ✅ Completed | [20260210-06](completed/20260210-06-review-schema-path-local-copy.md) |
 
 ## Development Flow
 

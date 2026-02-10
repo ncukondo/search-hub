@@ -13,20 +13,29 @@ PR #$ARGUMENTS をレビューします。
 !`gh pr view $ARGUMENTS --json title,author,body,additions,deletions,changedFiles --jq '"Title: \(.title)\nAuthor: \(.author.login)\nChanges: +\(.additions)/-\(.deletions) in \(.changedFiles) files\n\nDescription:\n\(.body)"' 2>/dev/null`
 
 ## CI Status
-!`gh pr checks $ARGUMENTS 2>/dev/null`
+!`gh pr checks $ARGUMENTS 2>/dev/null || echo "(CI checks not available yet)"`
 
 ## 手順
 
 ### 1. CI完了待機
 
-CIが未完了の場合は完了まで待機：
+CIが未完了の場合は完了まで待機（最大5分）：
 ```bash
-while true; do
-  status=$(gh pr checks $ARGUMENTS --json state --jq 'all(.state == "SUCCESS" or .state == "SKIPPED")' 2>/dev/null)
-  if [ "$status" = "true" ]; then break; fi
-  echo "Waiting for CI..."
+max_attempts=10
+attempt=0
+while [ $attempt -lt $max_attempts ]; do
+  pending=$(gh pr checks $ARGUMENTS --json bucket --jq 'any(.bucket == "pending")' 2>/dev/null || echo "unknown")
+  if [ "$pending" = "false" ]; then
+    echo "CI completed."
+    break
+  fi
+  attempt=$((attempt + 1))
+  echo "Waiting for CI... ($attempt/$max_attempts)"
   sleep 30
 done
+if [ $attempt -ge $max_attempts ]; then
+  echo "CI still pending after 5 minutes. Proceeding with review."
+fi
 ```
 
 ### 2. 変更内容の確認
