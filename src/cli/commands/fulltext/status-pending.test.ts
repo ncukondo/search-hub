@@ -6,7 +6,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { executeFulltextStatus } from './status';
 import { executeFulltextPending } from './pending';
-import type { FulltextMeta } from '../../../fulltext/types';
+import type { FulltextMeta } from '@ncukondo/academic-fulltext';
+import { loadMeta, getMetaPath } from '@ncukondo/academic-fulltext';
 
 // Mock fs operations
 vi.mock('node:fs/promises', () => ({
@@ -16,9 +17,17 @@ vi.mock('node:fs/promises', () => ({
   access: vi.fn(),
 }));
 
+// Mock package functions
+vi.mock('@ncukondo/academic-fulltext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@ncukondo/academic-fulltext')>();
+  return { ...actual, loadMeta: vi.fn(), getMetaPath: vi.fn() };
+});
+
 import { readFile } from 'node:fs/promises';
 
 const mockReadFile = vi.mocked(readFile);
+const mockLoadMeta = vi.mocked(loadMeta);
+const mockGetMetaPath = vi.mocked(getMetaPath);
 
 // Shared review data: 4 articles in various fulltext states
 const reviewFileYaml = `
@@ -32,7 +41,7 @@ articles:
     finalDecision: include
     fulltext:
       dirName: alpha2024-aaaa1111
-      hasFiles: { pdf: true, xml: false, markdown: false }
+      hasFiles: { pdf: true, xml: false, html: false, markdown: false }
   - doi: "10.1234/with-both"
     title: "Article With Both"
     authors: "Beta B"
@@ -41,7 +50,7 @@ articles:
     finalDecision: include
     fulltext:
       dirName: beta2024-bbbb2222
-      hasFiles: { pdf: true, xml: false, markdown: true }
+      hasFiles: { pdf: true, xml: false, html: false, markdown: true }
   - doi: "10.1234/pending"
     title: "Article Pending"
     authors: "Gamma G"
@@ -50,7 +59,7 @@ articles:
     finalDecision: include
     fulltext:
       dirName: gamma2024-cccc3333
-      hasFiles: { pdf: false, xml: false, markdown: false }
+      hasFiles: { pdf: false, xml: false, html: false, markdown: false }
   - doi: "10.1234/not-init"
     title: "Article Not Initialized"
     authors: "Delta D"
@@ -101,10 +110,23 @@ describe('fulltext status + pending integration', () => {
     mockReadFile.mockImplementation(async (path) => {
       const p = String(path);
       if (p.includes('reviews.yaml')) return reviewFileYaml;
-      if (p.includes('alpha2024-aaaa1111/meta.json')) return JSON.stringify(metaAlpha);
-      if (p.includes('beta2024-bbbb2222/meta.json')) return JSON.stringify(metaBeta);
-      if (p.includes('gamma2024-cccc3333/meta.json')) return JSON.stringify(metaGamma);
       throw new Error(`File not found: ${p}`);
+    });
+
+    mockGetMetaPath.mockImplementation((sessionDir: string, dirName: string) =>
+      `${sessionDir}/fulltext/${dirName}/meta.json`
+    );
+
+    const metaMap: Record<string, FulltextMeta> = {
+      'alpha2024-aaaa1111': metaAlpha,
+      'beta2024-bbbb2222': metaBeta,
+      'gamma2024-cccc3333': metaGamma,
+    };
+    mockLoadMeta.mockImplementation(async (path: string) => {
+      for (const [dirName, meta] of Object.entries(metaMap)) {
+        if (path.includes(dirName)) return meta;
+      }
+      throw new Error(`File not found: ${path}`);
     });
   });
 

@@ -1296,8 +1296,8 @@ summary:
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
 
       // Simulate fulltext init having attached fulltext refs
-      reviewFile.articles[0]!.fulltext = { dirName: '2024-smith-machine-learning', hasFiles: { pdf: true, xml: false, markdown: false } };
-      reviewFile.articles[1]!.fulltext = { dirName: '2023-jones-deep-learning', hasFiles: { pdf: true, xml: false, markdown: false } };
+      reviewFile.articles[0]!.fulltext = { dirName: '2024-smith-machine-learning', hasFiles: { pdf: true, xml: false, html: false, markdown: false } };
+      reviewFile.articles[1]!.fulltext = { dirName: '2023-jones-deep-learning', hasFiles: { pdf: true, xml: false, html: false, markdown: false } };
       // Article 2 has no fulltext (not all articles have PDFs)
       await writeFile(reviewsPath, stringifyYaml(reviewFile));
 
@@ -1320,11 +1320,11 @@ summary:
       expect(screeningFile.articles).toHaveLength(3);
 
       // Article 0: has fulltext and abstract
-      expect(screeningFile.articles[0]!.fulltext).toEqual({ dirName: '2024-smith-machine-learning', hasFiles: { pdf: true, xml: false, markdown: false } });
+      expect(screeningFile.articles[0]!.fulltext).toEqual({ dirName: '2024-smith-machine-learning', hasFiles: { pdf: true, xml: false, html: false, markdown: false } });
       expect(screeningFile.articles[0]!.abstract).toBeDefined();
 
       // Article 1: has fulltext and abstract
-      expect(screeningFile.articles[1]!.fulltext).toEqual({ dirName: '2023-jones-deep-learning', hasFiles: { pdf: true, xml: false, markdown: false } });
+      expect(screeningFile.articles[1]!.fulltext).toEqual({ dirName: '2023-jones-deep-learning', hasFiles: { pdf: true, xml: false, html: false, markdown: false } });
       expect(screeningFile.articles[1]!.abstract).toBeDefined();
 
       // Article 2: no fulltext ref

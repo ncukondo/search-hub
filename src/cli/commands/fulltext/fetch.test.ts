@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { executeFulltextFetch } from './fetch';
-import type { FulltextMeta } from '../../../fulltext/types';
+import type { FulltextMeta } from '@ncukondo/academic-fulltext';
 import type { ReviewFile } from '../review/types';
 
 // Mock dependencies
@@ -20,12 +20,9 @@ vi.mock('yaml', () => ({
   stringify: vi.fn().mockReturnValue(''),
 }));
 
-vi.mock('../../../fulltext/meta', () => ({
+vi.mock('@ncukondo/academic-fulltext', () => ({
   loadMeta: vi.fn(),
   saveMeta: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock('../../../fulltext/download/orchestrator', () => ({
   fetchAllFulltexts: vi.fn(),
 }));
 
@@ -35,8 +32,7 @@ vi.mock('./convert', () => ({
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { loadMeta } from '../../../fulltext/meta';
-import { fetchAllFulltexts } from '../../../fulltext/download/orchestrator';
+import { loadMeta, fetchAllFulltexts } from '@ncukondo/academic-fulltext';
 import { executeFulltextConvert } from './convert';
 
 const mockReadFile = vi.mocked(readFile);
@@ -85,7 +81,7 @@ describe('executeFulltextFetch', () => {
       doi: '10.1234/test',
       fulltext: {
         dirName: 'smith2024-a1b2c3d4',
-        hasFiles: { pdf: false, xml: false, markdown: false },
+        hasFiles: { pdf: false, xml: false, html: false, markdown: false },
       },
     }]);
     mockReadFile.mockResolvedValue('yaml content');
@@ -142,9 +138,9 @@ describe('executeFulltextFetch', () => {
   it('returns summary with downloaded, failed, skipped counts', async () => {
     // Setup: 3 articles
     const reviewFile = createReviewFile([
-      { title: 'Art1', doi: '10.1/a', fulltext: { dirName: 'art1-aaaa', hasFiles: { pdf: false, xml: false, markdown: false } } },
-      { title: 'Art2', doi: '10.1/b', fulltext: { dirName: 'art2-bbbb', hasFiles: { pdf: true, xml: false, markdown: false } } },
-      { title: 'Art3', doi: '10.1/c', fulltext: { dirName: 'art3-cccc', hasFiles: { pdf: false, xml: false, markdown: false } } },
+      { title: 'Art1', doi: '10.1/a', fulltext: { dirName: 'art1-aaaa', hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
+      { title: 'Art2', doi: '10.1/b', fulltext: { dirName: 'art2-bbbb', hasFiles: { pdf: true, xml: false, html: false, markdown: false } } },
+      { title: 'Art3', doi: '10.1/c', fulltext: { dirName: 'art3-cccc', hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
     ]);
     mockParseYaml.mockReturnValue(reviewFile);
 
@@ -259,7 +255,7 @@ describe('executeFulltextFetch', () => {
         doi: '10.1234/test',
         fulltext: {
           dirName: 'smith2024-a1b2c3d4',
-          hasFiles: { pdf: false, xml: false, markdown: false },
+          hasFiles: { pdf: false, xml: false, html: false, markdown: false },
         },
       }]);
       // Both reads return the same review file
@@ -283,14 +279,15 @@ describe('executeFulltextFetch', () => {
       expect(updatedArticle?.fulltext?.hasFiles).toEqual({
         pdf: true,
         xml: true,
+        html: false,
         markdown: false,
       });
     });
 
     it('only updates articles that were fetched, not failed ones', async () => {
       const reviewFile = createReviewFile([
-        { title: 'Art1', doi: '10.1/a', fulltext: { dirName: 'art1-aaaa', hasFiles: { pdf: false, xml: false, markdown: false } } },
-        { title: 'Art2', doi: '10.1/b', fulltext: { dirName: 'art2-bbbb', hasFiles: { pdf: false, xml: false, markdown: false } } },
+        { title: 'Art1', doi: '10.1/a', fulltext: { dirName: 'art1-aaaa', hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
+        { title: 'Art2', doi: '10.1/b', fulltext: { dirName: 'art2-bbbb', hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
       ]);
       mockParseYaml.mockReturnValue(reviewFile);
 

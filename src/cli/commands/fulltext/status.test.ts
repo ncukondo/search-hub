@@ -4,16 +4,25 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { executeFulltextStatus } from './status';
-import type { FulltextMeta } from '../../../fulltext/types';
+import type { FulltextMeta } from '@ncukondo/academic-fulltext';
+import { loadMeta, getMetaPath } from '@ncukondo/academic-fulltext';
 
 // Mock fs operations
 vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(),
 }));
 
+// Mock package functions
+vi.mock('@ncukondo/academic-fulltext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@ncukondo/academic-fulltext')>();
+  return { ...actual, loadMeta: vi.fn(), getMetaPath: vi.fn() };
+});
+
 import { readFile } from 'node:fs/promises';
 
 const mockReadFile = vi.mocked(readFile);
+const mockLoadMeta = vi.mocked(loadMeta);
+const mockGetMetaPath = vi.mocked(getMetaPath);
 
 /** Helper: create a FulltextMeta object for testing */
 function makeMeta(
@@ -39,28 +48,28 @@ articles:
     finalDecision: include
     fulltext:
       dirName: smith2024-aaaa1111
-      hasFiles: { pdf: true, xml: false, markdown: false }
+      hasFiles: { pdf: true, xml: false, html: false, markdown: false }
   - doi: "10.1234/a2"
     title: "Article with Markdown only"
     reviews: []
     finalDecision: include
     fulltext:
       dirName: jones2024-bbbb2222
-      hasFiles: { pdf: false, xml: false, markdown: true }
+      hasFiles: { pdf: false, xml: false, html: false, markdown: true }
   - doi: "10.1234/a3"
     title: "Article with both PDF and Markdown"
     reviews: []
     finalDecision: include
     fulltext:
       dirName: lee2024-cccc3333
-      hasFiles: { pdf: true, xml: false, markdown: true }
+      hasFiles: { pdf: true, xml: false, html: false, markdown: true }
   - doi: "10.1234/a4"
     title: "Article pending (directory, no files)"
     reviews: []
     finalDecision: include
     fulltext:
       dirName: chen2024-dddd4444
-      hasFiles: { pdf: false, xml: false, markdown: false }
+      hasFiles: { pdf: false, xml: false, html: false, markdown: false }
   - doi: "10.1234/a5"
     title: "Article not initialized"
     reviews: []
@@ -109,11 +118,26 @@ describe('executeFulltextStatus', () => {
     mockReadFile.mockImplementation(async (path) => {
       const p = String(path);
       if (p.includes('reviews.yaml')) return reviewFileYaml;
-      if (p.includes('smith2024-aaaa1111/meta.json')) return JSON.stringify(metaA1);
-      if (p.includes('jones2024-bbbb2222/meta.json')) return JSON.stringify(metaA2);
-      if (p.includes('lee2024-cccc3333/meta.json')) return JSON.stringify(metaA3);
-      if (p.includes('chen2024-dddd4444/meta.json')) return JSON.stringify(metaA4);
       throw new Error(`File not found: ${p}`);
+    });
+
+    // Mock getMetaPath to return predictable paths
+    mockGetMetaPath.mockImplementation((sessionDir: string, dirName: string) =>
+      `${sessionDir}/fulltext/${dirName}/meta.json`
+    );
+
+    // Mock loadMeta to return meta based on path
+    const metaMap: Record<string, FulltextMeta> = {
+      'smith2024-aaaa1111': metaA1,
+      'jones2024-bbbb2222': metaA2,
+      'lee2024-cccc3333': metaA3,
+      'chen2024-dddd4444': metaA4,
+    };
+    mockLoadMeta.mockImplementation(async (path: string) => {
+      for (const [dirName, meta] of Object.entries(metaMap)) {
+        if (path.includes(dirName)) return meta;
+      }
+      throw new Error(`File not found: ${path}`);
     });
 
   });
@@ -178,12 +202,8 @@ articles:
   });
 
   it('handles missing fulltext directory gracefully', async () => {
-    // Override readFile to fail for all meta.json reads
-    mockReadFile.mockImplementation(async (path) => {
-      const p = String(path);
-      if (p.includes('reviews.yaml')) return reviewFileYaml;
-      throw new Error('ENOENT');
-    });
+    // Override loadMeta to fail for all
+    mockLoadMeta.mockRejectedValue(new Error('ENOENT'));
 
     const result = await executeFulltextStatus({ sessionDir });
     // All articles with fulltext refs become "pending" since we can't read their meta
