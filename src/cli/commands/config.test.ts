@@ -88,6 +88,8 @@ const mockConfig: Config = {
     sources: {
       unpaywall_email: '',
       core_api_key: '',
+      ncbi_email: '',
+      ncbi_tool: 'search-hub',
       prefer_sources: ['pmc', 'arxiv', 'unpaywall', 'core'],
     },
     download: {
