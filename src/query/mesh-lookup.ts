@@ -48,10 +48,6 @@ export class MeSHLookupClient {
    * to provide suggestions.
    */
   async lookupTerm(term: string): Promise<MeSHLookupResult> {
-    if (this.rateLimiter) {
-      await this.rateLimiter.acquire();
-    }
-
     // Try exact match first
     const exactResults = await this.fetchLookup(term, 'exact', 1);
 
@@ -89,6 +85,10 @@ export class MeSHLookupClient {
     match: 'exact' | 'startswith',
     limit: number
   ): Promise<MeSHApiEntry[]> {
+    if (this.rateLimiter) {
+      await this.rateLimiter.acquire();
+    }
+
     const params = new URLSearchParams({
       label,
       match,

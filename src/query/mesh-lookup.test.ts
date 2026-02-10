@@ -181,7 +181,7 @@ describe('MeSHLookupClient', () => {
   });
 
   describe('RateLimiter integration', () => {
-    it('should call RateLimiter.acquire() before each lookupTerm', async () => {
+    it('should call acquire() once per fetchLookup when term is found (exact hit)', async () => {
       const mockRateLimiter = {
         acquire: vi.fn().mockResolvedValue(undefined),
       } as unknown as RateLimiter;
@@ -190,12 +190,12 @@ describe('MeSHLookupClient', () => {
 
       const mockFetch = vi
         .fn()
-        // Term 1: valid
+        // Term 1: exact hit
         .mockResolvedValueOnce({
           ok: true,
           json: async () => [{ resource: 'x', label: 'Term A' }],
         })
-        // Term 2: valid
+        // Term 2: exact hit
         .mockResolvedValueOnce({
           ok: true,
           json: async () => [{ resource: 'y', label: 'Term B' }],
@@ -204,7 +204,36 @@ describe('MeSHLookupClient', () => {
 
       await clientWithLimiter.lookupTerms(['Term A', 'Term B']);
 
-      // acquire() should be called once per lookupTerm call (before fetch)
+      // 1 acquire per exact fetch = 2 total
+      expect(mockRateLimiter.acquire).toHaveBeenCalledTimes(2);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should call acquire() twice when term not found (exact miss + startswith)', async () => {
+      const mockRateLimiter = {
+        acquire: vi.fn().mockResolvedValue(undefined),
+      } as unknown as RateLimiter;
+
+      const clientWithLimiter = new MeSHLookupClient({ rateLimiter: mockRateLimiter });
+
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [],
+        })
+        // startswith hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [{ resource: 'x', label: 'Suggestion' }],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await clientWithLimiter.lookupTerm('Misspeled');
+
+      // 1 acquire for exact + 1 acquire for startswith = 2
       expect(mockRateLimiter.acquire).toHaveBeenCalledTimes(2);
 
       vi.unstubAllGlobals();
