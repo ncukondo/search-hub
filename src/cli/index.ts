@@ -25,6 +25,7 @@ import {
   hasVocabErrors,
 } from './commands/query/validate.js';
 import { MeSHLookupClient } from '../query/mesh-lookup.js';
+import { RateLimiter } from '../providers/base/rate-limiter.js';
 import {
   translateQueryCommand,
   formatTranslateResult,
@@ -368,7 +369,8 @@ Examples:
       const globalOpts = program.opts() as GlobalOptions;
       try {
         if (opts.vocab) {
-          const meshClient = new MeSHLookupClient();
+          const rateLimiter = new RateLimiter({ tokensPerSecond: 3 });
+          const meshClient = new MeSHLookupClient({ rateLimiter });
           const result = await validateVocabCommand(file, meshClient);
           if (!globalOpts.quiet) {
             let output = formatValidateResult(result, file);
