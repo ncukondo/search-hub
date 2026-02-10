@@ -32,7 +32,7 @@ export type Operator = 'AND' | 'OR';
  */
 export interface TermBlock {
   /** Free-text keywords (supported by all databases) */
-  keywords: string[];
+  keywords?: string[] | undefined;
   /** MeSH terms (PubMed only) */
   mesh?: string[] | undefined;
   /** Emtree terms (Embase only) */

@@ -291,8 +291,8 @@ function compareBlocks(
   const terms1 = block1 ?? emptyTerms;
   const terms2 = block2 ?? emptyTerms;
 
-  const added = setDiff(terms1.keywords, terms2.keywords);
-  const removed = setDiff(terms2.keywords, terms1.keywords);
+  const added = setDiff(terms1.keywords ?? [], terms2.keywords ?? []);
+  const removed = setDiff(terms2.keywords ?? [], terms1.keywords ?? []);
   const meshAdded = setDiff(terms1.mesh ?? [], terms2.mesh ?? []);
   const meshRemoved = setDiff(terms2.mesh ?? [], terms1.mesh ?? []);
   const emtreeAdded = setDiff(terms1.emtree ?? [], terms2.emtree ?? []);

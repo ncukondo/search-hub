@@ -58,8 +58,34 @@ describe('Query Validator Schemas', () => {
       expect(() => termBlockSchema.parse({ keywords: [] })).toThrow();
     });
 
-    it('should reject missing keywords', () => {
-      expect(() => termBlockSchema.parse({ mesh: ['term'] })).toThrow();
+    it('should accept mesh-only block (no keywords)', () => {
+      const result = termBlockSchema.parse({
+        mesh: ['Artificial Intelligence'],
+      });
+      expect(result.mesh).toEqual(['Artificial Intelligence']);
+      expect(result.keywords).toBeUndefined();
+    });
+
+    it('should accept eric-only block (no keywords)', () => {
+      const result = termBlockSchema.parse({
+        eric: ['Medical Education'],
+      });
+      expect(result.eric).toEqual(['Medical Education']);
+      expect(result.keywords).toBeUndefined();
+    });
+
+    it('should reject block with no term types at all', () => {
+      expect(() => termBlockSchema.parse({})).toThrow(
+        /At least one of keywords, mesh, emtree, or eric is required/
+      );
+    });
+
+    it('should reject block with only exclude (no searchable terms)', () => {
+      expect(() =>
+        termBlockSchema.parse({ exclude: ['animal'] })
+      ).toThrow(
+        /At least one of keywords, mesh, emtree, or eric is required/
+      );
     });
 
     it('should accept exclude terms', () => {

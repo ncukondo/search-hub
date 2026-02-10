@@ -49,7 +49,7 @@ export function detectShortKeywords(ast: QueryAST, threshold = 3): string[] {
   const shortKeywords = new Set<string>();
 
   for (const block of ast.blocks) {
-    for (const keyword of block.terms.keywords) {
+    for (const keyword of block.terms.keywords ?? []) {
       if (keyword.length <= threshold) {
         shortKeywords.add(keyword);
       }

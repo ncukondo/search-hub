@@ -82,7 +82,7 @@ function translateBlock(block: QueryBlock): { query: string; notClause: string |
   const terms: string[] = [];
 
   // Translate keywords
-  for (const keyword of block.terms.keywords) {
+  for (const keyword of block.terms.keywords ?? []) {
     terms.push(translateTerm(keyword, qualifier));
   }
 
