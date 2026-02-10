@@ -87,6 +87,23 @@ export class MeSHLookupClient {
       return result;
     }
 
+    // 2b. Try startsWith with progressively shorter input (handles suffix typos)
+    if (term.length > 3) {
+      for (let len = term.length - 1; len >= Math.max(term.length - 3, 3); len--) {
+        const truncated = term.slice(0, len);
+        const truncatedResults = await this.fetchLookup(truncated, 'startswith', 5);
+        if (truncatedResults.length > 0) {
+          const result: MeSHLookupResult = {
+            term,
+            found: false,
+            suggestions: truncatedResults.map((s) => s.label),
+          };
+          this.cache?.set('mesh', term, result);
+          return result;
+        }
+      }
+    }
+
     // 3. Try contains (full term) for typos and variant spellings
     const containsResults = await this.fetchLookup(term, 'contains', 5);
 
