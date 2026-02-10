@@ -103,6 +103,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 94 | Search Help Query Features | - | ✅ Completed | [20260208-02](completed/20260208-02-search-help-query-features.md) |
 | 95 | Diff Merge Suggestion | 93 | ✅ Completed | [20260208-03](completed/20260208-03-diff-merge-suggestion.md) |
 | 96 | Migrate Fulltext Module to `@ncukondo/academic-fulltext` Package | 59-66 | ✅ Completed | [20260210-01](completed/20260210-01-migrate-fulltext-to-package.md) |
+| 97 | Validate Controlled Vocabulary Terms (MeSH) | 3 | ✅ Completed | [20260210-02](completed/20260210-02-validate-controlled-vocabulary.md) |
+| 98 | Vocab Validator Improvements (Rate Limit, Timeout, Refactor) | 97 | 🔲 Pending | [20260210-03](20260210-03-vocab-validator-improvements.md) |
 
 ## Development Flow
 
