@@ -333,10 +333,8 @@ export async function executeReviewMerge(
       lineWidth: 0,
     });
 
-    // Preserve schema reference comment
-    // Path from sessions/{id}/.internal/ to .search-hub/schemas/
-    const schemaPath = '../../../../.search-hub/schemas/review.schema.json';
-    const schemaComment = `# yaml-language-server: $schema=${schemaPath}\n`;
+    // Preserve schema reference comment (local copy alongside reviews.yaml)
+    const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
     const finalContent = schemaComment + yamlContent;
 
     await writeFile(mainReviewsPath, finalContent, 'utf-8');

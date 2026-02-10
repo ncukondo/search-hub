@@ -291,11 +291,11 @@ describe('executeReviewExtract', () => {
     it('copies schema file alongside YAML output', async () => {
       await writeReviewFile(sampleArticles);
 
-      // First, ensure we have a schema file to copy
-      const schemasDir = join(dirname(sessionsDir), '.search-hub', 'schemas');
-      await mkdir(schemasDir, { recursive: true });
+      // Ensure schema file exists in .internal/ (where init places it)
+      const internalDir = join(sessionsDir, sessionId, '.internal');
+      await mkdir(internalDir, { recursive: true });
       await writeFile(
-        join(schemasDir, 'review.schema.json'),
+        join(internalDir, 'review.schema.json'),
         JSON.stringify({ $schema: 'http://json-schema.org/draft-07/schema#', title: 'Review File' })
       );
 

@@ -104,7 +104,7 @@ summary:
     expect(content).toContain('# include / exclude / uncertain');
   });
 
-  it('includes schema reference comment at the top', async () => {
+  it('references local schema path (./review.schema.json) in YAML comment', async () => {
     await setupSession('pubmed', [
       JSON.stringify({ title: 'Article', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
     ]);
@@ -115,12 +115,12 @@ summary:
     const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
     const content = await readFile(reviewsPath, 'utf-8');
 
-    // Schema comment should be first line
+    // Schema comment should reference local path
     const firstLine = content.split('\n')[0];
-    expect(firstLine).toMatch(/^# yaml-language-server.*review\.schema\.json/);
+    expect(firstLine).toBe('# yaml-language-server: $schema=./review.schema.json');
   });
 
-  it('copies schema file to .search-hub/schemas/', async () => {
+  it('copies schema file to .internal/ alongside reviews.yaml', async () => {
     await setupSession('pubmed', [
       JSON.stringify({ title: 'Article', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
     ]);
@@ -128,8 +128,8 @@ summary:
     const options: ReviewInitOptions = { sessionId };
     await executeReviewInit(options, sessionsDir);
 
-    // Check schema file was copied
-    const schemaPath = join(tempDir, '.search-hub', 'schemas', 'review.schema.json');
+    // Check schema file was copied alongside reviews.yaml in .internal/
+    const schemaPath = join(sessionsDir, sessionId, '.internal', 'review.schema.json');
     const schemaContent = await readFile(schemaPath, 'utf-8');
     const schema = JSON.parse(schemaContent);
     expect(schema.$schema).toContain('json-schema.org');

@@ -81,8 +81,7 @@ export async function executeReviewFinalize(
   // Write back if not dry-run
   if (!options.dryRun) {
     const yamlContent = stringifyYaml(reviewFile, { lineWidth: 0 });
-    const schemaPath = '../../../../.search-hub/schemas/review.schema.json';
-    const schemaComment = `# yaml-language-server: $schema=${schemaPath}\n`;
+    const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
     await writeFile(reviewsPath, schemaComment + yamlContent, 'utf-8');
   }
 

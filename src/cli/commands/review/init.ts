@@ -156,10 +156,8 @@ export async function executeReviewInit(
     lineWidth: 0, // Disable line wrapping
   });
 
-  // Add schema reference comment at top
-  // Path from sessions/{id}/.internal/ to .search-hub/schemas/
-  const schemaPath = '../../../../.search-hub/schemas/review.schema.json';
-  const schemaComment = `# yaml-language-server: $schema=${schemaPath}\n`;
+  // Add schema reference comment at top (local copy alongside reviews.yaml)
+  const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
 
   // Replace empty reviews arrays with commented example
   const reviewsExample = `reviews:
@@ -174,10 +172,8 @@ export async function executeReviewInit(
   // Write reviews.yaml
   await writeFile(reviewsPath, finalContent, 'utf-8');
 
-  // Copy schema file to .search-hub/schemas/
-  const schemasDir = join(dirname(sessionsDir), '.search-hub', 'schemas');
-  await mkdir(schemasDir, { recursive: true });
-  const schemaDestPath = join(schemasDir, 'review.schema.json');
+  // Copy schema file to .internal/ alongside reviews.yaml
+  const schemaDestPath = join(internalDir, 'review.schema.json');
 
   try {
     const schemaSourcePath = await findSchemaSource();

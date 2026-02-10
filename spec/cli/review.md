@@ -137,7 +137,7 @@ included and what fields are available for editing.
 For reviewers performing screening at a specific basis level.
 
 ```yaml
-# yaml-language-server: $schema=../../schemas/review.schema.json
+# yaml-language-server: $schema=./review.schema.json
 # Screening file: mark each article's decision in reviews[0].decision
 # Valid decisions: include / exclude / uncertain
 sessionId: my-session
@@ -178,7 +178,7 @@ articles:
 For responsible person's confirmation. Includes review history and final decision field.
 
 ```yaml
-# yaml-language-server: $schema=../../schemas/review.schema.json
+# yaml-language-server: $schema=./review.schema.json
 # Final decision file: set finalDecision on each article
 # Valid decisions: include / exclude / null
 sessionId: my-session
