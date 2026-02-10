@@ -39,75 +39,75 @@ Each step follows the TDD cycle:
 
 ### Step 1: Add `RateLimiter` to `MeSHLookupClient`
 
-- [x]Write test: `src/query/mesh-lookup.test.ts`
+- [x] Write test: `src/query/mesh-lookup.test.ts`
   - `RateLimiter.acquire()` が各 `lookupTerm` 呼び出し前に呼ばれることを検証
   - `RateLimiter` 未指定時はレート制限なしで動作する（後方互換）
-- [x]Verify test fails (Red)
-- [x]Implement: コンストラクタに `RateLimiter` をオプショナルで受け取り、`lookupTerm` 内で `acquire()` を呼ぶ
-- [x]Verify test passes (Green)
-- [x]Run `npm run lint && npm run typecheck`
-- [x]Refactor if needed
-- [x]Verify test still passes
-- [x]Acceptance: NLM APIへのリクエストが `RateLimiter` でレート制御される
+- [x] Verify test fails (Red)
+- [x] Implement: コンストラクタに `RateLimiter` をオプショナルで受け取り、`lookupTerm` 内で `acquire()` を呼ぶ
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: NLM APIへのリクエストが `RateLimiter` でレート制御される
 
 ### Step 2: Add fetch timeout with `AbortSignal`
 
-- [x]Write test: `src/query/mesh-lookup.test.ts`
+- [x] Write test: `src/query/mesh-lookup.test.ts`
   - タイムアウト時に `status: 'error'` が返ることを検証
   - デフォルトタイムアウト値（10秒）の確認
-- [x]Verify test fails (Red)
-- [x]Implement: `fetch()` に `{ signal: AbortSignal.timeout(timeoutMs) }` を追加
-- [x]Verify test passes (Green)
-- [x]Run `npm run lint && npm run typecheck`
-- [x]Refactor if needed
-- [x]Verify test still passes
-- [x]Acceptance: 無応答APIがタイムアウト後に適切なエラーを返す
+- [x] Verify test fails (Red)
+- [x] Implement: `fetch()` に `{ signal: AbortSignal.timeout(timeoutMs) }` を追加
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 無応答APIがタイムアウト後に適切なエラーを返す
 
 ### Step 3: Refactor `validateVocabCommand` to reuse `validateQueryCommand`
 
-- [x]Write test: `src/cli/commands/query/validate.test.ts`
+- [x] Write test: `src/cli/commands/query/validate.test.ts`
   - リファクタ後も全既存テストがパスすることを確認
   - 構文エラー時に vocab チェックがスキップされることを確認
-- [x]Verify test fails (Red) — or confirm existing tests cover the behavior
-- [x]Implement: `validateVocabCommand` を `validateQueryCommand` の結果を利用する形にリファクタ
-- [x]Verify test passes (Green)
-- [x]Run `npm run lint && npm run typecheck`
-- [x]Refactor if needed
-- [x]Verify test still passes
-- [x]Acceptance: ファイル読み込み・パースの重複コードが排除される
+- [x] Verify test fails (Red) — or confirm existing tests cover the behavior
+- [x] Implement: `validateVocabCommand` を `validateQueryCommand` の結果を利用する形にリファクタ
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: ファイル読み込み・パースの重複コードが排除される
 
 ### Step 4: Non-zero exit code on invalid vocab terms
 
-- [x]Write test: `src/cli/commands/query/validate.test.ts`
+- [x] Write test: `src/cli/commands/query/validate.test.ts`
   - `--vocab` で無効な用語がある場合、終了コードが非ゼロ
   - 全用語が有効な場合は終了コード 0
   - `status: 'error'`（API エラー）は非ゼロにしない（警告のみ）
-- [x]Verify test fails (Red)
-- [x]Implement: `result.termResults` に `not_found` がある場合に適切な終了コードを返す
-- [x]Verify test passes (Green)
-- [x]Run `npm run lint && npm run typecheck`
-- [x]Refactor if needed
-- [x]Verify test still passes
-- [x]Acceptance: CI で `query validate --vocab` を使って無効な用語を検出できる
+- [x] Verify test fails (Red)
+- [x] Implement: `result.termResults` に `not_found` がある場合に適切な終了コードを返す
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: CI で `query validate --vocab` を使って無効な用語を検出できる
 
 ### Step 5: Extract shared mock client helper
 
-- [x]Identify duplicated `createMockMeSHClient` / `createMockClient` patterns
-- [x]Create shared helper: `src/query/__test-helpers__/mock-mesh-client.ts`
-- [x]Update all 3 test files to import from shared helper
-- [x]Run `npm run lint && npm run typecheck`
-- [x]Verify all tests still pass
-- [x]Acceptance: モッククライアントのコードが一箇所に集約される
+- [x] Identify duplicated `createMockMeSHClient` / `createMockClient` patterns
+- [x] Create shared helper: `src/query/__test-helpers__/mock-mesh-client.ts`
+- [x] Update all 3 test files to import from shared helper
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Verify all tests still pass
+- [x] Acceptance: モッククライアントのコードが一箇所に集約される
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [x]Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
+- [x] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
   - `--vocab` で無効な用語がある場合の終了コードを検証
   - タイムアウト動作の検証（モック使用可）
   - 既存のE2Eテストが壊れていないことを確認
-- [x]Verify all E2E tests pass
-- [x]Run full test suite: `npm test`
-- [x]Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
