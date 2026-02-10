@@ -6,7 +6,7 @@ import {
   hasVocabErrors,
 } from './validate.js';
 import * as fs from 'node:fs/promises';
-import type { MeSHLookupClient } from '../../../query/mesh-lookup.js';
+import { createMockMeSHClient } from '../../../query/__test-helpers__/mock-mesh-client.js';
 
 vi.mock('node:fs/promises');
 
@@ -118,25 +118,10 @@ query:
     operator: OR
 `;
 
-    function createMockClient(
-      results: Map<string, { found: boolean; suggestions?: string[] }>
-    ): MeSHLookupClient {
-      return {
-        lookupTerm: vi.fn(async (term: string) => {
-          const result = results.get(term);
-          if (result) {
-            return { term, found: result.found, suggestions: result.suggestions };
-          }
-          return { term, found: false };
-        }),
-        lookupTerms: vi.fn(),
-      } as unknown as MeSHLookupClient;
-    }
-
     it('should validate MeSH terms when vocab flag is set', async () => {
       vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
 
-      const client = createMockClient(
+      const client = createMockMeSHClient(
         new Map([
           ['Diabetes Mellitus', { found: true }],
           ['Not A Real Term', { found: false, suggestions: ['Diabetes'] }],
@@ -156,7 +141,7 @@ query:
         new Error('ENOENT: no such file')
       );
 
-      const client = createMockClient(new Map());
+      const client = createMockMeSHClient(new Map());
 
       const result = await validateVocabCommand('/nonexistent.yaml', client);
 
@@ -167,7 +152,7 @@ query:
     it('should return schema errors without attempting vocab validation', async () => {
       vi.mocked(fs.readFile).mockResolvedValue(invalidYaml);
 
-      const client = createMockClient(new Map());
+      const client = createMockMeSHClient(new Map());
 
       const result = await validateVocabCommand('/invalid.yaml', client);
 
@@ -178,7 +163,7 @@ query:
     it('should return empty vocab result when no controlled vocab terms', async () => {
       vi.mocked(fs.readFile).mockResolvedValue(validYaml);
 
-      const client = createMockClient(new Map());
+      const client = createMockMeSHClient(new Map());
 
       const result = await validateVocabCommand('/path/to/query.yaml', client);
 

@@ -1,10 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   extractControlledVocabTerms,
   validateControlledVocab,
 } from './vocab-validator.js';
 import type { QueryAST } from './types.js';
-import type { MeSHLookupClient } from './mesh-lookup.js';
+import { createMockMeSHClient } from './__test-helpers__/mock-mesh-client.js';
 
 function makeAST(blocks: QueryAST['blocks']): QueryAST {
   return {
@@ -106,25 +106,6 @@ describe('extractControlledVocabTerms', () => {
 });
 
 describe('validateControlledVocab', () => {
-  function createMockClient(
-    results: Map<string, { found: boolean; suggestions?: string[] }>
-  ): MeSHLookupClient {
-    return {
-      lookupTerm: vi.fn(async (term: string) => {
-        const result = results.get(term);
-        if (result) {
-          return {
-            term,
-            found: result.found,
-            suggestions: result.suggestions,
-          };
-        }
-        return { term, found: false };
-      }),
-      lookupTerms: vi.fn(),
-    } as unknown as MeSHLookupClient;
-  }
-
   it('should validate mesh terms and return results', async () => {
     const ast = makeAST([
       {
@@ -137,7 +118,7 @@ describe('validateControlledVocab', () => {
       },
     ]);
 
-    const client = createMockClient(
+    const client = createMockMeSHClient(
       new Map([
         ['Diabetes Mellitus', { found: true }],
         ['Not A Real Term', { found: false, suggestions: ['Diabetes'] }],
@@ -168,7 +149,7 @@ describe('validateControlledVocab', () => {
       },
     ]);
 
-    const client = createMockClient(new Map());
+    const client = createMockMeSHClient(new Map());
 
     const result = await validateControlledVocab(ast, client);
 
@@ -188,7 +169,7 @@ describe('validateControlledVocab', () => {
       },
     ]);
 
-    const client = createMockClient(
+    const client = createMockMeSHClient(
       new Map([
         ['Artificial Intelligence', { found: true }],
         ['Machine Learning', { found: true }],
@@ -213,7 +194,7 @@ describe('validateControlledVocab', () => {
       },
     ]);
 
-    const client = createMockClient(
+    const client = createMockMeSHClient(
       new Map([['Completely Invalid', { found: false }]])
     );
 

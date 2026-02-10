@@ -3,7 +3,7 @@
  *
  * Tests query file validation functionality.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
 import {
   setupE2EContext,
@@ -19,7 +19,7 @@ import {
   formatValidateResult,
   formatVocabValidationOutput,
 } from './validate.js';
-import type { MeSHLookupClient } from '../../../query/mesh-lookup.js';
+import { createMockMeSHClient } from '../../../query/__test-helpers__/mock-mesh-client.js';
 
 describe('search-hub query validate E2E', () => {
   let ctx: E2EContext;
@@ -365,21 +365,6 @@ overrides:
   });
 
   describe('validate --vocab (controlled vocabulary)', () => {
-    function createMockMeSHClient(
-      results: Map<string, { found: boolean; suggestions?: string[] }>
-    ): MeSHLookupClient {
-      return {
-        lookupTerm: vi.fn(async (term: string) => {
-          const result = results.get(term);
-          if (result) {
-            return { term, found: result.found, suggestions: result.suggestions };
-          }
-          return { term, found: false };
-        }),
-        lookupTerms: vi.fn(),
-      } as unknown as MeSHLookupClient;
-    }
-
     it('should validate MeSH terms in real query file', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
