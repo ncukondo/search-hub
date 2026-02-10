@@ -105,7 +105,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 96 | Migrate Fulltext Module to `@ncukondo/academic-fulltext` Package | 59-66 | ✅ Completed | [20260210-01](completed/20260210-01-migrate-fulltext-to-package.md) |
 | 97 | Validate Controlled Vocabulary Terms (MeSH) | 3 | ✅ Completed | [20260210-02](completed/20260210-02-validate-controlled-vocabulary.md) |
 | 98 | Vocab Validator Improvements (Rate Limit, Timeout, Refactor) | 97 | ✅ Completed | [20260210-03](completed/20260210-03-vocab-validator-improvements.md) |
-| 99 | Vocab Suggestion Improvements (Fuzzy Match, Conditional --vocab Hint) | 98 | 🔲 Pending | [20260210-04](20260210-04-vocab-suggestion-improvements.md) |
+| 99 | ~~Vocab Suggestion Improvements~~ | 98 | ❌ Deleted (superseded by #100) | ~~20260210-04~~ |
+| 100 | Default Vocab Validation with File-Based Cache | 98 | 🔲 Pending | [20260210-05](20260210-05-default-vocab-validation-with-cache.md) |
 
 ## Development Flow
 
