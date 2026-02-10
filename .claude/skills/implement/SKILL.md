@@ -92,16 +92,25 @@ tail -f /tmp/claude-orchestrator/orchestrator.log
 cat /tmp/claude-orchestrator/notifications
 ```
 
-### 6. Merge (main agent only)
+### 6. Review Report (main agent only)
 
-When notified of approval:
+レビュー完了の通知を受けたら：
+1. PRのレビュー結果を取得する（`gh api repos/<owner>/<repo>/pulls/<PR>/reviews`）
+2. **Minor/Suggestions を含む全指摘事項をユーザーに報告する**
+3. ユーザーの判断を仰ぐ（マージ / 修正対応 / 保留）
+
+**ユーザーの明示的な承認なしにマージしないこと。**
+
+### 7. Merge (main agent only)
+
+ユーザーからマージの承認を得たら：
 ```bash
 gh pr merge <pr-number> --squash --delete-branch
 git worktree remove <path> --force
 git branch -D <branch>
 ```
 
-### 7. Post-Merge (main branch)
+### 8. Post-Merge (main branch)
 
 - Update ROADMAP.md status to "Done"
 - Move task file to `spec/tasks/completed/`
