@@ -4,8 +4,7 @@
 
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { getFulltextDir, getArticleDir, getMetaPath } from '../../../fulltext/paths.js';
-import { convertPmcXmlToMarkdown } from '../../../fulltext/convert/index.js';
+import { getFulltextDir, getArticleDir, getMetaPath, convertPmcXmlToMarkdown } from '@ncukondo/academic-fulltext';
 
 export interface FulltextConvertOptions {
   sessionId: string;

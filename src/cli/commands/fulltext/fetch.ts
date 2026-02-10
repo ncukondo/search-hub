@@ -6,9 +6,7 @@ import { join } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { FulltextMeta } from '../../../fulltext/types.js';
-import { loadMeta } from '../../../fulltext/meta.js';
-import { fetchAllFulltexts, type FetchArticle } from '../../../fulltext/download/orchestrator.js';
+import { loadMeta, fetchAllFulltexts, type FulltextMeta, type FetchArticle } from '@ncukondo/academic-fulltext';
 import { executeFulltextConvert } from './convert.js';
 export interface FulltextFetchOptions {
   sessionId: string;

@@ -6,9 +6,7 @@ import { join } from 'node:path';
 import { readFile, writeFile, readdir, stat } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { FulltextMeta, FileInfo } from '../../../fulltext/types.js';
-import { loadMeta, saveMeta, updateMetaFiles } from '../../../fulltext/meta.js';
-import { getFulltextDir } from '../../../fulltext/paths.js';
+import { loadMeta, saveMeta, updateMetaFiles, getFulltextDir, type FulltextMeta, type FileInfo } from '@ncukondo/academic-fulltext';
 
 /** Known fulltext filenames and their type keys. */
 const FULLTEXT_FILES: Record<string, 'pdf' | 'xml' | 'markdown'> = {

@@ -6,9 +6,7 @@
 import { readFile, readdir, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { discoverOA, type DiscoveryConfig, type DiscoveryArticle } from '../../../fulltext/discovery/index';
-import { loadMeta, saveMeta } from '../../../fulltext/meta';
-import type { OAStatus } from '../../../fulltext/types';
+import { discoverOA, loadMeta, saveMeta, type DiscoveryConfig, type DiscoveryArticle, type OAStatus } from '@ncukondo/academic-fulltext';
 import type { ReviewFile, ArticleEntry } from '../review/types';
 
 /** Default concurrency for parallel article processing */
