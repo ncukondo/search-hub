@@ -19,13 +19,13 @@ import {
 } from './commands/config.js';
 import {
   validateQueryCommand,
-  validateVocabCommand,
   formatValidateResult,
   formatVocabValidationOutput,
   hasVocabErrors,
 } from './commands/query/validate.js';
 import { MeSHLookupClient } from '../query/mesh-lookup.js';
 import { RateLimiter } from '../providers/base/rate-limiter.js';
+import { VocabCache } from '../query/vocab-cache.js';
 import {
   translateQueryCommand,
   formatTranslateResult,
@@ -358,40 +358,54 @@ Use "search-hub query init" to generate a template.`);
 
   queryCommand
     .command('validate')
-    .description('Validate query YAML file')
+    .description('Validate query YAML file (auto-checks controlled vocabulary)')
     .argument('<file>', 'path to query YAML file')
-    .option('--vocab', 'validate controlled vocabulary terms (MeSH) against external APIs')
+    .option('--vocab', '(deprecated, now default) validate controlled vocabulary terms')
+    .option('--no-vocab', 'skip controlled vocabulary validation')
+    .option('--no-cache', 'skip vocabulary lookup cache')
     .addHelpText('after', `
 Examples:
   $ search-hub query validate ./diabetes-ai.yaml
-  $ search-hub query validate ./diabetes-ai.yaml --vocab   # Check MeSH terms`)
-    .action(async (file: string, opts: { vocab?: boolean }) => {
+  $ search-hub query validate ./diabetes-ai.yaml --no-vocab   # Skip MeSH check
+  $ search-hub query validate ./diabetes-ai.yaml --no-cache   # Ignore cache`)
+    .action(async (file: string, opts: { vocab?: boolean; cache?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
-        if (opts.vocab) {
-          const rateLimiter = new RateLimiter({ tokensPerSecond: 3 });
-          const meshClient = new MeSHLookupClient({ rateLimiter });
-          const result = await validateVocabCommand(file, meshClient);
-          if (!globalOpts.quiet) {
-            let output = formatValidateResult(result, file);
-            if (result.vocabResult) {
-              output += formatVocabValidationOutput(result.vocabResult);
-            }
-            console.log(output);
-          }
-          process.exitCode =
-            !result.success || hasVocabErrors(result)
-              ? EXIT_CODES.QUERY_ERROR
-              : EXIT_CODES.SUCCESS;
-        } else {
-          const result = await validateQueryCommand(file);
-          if (!globalOpts.quiet) {
-            console.log(formatValidateResult(result, file));
-          }
-          process.exitCode = result.success
-            ? EXIT_CODES.SUCCESS
-            : EXIT_CODES.QUERY_ERROR;
+        const noVocab = opts.vocab === false;
+        const noCache = opts.cache === false;
+
+        let cache: VocabCache | undefined;
+        if (!noVocab && !noCache) {
+          cache = new VocabCache();
+          await cache.load();
         }
+
+        const rateLimiter = new RateLimiter({ tokensPerSecond: 3 });
+        const meshClient = new MeSHLookupClient({
+          rateLimiter,
+          ...(cache ? { cache } : {}),
+        });
+
+        const result = await validateQueryCommand(file, noVocab
+          ? { noVocab }
+          : { meshClient }
+        );
+
+        if (cache) {
+          await cache.save();
+        }
+
+        if (!globalOpts.quiet) {
+          let output = formatValidateResult(result, file);
+          if (result.vocabResult) {
+            output += formatVocabValidationOutput(result.vocabResult);
+          }
+          console.log(output);
+        }
+        process.exitCode =
+          !result.success || hasVocabErrors(result)
+            ? EXIT_CODES.QUERY_ERROR
+            : EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
           console.error(
