@@ -7,7 +7,10 @@
  * API docs: https://id.nlm.nih.gov/mesh/lookup/term
  */
 
+import type { RateLimiter } from '../providers/base/rate-limiter.js';
+
 const MESH_LOOKUP_BASE_URL = 'https://id.nlm.nih.gov/mesh/lookup/term';
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 /**
  * Result of a MeSH term lookup.
@@ -30,6 +33,14 @@ interface MeSHApiEntry {
  * Client for the NLM MeSH Lookup API.
  */
 export class MeSHLookupClient {
+  private readonly rateLimiter: RateLimiter | undefined;
+  private readonly timeoutMs: number;
+
+  constructor(options?: { rateLimiter?: RateLimiter; timeoutMs?: number }) {
+    this.rateLimiter = options?.rateLimiter;
+    this.timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  }
+
   /**
    * Look up a single MeSH term.
    *
@@ -37,6 +48,10 @@ export class MeSHLookupClient {
    * to provide suggestions.
    */
   async lookupTerm(term: string): Promise<MeSHLookupResult> {
+    if (this.rateLimiter) {
+      await this.rateLimiter.acquire();
+    }
+
     // Try exact match first
     const exactResults = await this.fetchLookup(term, 'exact', 1);
 
@@ -84,7 +99,9 @@ export class MeSHLookupClient {
 
     let response: Response;
     try {
-      response = await fetch(url);
+      response = await fetch(url, {
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unknown error';

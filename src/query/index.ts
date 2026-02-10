@@ -46,6 +46,7 @@ export {
 } from './vocab-validator.js';
 export type {
   VocabTerm,
+  VocabTermError,
   VocabTermResult,
   VocabValidationResult,
 } from './vocab-validator.js';

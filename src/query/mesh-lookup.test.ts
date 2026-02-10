@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MeSHLookupClient } from './mesh-lookup.js';
+import type { RateLimiter } from '../providers/base/rate-limiter.js';
 
 describe('MeSHLookupClient', () => {
   let client: MeSHLookupClient;
@@ -176,6 +177,100 @@ describe('MeSHLookupClient', () => {
     it('should return empty array for empty input', async () => {
       const results = await client.lookupTerms([]);
       expect(results).toEqual([]);
+    });
+  });
+
+  describe('RateLimiter integration', () => {
+    it('should call RateLimiter.acquire() before each lookupTerm', async () => {
+      const mockRateLimiter = {
+        acquire: vi.fn().mockResolvedValue(undefined),
+      } as unknown as RateLimiter;
+
+      const clientWithLimiter = new MeSHLookupClient({ rateLimiter: mockRateLimiter });
+
+      const mockFetch = vi
+        .fn()
+        // Term 1: valid
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [{ resource: 'x', label: 'Term A' }],
+        })
+        // Term 2: valid
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [{ resource: 'y', label: 'Term B' }],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await clientWithLimiter.lookupTerms(['Term A', 'Term B']);
+
+      // acquire() should be called once per lookupTerm call (before fetch)
+      expect(mockRateLimiter.acquire).toHaveBeenCalledTimes(2);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should work without RateLimiter (backward compatible)', async () => {
+      const clientNoLimiter = new MeSHLookupClient();
+
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Test Term' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await clientNoLimiter.lookupTerm('Test Term');
+      expect(result.found).toBe(true);
+
+      vi.unstubAllGlobals();
+    });
+  });
+
+  describe('fetch timeout', () => {
+    it('should pass AbortSignal.timeout to fetch', async () => {
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Test' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await client.lookupTerm('Test');
+
+      // Verify signal was passed to fetch
+      const fetchOptions = mockFetch.mock.calls[0]![1] as RequestInit;
+      expect(fetchOptions).toBeDefined();
+      expect(fetchOptions.signal).toBeInstanceOf(AbortSignal);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should use custom timeout when provided', async () => {
+      const clientWithTimeout = new MeSHLookupClient({ timeoutMs: 5000 });
+
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Test' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await clientWithTimeout.lookupTerm('Test');
+
+      const fetchOptions = mockFetch.mock.calls[0]![1] as RequestInit;
+      expect(fetchOptions.signal).toBeInstanceOf(AbortSignal);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should throw MeSH lookup failed on timeout', async () => {
+      const abortError = new DOMException('The operation was aborted', 'AbortError');
+      const mockFetch = vi.fn().mockRejectedValueOnce(abortError);
+      vi.stubGlobal('fetch', mockFetch);
+
+      await expect(client.lookupTerm('Test')).rejects.toThrow(
+        'MeSH lookup failed'
+      );
+
+      vi.unstubAllGlobals();
     });
   });
 });

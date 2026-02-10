@@ -26,11 +26,21 @@ export interface VocabTermResult {
 }
 
 /**
+ * A controlled vocabulary term that failed due to an API error.
+ */
+export interface VocabTermError {
+  term: string;
+  vocabulary: 'mesh';
+  error: string;
+}
+
+/**
  * Result of validating all controlled vocabulary terms in a query.
  */
 export interface VocabValidationResult {
   valid: VocabTermResult[];
   invalid: VocabTermResult[];
+  errors: VocabTermError[];
 }
 
 /**
@@ -67,11 +77,20 @@ export async function validateControlledVocab(
 
   const valid: VocabTermResult[] = [];
   const invalid: VocabTermResult[] = [];
+  const errors: VocabTermError[] = [];
 
   for (const vocabTerm of terms) {
-    const result: MeSHLookupResult = await meshClient.lookupTerm(
-      vocabTerm.term
-    );
+    let result: MeSHLookupResult;
+    try {
+      result = await meshClient.lookupTerm(vocabTerm.term);
+    } catch (err) {
+      errors.push({
+        term: vocabTerm.term,
+        vocabulary: vocabTerm.vocabulary,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      continue;
+    }
     const termResult: VocabTermResult = {
       term: vocabTerm.term,
       vocabulary: vocabTerm.vocabulary,
@@ -86,5 +105,5 @@ export async function validateControlledVocab(
     }
   }
 
-  return { valid, invalid };
+  return { valid, invalid, errors };
 }

@@ -146,7 +146,7 @@ describe('Query Module Exports', () => {
       const term: VocabTerm = { term: 'Test', vocabulary: 'mesh' };
       const result: VocabTermResult = { term: 'Test', vocabulary: 'mesh', found: true };
       const lookupResult: MeSHLookupResult = { term: 'Test', found: true };
-      const validationResult: VocabValidationResult = { valid: [result], invalid: [] };
+      const validationResult: VocabValidationResult = { valid: [result], invalid: [], errors: [] };
 
       expect(term.vocabulary).toBe('mesh');
       expect(validationResult.valid).toHaveLength(1);

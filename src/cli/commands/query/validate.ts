@@ -8,6 +8,7 @@ import { readFile } from 'node:fs/promises';
 import { parseQueryString, ValidationError } from '../../../query/index.js';
 import { ZodError } from 'zod';
 import type { MeSHLookupClient } from '../../../query/mesh-lookup.js';
+import type { QueryAST } from '../../../query/types.js';
 import {
   validateControlledVocab,
   type VocabValidationResult,
@@ -30,6 +31,45 @@ export interface ValidateResult {
 }
 
 /**
+ * Read and parse a query YAML file.
+ *
+ * @returns The parsed AST on success, or a ValidateResult with errors on failure.
+ */
+async function parseQueryFile(
+  filePath: string
+): Promise<{ ast: QueryAST } | { result: ValidateResult }> {
+  let content: string;
+  try {
+    content = await readFile(filePath, 'utf-8');
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to read file';
+    return { result: { success: false, errors: [message] } };
+  }
+
+  try {
+    const ast = parseQueryString(content);
+    return { ast };
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const errors = error.issues.map((e) => {
+        const path = e.path.join('.');
+        return path ? `${path}: ${e.message}` : e.message;
+      });
+      return { result: { success: false, errors } };
+    }
+
+    if (error instanceof ValidationError) {
+      return { result: { success: false, errors: [error.message] } };
+    }
+
+    const message =
+      error instanceof Error ? error.message : 'Unknown validation error';
+    return { result: { success: false, errors: [message] } };
+  }
+}
+
+/**
  * Validate a query YAML file.
  *
  * @param filePath - Path to the query file
@@ -38,54 +78,17 @@ export interface ValidateResult {
 export async function validateQueryCommand(
   filePath: string
 ): Promise<ValidateResult> {
-  // Read file
-  let content: string;
-  try {
-    content = await readFile(filePath, 'utf-8');
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to read file';
-    return {
-      success: false,
-      errors: [message],
-    };
+  const parsed = await parseQueryFile(filePath);
+
+  if ('result' in parsed) {
+    return parsed.result;
   }
 
-  // Parse and validate using query module
-  try {
-    const ast = parseQueryString(content);
-    return {
-      success: true,
-      queryName: ast.name,
-      blockCount: ast.blocks.length,
-    };
-  } catch (error) {
-    if (error instanceof ZodError) {
-      const errors = error.issues.map((e) => {
-        const path = e.path.join('.');
-        return path ? `${path}: ${e.message}` : e.message;
-      });
-      return {
-        success: false,
-        errors,
-      };
-    }
-
-    if (error instanceof ValidationError) {
-      return {
-        success: false,
-        errors: [error.message],
-      };
-    }
-
-    // YAML parse error or other error
-    const message =
-      error instanceof Error ? error.message : 'Unknown validation error';
-    return {
-      success: false,
-      errors: [message],
-    };
-  }
+  return {
+    success: true,
+    queryName: parsed.ast.name,
+    blockCount: parsed.ast.blocks.length,
+  };
 }
 
 /**
@@ -114,6 +117,13 @@ export function formatValidateResult(
 }
 
 /**
+ * Check if a validation result contains invalid controlled vocabulary terms.
+ */
+export function hasVocabErrors(result: ValidateResult): boolean {
+  return (result.vocabResult?.invalid.length ?? 0) > 0;
+}
+
+/**
  * Validate a query YAML file with controlled vocabulary checking.
  *
  * First validates the query structure, then validates controlled vocab
@@ -123,48 +133,18 @@ export async function validateVocabCommand(
   filePath: string,
   meshClient: MeSHLookupClient
 ): Promise<ValidateResult> {
-  // Read file
-  let content: string;
-  try {
-    content = await readFile(filePath, 'utf-8');
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to read file';
-    return {
-      success: false,
-      errors: [message],
-    };
+  const parsed = await parseQueryFile(filePath);
+
+  if ('result' in parsed) {
+    return parsed.result;
   }
 
-  // Parse and validate structure first
-  let ast;
-  try {
-    ast = parseQueryString(content);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      const errors = error.issues.map((e) => {
-        const path = e.path.join('.');
-        return path ? `${path}: ${e.message}` : e.message;
-      });
-      return { success: false, errors };
-    }
-
-    if (error instanceof ValidationError) {
-      return { success: false, errors: [error.message] };
-    }
-
-    const message =
-      error instanceof Error ? error.message : 'Unknown validation error';
-    return { success: false, errors: [message] };
-  }
-
-  // Validate controlled vocabulary terms
-  const vocabResult = await validateControlledVocab(ast, meshClient);
+  const vocabResult = await validateControlledVocab(parsed.ast, meshClient);
 
   return {
     success: true,
-    queryName: ast.name,
-    blockCount: ast.blocks.length,
+    queryName: parsed.ast.name,
+    blockCount: parsed.ast.blocks.length,
     vocabResult,
   };
 }
@@ -175,7 +155,11 @@ export async function validateVocabCommand(
 export function formatVocabValidationOutput(
   result: VocabValidationResult
 ): string {
-  if (result.valid.length === 0 && result.invalid.length === 0) {
+  if (
+    result.valid.length === 0 &&
+    result.invalid.length === 0 &&
+    result.errors.length === 0
+  ) {
     return '';
   }
 
@@ -192,6 +176,10 @@ export function formatVocabValidationOutput(
         `    Did you mean: ${item.suggestions.map((s) => `"${s}"`).join(', ')}`
       );
     }
+  }
+
+  for (const item of result.errors) {
+    lines.push(`  ⚠ ${item.vocabulary}: "${item.term}" — ${item.error}`);
   }
 
   return lines.join('\n');

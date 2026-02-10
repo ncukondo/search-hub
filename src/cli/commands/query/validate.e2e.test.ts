@@ -3,7 +3,7 @@
  *
  * Tests query file validation functionality.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
 import {
   setupE2EContext,
@@ -18,8 +18,9 @@ import {
   validateVocabCommand,
   formatValidateResult,
   formatVocabValidationOutput,
+  hasVocabErrors,
 } from './validate.js';
-import type { MeSHLookupClient } from '../../../query/mesh-lookup.js';
+import { createMockMeSHClient } from '../../../query/__test-helpers__/mock-mesh-client.js';
 
 describe('search-hub query validate E2E', () => {
   let ctx: E2EContext;
@@ -365,21 +366,6 @@ overrides:
   });
 
   describe('validate --vocab (controlled vocabulary)', () => {
-    function createMockMeSHClient(
-      results: Map<string, { found: boolean; suggestions?: string[] }>
-    ): MeSHLookupClient {
-      return {
-        lookupTerm: vi.fn(async (term: string) => {
-          const result = results.get(term);
-          if (result) {
-            return { term, found: result.found, suggestions: result.suggestions };
-          }
-          return { term, found: false };
-        }),
-        lookupTerms: vi.fn(),
-      } as unknown as MeSHLookupClient;
-    }
-
     it('should validate MeSH terms in real query file', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
@@ -529,6 +515,62 @@ query:
 
       const output = formatVocabValidationOutput(result.vocabResult!);
       expect(output).toBe('');
+    });
+
+    it('should indicate vocab errors when invalid terms are found', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: exit-code-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+        - "Not A Real Term"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          ['Diabetes Mellitus', { found: true }],
+          ['Not A Real Term', { found: false }],
+        ])
+      );
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.success).toBe(true);
+      expect(hasVocabErrors(result)).toBe(true);
+    });
+
+    it('should not indicate vocab errors when all terms are valid', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: all-valid-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([['Diabetes Mellitus', { found: true }]])
+      );
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.success).toBe(true);
+      expect(hasVocabErrors(result)).toBe(false);
     });
   });
 });

@@ -22,8 +22,10 @@ import {
   validateVocabCommand,
   formatValidateResult,
   formatVocabValidationOutput,
+  hasVocabErrors,
 } from './commands/query/validate.js';
 import { MeSHLookupClient } from '../query/mesh-lookup.js';
+import { RateLimiter } from '../providers/base/rate-limiter.js';
 import {
   translateQueryCommand,
   formatTranslateResult,
@@ -367,7 +369,8 @@ Examples:
       const globalOpts = program.opts() as GlobalOptions;
       try {
         if (opts.vocab) {
-          const meshClient = new MeSHLookupClient();
+          const rateLimiter = new RateLimiter({ tokensPerSecond: 3 });
+          const meshClient = new MeSHLookupClient({ rateLimiter });
           const result = await validateVocabCommand(file, meshClient);
           if (!globalOpts.quiet) {
             let output = formatValidateResult(result, file);
@@ -376,9 +379,10 @@ Examples:
             }
             console.log(output);
           }
-          process.exitCode = result.success
-            ? EXIT_CODES.SUCCESS
-            : EXIT_CODES.QUERY_ERROR;
+          process.exitCode =
+            !result.success || hasVocabErrors(result)
+              ? EXIT_CODES.QUERY_ERROR
+              : EXIT_CODES.SUCCESS;
         } else {
           const result = await validateQueryCommand(file);
           if (!globalOpts.quiet) {
