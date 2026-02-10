@@ -181,6 +181,7 @@ query:
         vocabResult: {
           valid: [{ term: 'Diabetes Mellitus', vocabulary: 'mesh' as const, found: true }],
           invalid: [{ term: 'Not A Term', vocabulary: 'mesh' as const, found: false }],
+          errors: [],
         },
       };
       expect(hasVocabErrors(result)).toBe(true);
@@ -192,6 +193,7 @@ query:
         vocabResult: {
           valid: [{ term: 'Diabetes Mellitus', vocabulary: 'mesh' as const, found: true }],
           invalid: [],
+          errors: [],
         },
       };
       expect(hasVocabErrors(result)).toBe(false);
@@ -205,7 +207,7 @@ query:
     it('should return false when vocabResult has no terms', () => {
       const result = {
         success: true,
-        vocabResult: { valid: [], invalid: [] },
+        vocabResult: { valid: [], invalid: [], errors: [] },
       };
       expect(hasVocabErrors(result)).toBe(false);
     });
@@ -216,6 +218,7 @@ query:
       const output = formatVocabValidationOutput({
         valid: [{ term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true }],
         invalid: [],
+        errors: [],
       });
 
       expect(output).toContain('✓');
@@ -233,6 +236,7 @@ query:
             suggestions: ['Diabetes Mellitus'],
           },
         ],
+        errors: [],
       });
 
       expect(output).toContain('✗');
@@ -246,6 +250,7 @@ query:
         invalid: [
           { term: 'Xyz', vocabulary: 'mesh', found: false },
         ],
+        errors: [],
       });
 
       expect(output).toContain('✗');
@@ -257,6 +262,7 @@ query:
       const output = formatVocabValidationOutput({
         valid: [],
         invalid: [],
+        errors: [],
       });
 
       expect(output).toBe('');

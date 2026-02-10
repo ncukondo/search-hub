@@ -155,7 +155,11 @@ export async function validateVocabCommand(
 export function formatVocabValidationOutput(
   result: VocabValidationResult
 ): string {
-  if (result.valid.length === 0 && result.invalid.length === 0) {
+  if (
+    result.valid.length === 0 &&
+    result.invalid.length === 0 &&
+    result.errors.length === 0
+  ) {
     return '';
   }
 
@@ -172,6 +176,10 @@ export function formatVocabValidationOutput(
         `    Did you mean: ${item.suggestions.map((s) => `"${s}"`).join(', ')}`
       );
     }
+  }
+
+  for (const item of result.errors) {
+    lines.push(`  ⚠ ${item.vocabulary}: "${item.term}" — ${item.error}`);
   }
 
   return lines.join('\n');
