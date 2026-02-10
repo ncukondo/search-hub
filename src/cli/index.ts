@@ -385,7 +385,12 @@ Examples:
 
           if (!globalOpts.quiet) {
             const output = formatValidateResult(result, file);
-            console.log(output);
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'query validate',
+              queryFile: file,
+              validationSuccess: result.success,
+            }));
+            console.log(output + (suggestion ? '\n' + suggestion : ''));
           }
           process.exitCode = !result.success
             ? EXIT_CODES.QUERY_ERROR
@@ -410,6 +415,12 @@ Examples:
           if (result.vocabResult) {
             output += formatVocabValidationOutput(result.vocabResult);
           }
+          const suggestion = formatSuggestion(getSuggestion({
+            command: 'query validate',
+            queryFile: file,
+            validationSuccess: result.success && !hasVocabErrors(result),
+          }));
+          if (suggestion) output += '\n' + suggestion;
           console.log(output);
         }
         process.exitCode =

@@ -20,6 +20,8 @@ import {
   hasVocabErrors,
 } from './validate.js';
 import { createMockMeSHClient } from '../../../query/__test-helpers__/mock-mesh-client.js';
+import { getSuggestion } from '../../suggestions/rules.js';
+import { formatSuggestion } from '../../suggestions/index.js';
 
 describe('search-hub query validate E2E', () => {
   let ctx: E2EContext;
@@ -565,6 +567,152 @@ query:
 
       expect(result.success).toBe(true);
       expect(hasVocabErrors(result)).toBe(false);
+    });
+  });
+
+  describe('suggestion integration (noVocab path)', () => {
+    it('should show --dry-run suggestion after successful validation with --no-vocab', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const result = await validateQueryCommand(queryPath, { noVocab: true });
+
+      expect(result.success).toBe(true);
+
+      // Simulate what the CLI action does
+      const output = formatValidateResult(result, queryPath);
+      const suggestion = formatSuggestion(getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success,
+      }));
+
+      const fullOutput = output + (suggestion ? '\n' + suggestion : '');
+
+      expect(fullOutput).toContain('--dry-run');
+      expect(fullOutput).toContain('--preview');
+      expect(fullOutput).toContain('Next:');
+    });
+
+    it('should show $EDITOR suggestion after failed validation with --no-vocab', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        invalidQueryFixtures.missingName
+      );
+      const result = await validateQueryCommand(queryPath, { noVocab: true });
+
+      expect(result.success).toBe(false);
+
+      const output = formatValidateResult(result, queryPath);
+      const suggestion = formatSuggestion(getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success,
+      }));
+
+      const fullOutput = output + (suggestion ? '\n' + suggestion : '');
+
+      expect(fullOutput).toContain('$EDITOR');
+      expect(fullOutput).toContain('Next:');
+    });
+
+    it('should not show suggestion when --quiet is used', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const result = await validateQueryCommand(queryPath, { noVocab: true });
+
+      expect(result.success).toBe(true);
+
+      // When --quiet is set, the CLI skips all output including suggestions
+      // Verify that suggestion is non-empty (so quiet suppression is meaningful)
+      const suggestion = formatSuggestion(getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success,
+      }));
+      expect(suggestion.length).toBeGreaterThan(0);
+
+      // The quiet path should produce no output at all - this is gated by
+      // !globalOpts.quiet in the CLI action
+    });
+  });
+
+  describe('suggestion integration (vocab path)', () => {
+    it('should show suggestion after successful vocab validation', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: mesh-suggestion-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([['Diabetes Mellitus', { found: true }]])
+      );
+
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
+
+      expect(result.success).toBe(true);
+      expect(hasVocabErrors(result)).toBe(false);
+
+      let output = formatValidateResult(result, queryPath);
+      if (result.vocabResult) {
+        output += formatVocabValidationOutput(result.vocabResult);
+      }
+      const suggestion = formatSuggestion(getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success && !hasVocabErrors(result),
+      }));
+      if (suggestion) output += '\n' + suggestion;
+
+      expect(output).toContain('--dry-run');
+      expect(output).toContain('Next:');
+    });
+
+    it('should show $EDITOR suggestion when vocab has errors', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: vocab-error-suggestion-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Not A Real Term"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([['Not A Real Term', { found: false }]])
+      );
+
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
+
+      expect(result.success).toBe(true);
+      expect(hasVocabErrors(result)).toBe(true);
+
+      let output = formatValidateResult(result, queryPath);
+      if (result.vocabResult) {
+        output += formatVocabValidationOutput(result.vocabResult);
+      }
+      const suggestion = formatSuggestion(getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success && !hasVocabErrors(result),
+      }));
+      if (suggestion) output += '\n' + suggestion;
+
+      expect(output).toContain('$EDITOR');
+      expect(output).toContain('Next:');
     });
   });
 

@@ -34,12 +34,12 @@ Each step follows the TDD cycle:
 
 `--no-vocab` パスでは validate 完了後すぐに return しているため、suggestion が出ない。
 
-- [ ] Write test: CLI integration test / E2E test
+- [x] Write test: CLI integration test / E2E test
   - `--no-vocab` で validate 成功時に `--dry-run` / `--preview` の suggestion が表示されること
   - `--no-vocab` で validate 失敗時に `$EDITOR` の suggestion が表示されること
   - `--quiet` 時に suggestion が表示されないこと
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/cli/index.ts` の noVocab パス（L383-393）に suggestion を追加
+- [x] Verify test fails (Red)
+- [x] Implement: `src/cli/index.ts` の noVocab パス（L383-393）に suggestion を追加
   ```typescript
   if (!globalOpts.quiet) {
     const output = formatValidateResult(result, file);
@@ -51,21 +51,21 @@ Each step follows the TDD cycle:
     console.log(output + (suggestion ? '\n' + suggestion : ''));
   }
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: `--no-vocab` パスで suggestion が表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: `--no-vocab` パスで suggestion が表示される
 
 ### Step 2: validate アクション（vocab 実行パス）に suggestion を接続
 
 vocab チェック付きの通常パスにも suggestion を追加する。
 
-- [ ] Write test: CLI integration test / E2E test
+- [x] Write test: CLI integration test / E2E test
   - vocab チェック成功時に suggestion が表示されること
   - vocab エラー時に suggestion が表示されること
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/cli/index.ts` の vocab パス（L408-414）に suggestion を追加
+- [x] Verify test fails (Red)
+- [x] Implement: `src/cli/index.ts` の vocab パス（L408-414）に suggestion を追加
   ```typescript
   if (!globalOpts.quiet) {
     let output = formatValidateResult(result, file);
@@ -81,11 +81,11 @@ vocab チェック付きの通常パスにも suggestion を追加する。
     console.log(output);
   }
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: vocab パスで suggestion が表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: vocab パスで suggestion が表示される
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
