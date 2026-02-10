@@ -9,9 +9,10 @@ import type { ReviewFile } from '../review/types.js';
 import { loadMeta, saveMeta, updateMetaFiles, getFulltextDir, type FulltextMeta, type FileInfo } from '@ncukondo/academic-fulltext';
 
 /** Known fulltext filenames and their type keys. */
-const FULLTEXT_FILES: Record<string, 'pdf' | 'xml' | 'markdown'> = {
+const FULLTEXT_FILES: Record<string, 'pdf' | 'xml' | 'html' | 'markdown'> = {
   'fulltext.pdf': 'pdf',
   'fulltext.xml': 'xml',
+  'fulltext.html': 'html',
   'fulltext.md': 'markdown',
 };
 
@@ -57,7 +58,7 @@ export async function executeFulltextSync(
   const articlesWithChanges = new Set<string>();
 
   // Track updates for meta and reviews
-  const hasFilesUpdates = new Map<string, { pdf: boolean; xml: boolean; markdown: boolean }>();
+  const hasFilesUpdates = new Map<string, { pdf: boolean; xml: boolean; html: boolean; markdown: boolean }>();
   const metaUpdates = new Map<string, { meta: FulltextMeta; path: string }>();
 
   for (const dirName of dirEntries) {
@@ -75,7 +76,7 @@ export async function executeFulltextSync(
 
     const newFiles: string[] = [];
     const newSizes: number[] = [];
-    const fileInfoUpdates: { pdf?: FileInfo; xml?: FileInfo; markdown?: FileInfo } = {};
+    const fileInfoUpdates: { pdf?: FileInfo; xml?: FileInfo; html?: FileInfo; markdown?: FileInfo } = {};
 
     for (const [filename, typeKey] of Object.entries(FULLTEXT_FILES)) {
       // Skip if already tracked in meta
@@ -126,6 +127,7 @@ export async function executeFulltextSync(
         const hasFiles = {
           pdf: !!(updatedMeta.files.pdf),
           xml: !!(updatedMeta.files.xml),
+          html: !!(updatedMeta.files.html),
           markdown: !!(updatedMeta.files.markdown),
         };
         hasFilesUpdates.set(dirName, hasFiles);

@@ -97,7 +97,7 @@ export async function executeFulltextInit(
     // Build fulltext ref for reviews.yaml
     const fulltextRef: ArticleFulltextRef = {
       dirName,
-      hasFiles: { pdf: false, xml: false, markdown: false },
+      hasFiles: { pdf: false, xml: false, html: false, markdown: false },
     };
 
     if (!dryRun) {

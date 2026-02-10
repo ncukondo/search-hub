@@ -183,6 +183,7 @@ async function updateReviews(
           article.fulltext.hasFiles = {
             pdf: article.fulltext.hasFiles.pdf || result.filesDownloaded.includes('fulltext.pdf'),
             xml: article.fulltext.hasFiles.xml || result.filesDownloaded.includes('fulltext.xml'),
+            html: article.fulltext.hasFiles.html || result.filesDownloaded.includes('fulltext.html'),
             markdown: article.fulltext.hasFiles.markdown || result.filesDownloaded.includes('fulltext.md'),
           };
           changed = true;
