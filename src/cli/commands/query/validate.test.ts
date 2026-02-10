@@ -168,6 +168,79 @@ query:
     });
   });
 
+  describe('graceful degradation on API errors', () => {
+    const yamlWithMesh = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+        - "Unknown Term"
+    operator: OR
+`;
+
+    it('should keep success=true when all API calls fail', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = {
+        lookupTerm: vi.fn().mockRejectedValue(new Error('Network error')),
+        lookupTerms: vi.fn(),
+      } as unknown as import('../../../query/mesh-lookup.js').MeSHLookupClient;
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.errors).toHaveLength(2);
+      expect(result.vocabResult!.valid).toHaveLength(0);
+      expect(result.vocabResult!.invalid).toHaveLength(0);
+    });
+
+    it('should handle partial API errors (some terms succeed, some fail)', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = {
+        lookupTerm: vi.fn()
+          .mockResolvedValueOnce({ term: 'Diabetes Mellitus', found: true })
+          .mockRejectedValueOnce(new Error('Timeout')),
+        lookupTerms: vi.fn(),
+      } as unknown as import('../../../query/mesh-lookup.js').MeSHLookupClient;
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.errors).toHaveLength(1);
+    });
+
+    it('should include warning text for API errors in vocab output', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = {
+        lookupTerm: vi.fn()
+          .mockResolvedValueOnce({ term: 'Diabetes Mellitus', found: true })
+          .mockRejectedValueOnce(new Error('Network error')),
+        lookupTerms: vi.fn(),
+      } as unknown as import('../../../query/mesh-lookup.js').MeSHLookupClient;
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('⚠');
+      expect(output).toContain('Network error');
+    });
+  });
+
   describe('validateVocabCommand', () => {
     const yamlWithMesh = `
 name: test-query
