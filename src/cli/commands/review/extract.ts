@@ -315,8 +315,7 @@ export async function executeReviewExtract(
   await writeFile(outputPath, finalContent, 'utf-8');
 
   // Copy schema file to output directory if it exists
-  const schemasDir = join(dirname(sessionsDir), '.search-hub', 'schemas');
-  const schemaSourcePath = join(schemasDir, 'review.schema.json');
+  const schemaSourcePath = join(sessionDir, '.internal', 'review.schema.json');
   const schemaDestPath = join(outputDir, 'review.schema.json');
 
   try {
