@@ -10,6 +10,7 @@
 import type { RateLimiter } from '../providers/base/rate-limiter.js';
 
 const MESH_LOOKUP_BASE_URL = 'https://id.nlm.nih.gov/mesh/lookup/term';
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 /**
  * Result of a MeSH term lookup.
@@ -33,9 +34,11 @@ interface MeSHApiEntry {
  */
 export class MeSHLookupClient {
   private readonly rateLimiter: RateLimiter | undefined;
+  private readonly timeoutMs: number;
 
-  constructor(options?: { rateLimiter?: RateLimiter }) {
+  constructor(options?: { rateLimiter?: RateLimiter; timeoutMs?: number }) {
     this.rateLimiter = options?.rateLimiter;
+    this.timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
   /**
@@ -96,7 +99,9 @@ export class MeSHLookupClient {
 
     let response: Response;
     try {
-      response = await fetch(url);
+      response = await fetch(url, {
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unknown error';

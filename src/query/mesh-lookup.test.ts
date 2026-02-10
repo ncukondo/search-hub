@@ -225,4 +225,52 @@ describe('MeSHLookupClient', () => {
       vi.unstubAllGlobals();
     });
   });
+
+  describe('fetch timeout', () => {
+    it('should pass AbortSignal.timeout to fetch', async () => {
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Test' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await client.lookupTerm('Test');
+
+      // Verify signal was passed to fetch
+      const fetchOptions = mockFetch.mock.calls[0]![1] as RequestInit;
+      expect(fetchOptions).toBeDefined();
+      expect(fetchOptions.signal).toBeInstanceOf(AbortSignal);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should use custom timeout when provided', async () => {
+      const clientWithTimeout = new MeSHLookupClient({ timeoutMs: 5000 });
+
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Test' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await clientWithTimeout.lookupTerm('Test');
+
+      const fetchOptions = mockFetch.mock.calls[0]![1] as RequestInit;
+      expect(fetchOptions.signal).toBeInstanceOf(AbortSignal);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should throw MeSH lookup failed on timeout', async () => {
+      const abortError = new DOMException('The operation was aborted', 'AbortError');
+      const mockFetch = vi.fn().mockRejectedValueOnce(abortError);
+      vi.stubGlobal('fetch', mockFetch);
+
+      await expect(client.lookupTerm('Test')).rejects.toThrow(
+        'MeSH lookup failed'
+      );
+
+      vi.unstubAllGlobals();
+    });
+  });
 });
