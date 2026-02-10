@@ -91,13 +91,13 @@ vocab チェック付きの通常パスにも suggestion を追加する。
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
+- [x] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
   - validate 成功時に `--dry-run` を含む suggestion が出力されること
   - validate 失敗時に `$EDITOR` を含む suggestion が出力されること
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: validate の成功・失敗それぞれで suggestion 出力を確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: validate の成功・失敗それぞれで suggestion 出力を確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
