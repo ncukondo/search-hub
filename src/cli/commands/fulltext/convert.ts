@@ -4,7 +4,7 @@
 
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { getFulltextDir, getArticleDir, getMetaPath, convertPmcXmlToMarkdown } from '@ncukondo/academic-fulltext';
+import { getFulltextDir, getArticleDir, getMetaPath, convertPmcXmlToMarkdown, convertArxivHtmlToMarkdown } from '@ncukondo/academic-fulltext';
 
 export interface FulltextConvertOptions {
   sessionId: string;
@@ -79,12 +79,16 @@ export async function executeFulltextConvert(
   for (const dirName of articleDirs) {
     const articleDir = getArticleDir(sessionDir, dirName);
     const xmlPath = join(articleDir, 'fulltext.xml');
+    const htmlPath = join(articleDir, 'fulltext.html');
     const mdPath = join(articleDir, 'fulltext.md');
     const metaPath = getMetaPath(sessionDir, dirName);
 
-    // Check if XML exists
-    if (!(await fileExists(xmlPath))) {
-      continue; // No XML to convert, skip silently
+    const hasXml = await fileExists(xmlPath);
+    const hasHtml = await fileExists(htmlPath);
+
+    // No convertible source found
+    if (!hasXml && !hasHtml) {
+      continue;
     }
 
     // Check if already converted
@@ -94,13 +98,11 @@ export async function executeFulltextConvert(
       continue;
     }
 
-    // Convert
+    // Convert: prefer PMC XML, fall back to arXiv HTML
     const metaPathExists = await fileExists(metaPath);
-    const result = await convertPmcXmlToMarkdown(
-      xmlPath,
-      mdPath,
-      metaPathExists ? metaPath : undefined,
-    );
+    const result = hasXml
+      ? await convertPmcXmlToMarkdown(xmlPath, mdPath, metaPathExists ? metaPath : undefined)
+      : await convertArxivHtmlToMarkdown(htmlPath, mdPath, metaPathExists ? metaPath : undefined);
 
     if (result.success) {
       converted++;

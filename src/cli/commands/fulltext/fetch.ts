@@ -93,6 +93,7 @@ export async function executeFulltextFetch(
       dirName,
       oaLocations: locations,
       ...(meta.pmcid ? { pmcid: meta.pmcid } : {}),
+      ...(meta.arxivId ? { arxivId: meta.arxivId } : {}),
     });
   }
 
@@ -118,13 +119,16 @@ export async function executeFulltextFetch(
   if (source) fetchOpts.sourceFilter = source;
   const results = await fetchAllFulltexts(toFetch, sessionDir, fetchOpts);
 
-  // Auto-convert PMC XML to Markdown (unless --no-convert-markdown)
+  // Auto-convert PMC XML / arXiv HTML to Markdown (unless --no-convert-markdown)
   const convertMarkdown = options.convertMarkdown !== false;
   if (convertMarkdown) {
-    const xmlArticles = results.filter(
-      (r) => r.status === 'downloaded' && r.filesDownloaded?.includes('fulltext.xml'),
+    const convertibleArticles = results.filter(
+      (r) => r.status === 'downloaded' && (
+        r.filesDownloaded?.includes('fulltext.xml') ||
+        r.filesDownloaded?.includes('fulltext.html')
+      ),
     );
-    for (const article of xmlArticles) {
+    for (const article of convertibleArticles) {
       await executeFulltextConvert({ sessionId, article: article.dirName }, sessionsDir);
     }
   }
