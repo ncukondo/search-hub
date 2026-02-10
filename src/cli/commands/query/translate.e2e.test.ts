@@ -356,6 +356,84 @@ query:
     });
   });
 
+  describe('translate - mesh-only query (no keywords)', () => {
+    it('should translate mesh-only query for PubMed', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: mesh-only-translate-test
+query:
+  - field: title_abstract
+    terms:
+      mesh:
+        - "Artificial Intelligence"
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['pubmed'],
+      });
+
+      expect(result.success).toBe(true);
+      const pubmed = result.translations!['pubmed'];
+      expect(pubmed!.native).toContain('Artificial Intelligence');
+      expect(pubmed!.native).toContain('[mh]');
+    });
+
+    it('should translate mesh-only query for all providers', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: mesh-only-all-providers
+query:
+  - field: title_abstract
+    terms:
+      mesh:
+        - "Artificial Intelligence"
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath);
+
+      expect(result.success).toBe(true);
+      expect(result.translations!['pubmed']).toBeDefined();
+      expect(result.translations!['eric']).toBeDefined();
+      expect(result.translations!['arxiv']).toBeDefined();
+      expect(result.translations!['scopus']).toBeDefined();
+    });
+
+    it('should translate mixed keywords-and-mesh-only blocks', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: mixed-blocks-translate
+query:
+  - field: title_abstract
+    terms:
+      mesh:
+        - "Artificial Intelligence"
+    operator: OR
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['pubmed'],
+      });
+
+      expect(result.success).toBe(true);
+      const pubmed = result.translations!['pubmed'];
+      expect(pubmed!.native).toContain('Artificial Intelligence');
+      expect(pubmed!.native).toContain('diabetes');
+    });
+  });
+
   describe('query with various fields', () => {
     it('should translate title field correctly', async () => {
       const queryPath = await createRawQueryFile(

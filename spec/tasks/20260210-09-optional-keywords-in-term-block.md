@@ -90,13 +90,13 @@ keywords が `undefined` の場合にクエリ変換が壊れないことを確�
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Write E2E test: `src/query/validator.e2e.test.ts` or update `validate.e2e.test.ts`
+- [x] Write E2E test: `src/query/validator.e2e.test.ts` or update `validate.e2e.test.ts`
   - MeSH のみのクエリファイルが validate をパスすること
   - MeSH のみのクエリで `query translate` が正しく動作すること
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: MeSH のみの YAML を作成し validate → translate の一連のフローを確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: MeSH のみの YAML を作成し validate → translate の一連のフローを確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

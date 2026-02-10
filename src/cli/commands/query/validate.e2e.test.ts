@@ -568,6 +568,99 @@ query:
     });
   });
 
+  describe('validate - mesh-only query (no keywords)', () => {
+    it('should validate mesh-only query file', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: mesh-only-test
+query:
+  - field: title_abstract
+    terms:
+      mesh:
+        - "Artificial Intelligence"
+    operator: OR
+`
+      );
+
+      const result = await validateQueryCommand(queryPath);
+
+      expect(result.success).toBe(true);
+      expect(result.queryName).toBe('mesh-only-test');
+      expect(result.blockCount).toBe(1);
+    });
+
+    it('should validate eric-only query file', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: eric-only-test
+query:
+  - field: title_abstract
+    terms:
+      eric:
+        - "Medical Education"
+    operator: OR
+`
+      );
+
+      const result = await validateQueryCommand(queryPath);
+
+      expect(result.success).toBe(true);
+      expect(result.queryName).toBe('eric-only-test');
+      expect(result.blockCount).toBe(1);
+    });
+
+    it('should reject block with no term types', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: empty-terms-test
+query:
+  - field: title_abstract
+    terms:
+      exclude:
+        - "animal"
+    operator: OR
+`
+      );
+
+      const result = await validateQueryCommand(queryPath);
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toBeDefined();
+      const errorText = result.errors!.join(' ');
+      expect(errorText).toContain('At least one of keywords, mesh, emtree, or eric is required');
+    });
+
+    it('should validate mixed keywords and mesh-only blocks', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: mixed-test
+query:
+  - field: title_abstract
+    terms:
+      mesh:
+        - "Artificial Intelligence"
+    operator: OR
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+        - T2DM
+    operator: OR
+`
+      );
+
+      const result = await validateQueryCommand(queryPath);
+
+      expect(result.success).toBe(true);
+      expect(result.queryName).toBe('mixed-test');
+      expect(result.blockCount).toBe(2);
+    });
+  });
+
   describe('default vocab validation (auto-check)', () => {
     it('should auto-validate MeSH terms via validateQueryCommand with meshClient', async () => {
       const queryPath = await createRawQueryFile(
