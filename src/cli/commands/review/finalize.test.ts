@@ -33,8 +33,7 @@ describe('executeReviewFinalize', () => {
     const sessionDir = join(sessionsDir, sessionId);
     const internalDir = join(sessionDir, '.internal');
     await mkdir(internalDir, { recursive: true });
-    const schemaPath = '../../../../.search-hub/schemas/review.schema.json';
-    const schemaComment = `# yaml-language-server: $schema=${schemaPath}\n`;
+    const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
     await writeFile(
       join(internalDir, 'reviews.yaml'),
       schemaComment + stringifyYaml(reviewFile, { lineWidth: 0 })
@@ -162,6 +161,29 @@ describe('executeReviewFinalize', () => {
       expect(result.includedCount).toBe(0);
       expect(result.excludedCount).toBe(0);
       expect(result.skippedByStatus.finalized).toBe(1);
+    });
+
+    it('writes finalized YAML with local schema reference (./review.schema.json)', async () => {
+      await setupReviewFile({
+        sessionId,
+        reviewers: [{ name: 'ai:claude', basis: 'title' }],
+        articles: [
+          {
+            doi: '10.1234/a1',
+            title: 'Article 1',
+            reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title' }],
+          },
+        ],
+      });
+
+      await executeReviewFinalize({ sessionId }, sessionsDir);
+
+      const content = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8'
+      );
+      const firstLine = content.split('\n')[0];
+      expect(firstLine).toBe('# yaml-language-server: $schema=./review.schema.json');
     });
 
     it('returns correct counts for mixed articles', async () => {
