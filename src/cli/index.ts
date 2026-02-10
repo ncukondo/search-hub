@@ -378,6 +378,13 @@ Examples:
               output += formatVocabValidationOutput(result.vocabResult);
             }
             console.log(output);
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'query validate',
+              queryFile: file,
+              validationSuccess: result.success && !hasVocabErrors(result),
+              vocabChecked: true,
+            }));
+            if (suggestion) console.log(suggestion);
           }
           process.exitCode =
             !result.success || hasVocabErrors(result)
@@ -387,6 +394,14 @@ Examples:
           const result = await validateQueryCommand(file);
           if (!globalOpts.quiet) {
             console.log(formatValidateResult(result, file));
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'query validate',
+              queryFile: file,
+              validationSuccess: result.success,
+              hasControlledVocab: result.hasControlledVocab,
+              vocabChecked: false,
+            }));
+            if (suggestion) console.log(suggestion);
           }
           process.exitCode = result.success
             ? EXIT_CODES.SUCCESS
