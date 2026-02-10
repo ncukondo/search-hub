@@ -7,7 +7,7 @@
 import { join } from 'node:path';
 import type { FulltextAttachResult } from './types.js';
 import { refFulltextAttach, type RefCliOptions } from './ref-cli.js';
-import { processFulltextEntries } from '../fulltext/attach-shared.js';
+import { processFulltextEntries } from './attach-shared.js';
 
 /**
  * Options for attachFulltexts function.
