@@ -21,6 +21,8 @@ import {
   hasVocabErrors,
 } from './validate.js';
 import { createMockMeSHClient } from '../../../query/__test-helpers__/mock-mesh-client.js';
+import { getSuggestion } from '../../suggestions/rules.js';
+import { formatSuggestion } from '../../suggestions/index.js';
 
 describe('search-hub query validate E2E', () => {
   let ctx: E2EContext;
@@ -571,6 +573,190 @@ query:
 
       expect(result.success).toBe(true);
       expect(hasVocabErrors(result)).toBe(false);
+    });
+  });
+
+  describe('fuzzy suggestions E2E', () => {
+    it('should display multiple suggestions for a misspelled term', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: fuzzy-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - AI
+      mesh:
+        - "Artificial Intelligense"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          [
+            'Artificial Intelligense',
+            {
+              found: false,
+              suggestions: ['Artificial Intelligence', 'Artificial Organs'],
+            },
+          ],
+        ])
+      );
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+      expect(result.vocabResult!.invalid[0]!.suggestions).toEqual([
+        'Artificial Intelligence',
+        'Artificial Organs',
+      ]);
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('Did you mean: "Artificial Intelligence", "Artificial Organs"');
+    });
+
+    it('should display suggestion for plural form mismatch', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: plural-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - therapy
+      mesh:
+        - "Drug Therapies"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          [
+            'Drug Therapies',
+            {
+              found: false,
+              suggestions: ['Drug Therapy'],
+            },
+          ],
+        ])
+      );
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('Did you mean: "Drug Therapy"');
+    });
+  });
+
+  describe('next step suggestions E2E', () => {
+    it('should suggest --vocab when query has controlled vocab and validate succeeds', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: next-step-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+    operator: OR
+`
+      );
+
+      const result = await validateQueryCommand(queryPath);
+
+      expect(result.success).toBe(true);
+      expect(result.hasControlledVocab).toBe(true);
+
+      const suggestion = getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success,
+        hasControlledVocab: result.hasControlledVocab,
+        vocabChecked: false,
+      });
+
+      expect(suggestion).not.toBeNull();
+      expect(suggestion!.seeAlso.some((s) => s.command.includes('--vocab'))).toBe(true);
+
+      const formatted = formatSuggestion(suggestion);
+      expect(formatted).toContain('--vocab');
+    });
+
+    it('should NOT suggest --vocab when query has only keywords', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: keywords-only-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+    operator: OR
+`
+      );
+
+      const result = await validateQueryCommand(queryPath);
+
+      expect(result.success).toBe(true);
+      expect(result.hasControlledVocab).toBe(false);
+
+      const suggestion = getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success,
+        hasControlledVocab: result.hasControlledVocab,
+        vocabChecked: false,
+      });
+
+      expect(suggestion).not.toBeNull();
+      expect(suggestion!.seeAlso.every((s) => !s.command.includes('--vocab'))).toBe(true);
+    });
+
+    it('should NOT suggest --vocab after vocab check was already done', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: vocab-done-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([['Diabetes Mellitus', { found: true }]])
+      );
+
+      const result = await validateVocabCommand(queryPath, client);
+
+      expect(result.success).toBe(true);
+
+      const suggestion = getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success && !hasVocabErrors(result),
+        vocabChecked: true,
+      });
+
+      expect(suggestion).not.toBeNull();
+      expect(suggestion!.seeAlso.every((s) => !s.command.includes('--vocab'))).toBe(true);
     });
   });
 });

@@ -53,80 +53,80 @@ Each step follows the TDD cycle:
 3. `contains`（用語全体）— 部分一致で候補を探す
 4. `startsWith`（先頭N単語）— 複数語の用語で末尾が違う場合に対応
 
-- [ ] Write test: `src/query/mesh-lookup.test.ts`
+- [x] Write test: `src/query/mesh-lookup.test.ts`
   - タイプミス（例: "Artificial Intelligense"）でサジェスチョンが返ることを検証
   - 複数形（例: "Drug Therapies" → "Drug Therapy"）でサジェスチョンが返ることを検証
   - スペース違い（例: "Cardio Vascular Disease" → "Cardiovascular Diseases"）でサジェスチョンが返ることを検証
   - 完全一致時は従来通り `found: true` を返す
   - `startsWith` で見つかる場合は従来通りの動作
-- [ ] Verify test fails (Red)
-- [ ] Implement: `lookupTerm` にフォールバック戦略を追加
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: タイプミス・複数形・表記揺れに対してサジェスチョンが返る
+- [x] Verify test fails (Red)
+- [x] Implement: `lookupTerm` にフォールバック戦略を追加
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: タイプミス・複数形・表記揺れに対してサジェスチョンが返る
 
 ### Step 2: Display suggestions in CLI output
 
 `formatVocabValidationOutput` で `suggestions` がある場合に表示する。
 
-- [ ] Write test: `src/cli/commands/query/validate.test.ts`
+- [x] Write test: `src/cli/commands/query/validate.test.ts`
   - `suggestions` がある場合、「Did you mean: ...」のような形式で表示されることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement: `formatVocabValidationOutput` でサジェスチョン表示を追加
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: 無効な用語の後にサジェスチョンが表示される
+- [x] Verify test fails (Red) — already implemented in prior task
+- [x] Implement: `formatVocabValidationOutput` でサジェスチョン表示を追加
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 無効な用語の後にサジェスチョンが表示される
 
 ### Step 3: Add `hasControlledVocab` to `ValidateResult`
 
 `validateQueryCommand` で AST の `blocks[].terms` に `mesh`/`emtree`/`eric` が
 含まれるか判定し、`ValidateResult.hasControlledVocab` フラグを返す。
 
-- [ ] Write test: `src/cli/commands/query/validate.test.ts`
+- [x] Write test: `src/cli/commands/query/validate.test.ts`
   - MeSH 用語を含むクエリで `hasControlledVocab: true` が返ることを検証
   - キーワードのみのクエリで `hasControlledVocab: false` が返ることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement: `ValidateResult` にフラグ追加、`validateQueryCommand` で判定
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: 統制語の有無を判定できる
+- [x] Verify test fails (Red)
+- [x] Implement: `ValidateResult` にフラグ追加、`validateQueryCommand` で判定
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 統制語の有無を判定できる
 
 ### Step 4: Conditional `--vocab` suggestion in next steps
 
 `queryValidateRule` で、`validationSuccess && hasControlledVocab && !vocabChecked` の場合に
 `query validate --vocab` を seeAlso として提案する。
 
-- [ ] Write test: `src/cli/suggestions/rules.test.ts`
+- [x] Write test: `src/cli/suggestions/rules.test.ts`
   - 統制語あり・vocabチェック未実施 → seeAlso に `--vocab` 提案
   - 統制語なし → `--vocab` 提案なし
   - 既に `--vocab` チェック済み → `--vocab` 提案なし
-- [ ] Verify test fails (Red)
-- [ ] Implement: `SuggestionContext` に `hasControlledVocab` と `vocabChecked` を追加、ルール更新
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: 条件に応じて `--vocab` が適切に提案される
+- [x] Verify test fails (Red)
+- [x] Implement: `SuggestionContext` に `hasControlledVocab` と `vocabChecked` を追加、ルール更新
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 条件に応じて `--vocab` が適切に提案される
 
 ### Step 5: Wire context in CLI
 
 `src/cli/index.ts` の validate コマンドで、suggestion context に `hasControlledVocab` と
 `vocabChecked` を渡す。
 
-- [ ] Write test: E2E テストで validate 後に `--vocab` 提案が出ることを確認
-- [ ] Verify test fails (Red)
-- [ ] Implement: CLI コマンド内で context を生成して `getSuggestion` に渡す
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: CLI 実行時に統制語の有無に応じた next step が表示される
+- [x] Write test: E2E テストで validate 後に `--vocab` 提案が出ることを確認 (in Final Step)
+- [x] Verify test fails (Red)
+- [x] Implement: CLI コマンド内で context を生成して `getSuggestion` に渡す
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: CLI 実行時に統制語の有無に応じた next step が表示される
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
