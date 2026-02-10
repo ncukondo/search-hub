@@ -104,6 +104,70 @@ describe('query validate command', () => {
     });
   });
 
+  describe('auto vocab validation in validateQueryCommand', () => {
+    const yamlWithMesh = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+        - "Not A Real Term"
+    operator: OR
+`;
+
+    it('should auto-validate vocab when MeSH terms exist and meshClient is provided', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = createMockMeSHClient(
+        new Map([
+          ['Diabetes Mellitus', { found: true }],
+          ['Not A Real Term', { found: false, suggestions: ['Diabetes'] }],
+        ])
+      );
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+    });
+
+    it('should not include vocabResult for keywords-only queries', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(validYaml);
+
+      const client = createMockMeSHClient(new Map());
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeUndefined();
+    });
+
+    it('should skip vocab validation when noVocab option is set', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = createMockMeSHClient(
+        new Map([['Diabetes Mellitus', { found: true }]])
+      );
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+        noVocab: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeUndefined();
+    });
+  });
+
   describe('validateVocabCommand', () => {
     const yamlWithMesh = `
 name: test-query
