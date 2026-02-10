@@ -15,7 +15,6 @@ import {
 } from '../../e2e-helpers.js';
 import {
   validateQueryCommand,
-  validateVocabCommand,
   formatValidateResult,
   formatVocabValidationOutput,
   hasVocabErrors,
@@ -365,7 +364,7 @@ overrides:
     });
   });
 
-  describe('validate --vocab (controlled vocabulary)', () => {
+  describe('validate with controlled vocabulary (via validateQueryCommand)', () => {
     it('should validate MeSH terms in real query file', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
@@ -390,7 +389,7 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
@@ -429,7 +428,7 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
@@ -463,7 +462,7 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.vocabResult).toBeDefined();
       const output = formatVocabValidationOutput(result.vocabResult!);
@@ -484,13 +483,13 @@ query: not_valid
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(false);
       expect(result.vocabResult).toBeUndefined();
     });
 
-    it('should handle query with no controlled vocab terms', async () => {
+    it('should not include vocabResult when query has no controlled vocab terms', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
         `
@@ -506,15 +505,10 @@ query:
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
-      expect(result.vocabResult).toBeDefined();
-      expect(result.vocabResult!.valid).toHaveLength(0);
-      expect(result.vocabResult!.invalid).toHaveLength(0);
-
-      const output = formatVocabValidationOutput(result.vocabResult!);
-      expect(output).toBe('');
+      expect(result.vocabResult).toBeUndefined();
     });
 
     it('should indicate vocab errors when invalid terms are found', async () => {
@@ -541,7 +535,7 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(hasVocabErrors(result)).toBe(true);
@@ -567,10 +561,125 @@ query:
         new Map([['Diabetes Mellitus', { found: true }]])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(hasVocabErrors(result)).toBe(false);
+    });
+  });
+
+  describe('default vocab validation (auto-check)', () => {
+    it('should auto-validate MeSH terms via validateQueryCommand with meshClient', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: auto-vocab-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+        - "Diabetes Mellitus, Type 2"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          ['Diabetes Mellitus', { found: true }],
+          ['Diabetes Mellitus, Type 2', { found: true }],
+        ])
+      );
+
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(2);
+      expect(result.vocabResult!.invalid).toHaveLength(0);
+    });
+
+    it('should skip vocab validation with --no-vocab', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: no-vocab-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([['Diabetes Mellitus', { found: true }]])
+      );
+
+      const result = await validateQueryCommand(queryPath, {
+        meshClient: client,
+        noVocab: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeUndefined();
+    });
+
+    it('should not auto-validate when query has no controlled vocab terms', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: keywords-only-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+        - insulin
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(new Map());
+
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeUndefined();
+    });
+
+    it('should gracefully handle API errors during auto-validation', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: api-error-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+    operator: OR
+`
+      );
+
+      const client = {
+        lookupTerm: async () => { throw new Error('Network timeout'); },
+        lookupTerms: async () => [],
+      } as unknown as import('../../../query/mesh-lookup.js').MeSHLookupClient;
+
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.errors).toHaveLength(1);
+      expect(result.vocabResult!.errors[0]!.error).toContain('Network timeout');
     });
   });
 });

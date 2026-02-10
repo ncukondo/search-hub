@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MeSHLookupClient } from './mesh-lookup.js';
 import type { RateLimiter } from '../providers/base/rate-limiter.js';
+import type { VocabCache } from './vocab-cache.js';
 
 describe('MeSHLookupClient', () => {
   let client: MeSHLookupClient;
@@ -67,17 +68,119 @@ describe('MeSHLookupClient', () => {
       vi.unstubAllGlobals();
     });
 
-    it('should return found=false with no suggestions when startswith also returns empty', async () => {
+    it('should return suggestions via contains when startswith fails (typo)', async () => {
       const mockFetch = vi
         .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [],
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [],
+          json: async () => [
+            { resource: 'x', label: 'Artificial Intelligence' },
+          ],
         });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Artificial Intelligense');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Artificial Intelligence']);
+      // Verify contains was called with correct match type
+      const thirdCallUrl = new URL(mockFetch.mock.calls[2]![0] as string);
+      expect(thirdCallUrl.searchParams.get('match')).toBe('contains');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should return suggestions via first-word startswith for multi-word terms', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss (full term)
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith first word hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Drug Therapy' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Drug Therapies');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Drug Therapy']);
+      // Verify first-word startswith was called with first word only
+      const fourthCallUrl = new URL(mockFetch.mock.calls[3]![0] as string);
+      expect(fourthCallUrl.searchParams.get('label')).toBe('Drug');
+      expect(fourthCallUrl.searchParams.get('match')).toBe('startswith');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should not try first-word startswith for single-word terms', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Xyzzy');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toBeUndefined();
+      // Only 3 calls: exact, startswith, contains (no first-word for single word)
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should not call contains if startswith succeeds', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Diabetes Mellitus' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Diabetes Mell');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Diabetes Mellitus']);
+      // Only 2 calls: exact + startswith (no contains)
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should return found=false with no suggestions when all fallbacks fail', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // first-word startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] });
       vi.stubGlobal('fetch', mockFetch);
 
       const result = await client.lookupTerm('Xyzzy Not A Term');
@@ -181,7 +284,7 @@ describe('MeSHLookupClient', () => {
   });
 
   describe('RateLimiter integration', () => {
-    it('should call RateLimiter.acquire() before each lookupTerm', async () => {
+    it('should call acquire() once per fetchLookup when term is found (exact hit)', async () => {
       const mockRateLimiter = {
         acquire: vi.fn().mockResolvedValue(undefined),
       } as unknown as RateLimiter;
@@ -190,12 +293,12 @@ describe('MeSHLookupClient', () => {
 
       const mockFetch = vi
         .fn()
-        // Term 1: valid
+        // Term 1: exact hit
         .mockResolvedValueOnce({
           ok: true,
           json: async () => [{ resource: 'x', label: 'Term A' }],
         })
-        // Term 2: valid
+        // Term 2: exact hit
         .mockResolvedValueOnce({
           ok: true,
           json: async () => [{ resource: 'y', label: 'Term B' }],
@@ -204,7 +307,36 @@ describe('MeSHLookupClient', () => {
 
       await clientWithLimiter.lookupTerms(['Term A', 'Term B']);
 
-      // acquire() should be called once per lookupTerm call (before fetch)
+      // 1 acquire per exact fetch = 2 total
+      expect(mockRateLimiter.acquire).toHaveBeenCalledTimes(2);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should call acquire() twice when term not found (exact miss + startswith)', async () => {
+      const mockRateLimiter = {
+        acquire: vi.fn().mockResolvedValue(undefined),
+      } as unknown as RateLimiter;
+
+      const clientWithLimiter = new MeSHLookupClient({ rateLimiter: mockRateLimiter });
+
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [],
+        })
+        // startswith hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [{ resource: 'x', label: 'Suggestion' }],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await clientWithLimiter.lookupTerm('Misspeled');
+
+      // 1 acquire for exact + 1 acquire for startswith = 2
       expect(mockRateLimiter.acquire).toHaveBeenCalledTimes(2);
 
       vi.unstubAllGlobals();
@@ -269,6 +401,71 @@ describe('MeSHLookupClient', () => {
       await expect(client.lookupTerm('Test')).rejects.toThrow(
         'MeSH lookup failed'
       );
+
+      vi.unstubAllGlobals();
+    });
+  });
+
+  describe('VocabCache integration', () => {
+    it('should skip fetchLookup when cache hits', async () => {
+      const mockCache = {
+        get: vi.fn().mockReturnValue({ term: 'Diabetes Mellitus', found: true }),
+        set: vi.fn(),
+      } as unknown as VocabCache;
+
+      const clientWithCache = new MeSHLookupClient({ cache: mockCache });
+
+      const mockFetch = vi.fn();
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await clientWithCache.lookupTerm('Diabetes Mellitus');
+
+      expect(result.found).toBe(true);
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockCache.get).toHaveBeenCalledWith('mesh', 'Diabetes Mellitus');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should call API and write to cache on cache miss', async () => {
+      const mockCache = {
+        get: vi.fn().mockReturnValue(undefined),
+        set: vi.fn(),
+      } as unknown as VocabCache;
+
+      const clientWithCache = new MeSHLookupClient({ cache: mockCache });
+
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Diabetes Mellitus' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await clientWithCache.lookupTerm('Diabetes Mellitus');
+
+      expect(result.found).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockCache.set).toHaveBeenCalledWith(
+        'mesh',
+        'Diabetes Mellitus',
+        { term: 'Diabetes Mellitus', found: true }
+      );
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should work without cache (undefined)', async () => {
+      const clientNoCache = new MeSHLookupClient();
+
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Test' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await clientNoCache.lookupTerm('Test');
+      expect(result.found).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
 
       vi.unstubAllGlobals();
     });

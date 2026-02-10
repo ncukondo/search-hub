@@ -10,6 +10,7 @@ import { ZodError } from 'zod';
 import type { MeSHLookupClient } from '../../../query/mesh-lookup.js';
 import type { QueryAST } from '../../../query/types.js';
 import {
+  extractControlledVocabTerms,
   validateControlledVocab,
   type VocabValidationResult,
 } from '../../../query/vocab-validator.js';
@@ -76,7 +77,11 @@ async function parseQueryFile(
  * @returns Validation result
  */
 export async function validateQueryCommand(
-  filePath: string
+  filePath: string,
+  options?: {
+    meshClient?: MeSHLookupClient;
+    noVocab?: boolean;
+  }
 ): Promise<ValidateResult> {
   const parsed = await parseQueryFile(filePath);
 
@@ -84,11 +89,24 @@ export async function validateQueryCommand(
     return parsed.result;
   }
 
-  return {
+  const result: ValidateResult = {
     success: true,
     queryName: parsed.ast.name,
     blockCount: parsed.ast.blocks.length,
   };
+
+  // Auto-validate vocab when controlled vocab terms exist
+  if (options?.meshClient && !options.noVocab) {
+    const terms = extractControlledVocabTerms(parsed.ast);
+    if (terms.length > 0) {
+      result.vocabResult = await validateControlledVocab(
+        parsed.ast,
+        options.meshClient
+      );
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -121,32 +139,6 @@ export function formatValidateResult(
  */
 export function hasVocabErrors(result: ValidateResult): boolean {
   return (result.vocabResult?.invalid.length ?? 0) > 0;
-}
-
-/**
- * Validate a query YAML file with controlled vocabulary checking.
- *
- * First validates the query structure, then validates controlled vocab
- * terms (MeSH) against external APIs.
- */
-export async function validateVocabCommand(
-  filePath: string,
-  meshClient: MeSHLookupClient
-): Promise<ValidateResult> {
-  const parsed = await parseQueryFile(filePath);
-
-  if ('result' in parsed) {
-    return parsed.result;
-  }
-
-  const vocabResult = await validateControlledVocab(parsed.ast, meshClient);
-
-  return {
-    success: true,
-    queryName: parsed.ast.name,
-    blockCount: parsed.ast.blocks.length,
-    vocabResult,
-  };
 }
 
 /**

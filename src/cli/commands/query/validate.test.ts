@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   validateQueryCommand,
-  validateVocabCommand,
   formatVocabValidationOutput,
   hasVocabErrors,
 } from './validate.js';
@@ -104,7 +103,7 @@ describe('query validate command', () => {
     });
   });
 
-  describe('validateVocabCommand', () => {
+  describe('auto vocab validation in validateQueryCommand', () => {
     const yamlWithMesh = `
 name: test-query
 query:
@@ -118,7 +117,7 @@ query:
     operator: OR
 `;
 
-    it('should validate MeSH terms when vocab flag is set', async () => {
+    it('should auto-validate vocab when MeSH terms exist and meshClient is provided', async () => {
       vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
 
       const client = createMockMeSHClient(
@@ -128,7 +127,144 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand('/path/to/query.yaml', client);
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+    });
+
+    it('should not include vocabResult for keywords-only queries', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(validYaml);
+
+      const client = createMockMeSHClient(new Map());
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeUndefined();
+    });
+
+    it('should skip vocab validation when noVocab option is set', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = createMockMeSHClient(
+        new Map([['Diabetes Mellitus', { found: true }]])
+      );
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+        noVocab: true,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeUndefined();
+    });
+  });
+
+  describe('graceful degradation on API errors', () => {
+    const yamlWithMesh = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+        - "Unknown Term"
+    operator: OR
+`;
+
+    it('should keep success=true when all API calls fail', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = {
+        lookupTerm: vi.fn().mockRejectedValue(new Error('Network error')),
+        lookupTerms: vi.fn(),
+      } as unknown as import('../../../query/mesh-lookup.js').MeSHLookupClient;
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.errors).toHaveLength(2);
+      expect(result.vocabResult!.valid).toHaveLength(0);
+      expect(result.vocabResult!.invalid).toHaveLength(0);
+    });
+
+    it('should handle partial API errors (some terms succeed, some fail)', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = {
+        lookupTerm: vi.fn()
+          .mockResolvedValueOnce({ term: 'Diabetes Mellitus', found: true })
+          .mockRejectedValueOnce(new Error('Timeout')),
+        lookupTerms: vi.fn(),
+      } as unknown as import('../../../query/mesh-lookup.js').MeSHLookupClient;
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.errors).toHaveLength(1);
+    });
+
+    it('should include warning text for API errors in vocab output', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = {
+        lookupTerm: vi.fn()
+          .mockResolvedValueOnce({ term: 'Diabetes Mellitus', found: true })
+          .mockRejectedValueOnce(new Error('Network error')),
+        lookupTerms: vi.fn(),
+      } as unknown as import('../../../query/mesh-lookup.js').MeSHLookupClient;
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient: client,
+      });
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('⚠');
+      expect(output).toContain('Network error');
+    });
+  });
+
+  describe('validateQueryCommand with meshClient (vocab validation)', () => {
+    const yamlWithMesh = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+        - "Not A Real Term"
+    operator: OR
+`;
+
+    it('should validate MeSH terms when meshClient is provided', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
+
+      const client = createMockMeSHClient(
+        new Map([
+          ['Diabetes Mellitus', { found: true }],
+          ['Not A Real Term', { found: false, suggestions: ['Diabetes'] }],
+        ])
+      );
+
+      const result = await validateQueryCommand('/path/to/query.yaml', { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
@@ -143,7 +279,7 @@ query:
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand('/nonexistent.yaml', client);
+      const result = await validateQueryCommand('/nonexistent.yaml', { meshClient: client });
 
       expect(result.success).toBe(false);
       expect(result.vocabResult).toBeUndefined();
@@ -154,23 +290,21 @@ query:
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand('/invalid.yaml', client);
+      const result = await validateQueryCommand('/invalid.yaml', { meshClient: client });
 
       expect(result.success).toBe(false);
       expect(result.vocabResult).toBeUndefined();
     });
 
-    it('should return empty vocab result when no controlled vocab terms', async () => {
+    it('should not include vocabResult when no controlled vocab terms', async () => {
       vi.mocked(fs.readFile).mockResolvedValue(validYaml);
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand('/path/to/query.yaml', client);
+      const result = await validateQueryCommand('/path/to/query.yaml', { meshClient: client });
 
       expect(result.success).toBe(true);
-      expect(result.vocabResult).toBeDefined();
-      expect(result.vocabResult!.valid).toHaveLength(0);
-      expect(result.vocabResult!.invalid).toHaveLength(0);
+      expect(result.vocabResult).toBeUndefined();
     });
   });
 
