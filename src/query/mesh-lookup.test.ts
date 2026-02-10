@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MeSHLookupClient } from './mesh-lookup.js';
+import type { RateLimiter } from '../providers/base/rate-limiter.js';
 
 describe('MeSHLookupClient', () => {
   let client: MeSHLookupClient;
@@ -176,6 +177,52 @@ describe('MeSHLookupClient', () => {
     it('should return empty array for empty input', async () => {
       const results = await client.lookupTerms([]);
       expect(results).toEqual([]);
+    });
+  });
+
+  describe('RateLimiter integration', () => {
+    it('should call RateLimiter.acquire() before each lookupTerm', async () => {
+      const mockRateLimiter = {
+        acquire: vi.fn().mockResolvedValue(undefined),
+      } as unknown as RateLimiter;
+
+      const clientWithLimiter = new MeSHLookupClient({ rateLimiter: mockRateLimiter });
+
+      const mockFetch = vi
+        .fn()
+        // Term 1: valid
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [{ resource: 'x', label: 'Term A' }],
+        })
+        // Term 2: valid
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [{ resource: 'y', label: 'Term B' }],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await clientWithLimiter.lookupTerms(['Term A', 'Term B']);
+
+      // acquire() should be called once per lookupTerm call (before fetch)
+      expect(mockRateLimiter.acquire).toHaveBeenCalledTimes(2);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should work without RateLimiter (backward compatible)', async () => {
+      const clientNoLimiter = new MeSHLookupClient();
+
+      const mockFetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => [{ resource: 'x', label: 'Test Term' }],
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await clientNoLimiter.lookupTerm('Test Term');
+      expect(result.found).toBe(true);
+
+      vi.unstubAllGlobals();
     });
   });
 });

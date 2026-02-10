@@ -7,6 +7,8 @@
  * API docs: https://id.nlm.nih.gov/mesh/lookup/term
  */
 
+import type { RateLimiter } from '../providers/base/rate-limiter.js';
+
 const MESH_LOOKUP_BASE_URL = 'https://id.nlm.nih.gov/mesh/lookup/term';
 
 /**
@@ -30,6 +32,12 @@ interface MeSHApiEntry {
  * Client for the NLM MeSH Lookup API.
  */
 export class MeSHLookupClient {
+  private readonly rateLimiter: RateLimiter | undefined;
+
+  constructor(options?: { rateLimiter?: RateLimiter }) {
+    this.rateLimiter = options?.rateLimiter;
+  }
+
   /**
    * Look up a single MeSH term.
    *
@@ -37,6 +45,10 @@ export class MeSHLookupClient {
    * to provide suggestions.
    */
   async lookupTerm(term: string): Promise<MeSHLookupResult> {
+    if (this.rateLimiter) {
+      await this.rateLimiter.acquire();
+    }
+
     // Try exact match first
     const exactResults = await this.fetchLookup(term, 'exact', 1);
 
