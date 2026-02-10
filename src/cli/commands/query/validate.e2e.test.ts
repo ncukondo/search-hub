@@ -601,6 +601,48 @@ query:
       expect(result.vocabResult!.invalid).toHaveLength(0);
     });
 
+    it('should suggest correct term for suffix typo via truncated startsWith', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: suffix-typo-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - AI
+      mesh:
+        - "Artificial Intelligencee"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          [
+            'Artificial Intelligencee',
+            {
+              found: false,
+              suggestions: ['Artificial Intelligence'],
+            },
+          ],
+        ])
+      );
+
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
+        'Artificial Intelligence'
+      );
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('✗ mesh: "Artificial Intelligencee"');
+      expect(output).toContain('Did you mean: "Artificial Intelligence"');
+    });
+
     it('should skip vocab validation with --no-vocab', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,

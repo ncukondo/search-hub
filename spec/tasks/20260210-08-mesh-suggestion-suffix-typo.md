@@ -45,14 +45,14 @@ Each step follows the TDD cycle:
 `exact` → `startsWith`（全体）の後、`contains` の前に、入力文字列を末尾から1〜3文字
 ずつ削った `startsWith` 検索を追加する。
 
-- [ ] Write test: `src/query/mesh-lookup.test.ts`
+- [x] Write test: `src/query/mesh-lookup.test.ts`
   - 末尾タイポ（"Artificial Intelligencee"）で `startsWith` 短縮版がヒットし
     "Artificial Intelligence" が suggestion に含まれることを検証
   - 元の `startsWith`（全体）でヒットする場合は短縮版が呼ばれないことを検証
   - 短縮版でもヒットしない場合は `contains` にフォールバックすることを検証
   - 3文字以下の入力では短縮を試みないことを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement: `lookupTerm` に truncated startsWith ステップを追加
+- [x] Verify test fails (Red)
+- [x] Implement: `lookupTerm` に truncated startsWith ステップを追加
   ```typescript
   // Between step 2 (startsWith full) and step 3 (contains full):
   // 2b. Try startsWith with progressively shorter input (handles suffix typos)
@@ -66,11 +66,11 @@ Each step follows the TDD cycle:
     }
   }
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: 末尾タイポで正しい MeSH term が suggestion に含まれる
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 末尾タイポで正しい MeSH term が suggestion に含まれる
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
