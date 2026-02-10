@@ -67,17 +67,119 @@ describe('MeSHLookupClient', () => {
       vi.unstubAllGlobals();
     });
 
-    it('should return found=false with no suggestions when startswith also returns empty', async () => {
+    it('should return suggestions via contains when startswith fails (typo)', async () => {
       const mockFetch = vi
         .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [],
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => [],
+          json: async () => [
+            { resource: 'x', label: 'Artificial Intelligence' },
+          ],
         });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Artificial Intelligense');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Artificial Intelligence']);
+      // Verify contains was called with correct match type
+      const thirdCallUrl = new URL(mockFetch.mock.calls[2]![0] as string);
+      expect(thirdCallUrl.searchParams.get('match')).toBe('contains');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should return suggestions via first-word startswith for multi-word terms', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss (full term)
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith first word hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Drug Therapy' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Drug Therapies');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Drug Therapy']);
+      // Verify first-word startswith was called with first word only
+      const fourthCallUrl = new URL(mockFetch.mock.calls[3]![0] as string);
+      expect(fourthCallUrl.searchParams.get('label')).toBe('Drug');
+      expect(fourthCallUrl.searchParams.get('match')).toBe('startswith');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should not try first-word startswith for single-word terms', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Xyzzy');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toBeUndefined();
+      // Only 3 calls: exact, startswith, contains (no first-word for single word)
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should not call contains if startswith succeeds', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Diabetes Mellitus' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Diabetes Mell');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Diabetes Mellitus']);
+      // Only 2 calls: exact + startswith (no contains)
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should return found=false with no suggestions when all fallbacks fail', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // first-word startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] });
       vi.stubGlobal('fetch', mockFetch);
 
       const result = await client.lookupTerm('Xyzzy Not A Term');
