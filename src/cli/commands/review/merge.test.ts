@@ -388,6 +388,29 @@ describe('executeReviewMerge', () => {
     });
   });
 
+  it('writes merged YAML with local schema reference (./review.schema.json)', async () => {
+    const mainArticles: ArticleEntry[] = [
+      { title: 'Article 1', pmid: '1', reviews: [] },
+    ];
+    await writeMainReviewFile(mainArticles);
+
+    const extractedArticles: ArticleEntry[] = [
+      {
+        title: 'Article 1',
+        pmid: '1',
+        reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
+      },
+    ];
+    await writeExtractedFile(extractedArticles, 'batch');
+
+    await executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir);
+
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
+    const content = await readFile(reviewsPath, 'utf-8');
+    const firstLine = content.split('\n')[0];
+    expect(firstLine).toBe('# yaml-language-server: $schema=./review.schema.json');
+  });
+
   it('throws error if reviews.yaml does not exist', async () => {
     const sessionDir = join(sessionsDir, sessionId);
     await mkdir(sessionDir, { recursive: true });
