@@ -223,6 +223,8 @@ Examples:
           config: {
             unpaywallEmail: config.fulltext?.sources?.unpaywall_email ?? '',
             coreApiKey: config.fulltext?.sources?.core_api_key ?? '',
+            ncbiEmail: config.fulltext?.sources?.ncbi_email ?? '',
+            ncbiTool: config.fulltext?.sources?.ncbi_tool ?? 'search-hub',
             preferSources: config.fulltext?.sources?.prefer_sources ?? ['pmc', 'arxiv', 'unpaywall', 'core'],
           },
         });

@@ -2,7 +2,7 @@
  * Review workflow types for article assessment tracking
  */
 
-import type { ArticleFulltextRef } from '../../../fulltext/types.js';
+import type { ArticleFulltextRef } from '@ncukondo/academic-fulltext';
 
 export type ReviewDecision = 'include' | 'exclude' | 'uncertain';
 

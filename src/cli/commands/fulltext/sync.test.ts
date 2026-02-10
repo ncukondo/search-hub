@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile, mkdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { FulltextMeta } from '../../../fulltext/types.js';
+import type { FulltextMeta } from '@ncukondo/academic-fulltext';
 import { executeFulltextSync } from './sync.js';
 
 describe('executeFulltextSync', () => {
@@ -68,7 +68,7 @@ describe('executeFulltextSync', () => {
     const meta = makeMeta(dirName, { doi: '10.1234/test' });
     await setupArticleDir(sessionDir, dirName, meta);
     await setupReviews(sessionDir, [
-      { title: meta.title, doi: '10.1234/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, markdown: false } } },
+      { title: meta.title, doi: '10.1234/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
     ]);
 
     // Add a PDF file
@@ -87,7 +87,7 @@ describe('executeFulltextSync', () => {
     const meta = makeMeta(dirName, { doi: '10.5678/test' });
     await setupArticleDir(sessionDir, dirName, meta);
     await setupReviews(sessionDir, [
-      { title: meta.title, doi: '10.5678/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, markdown: false } } },
+      { title: meta.title, doi: '10.5678/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
     ]);
 
     // Add a markdown file
@@ -105,7 +105,7 @@ describe('executeFulltextSync', () => {
     const meta = makeMeta(dirName, { doi: '10.9876/test' });
     await setupArticleDir(sessionDir, dirName, meta);
     await setupReviews(sessionDir, [
-      { title: meta.title, doi: '10.9876/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, markdown: false } } },
+      { title: meta.title, doi: '10.9876/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
     ]);
 
     // Add an XML file
@@ -144,7 +144,7 @@ describe('executeFulltextSync', () => {
     const meta = makeMeta(dirName, { doi: '10.1234/test' });
     await setupArticleDir(sessionDir, dirName, meta);
     await setupReviews(sessionDir, [
-      { title: meta.title, doi: '10.1234/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, markdown: false } } },
+      { title: meta.title, doi: '10.1234/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
     ]);
 
     // Add a PDF

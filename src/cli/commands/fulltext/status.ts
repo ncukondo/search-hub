@@ -6,8 +6,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { loadMeta } from '../../../fulltext/meta.js';
-import { getMetaPath } from '../../../fulltext/paths.js';
+import { loadMeta, getMetaPath } from '@ncukondo/academic-fulltext';
 import type { ReviewFile, ArticleEntry } from '../review/types.js';
 
 export interface FulltextStatusOptions {

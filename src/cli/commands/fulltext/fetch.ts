@@ -6,9 +6,7 @@ import { join } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { FulltextMeta } from '../../../fulltext/types.js';
-import { loadMeta } from '../../../fulltext/meta.js';
-import { fetchAllFulltexts, type FetchArticle } from '../../../fulltext/download/orchestrator.js';
+import { loadMeta, fetchAllFulltexts, type FulltextMeta, type FetchArticle } from '@ncukondo/academic-fulltext';
 import { executeFulltextConvert } from './convert.js';
 export interface FulltextFetchOptions {
   sessionId: string;
@@ -95,6 +93,7 @@ export async function executeFulltextFetch(
       dirName,
       oaLocations: locations,
       ...(meta.pmcid ? { pmcid: meta.pmcid } : {}),
+      ...(meta.arxivId ? { arxivId: meta.arxivId } : {}),
     });
   }
 
@@ -120,13 +119,16 @@ export async function executeFulltextFetch(
   if (source) fetchOpts.sourceFilter = source;
   const results = await fetchAllFulltexts(toFetch, sessionDir, fetchOpts);
 
-  // Auto-convert PMC XML to Markdown (unless --no-convert-markdown)
+  // Auto-convert PMC XML / arXiv HTML to Markdown (unless --no-convert-markdown)
   const convertMarkdown = options.convertMarkdown !== false;
   if (convertMarkdown) {
-    const xmlArticles = results.filter(
-      (r) => r.status === 'downloaded' && r.filesDownloaded?.includes('fulltext.xml'),
+    const convertibleArticles = results.filter(
+      (r) => r.status === 'downloaded' && (
+        r.filesDownloaded?.includes('fulltext.xml') ||
+        r.filesDownloaded?.includes('fulltext.html')
+      ),
     );
-    for (const article of xmlArticles) {
+    for (const article of convertibleArticles) {
       await executeFulltextConvert({ sessionId, article: article.dirName }, sessionsDir);
     }
   }
@@ -185,6 +187,7 @@ async function updateReviews(
           article.fulltext.hasFiles = {
             pdf: article.fulltext.hasFiles.pdf || result.filesDownloaded.includes('fulltext.pdf'),
             xml: article.fulltext.hasFiles.xml || result.filesDownloaded.includes('fulltext.xml'),
+            html: article.fulltext.hasFiles.html || result.filesDownloaded.includes('fulltext.html'),
             markdown: article.fulltext.hasFiles.markdown || result.filesDownloaded.includes('fulltext.md'),
           };
           changed = true;

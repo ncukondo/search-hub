@@ -7,7 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { FulltextAttachResult } from '../../../integration/types.js';
 import { refFulltextAttach, refExport, type RefCliOptions } from '../../../integration/ref-cli.js';
-import { processFulltextEntries } from '../../../fulltext/attach-shared.js';
+import { processFulltextEntries } from '../../../integration/attach-shared.js';
 
 export interface FulltextAttachCommandOptions {
   sessionDir: string;

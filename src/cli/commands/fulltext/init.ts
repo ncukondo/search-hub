@@ -7,11 +7,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { ArticleFulltextRef } from '../../../fulltext/types.js';
-import { generateCitationKey, generateDirName } from '../../../fulltext/citation-key.js';
-import { createMeta, saveMeta } from '../../../fulltext/meta.js';
-import { generateReadme } from '../../../fulltext/readme.js';
-import { getFulltextDir, getArticleDir, getMetaPath, getReadmePath } from '../../../fulltext/paths.js';
+import { generateCitationKey, generateDirName, createMeta, saveMeta, generateReadme, getFulltextDir, getArticleDir, getMetaPath, getReadmePath, type ArticleFulltextRef } from '@ncukondo/academic-fulltext';
 
 export interface FulltextInitOptions {
   sessionId: string;
@@ -101,7 +97,7 @@ export async function executeFulltextInit(
     // Build fulltext ref for reviews.yaml
     const fulltextRef: ArticleFulltextRef = {
       dirName,
-      hasFiles: { pdf: false, xml: false, markdown: false },
+      hasFiles: { pdf: false, xml: false, html: false, markdown: false },
     };
 
     if (!dryRun) {

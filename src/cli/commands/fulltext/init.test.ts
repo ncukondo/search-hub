@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile, mkdir, readFile, readdir } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { FulltextMeta } from '../../../fulltext/types.js';
+import type { FulltextMeta } from '@ncukondo/academic-fulltext';
 import { executeFulltextInit } from './init.js';
 
 describe('executeFulltextInit', () => {
@@ -160,7 +160,7 @@ describe('executeFulltextInit', () => {
     const includedArticle = reviewFile.articles.find(a => a.doi === '10.1234/included');
     expect(includedArticle?.fulltext).toBeDefined();
     expect(includedArticle?.fulltext?.dirName).toMatch(/^[a-z0-9]+-[a-f0-9]{8}$/);
-    expect(includedArticle?.fulltext?.hasFiles).toEqual({ pdf: false, xml: false, markdown: false });
+    expect(includedArticle?.fulltext?.hasFiles).toEqual({ pdf: false, xml: false, html: false, markdown: false });
 
     // Excluded article should NOT have fulltext reference
     const excludedArticle = reviewFile.articles.find(a => a.doi === '10.1234/excluded');

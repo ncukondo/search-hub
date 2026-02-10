@@ -564,7 +564,7 @@ describe('executeReviewExtract', () => {
           pmid: '200',
           doi: '10.1234/ft',
           abstract: 'Abstract text.',
-          fulltext: { dirName: 'smith2024-abcd1234', hasFiles: { pdf: true, xml: false, markdown: true } },
+          fulltext: { dirName: 'smith2024-abcd1234', hasFiles: { pdf: true, xml: false, html: false, markdown: true } },
           reviews: [],
         },
         {
@@ -591,7 +591,7 @@ describe('executeReviewExtract', () => {
 
       expect(reviewFile.basis).toBe('fulltext');
       // Article with fulltext should have fulltext ref (as object with dirName) and abstract
-      expect(reviewFile.articles[0]!.fulltext).toEqual({ dirName: 'smith2024-abcd1234', hasFiles: { pdf: true, xml: false, markdown: true } });
+      expect(reviewFile.articles[0]!.fulltext).toEqual({ dirName: 'smith2024-abcd1234', hasFiles: { pdf: true, xml: false, html: false, markdown: true } });
       expect(reviewFile.articles[0]!.abstract).toBe('Abstract text.');
       // Article without fulltext should still be included but without fulltext
       expect(reviewFile.articles[1]!.fulltext).toBeUndefined();

@@ -4,12 +4,17 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { executeFulltextCheck } from './check';
-import * as discoveryModule from '../../../fulltext/discovery/index';
-import type { FulltextMeta } from '../../../fulltext/types';
+import * as academicFulltext from '@ncukondo/academic-fulltext';
+import type { FulltextMeta } from '@ncukondo/academic-fulltext';
 
-// Mock the discovery module
-vi.mock('../../../fulltext/discovery/index');
-const mockDiscoverOA = vi.mocked(discoveryModule.discoverOA);
+// Mock the package
+vi.mock('@ncukondo/academic-fulltext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@ncukondo/academic-fulltext')>();
+  return { ...actual, discoverOA: vi.fn(), loadMeta: vi.fn(), saveMeta: vi.fn() };
+});
+const mockDiscoverOA = vi.mocked(academicFulltext.discoverOA);
+const mockLoadMeta = vi.mocked(academicFulltext.loadMeta);
+const mockSaveMeta = vi.mocked(academicFulltext.saveMeta);
 
 // Mock fs operations
 vi.mock('node:fs/promises', () => ({
@@ -74,9 +79,11 @@ articles:
     mockReadFile.mockImplementation(async (path) => {
       const p = String(path);
       if (p.includes('reviews.yaml')) return reviewFileYaml;
-      if (p.includes('meta.json')) return JSON.stringify(sampleMeta);
       throw new Error(`File not found: ${p}`);
     });
+
+    // Default: loadMeta returns sample meta
+    mockLoadMeta.mockResolvedValue(sampleMeta);
 
     // Default: fulltext directory with one entry
     mockReaddir.mockResolvedValue(
@@ -95,12 +102,14 @@ articles:
             { source: 'unpaywall' as const, url: 'https://example.com/paper.pdf', urlType: 'pdf' as const, version: 'published' as const },
           ],
           errors: [],
+          discoveredIds: {},
         };
       }
       return {
         oaStatus: 'closed' as const,
         locations: [],
         errors: [],
+        discoveredIds: {},
       };
     });
   });
@@ -122,11 +131,8 @@ articles:
       config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
     });
 
-    // Should write updated meta
-    const writeCallArgs = mockWriteFile.mock.calls.filter(
-      (call) => String(call[0]).includes('meta.json')
-    );
-    expect(writeCallArgs.length).toBeGreaterThan(0);
+    // Should save updated meta via the package's saveMeta
+    expect(mockSaveMeta).toHaveBeenCalled();
   });
 
   it('returns correct summary (open, closed, unknown)', async () => {
@@ -211,7 +217,7 @@ articles:
       // Simulate async work
       await new Promise((resolve) => setTimeout(resolve, 10));
       currentConcurrent--;
-      return { oaStatus: 'closed' as const, locations: [], errors: [] };
+      return { oaStatus: 'closed' as const, locations: [], errors: [], discoveredIds: {} };
     });
 
     const result = await executeFulltextCheck({

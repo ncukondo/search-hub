@@ -6,8 +6,8 @@
 import { readdir, readFile, access } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { join } from 'node:path';
-import type { FulltextMeta } from './types.js';
-import type { FulltextAttachResult } from '../integration/types.js';
+import type { FulltextMeta } from '@ncukondo/academic-fulltext';
+import type { FulltextAttachResult } from './types.js';
 
 /** Files we try to attach, in priority order. */
 export const ATTACHABLE_FILES = ['fulltext.pdf', 'fulltext.md'] as const;

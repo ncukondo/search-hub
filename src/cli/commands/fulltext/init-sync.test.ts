@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile, mkdir, readFile, readdir } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import type { FulltextMeta } from '../../../fulltext/types.js';
+import type { FulltextMeta } from '@ncukondo/academic-fulltext';
 import { executeFulltextInit } from './init.js';
 import { executeFulltextSync } from './sync.js';
 

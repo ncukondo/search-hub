@@ -6,9 +6,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { loadMeta } from '../../../fulltext/meta.js';
-import { getMetaPath } from '../../../fulltext/paths.js';
-import type { OALocation } from '../../../fulltext/types.js';
+import { loadMeta, getMetaPath, type OALocation } from '@ncukondo/academic-fulltext';
 import type { ReviewFile, ArticleEntry } from '../review/types.js';
 
 export interface FulltextPendingOptions {

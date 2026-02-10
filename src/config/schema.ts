@@ -92,11 +92,15 @@ export const ConfigSchema = z.object({
         .object({
           unpaywall_email: z.string().default(''),
           core_api_key: z.string().default(''),
+          ncbi_email: z.string().default(''),
+          ncbi_tool: z.string().default('search-hub'),
           prefer_sources: z.array(z.string()).default(['pmc', 'arxiv', 'unpaywall', 'core']),
         })
         .default(() => ({
           unpaywall_email: '',
           core_api_key: '',
+          ncbi_email: '',
+          ncbi_tool: 'search-hub',
           prefer_sources: ['pmc', 'arxiv', 'unpaywall', 'core'],
         })),
       download: z
@@ -116,6 +120,8 @@ export const ConfigSchema = z.object({
       sources: {
         unpaywall_email: '',
         core_api_key: '',
+        ncbi_email: '',
+        ncbi_tool: 'search-hub',
         prefer_sources: ['pmc', 'arxiv', 'unpaywall', 'core'],
       },
       download: {
