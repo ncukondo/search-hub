@@ -26,6 +26,13 @@
 - [spec/tasks/completed/20260210-02-validate-controlled-vocabulary.md](completed/20260210-02-validate-controlled-vocabulary.md) - 元タスク
 - [spec/tasks/completed/20260210-03-vocab-validator-improvements.md](completed/20260210-03-vocab-validator-improvements.md) - Rate limit/timeout 改善
 
+## Reference Implementation
+
+Step 2（ファジーサジェスチョン）の実装時に、クローズ済み PR #104 のコードを参考にできる:
+- **PR**: https://github.com/ncukondo/search-hub/pull/104
+- **コミット**: `a85e846` — `lookupTerm` に `contains` + 先頭語 `startsWith` フォールバックを追加
+- **注意**: PR #104 は rate limit 修正前の実装のため、`acquire()` の配置は本タスク Step 1 に合わせて調整が必要
+
 ## Related Source Files
 
 - `src/query/mesh-lookup.ts` — MeSH Lookup API クライアント（#3 rate limit 修正）
