@@ -47,24 +47,24 @@ Each step follows the TDD cycle:
 
 ### Step 1: `--vocab` オプション定義を削除し `--no-vocab` のみに統一
 
-- [ ] Write test: `src/cli/commands/query/validate.e2e.test.ts` or integration test
+- [x] Write test: `src/cli/commands/query/validate.e2e.test.ts` or integration test
   - `--no-vocab` で vocab チェックがスキップされることを確認（既存テストの維持）
   - `--vocab` を指定しなくても vocab チェックがデフォルトで実行されることを確認（既存テストの維持）
-- [ ] Verify test passes (現時点で Green であるはず)
-- [ ] Implement:
+- [x] Verify test passes (現時点で Green であるはず)
+- [x] Implement:
   - `src/cli/index.ts` L363: `.option('--vocab', ...)` 行を削除
   - `src/cli/index.ts` L371: action のシグネチャ `opts: { vocab?: boolean; cache?: boolean }` を
     `opts: { vocab?: boolean; cache?: boolean }` のまま維持（Commander.js の `--no-vocab` は
     `vocab: false` を設定するため、`--vocab` 定義がなくても `--no-vocab` は動作する）
     ※ Commander.js の挙動を確認し、必要なら型を調整
   - `src/cli/commands/query/validate.ts` L30: コメントから `--vocab` 言及を削除
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Verify test still passes
-- [ ] Acceptance: `--help` に `--vocab` が表示されず、`--no-vocab` のみが表示される
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Verify test still passes
+- [x] Acceptance: `--help` に `--vocab` が表示されず、`--no-vocab` のみが表示される
 
 ### Step 2: spec/cli/commands.md を更新
 
-- [ ] `query validate` セクションにオプション一覧を追加:
+- [x] `query validate` セクションにオプション一覧を追加:
   ```
   ### query validate
 
@@ -78,19 +78,19 @@ Each step follows the TDD cycle:
     --no-vocab  skip controlled vocabulary validation
     --no-cache  skip vocabulary lookup cache
   ```
-- [ ] Acceptance: commands.md に `query validate` のオプションが記載されている
+- [x] Acceptance: commands.md に `query validate` のオプションが記載されている
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Verify all existing E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**:
+- [x] Verify all existing E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**:
   - `search-hub query validate --help` で `--vocab` が表示されないこと
   - `search-hub query validate file.yaml` でデフォルトの vocab チェックが動作すること
   - `search-hub query validate --no-vocab file.yaml` で vocab チェックがスキップされること
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
