@@ -15,7 +15,6 @@ import {
 } from '../../e2e-helpers.js';
 import {
   validateQueryCommand,
-  validateVocabCommand,
   formatValidateResult,
   formatVocabValidationOutput,
   hasVocabErrors,
@@ -365,7 +364,7 @@ overrides:
     });
   });
 
-  describe('validate --vocab (controlled vocabulary)', () => {
+  describe('validate with controlled vocabulary (via validateQueryCommand)', () => {
     it('should validate MeSH terms in real query file', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
@@ -390,7 +389,7 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
@@ -429,7 +428,7 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
@@ -463,7 +462,7 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.vocabResult).toBeDefined();
       const output = formatVocabValidationOutput(result.vocabResult!);
@@ -484,13 +483,13 @@ query: not_valid
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(false);
       expect(result.vocabResult).toBeUndefined();
     });
 
-    it('should handle query with no controlled vocab terms', async () => {
+    it('should not include vocabResult when query has no controlled vocab terms', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
         `
@@ -506,15 +505,10 @@ query:
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
-      expect(result.vocabResult).toBeDefined();
-      expect(result.vocabResult!.valid).toHaveLength(0);
-      expect(result.vocabResult!.invalid).toHaveLength(0);
-
-      const output = formatVocabValidationOutput(result.vocabResult!);
-      expect(output).toBe('');
+      expect(result.vocabResult).toBeUndefined();
     });
 
     it('should indicate vocab errors when invalid terms are found', async () => {
@@ -541,7 +535,7 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(hasVocabErrors(result)).toBe(true);
@@ -567,7 +561,7 @@ query:
         new Map([['Diabetes Mellitus', { found: true }]])
       );
 
-      const result = await validateVocabCommand(queryPath, client);
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(hasVocabErrors(result)).toBe(false);

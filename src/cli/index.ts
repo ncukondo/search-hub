@@ -380,16 +380,26 @@ Examples:
           await cache.load();
         }
 
+        if (noVocab) {
+          const result = await validateQueryCommand(file, { noVocab });
+
+          if (!globalOpts.quiet) {
+            const output = formatValidateResult(result, file);
+            console.log(output);
+          }
+          process.exitCode = !result.success
+            ? EXIT_CODES.QUERY_ERROR
+            : EXIT_CODES.SUCCESS;
+          return;
+        }
+
         const rateLimiter = new RateLimiter({ tokensPerSecond: 3 });
         const meshClient = new MeSHLookupClient({
           rateLimiter,
           ...(cache ? { cache } : {}),
         });
 
-        const result = await validateQueryCommand(file, noVocab
-          ? { noVocab }
-          : { meshClient }
-        );
+        const result = await validateQueryCommand(file, { meshClient });
 
         if (cache) {
           await cache.save();

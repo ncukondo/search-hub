@@ -142,32 +142,6 @@ export function hasVocabErrors(result: ValidateResult): boolean {
 }
 
 /**
- * Validate a query YAML file with controlled vocabulary checking.
- *
- * First validates the query structure, then validates controlled vocab
- * terms (MeSH) against external APIs.
- */
-export async function validateVocabCommand(
-  filePath: string,
-  meshClient: MeSHLookupClient
-): Promise<ValidateResult> {
-  const parsed = await parseQueryFile(filePath);
-
-  if ('result' in parsed) {
-    return parsed.result;
-  }
-
-  const vocabResult = await validateControlledVocab(parsed.ast, meshClient);
-
-  return {
-    success: true,
-    queryName: parsed.ast.name,
-    blockCount: parsed.ast.blocks.length,
-    vocabResult,
-  };
-}
-
-/**
  * Format controlled vocabulary validation results for display.
  */
 export function formatVocabValidationOutput(

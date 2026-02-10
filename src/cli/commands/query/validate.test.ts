@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   validateQueryCommand,
-  validateVocabCommand,
   formatVocabValidationOutput,
   hasVocabErrors,
 } from './validate.js';
@@ -241,7 +240,7 @@ query:
     });
   });
 
-  describe('validateVocabCommand', () => {
+  describe('validateQueryCommand with meshClient (vocab validation)', () => {
     const yamlWithMesh = `
 name: test-query
 query:
@@ -255,7 +254,7 @@ query:
     operator: OR
 `;
 
-    it('should validate MeSH terms when vocab flag is set', async () => {
+    it('should validate MeSH terms when meshClient is provided', async () => {
       vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
 
       const client = createMockMeSHClient(
@@ -265,7 +264,7 @@ query:
         ])
       );
 
-      const result = await validateVocabCommand('/path/to/query.yaml', client);
+      const result = await validateQueryCommand('/path/to/query.yaml', { meshClient: client });
 
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
@@ -280,7 +279,7 @@ query:
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand('/nonexistent.yaml', client);
+      const result = await validateQueryCommand('/nonexistent.yaml', { meshClient: client });
 
       expect(result.success).toBe(false);
       expect(result.vocabResult).toBeUndefined();
@@ -291,23 +290,21 @@ query:
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand('/invalid.yaml', client);
+      const result = await validateQueryCommand('/invalid.yaml', { meshClient: client });
 
       expect(result.success).toBe(false);
       expect(result.vocabResult).toBeUndefined();
     });
 
-    it('should return empty vocab result when no controlled vocab terms', async () => {
+    it('should not include vocabResult when no controlled vocab terms', async () => {
       vi.mocked(fs.readFile).mockResolvedValue(validYaml);
 
       const client = createMockMeSHClient(new Map());
 
-      const result = await validateVocabCommand('/path/to/query.yaml', client);
+      const result = await validateQueryCommand('/path/to/query.yaml', { meshClient: client });
 
       expect(result.success).toBe(true);
-      expect(result.vocabResult).toBeDefined();
-      expect(result.vocabResult!.valid).toHaveLength(0);
-      expect(result.vocabResult!.invalid).toHaveLength(0);
+      expect(result.vocabResult).toBeUndefined();
     });
   });
 

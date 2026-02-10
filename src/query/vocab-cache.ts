@@ -33,7 +33,11 @@ export class VocabCache {
   async load(): Promise<void> {
     try {
       const raw = await readFile(this.cachePath, 'utf-8');
-      this.store = JSON.parse(raw) as VocabCacheStore;
+      const parsed: unknown = JSON.parse(raw);
+      this.store =
+        typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
+          ? (parsed as VocabCacheStore)
+          : {};
     } catch {
       // File missing or corrupted JSON — start with empty cache
       this.store = {};
@@ -51,6 +55,7 @@ export class VocabCache {
     if (!entry) return undefined;
 
     if (Date.now() - entry.cachedAt > this.ttlMs) {
+      delete this.store[key];
       return undefined;
     }
 
