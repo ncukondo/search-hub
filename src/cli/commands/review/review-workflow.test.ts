@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
-import { mkdtemp, rm, writeFile, mkdir, readFile, access, copyFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile, mkdir, readFile, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { stringify as stringifyYaml, parse as parseYaml } from 'yaml';
 import { executeReviewInit } from './init.js';
@@ -41,21 +41,6 @@ describe('Review Workflow E2E', () => {
     tempDir = await mkdtemp(join(tmpdir(), 'review-e2e-test-'));
     sessionsDir = join(tempDir, 'sessions');
     await mkdir(sessionsDir, { recursive: true });
-
-    // Create schema file in .search-hub/schemas
-    const schemasDir = join(tempDir, '.search-hub', 'schemas');
-    await mkdir(schemasDir, { recursive: true });
-    const schemaPath = join(process.cwd(), 'schemas', 'review.schema.json');
-    try {
-      await access(schemaPath);
-      await copyFile(schemaPath, join(schemasDir, 'review.schema.json'));
-    } catch {
-      // Create a minimal schema if the real one is not available
-      await writeFile(
-        join(schemasDir, 'review.schema.json'),
-        JSON.stringify({ $schema: 'http://json-schema.org/draft-07/schema#', title: 'Review File' })
-      );
-    }
   });
 
   afterEach(async () => {
