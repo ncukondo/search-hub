@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MeSHLookupClient, type MeSHLookupResult } from './mesh-lookup.js';
+import { MeSHLookupClient } from './mesh-lookup.js';
 
 describe('MeSHLookupClient', () => {
   let client: MeSHLookupClient;
