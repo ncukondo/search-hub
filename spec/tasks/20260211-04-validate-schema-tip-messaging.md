@@ -133,13 +133,13 @@ Each step follows the TDD cycle:
 `or.items` の description が空の場合はコメント (`# ...`) を省略する。
 `formatSection` を再利用するか、`or` 用の軽量フォーマットを用意する。
 
-- [ ] Write test: `src/cli/suggestions/index.test.ts`
+- [x] Write test: `src/cli/suggestions/index.test.ts`
   - `or` が Next の後に表示されることを検証
   - `or.label` がセクションラベルとして使われることを検証
   - `or.items` の description が空の場合にコメントが省略されることを検証
   - `or` が undefined の場合は従来通りの出力であることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement:
+- [x] Verify test fails (Red)
+- [x] Implement:
   - `src/cli/suggestions/types.ts`: `SuggestionResult` に追加
     ```typescript
     or?: {
@@ -158,9 +158,9 @@ Each step follows the TDD cycle:
     }
     ```
     ※ Next の push の後、See also の push の前に配置
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: or セクションが正しいラベルとフォーマットで表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: or セクションが正しいラベルとフォーマットで表示される
 
 ### Step 3: `queryValidateRule` 更新 — 成功時 (tip)
 

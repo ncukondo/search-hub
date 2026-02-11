@@ -46,6 +46,14 @@ export function formatSuggestion(result: SuggestionResult | null): string {
   const nextSection = formatSection('Next', result.next);
   if (nextSection) sections.push(nextSection);
 
+  // Or section (after Next, before See also)
+  if (result.or && result.or.items.length > 0) {
+    const lines = result.or.items.map((s) =>
+      s.description ? `  ${s.command}    # ${s.description}` : `  ${s.command}`
+    );
+    sections.push(`${result.or.label}:\n${lines.join('\n')}`);
+  }
+
   const seeAlsoSection = formatSection('See also', result.seeAlso);
   if (seeAlsoSection) sections.push(seeAlsoSection);
 

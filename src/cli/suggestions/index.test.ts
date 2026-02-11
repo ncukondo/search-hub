@@ -103,6 +103,82 @@ describe('formatSuggestion', () => {
     expect(output).not.toContain('Tip:');
   });
 
+  it('should render or section after Next and before See also', () => {
+    const result: SuggestionResult = {
+      next: [{ command: '$EDITOR broken.yaml', description: 'Fix errors and re-validate' }],
+      seeAlso: [{ command: 'search-hub results my-session', description: 'View results' }],
+      or: {
+        label: 'Or create a new query from the template',
+        items: [{ command: 'search-hub query init -o query.yaml', description: '' }],
+      },
+    };
+
+    const output = formatSuggestion(result);
+
+    const nextIndex = output.indexOf('Next:');
+    const orIndex = output.indexOf('Or create');
+    const seeAlsoIndex = output.indexOf('See also:');
+    expect(nextIndex).toBeGreaterThan(-1);
+    expect(orIndex).toBeGreaterThan(-1);
+    expect(seeAlsoIndex).toBeGreaterThan(-1);
+    expect(nextIndex).toBeLessThan(orIndex);
+    expect(orIndex).toBeLessThan(seeAlsoIndex);
+  });
+
+  it('should use or.label as section label', () => {
+    const result: SuggestionResult = {
+      next: [{ command: '$EDITOR broken.yaml', description: 'Fix errors' }],
+      seeAlso: [],
+      or: {
+        label: 'Or create a new query from the template',
+        items: [{ command: 'search-hub query init -o query.yaml', description: '' }],
+      },
+    };
+
+    const output = formatSuggestion(result);
+    expect(output).toContain('Or create a new query from the template:');
+  });
+
+  it('should omit comment when or item description is empty', () => {
+    const result: SuggestionResult = {
+      next: [],
+      seeAlso: [],
+      or: {
+        label: 'Or create a new query from the template',
+        items: [{ command: 'search-hub query init -o query.yaml', description: '' }],
+      },
+    };
+
+    const output = formatSuggestion(result);
+    expect(output).toContain('  search-hub query init -o query.yaml');
+    expect(output).not.toContain('#');
+  });
+
+  it('should show comment when or item has description', () => {
+    const result: SuggestionResult = {
+      next: [],
+      seeAlso: [],
+      or: {
+        label: 'Or try an alternative',
+        items: [{ command: 'search-hub query init -o query.yaml', description: 'Start fresh' }],
+      },
+    };
+
+    const output = formatSuggestion(result);
+    expect(output).toContain('# Start fresh');
+  });
+
+  it('should render normally when or is undefined', () => {
+    const result: SuggestionResult = {
+      next: [{ command: 'search-hub search query.yaml', description: 'Search' }],
+      seeAlso: [],
+    };
+
+    const output = formatSuggestion(result);
+    expect(output).toContain('Next:');
+    expect(output).not.toContain('Or ');
+  });
+
   it('should align inline comments', () => {
     const result: SuggestionResult = {
       next: [
