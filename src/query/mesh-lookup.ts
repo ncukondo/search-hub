@@ -50,8 +50,9 @@ export class MeSHLookupClient {
    * Tries multiple match strategies in order:
    * 1. exact — exact match
    * 2. startsWith (full term) — prefix match
+   * 2b. startsWith (truncated) — suffix typo recovery (1-3 chars removed)
    * 3. contains (full term) — substring match
-   * 4. startsWith (first word) — for multi-word terms with plural/spelling diffs
+   * 4. startsWith (first word) — for multi-word terms
    *
    * Returns on the first strategy that produces results.
    * Results are cached when a VocabCache is provided.
@@ -85,6 +86,23 @@ export class MeSHLookupClient {
       };
       this.cache?.set('mesh', term, result);
       return result;
+    }
+
+    // 2b. Try startsWith with progressively shorter input (handles suffix typos)
+    if (term.length > 3) {
+      for (let len = term.length - 1; len >= Math.max(term.length - 3, 3); len--) {
+        const truncated = term.slice(0, len);
+        const truncatedResults = await this.fetchLookup(truncated, 'startswith', 5);
+        if (truncatedResults.length > 0) {
+          const result: MeSHLookupResult = {
+            term,
+            found: false,
+            suggestions: truncatedResults.map((s) => s.label),
+          };
+          this.cache?.set('mesh', term, result);
+          return result;
+        }
+      }
     }
 
     // 3. Try contains (full term) for typos and variant spellings
