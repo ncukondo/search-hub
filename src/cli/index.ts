@@ -22,6 +22,7 @@ import {
   formatValidateResult,
   formatVocabValidationOutput,
   hasVocabErrors,
+  detectSchemaLink,
 } from './commands/query/validate.js';
 import { MeSHLookupClient } from '../query/mesh-lookup.js';
 import { RateLimiter } from '../providers/base/rate-limiter.js';
@@ -379,6 +380,8 @@ Examples:
           await cache.load();
         }
 
+        const hasSchema = await detectSchemaLink(file);
+
         if (noVocab) {
           const result = await validateQueryCommand(file, { noVocab });
 
@@ -388,6 +391,7 @@ Examples:
               command: 'query validate',
               queryFile: file,
               validationSuccess: result.success,
+              hasSchemaLink: hasSchema,
             }));
             if (suggestion) output += '\n' + suggestion;
             console.log(output);
@@ -419,6 +423,7 @@ Examples:
             command: 'query validate',
             queryFile: file,
             validationSuccess: result.success && !hasVocabErrors(result),
+            hasSchemaLink: hasSchema,
           }));
           if (suggestion) output += '\n' + suggestion;
           console.log(output);
