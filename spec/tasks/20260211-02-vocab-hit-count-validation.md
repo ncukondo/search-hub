@@ -91,13 +91,13 @@ Each step follows the TDD cycle:
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Write E2E test
+- [x] Write E2E test
   - 存在する ERIC descriptor で警告なし
   - 存在しない ERIC descriptor で警告
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: タイポを含む YAML で validate を実行し警告を確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: タイポを含む YAML で validate を実行し警告を確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
