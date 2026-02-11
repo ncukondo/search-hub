@@ -35,7 +35,7 @@ export interface TermBlock {
   keywords?: string[] | undefined;
   /** MeSH terms (PubMed only) */
   mesh?: string[] | undefined;
-  /** Emtree terms (Embase only) */
+  /** Emtree terms (Embase/Scopus) */
   emtree?: string[] | undefined;
   /** ERIC Descriptors (ERIC only) */
   eric?: string[] | undefined;

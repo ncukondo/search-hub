@@ -14,7 +14,7 @@ type VocabType = 'mesh' | 'emtree' | 'eric';
 const VOCAB_DISPLAY_NAMES: Record<VocabType, string> = {
   mesh: 'MeSH',
   emtree: 'Emtree',
-  eric: 'ERIC Descriptor',
+  eric: 'ERIC descriptor',
 };
 
 /**
