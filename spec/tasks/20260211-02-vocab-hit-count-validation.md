@@ -47,16 +47,16 @@ Each step follows the TDD cycle:
 
 ### Step 1: VocabTerm の vocabulary 型を拡張
 
-- [ ] Write test: `src/query/vocab-validator.test.ts`
+- [x] Write test: `src/query/vocab-validator.test.ts`
   - `VocabTerm.vocabulary` が `'mesh' | 'eric' | 'emtree'` を受け付けること
   - `extractControlledVocabTerms()` が eric / emtree term も抽出すること
-- [ ] Verify test fails (Red)
-- [ ] Implement: vocabulary 型を union に拡張、extractControlledVocabTerms を更新
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: 全統制語が抽出される
+- [x] Verify test fails (Red)
+- [x] Implement: vocabulary 型を union に拡張、extractControlledVocabTerms を更新
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 全統制語が抽出される
 
 ### Step 2: count-only 検索による hit 数チェック
 
