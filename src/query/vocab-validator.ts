@@ -7,12 +7,15 @@
 import type { QueryAST } from './types.js';
 import type { MeSHLookupClient, MeSHLookupResult } from './mesh-lookup.js';
 
+/** Supported controlled vocabulary types. */
+export type VocabType = 'mesh' | 'eric' | 'emtree';
+
 /**
  * A controlled vocabulary term extracted from a QueryAST.
  */
 export interface VocabTerm {
   term: string;
-  vocabulary: 'mesh';
+  vocabulary: VocabType;
 }
 
 /**
@@ -20,7 +23,7 @@ export interface VocabTerm {
  */
 export interface VocabTermResult {
   term: string;
-  vocabulary: 'mesh';
+  vocabulary: VocabType;
   found: boolean;
   suggestions?: string[];
 }
@@ -30,7 +33,7 @@ export interface VocabTermResult {
  */
 export interface VocabTermError {
   term: string;
-  vocabulary: 'mesh';
+  vocabulary: VocabType;
   error: string;
 }
 
@@ -51,13 +54,22 @@ export function extractControlledVocabTerms(ast: QueryAST): VocabTerm[] {
   const seen = new Set<string>();
   const terms: VocabTerm[] = [];
 
+  const vocabFields: { key: keyof typeof ast.blocks[0]['terms']; vocab: VocabType }[] = [
+    { key: 'mesh', vocab: 'mesh' },
+    { key: 'eric', vocab: 'eric' },
+    { key: 'emtree', vocab: 'emtree' },
+  ];
+
   for (const block of ast.blocks) {
-    if (block.terms.mesh) {
-      for (const term of block.terms.mesh) {
-        const key = `mesh:${term}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          terms.push({ term, vocabulary: 'mesh' });
+    for (const { key, vocab } of vocabFields) {
+      const fieldTerms = block.terms[key];
+      if (fieldTerms) {
+        for (const term of fieldTerms) {
+          const dedupeKey = `${vocab}:${term}`;
+          if (!seen.has(dedupeKey)) {
+            seen.add(dedupeKey);
+            terms.push({ term, vocabulary: vocab });
+          }
         }
       }
     }

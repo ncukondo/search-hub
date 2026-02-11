@@ -103,6 +103,97 @@ describe('extractControlledVocabTerms', () => {
     const terms = extractControlledVocabTerms(ast);
     expect(terms).toEqual([]);
   });
+
+  it('should extract eric descriptors from blocks', () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['education'],
+          eric: ['Medical Education', 'Higher Education'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const terms = extractControlledVocabTerms(ast);
+
+    expect(terms).toEqual([
+      { term: 'Medical Education', vocabulary: 'eric' },
+      { term: 'Higher Education', vocabulary: 'eric' },
+    ]);
+  });
+
+  it('should extract emtree terms from blocks', () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['diabetes'],
+          emtree: ['diabetes mellitus', 'diabetic neuropathy'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const terms = extractControlledVocabTerms(ast);
+
+    expect(terms).toEqual([
+      { term: 'diabetes mellitus', vocabulary: 'emtree' },
+      { term: 'diabetic neuropathy', vocabulary: 'emtree' },
+    ]);
+  });
+
+  it('should extract all vocabulary types from mixed blocks', () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          keywords: ['diabetes'],
+          mesh: ['Diabetes Mellitus'],
+          eric: ['Medical Education'],
+          emtree: ['diabetes mellitus'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const terms = extractControlledVocabTerms(ast);
+
+    expect(terms).toEqual([
+      { term: 'Diabetes Mellitus', vocabulary: 'mesh' },
+      { term: 'Medical Education', vocabulary: 'eric' },
+      { term: 'diabetes mellitus', vocabulary: 'emtree' },
+    ]);
+  });
+
+  it('should deduplicate eric and emtree terms across blocks', () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          eric: ['Medical Education'],
+          emtree: ['diabetes mellitus'],
+        },
+        operator: 'OR',
+      },
+      {
+        field: 'keyword',
+        terms: {
+          eric: ['Medical Education'],
+          emtree: ['diabetes mellitus'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const terms = extractControlledVocabTerms(ast);
+
+    expect(terms).toEqual([
+      { term: 'Medical Education', vocabulary: 'eric' },
+      { term: 'diabetes mellitus', vocabulary: 'emtree' },
+    ]);
+  });
 });
 
 describe('validateControlledVocab', () => {
