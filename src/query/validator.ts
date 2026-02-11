@@ -30,7 +30,7 @@ export const termBlockSchema = z.object({
   eric: z.array(z.string()).optional(),
   exclude: z.array(z.string()).optional(),
 }).refine(
-  (data) => data.keywords || data.mesh || data.emtree || data.eric,
+  (data) => data.keywords?.length || data.mesh?.length || data.emtree?.length || data.eric?.length,
   { message: 'At least one of keywords, mesh, emtree, or eric is required' }
 );
 

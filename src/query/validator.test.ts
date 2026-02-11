@@ -80,6 +80,13 @@ describe('Query Validator Schemas', () => {
       );
     });
 
+    it('should reject block with empty arrays (truthy but no actual terms)', () => {
+      expect(() => termBlockSchema.parse({ mesh: [] })).toThrow();
+      expect(() => termBlockSchema.parse({ emtree: [] })).toThrow();
+      expect(() => termBlockSchema.parse({ eric: [] })).toThrow();
+      expect(() => termBlockSchema.parse({ mesh: [], eric: [] })).toThrow();
+    });
+
     it('should reject block with only exclude (no searchable terms)', () => {
       expect(() =>
         termBlockSchema.parse({ exclude: ['animal'] })
