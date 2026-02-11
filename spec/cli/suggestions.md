@@ -64,7 +64,9 @@ Next:
 
 **分類**: State-dependent（`$schema` リンクの有無で分岐）
 
-validate 成功後は翻訳確認かプレビューへ進む。`$schema` リンクがない場合は `query init` を info レベルで推奨。
+validate 成功後は翻訳確認かプレビューへ進む。`$schema` リンクがない場合は `Tip` でテンプレートからの
+作り直しを案内する。`query init` のテンプレートには mesh/eric/emtree/exclude/filters/overrides の
+コメント付き説明が含まれており、フォーマットを知らないユーザーにとって有用。
 
 **`$schema` リンクあり:**
 ```
@@ -75,11 +77,12 @@ Next:
 
 **`$schema` リンクなし:**
 ```
+Tip: Start from a template to get $schema support and usage examples:
+     search-hub query init -o query.yaml
+
 Next:
   search-hub search <query-file> --dry-run        # DB別の翻訳を確認
   search-hub search <query-file> --preview        # ヒット数+サンプルタイトルを確認
-See also:
-  search-hub query init -o <query-file>           # テンプレートで再作成（エディタ補完が有効に）
 ```
 
 #### `query validate` (失敗時)
@@ -95,8 +98,10 @@ Next:
 **`$schema` リンクなし:**
 ```
 Next:
-  search-hub query init -o <query-file>           # テンプレートから再作成（推奨）
-  $EDITOR <query-file>                            # エラーを手動修正
+  $EDITOR <query-file>                            # エラーを修正して再検証
+
+Or create a new query from the template:
+  search-hub query init -o query.yaml
 ```
 
 #### `query translate`
@@ -479,8 +484,17 @@ interface Suggestion {
 interface SuggestionResult {
   next: Suggestion[];     // 主要な次のステップ (1-2個)
   seeAlso: Suggestion[];  // 代替パス (0-2個)
+  tip?: string;           // Next の前に表示するアドバイス（プレーンテキスト）
+  or?: {                  // Next の後に表示する代替セクション
+    label: string;        // セクションラベル (e.g. "Or create a new query from the template")
+    items: Suggestion[];  // コマンドリスト
+  };
 }
+```
 
+表示順: `tip` → `Next:` → `or` → `See also:`
+
+```typescript
 interface SuggestionContext {
   command: string;                    // 実行されたコマンド名
   sessionId?: string;                // セッションID（あれば）
