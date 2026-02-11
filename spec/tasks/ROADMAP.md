@@ -115,8 +115,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 106 | Remove Deprecated `--vocab` Flag | 100 | ✅ Completed | [20260210-11](completed/20260210-11-remove-deprecated-vocab-flag.md) |
 | 107 | Scopus Emtree Support & Unsupported Vocab Warnings | 104 | ✅ Completed | [20260211-01](completed/20260211-01-scopus-emtree-support.md) |
 | 108 | Controlled Vocabulary Hit Count Validation | 107 | ✅ Completed | [20260211-02](completed/20260211-02-vocab-hit-count-validation.md) |
-| 109 | MeSH Multi-word Progressive Prefix Suggestion | 103 | | [20260211-03](20260211-03-mesh-multiword-prefix-suggestion.md) |
-| 110 | Improve $schema Absence Messaging | 105 | | [20260211-04](20260211-04-validate-schema-tip-messaging.md) |
+| 109 | MeSH Multi-word Progressive Prefix Suggestion | 103 | ✅ Completed | [20260211-03](completed/20260211-03-mesh-multiword-prefix-suggestion.md) |
+| 110 | Improve $schema Absence Messaging | 105 | ✅ Completed | [20260211-04](completed/20260211-04-validate-schema-tip-messaging.md) |
 
 ## Development Flow
 
