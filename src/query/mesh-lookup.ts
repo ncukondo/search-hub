@@ -50,8 +50,9 @@ export class MeSHLookupClient {
    * Tries multiple match strategies in order:
    * 1. exact — exact match
    * 2. startsWith (full term) — prefix match
+   * 2b. startsWith (truncated) — suffix typo recovery (1-3 chars removed)
    * 3. contains (full term) — substring match
-   * 4. startsWith (first word) — for multi-word terms with plural/spelling diffs
+   * 4. startsWith (first word) — for multi-word terms
    *
    * Returns on the first strategy that produces results.
    * Results are cached when a VocabCache is provided.
