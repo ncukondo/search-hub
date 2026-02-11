@@ -886,6 +886,48 @@ query:
       expect(output).toContain('Did you mean: "Artificial Intelligence"');
     });
 
+    it('should suggest correct term for middle-word typo via multi-word progressive prefix', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: middle-typo-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - AI
+      mesh:
+        - "Artificial Inteligence"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          [
+            'Artificial Inteligence',
+            {
+              found: false,
+              suggestions: ['Artificial Intelligence'],
+            },
+          ],
+        ])
+      );
+
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
+        'Artificial Intelligence'
+      );
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('✗ mesh: "Artificial Inteligence"');
+      expect(output).toContain('Did you mean: "Artificial Intelligence"');
+    });
+
     it('should skip vocab validation with --no-vocab', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,

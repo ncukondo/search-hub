@@ -70,6 +70,7 @@ describe('MeSHLookupClient', () => {
 
     it('should return suggestions via contains when startswith fails (typo)', async () => {
       // "Artificial Intelligense" (24 chars) → truncated tries: 23, 22, 21 chars
+      // words[1] = "Intelligense" (12 chars) → step 2c tries: N=8,7,6
       const mockFetch = vi
         .fn()
         // exact miss
@@ -81,6 +82,12 @@ describe('MeSHLookupClient', () => {
         // truncated startswith len-2 miss
         .mockResolvedValueOnce({ ok: true, json: async () => [] })
         // truncated startswith len-3 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: multi-word prefix N=8 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: multi-word prefix N=7 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: multi-word prefix N=6 miss
         .mockResolvedValueOnce({ ok: true, json: async () => [] })
         // contains hit
         .mockResolvedValueOnce({
@@ -95,8 +102,8 @@ describe('MeSHLookupClient', () => {
 
       expect(result.found).toBe(false);
       expect(result.suggestions).toEqual(['Artificial Intelligence']);
-      // Verify contains was called with correct match type (6th call)
-      const containsCallUrl = new URL(mockFetch.mock.calls[5]![0] as string);
+      // Verify contains was called with correct match type (9th call)
+      const containsCallUrl = new URL(mockFetch.mock.calls[8]![0] as string);
       expect(containsCallUrl.searchParams.get('match')).toBe('contains');
 
       vi.unstubAllGlobals();
@@ -104,6 +111,7 @@ describe('MeSHLookupClient', () => {
 
     it('should return suggestions via first-word startswith for multi-word terms', async () => {
       // "Drug Therapies" (14 chars) → truncated tries: 13, 12, 11 chars
+      // words[1] = "Therapies" (9 chars) → step 2c tries: N=5,4,3
       const mockFetch = vi
         .fn()
         // exact miss
@@ -115,6 +123,12 @@ describe('MeSHLookupClient', () => {
         // truncated startswith len-2 miss
         .mockResolvedValueOnce({ ok: true, json: async () => [] })
         // truncated startswith len-3 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: multi-word prefix N=5 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: multi-word prefix N=4 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: multi-word prefix N=3 miss
         .mockResolvedValueOnce({ ok: true, json: async () => [] })
         // contains miss
         .mockResolvedValueOnce({ ok: true, json: async () => [] })
@@ -131,8 +145,8 @@ describe('MeSHLookupClient', () => {
 
       expect(result.found).toBe(false);
       expect(result.suggestions).toEqual(['Drug Therapy']);
-      // Verify first-word startswith was called with first word only (7th call)
-      const firstWordCallUrl = new URL(mockFetch.mock.calls[6]![0] as string);
+      // Verify first-word startswith was called with first word only (10th call)
+      const firstWordCallUrl = new URL(mockFetch.mock.calls[9]![0] as string);
       expect(firstWordCallUrl.searchParams.get('label')).toBe('Drug');
       expect(firstWordCallUrl.searchParams.get('match')).toBe('startswith');
 
@@ -161,6 +175,141 @@ describe('MeSHLookupClient', () => {
       expect(result.suggestions).toBeUndefined();
       // 5 calls: exact, startswith, 2x truncated, contains (no first-word for single word)
       expect(mockFetch).toHaveBeenCalledTimes(5);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should return suggestions via multi-word progressive prefix (step 2c)', async () => {
+      // "Artificial Inteligence" → words[1] = "Inteligence" (11 chars)
+      // startN = min(11-4, 11-1) = min(7, 10) = 7
+      // N=7: "Artificial Intelig" → miss, N=6: "Artificial Inteli" → miss, N=5: "Artificial Intel" → hit
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith full miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-1 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-2 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-3 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=7 "Artificial Intelig" miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=6 "Artificial Inteli" miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=5 "Artificial Intel" hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Artificial Intelligence' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Artificial Inteligence');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Artificial Intelligence']);
+      // Verify step 2c call at N=5 (8th call)
+      const step2cCallUrl = new URL(mockFetch.mock.calls[7]![0] as string);
+      expect(step2cCallUrl.searchParams.get('label')).toBe('Artificial Intel');
+      expect(step2cCallUrl.searchParams.get('match')).toBe('startswith');
+      // Should not proceed to contains
+      expect(mockFetch).toHaveBeenCalledTimes(8);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should skip step 2c when full startsWith succeeds', async () => {
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith full hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Artificial Intelligence' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Artificial Intelligen');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Artificial Intelligence']);
+      // Only 2 calls: exact + startswith (no step 2c)
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should skip step 2c for single-word terms', async () => {
+      // "Diabetis" (8 chars) → truncated tries: 7, 6, 5 chars
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-1 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-2 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-3 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains hit (no step 2c for single word)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Diabetes Mellitus' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Diabetis');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Diabetes Mellitus']);
+      // 6 calls: exact, startswith, 3x truncated, contains (no step 2c)
+      expect(mockFetch).toHaveBeenCalledTimes(6);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should skip step 2c when second word is 3 chars or less', async () => {
+      // "Drug Of" → words[1] = "Of" (2 chars) → step 2c skipped
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-1 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-2 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-3 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss (no step 2c)
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // first-word startswith hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Drug Therapy' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Drug Of');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toEqual(['Drug Therapy']);
+      // 7 calls: no step 2c because words[1].length <= 3
+      expect(mockFetch).toHaveBeenCalledTimes(7);
 
       vi.unstubAllGlobals();
     });
@@ -222,6 +371,7 @@ describe('MeSHLookupClient', () => {
 
     it('should fall back to contains when truncated startswith also fails', async () => {
       // "Artificial Intelligense" (24 chars) - truncated tries: 23, 22, 21 chars
+      // words[1] = "Intelligense" (12 chars) → step 2c tries: N=8,7,6
       const mockFetch = vi
         .fn()
         // exact miss
@@ -233,6 +383,12 @@ describe('MeSHLookupClient', () => {
         // truncated startswith len-2 miss
         .mockResolvedValueOnce({ ok: true, json: async () => [] })
         // truncated startswith len-3 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: multi-word prefix N=8 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: multi-word prefix N=7 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: multi-word prefix N=6 miss
         .mockResolvedValueOnce({ ok: true, json: async () => [] })
         // contains hit
         .mockResolvedValueOnce({
@@ -247,8 +403,8 @@ describe('MeSHLookupClient', () => {
 
       expect(result.found).toBe(false);
       expect(result.suggestions).toEqual(['Artificial Intelligence']);
-      // Verify contains was reached after truncated attempts
-      const containsCallUrl = new URL(mockFetch.mock.calls[5]![0] as string);
+      // Verify contains was reached after truncated and step 2c attempts (9th call)
+      const containsCallUrl = new URL(mockFetch.mock.calls[8]![0] as string);
       expect(containsCallUrl.searchParams.get('match')).toBe('contains');
 
       vi.unstubAllGlobals();
@@ -324,6 +480,58 @@ describe('MeSHLookupClient', () => {
       expect(result.found).toBe(false);
       expect(result.term).toBe('Xyzzy Not A Term');
       expect(result.suggestions).toBeUndefined();
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should re-rank step 4 results by Levenshtein distance', async () => {
+      // "Artificial Inteligence" → all steps 1-3 miss, step 4 hits with limit=25
+      // words[1] = "Inteligence" (11 chars) → step 2c: 3 iterations all miss
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith full miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-1 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-2 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-3 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=7 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=6 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=5 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 4: first-word startswith with limit=25
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Artificial Arm' },
+            { resource: 'x', label: 'Artificial Eye' },
+            { resource: 'x', label: 'Artificial Intelligence' },
+            { resource: 'x', label: 'Artificial Limbs' },
+            { resource: 'x', label: 'Artificial Organs' },
+            { resource: 'x', label: 'Artificial Cells' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Artificial Inteligence');
+
+      expect(result.found).toBe(false);
+      // "Artificial Intelligence" (distance 1) should be first
+      expect(result.suggestions![0]).toBe('Artificial Intelligence');
+      // Should return at most 5 suggestions
+      expect(result.suggestions!.length).toBeLessThanOrEqual(5);
+      // Verify step 4 was called with limit=25
+      const step4CallUrl = new URL(mockFetch.mock.calls[9]![0] as string);
+      expect(step4CallUrl.searchParams.get('limit')).toBe('25');
+      expect(step4CallUrl.searchParams.get('label')).toBe('Artificial');
 
       vi.unstubAllGlobals();
     });

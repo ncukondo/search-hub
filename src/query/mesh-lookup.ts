@@ -9,6 +9,7 @@
 
 import type { RateLimiter } from '../providers/base/rate-limiter.js';
 import type { VocabCache } from './vocab-cache.js';
+import { levenshteinDistance } from '../utils/levenshtein.js';
 
 const MESH_LOOKUP_BASE_URL = 'https://id.nlm.nih.gov/mesh/lookup/term';
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -51,8 +52,9 @@ export class MeSHLookupClient {
    * 1. exact — exact match
    * 2. startsWith (full term) — prefix match
    * 2b. startsWith (truncated) — suffix typo recovery (1-3 chars removed)
+   * 2c. startsWith (word1 + word2 prefix) — multi-word progressive prefix (max 3 calls)
    * 3. contains (full term) — substring match
-   * 4. startsWith (first word) — for multi-word terms
+   * 4. startsWith (first word, limit=25) — re-ranked by Levenshtein distance
    *
    * Returns on the first strategy that produces results.
    * Results are cached when a VocabCache is provided.
@@ -105,6 +107,27 @@ export class MeSHLookupClient {
       }
     }
 
+    // 2c. Multi-word progressive prefix: try word1 + word2.slice(0, N)
+    const words = term.split(/\s+/);
+    if (words.length >= 2 && words[1]!.length > 3) {
+      const startN = Math.min(words[1]!.length - 4, words[1]!.length - 1);
+      const endN = 3;
+      let iterations = 0;
+      for (let n = startN; n >= endN && iterations < 3; n--, iterations++) {
+        const prefix = words[0]! + ' ' + words[1]!.slice(0, n);
+        const prefixResults = await this.fetchLookup(prefix, 'startswith', 5);
+        if (prefixResults.length > 0) {
+          const result: MeSHLookupResult = {
+            term,
+            found: false,
+            suggestions: prefixResults.map((s) => s.label),
+          };
+          this.cache?.set('mesh', term, result);
+          return result;
+        }
+      }
+    }
+
     // 3. Try contains (full term) for typos and variant spellings
     const containsResults = await this.fetchLookup(term, 'contains', 5);
 
@@ -119,17 +142,21 @@ export class MeSHLookupClient {
     }
 
     // 4. Try startsWith with first word only (for multi-word terms)
-    const words = term.split(/\s+/);
+    //    Fetch up to 25 results and re-rank by Levenshtein distance
     if (words.length > 1) {
       const firstWord = words[0]!;
-      const firstWordResults = await this.fetchLookup(firstWord, 'startswith', 5);
+      const firstWordResults = await this.fetchLookup(firstWord, 'startswith', 25);
 
       if (firstWordResults.length > 0) {
-        const result: MeSHLookupResult = {
-          term,
-          found: false,
-          suggestions: firstWordResults.map((s) => s.label),
-        };
+        const ranked = firstWordResults
+          .map((s) => ({
+            label: s.label,
+            distance: levenshteinDistance(term.toLowerCase(), s.label.toLowerCase()),
+          }))
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 5)
+          .map((s) => s.label);
+        const result: MeSHLookupResult = { term, found: false, suggestions: ranked };
         this.cache?.set('mesh', term, result);
         return result;
       }
