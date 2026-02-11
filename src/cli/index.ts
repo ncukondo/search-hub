@@ -360,7 +360,6 @@ Use "search-hub query init" to generate a template.`);
     .command('validate')
     .description('Validate query YAML file (auto-checks controlled vocabulary)')
     .argument('<file>', 'path to query YAML file')
-    .option('--vocab', '(deprecated, now default) validate controlled vocabulary terms')
     .option('--no-vocab', 'skip controlled vocabulary validation')
     .option('--no-cache', 'skip vocabulary lookup cache')
     .addHelpText('after', `

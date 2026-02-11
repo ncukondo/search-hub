@@ -361,11 +361,16 @@ search-hub query init [-o <path>] [--force]
 
 ### query validate
 
-Validate query YAML file.
+Validate query YAML file (auto-checks controlled vocabulary).
 
 ```bash
-search-hub query validate <query.yaml>
+search-hub query validate [options] <query.yaml>
 ```
+
+| Option | Description |
+|--------|-------------|
+| `--no-vocab` | Skip controlled vocabulary validation |
+| `--no-cache` | Skip vocabulary lookup cache |
 
 ### query translate
 
