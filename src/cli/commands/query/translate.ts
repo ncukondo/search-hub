@@ -133,6 +133,11 @@ export function formatTranslateResult(
     for (const [provider, translation] of Object.entries(result.translations)) {
       lines.push(`[${provider.toUpperCase()}]`);
       lines.push(translation.native);
+      if (translation.warnings && translation.warnings.length > 0) {
+        for (const warning of translation.warnings) {
+          lines.push(`⚠ ${warning}`);
+        }
+      }
       lines.push('');
     }
   }

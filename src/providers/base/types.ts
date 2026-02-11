@@ -71,6 +71,8 @@ export interface TranslatedQuery {
   originalAst?: QueryAST;
   /** Provider that produced this translation */
   provider: ProviderName;
+  /** Warnings about unsupported controlled vocabulary */
+  warnings?: string[];
 }
 
 /**

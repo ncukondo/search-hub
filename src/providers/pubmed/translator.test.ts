@@ -625,4 +625,34 @@ describe('PubMed Query Translator', () => {
       expect(result.native).not.toContain('AND NOT');
     });
   });
+
+  describe('Unsupported Vocabulary Warnings', () => {
+    it('should warn when block contains emtree terms', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: { emtree: ['Diabetes Mellitus'] },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toContainEqual(
+        'PubMed: block 1 skipped (contains only Emtree terms, not supported)'
+      );
+    });
+
+    it('should not warn when block contains mesh terms (supported)', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: { mesh: ['Diabetes Mellitus'] },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toBeUndefined();
+    });
+  });
 });

@@ -18,6 +18,7 @@
 
 import type { QueryAST, QueryBlock, FieldType, Operator } from '../../query/types.js';
 import type { TranslatedQuery } from '../base/types.js';
+import { collectUnsupportedVocabWarnings } from '../base/warnings.js';
 
 /**
  * Field prefix mappings for arXiv API.
@@ -253,9 +254,14 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
     }
   }
 
+  // Collect warnings for unsupported controlled vocabulary
+  // arXiv does not support any controlled vocabulary
+  const warnings = collectUnsupportedVocabWarnings(ast.blocks, 'arXiv', new Set());
+
   return {
     native,
     originalAst: ast,
     provider: 'arxiv',
+    ...(warnings.length > 0 ? { warnings } : {}),
   };
 }

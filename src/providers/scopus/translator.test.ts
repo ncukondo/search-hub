@@ -485,8 +485,87 @@ describe('Scopus Query Translator', () => {
     });
   });
 
+  describe('Emtree Term Support', () => {
+    it('should translate emtree-only block using INDEXTERMS()', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { emtree: ['Artificial Intelligence'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe('INDEXTERMS("Artificial Intelligence")');
+    });
+
+    it('should translate multiple emtree terms with OR', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { emtree: ['Diabetes Mellitus', 'Insulin Resistance'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe('INDEXTERMS("Diabetes Mellitus" OR "Insulin Resistance")');
+    });
+
+    it('should combine keywords and emtree terms with block operator', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: {
+              keywords: ['diabetes', 'T2DM'],
+              emtree: ['Diabetes Mellitus'],
+            },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe(
+        'TITLE-ABS-KEY(diabetes OR T2DM) OR INDEXTERMS("Diabetes Mellitus")'
+      );
+    });
+
+    it('should use INDEXTERMS regardless of block field setting', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title',
+            terms: { emtree: ['Neoplasm'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe('INDEXTERMS(Neoplasm)');
+    });
+  });
+
   describe('Keywords-undefined blocks', () => {
-    it('should handle mesh-only block (keywords field output is empty)', () => {
+    it('should produce empty native query for mesh-only block (unsupported vocab)', () => {
       const ast: QueryAST = {
         name: 'test',
         blocks: [
@@ -501,11 +580,11 @@ describe('Scopus Query Translator', () => {
       };
 
       const result = translateQuery(ast);
-      // Scopus doesn't use mesh, so the block has empty keywords → empty TITLE-ABS-KEY()
-      expect(result.native).toBe('TITLE-ABS-KEY()');
+      // Scopus doesn't use mesh, so the block produces no output
+      expect(result.native).toBe('');
     });
 
-    it('should combine mesh-only block with keywords block', () => {
+    it('should skip unsupported-vocab-only block when combined with keywords block', () => {
       const ast: QueryAST = {
         name: 'test',
         blocks: [
@@ -525,7 +604,65 @@ describe('Scopus Query Translator', () => {
       };
 
       const result = translateQuery(ast);
-      expect(result.native).toBe('TITLE-ABS-KEY() AND TITLE-ABS-KEY(diabetes)');
+      expect(result.native).toBe('TITLE-ABS-KEY(diabetes)');
+    });
+  });
+
+  describe('Unsupported Vocabulary Warnings', () => {
+    it('should warn when block contains mesh terms', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { keywords: ['diabetes'], mesh: ['Diabetes Mellitus'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toContainEqual(
+        'Scopus: MeSH terms in block 1 ignored (not supported) — keywords still searched'
+      );
+    });
+
+    it('should not warn when block contains emtree terms (supported)', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { emtree: ['Diabetes Mellitus'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.warnings ?? []).toHaveLength(0);
+    });
+
+    it('should not include warnings field when no unsupported vocab', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { keywords: ['diabetes'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toBeUndefined();
     });
   });
 

@@ -6,6 +6,7 @@
 
 import type { QueryAST, FieldType, QueryBlock, Filters, OverrideBlock } from '../../query/types';
 import type { TranslatedQuery } from '../base/types';
+import { collectUnsupportedVocabWarnings } from '../base/warnings';
 
 /**
  * Field function mappings for Scopus.
@@ -75,11 +76,30 @@ function quoteTerm(term: string): string {
  */
 function translateBlock(block: QueryBlock): { query: string; notClause: string | null } {
   const field = FIELD_MAP[block.field];
-  const terms = (block.terms.keywords ?? []).map(quoteTerm);
   const operator = block.operator;
+  const parts: string[] = [];
 
-  const termsStr = terms.join(` ${operator} `);
-  const query = `${field}(${termsStr})`;
+  // Translate keywords
+  const keywords = (block.terms.keywords ?? []).map(quoteTerm);
+  if (keywords.length > 0) {
+    parts.push(`${field}(${keywords.join(` ${operator} `)})`);
+  }
+
+  // Translate Emtree terms (always use INDEXTERMS)
+  const emtree = (block.terms.emtree ?? []).map(quoteTerm);
+  if (emtree.length > 0) {
+    parts.push(`INDEXTERMS(${emtree.join(` ${operator} `)})`);
+  }
+
+  // Combine parts (empty string when no supported terms)
+  let query: string;
+  if (parts.length === 0) {
+    query = '';
+  } else if (parts.length === 1) {
+    query = parts[0]!;
+  } else {
+    query = parts.join(` ${operator} `);
+  }
 
   // Translate exclude terms (without AND prefix - will be added during join)
   let notClause: string | null = null;
@@ -132,8 +152,10 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
   // Translate query blocks
   const blockResults = ast.blocks.map(translateBlock);
 
-  // Collect query parts and NOT clauses
-  const blockParts = blockResults.map((r) => r.query);
+  // Collect query parts (filter empty blocks) and NOT clauses
+  const blockParts = blockResults
+    .map((r) => r.query)
+    .filter((s) => s.length > 0);
   const notClauses = blockResults
     .map((r) => r.notClause)
     .filter((s): s is string => s !== null);
@@ -146,9 +168,14 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
   const allParts: string[] = [...blockParts, ...notClauses, ...filterParts];
   const native = allParts.join(' AND ');
 
+  // Collect warnings for unsupported controlled vocabulary
+  // Scopus supports emtree but not mesh or eric
+  const warnings = collectUnsupportedVocabWarnings(ast.blocks, 'Scopus', new Set(['emtree']));
+
   return {
     native,
     originalAst: ast,
     provider: 'scopus',
+    ...(warnings.length > 0 ? { warnings } : {}),
   };
 }
