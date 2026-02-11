@@ -88,16 +88,16 @@ if (words.length > 1) {
 注意: 最大反復回数は3回に制限（API コール数制約）。
 `len` の開始は `firstWord.length - 1`、終了条件は `>= 3` かつ最大3回。
 
-- [ ] Write test: `src/query/mesh-lookup.test.ts`
+- [x] Write test: `src/query/mesh-lookup.test.ts`
   - "Brest Neoplasms" で step 4b により "Breast Neoplasms" がサジェスチョンに含まれること
   - "Breat Neoplasms" で同様に "Breast Neoplasms" が得られること
   - step 4 で正しい候補が得られる場合は step 4b に到達しないこと
   - 単語が1語の場合は step 4b がスキップされること
-- [ ] Verify test fails (Red)
-- [ ] Implement: `lookupTerm` に step 4b を追加（step 4 の後）
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 第1語タイポの多語用語で正しいサジェスチョンが得られる
+- [x] Verify test fails (Red)
+- [x] Implement: `lookupTerm` に step 4b を追加（step 4 の後）
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 第1語タイポの多語用語で正しいサジェスチョンが得られる
 
 ### Step 2: 第2語 contains + Levenshtein 再ランキング (Step 4c)
 
@@ -120,36 +120,36 @@ if (words.length > 1) {
 }
 ```
 
-- [ ] Write test: `src/query/mesh-lookup.test.ts`
+- [x] Write test: `src/query/mesh-lookup.test.ts`
   - "Diabetse Mellitus" で step 4c により "Diabetes Mellitus" がサジェスチョンに含まれること
   - step 4b でヒットする場合は step 4c に到達しないこと
-- [ ] Verify test fails (Red)
-- [ ] Implement: `lookupTerm` に step 4c を追加（step 4b の後）
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 第1語が大幅に崩れた場合でも第2語から正しい候補が得られる
+- [x] Verify test fails (Red)
+- [x] Implement: `lookupTerm` に step 4c を追加（step 4b の後）
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 第1語が大幅に崩れた場合でも第2語から正しい候補が得られる
 
 ### Step 3: 既存テストの mock 更新
 
 step 4b/4c の追加により、多語用語の既存テストで mock シーケンスが変わる可能性がある。
 step 4 まで到達するテストケースで、step 4b/4c の API コール分の mock を追加する。
 
-- [ ] 既存テストを実行し、失敗するテストを特定
-- [ ] mock シーケンスを更新
-- [ ] 全テスト pass を確認
-- [ ] Run `npm run lint && npm run typecheck`
+- [x] 既存テストを実行し、失敗するテストを特定
+- [x] mock シーケンスを更新
+- [x] 全テスト pass を確認
+- [x] Run `npm run lint && npm run typecheck`
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
+- [x] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
   - 第1語タイポの MeSH 用語（"Brest Neoplasms" 等）で
     "Breast Neoplasms" がサジェスチョンに含まれることを確認
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: 第1語タイポの用語で validate を実行しサジェスチョンを確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
