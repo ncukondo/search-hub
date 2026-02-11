@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
 import {
   setupE2EContext,
+  execCli,
   type E2EContext,
   createQueryFile,
   createRawQueryFile,
@@ -578,18 +579,17 @@ query:
       expect(result.success).toBe(true);
 
       // Simulate what the CLI action does
-      const output = formatValidateResult(result, queryPath);
+      let output = formatValidateResult(result, queryPath);
       const suggestion = formatSuggestion(getSuggestion({
         command: 'query validate',
         queryFile: queryPath,
         validationSuccess: result.success,
       }));
+      if (suggestion) output += '\n' + suggestion;
 
-      const fullOutput = output + (suggestion ? '\n' + suggestion : '');
-
-      expect(fullOutput).toContain('--dry-run');
-      expect(fullOutput).toContain('--preview');
-      expect(fullOutput).toContain('Next:');
+      expect(output).toContain('--dry-run');
+      expect(output).toContain('--preview');
+      expect(output).toContain('Next:');
     });
 
     it('should show $EDITOR suggestion after failed validation with --no-vocab', async () => {
@@ -601,17 +601,16 @@ query:
 
       expect(result.success).toBe(false);
 
-      const output = formatValidateResult(result, queryPath);
+      let output = formatValidateResult(result, queryPath);
       const suggestion = formatSuggestion(getSuggestion({
         command: 'query validate',
         queryFile: queryPath,
         validationSuccess: result.success,
       }));
+      if (suggestion) output += '\n' + suggestion;
 
-      const fullOutput = output + (suggestion ? '\n' + suggestion : '');
-
-      expect(fullOutput).toContain('$EDITOR');
-      expect(fullOutput).toContain('Next:');
+      expect(output).toContain('$EDITOR');
+      expect(output).toContain('Next:');
     });
 
     it('should not show suggestion when --quiet is used', async () => {
@@ -828,6 +827,46 @@ query:
       expect(result.vocabResult).toBeDefined();
       expect(result.vocabResult!.errors).toHaveLength(1);
       expect(result.vocabResult!.errors[0]!.error).toContain('Network timeout');
+    });
+  });
+
+  describe('CLI stdout suggestion integration', () => {
+    it('should include Next: suggestion in CLI stdout for valid query with --no-vocab', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+
+      const result = await execCli(
+        ['query', 'validate', queryPath, '--no-vocab', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('Next:');
+      expect(result.stdout).toContain('--dry-run');
+    });
+
+    it('should include Next: suggestion in CLI stdout for invalid query with --no-vocab', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        invalidQueryFixtures.missingName
+      );
+
+      const result = await execCli(
+        ['query', 'validate', queryPath, '--no-vocab', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stdout).toContain('Next:');
+      expect(result.stdout).toContain('$EDITOR');
+    });
+
+    it('should suppress suggestion in CLI stdout with --quiet', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+
+      const result = await execCli(
+        ['query', 'validate', queryPath, '--no-vocab', '--quiet', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).not.toContain('Next:');
     });
   });
 });

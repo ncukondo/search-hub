@@ -384,13 +384,14 @@ Examples:
           const result = await validateQueryCommand(file, { noVocab });
 
           if (!globalOpts.quiet) {
-            const output = formatValidateResult(result, file);
+            let output = formatValidateResult(result, file);
             const suggestion = formatSuggestion(getSuggestion({
               command: 'query validate',
               queryFile: file,
               validationSuccess: result.success,
             }));
-            console.log(output + (suggestion ? '\n' + suggestion : ''));
+            if (suggestion) output += '\n' + suggestion;
+            console.log(output);
           }
           process.exitCode = !result.success
             ? EXIT_CODES.QUERY_ERROR
