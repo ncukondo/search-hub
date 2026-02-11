@@ -360,7 +360,6 @@ Use "search-hub query init" to generate a template.`);
     .command('validate')
     .description('Validate query YAML file (auto-checks controlled vocabulary)')
     .argument('<file>', 'path to query YAML file')
-    .option('--vocab', '(deprecated, now default) validate controlled vocabulary terms')
     .option('--no-vocab', 'skip controlled vocabulary validation')
     .option('--no-cache', 'skip vocabulary lookup cache')
     .addHelpText('after', `
@@ -384,7 +383,13 @@ Examples:
           const result = await validateQueryCommand(file, { noVocab });
 
           if (!globalOpts.quiet) {
-            const output = formatValidateResult(result, file);
+            let output = formatValidateResult(result, file);
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'query validate',
+              queryFile: file,
+              validationSuccess: result.success,
+            }));
+            if (suggestion) output += '\n' + suggestion;
             console.log(output);
           }
           process.exitCode = !result.success
@@ -410,6 +415,12 @@ Examples:
           if (result.vocabResult) {
             output += formatVocabValidationOutput(result.vocabResult);
           }
+          const suggestion = formatSuggestion(getSuggestion({
+            command: 'query validate',
+            queryFile: file,
+            validationSuccess: result.success && !hasVocabErrors(result),
+          }));
+          if (suggestion) output += '\n' + suggestion;
           console.log(output);
         }
         process.exitCode =

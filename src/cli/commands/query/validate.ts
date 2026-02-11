@@ -27,7 +27,7 @@ export interface ValidateResult {
   queryName?: string;
   /** Number of query blocks (if valid) */
   blockCount?: number;
-  /** Controlled vocabulary validation results (when --vocab is used) */
+  /** Controlled vocabulary validation results (auto-checked by default) */
   vocabResult?: VocabValidationResult;
 }
 
