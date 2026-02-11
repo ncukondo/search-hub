@@ -117,6 +117,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 108 | Controlled Vocabulary Hit Count Validation | 107 | ✅ Completed | [20260211-02](completed/20260211-02-vocab-hit-count-validation.md) |
 | 109 | MeSH Multi-word Progressive Prefix Suggestion | 103 | ✅ Completed | [20260211-03](completed/20260211-03-mesh-multiword-prefix-suggestion.md) |
 | 110 | Improve $schema Absence Messaging | 105 | ✅ Completed | [20260211-04](completed/20260211-04-validate-schema-tip-messaging.md) |
+| 111 | MeSH First-Word Typo Suggestion Improvement | 109 | 🔲 Ready | [20260211-05](20260211-05-mesh-first-word-typo-suggestion.md) |
 
 ## Development Flow
 
