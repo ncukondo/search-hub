@@ -434,6 +434,203 @@ query:
     });
   });
 
+  describe('Emtree term handling', () => {
+    it('should include Emtree terms in Scopus translation using INDEXTERMS', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: emtree-test
+query:
+  - field: title_abstract
+    terms:
+      emtree:
+        - Diabetes Mellitus
+        - Insulin Resistance
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['scopus'],
+      });
+
+      expect(result.success).toBe(true);
+      const scopus = result.translations!['scopus'];
+      expect(scopus!.native).toContain('INDEXTERMS');
+      expect(scopus!.native).toContain('Diabetes Mellitus');
+      expect(scopus!.native).toContain('Insulin Resistance');
+    });
+
+    it('should combine keywords and Emtree terms in Scopus', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: emtree-combined-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+        - T2DM
+      emtree:
+        - Diabetes Mellitus
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['scopus'],
+      });
+
+      expect(result.success).toBe(true);
+      const scopus = result.translations!['scopus'];
+      // Keywords in TITLE-ABS-KEY
+      expect(scopus!.native).toContain('TITLE-ABS-KEY(diabetes OR T2DM)');
+      // Emtree in INDEXTERMS
+      expect(scopus!.native).toContain('INDEXTERMS("Diabetes Mellitus")');
+    });
+
+    it('should translate emtree-only block for all providers', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: emtree-only-all
+query:
+  - field: title_abstract
+    terms:
+      emtree:
+        - Artificial Intelligence
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath);
+
+      expect(result.success).toBe(true);
+      // Scopus should use INDEXTERMS
+      const scopus = result.translations!['scopus'];
+      expect(scopus!.native).toContain('INDEXTERMS');
+      // Other providers should produce output (may be empty for unsupported vocab)
+      expect(result.translations!['pubmed']).toBeDefined();
+      expect(result.translations!['arxiv']).toBeDefined();
+      expect(result.translations!['eric']).toBeDefined();
+    });
+  });
+
+  describe('Unsupported vocabulary warnings', () => {
+    it('should warn when arXiv encounters mesh terms', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: mesh-warning-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - Diabetes Mellitus
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['arxiv'],
+      });
+
+      expect(result.success).toBe(true);
+      const arxiv = result.translations!['arxiv'];
+      expect(arxiv!.warnings).toBeDefined();
+      expect(arxiv!.warnings).toContainEqual(
+        'arXiv does not support MeSH terms — mesh terms in block 1 will be ignored'
+      );
+    });
+
+    it('should warn when Scopus encounters mesh terms', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: scopus-mesh-warning
+query:
+  - field: title_abstract
+    terms:
+      mesh:
+        - Neoplasms
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['scopus'],
+      });
+
+      expect(result.success).toBe(true);
+      const scopus = result.translations!['scopus'];
+      expect(scopus!.warnings).toContainEqual(
+        'Scopus does not support MeSH terms — mesh terms in block 1 will be ignored'
+      );
+    });
+
+    it('should not warn when PubMed uses mesh (supported)', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.withMesh);
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['pubmed'],
+      });
+
+      expect(result.success).toBe(true);
+      const pubmed = result.translations!['pubmed'];
+      expect(pubmed!.warnings).toBeUndefined();
+    });
+
+    it('should not warn when Scopus uses emtree (supported)', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: scopus-emtree-no-warning
+query:
+  - field: title_abstract
+    terms:
+      emtree:
+        - Diabetes Mellitus
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['scopus'],
+      });
+
+      expect(result.success).toBe(true);
+      const scopus = result.translations!['scopus'];
+      expect(scopus!.warnings).toBeUndefined();
+    });
+
+    it('should display warnings in formatted output', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: warning-format-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - Diabetes Mellitus
+    operator: OR
+`
+      );
+
+      const result = await translateQueryCommand(queryPath, {
+        providers: ['arxiv'],
+      });
+
+      const output = formatTranslateResult(result, queryPath);
+      expect(output).toContain('arXiv does not support MeSH terms');
+    });
+  });
+
   describe('query with various fields', () => {
     it('should translate title field correctly', async () => {
       const queryPath = await createRawQueryFile(

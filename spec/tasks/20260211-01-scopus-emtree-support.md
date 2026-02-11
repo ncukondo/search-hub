@@ -95,13 +95,13 @@ keywords の有無に関わらず、未対応統制語が含まれていれば�
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Write E2E test
+- [x] Write E2E test
   - Emtree term を含む Scopus クエリが正しく変換されること
   - 未対応統制語の警告が表示されること
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Emtree term を含む YAML で validate → translate を確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Emtree term を含む YAML で validate → translate を確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
