@@ -928,6 +928,90 @@ query:
       expect(output).toContain('Did you mean: "Artificial Intelligence"');
     });
 
+    it('should suggest correct term for first-word typo via step 4b', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: first-word-typo-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - cancer
+      mesh:
+        - "Brest Neoplasms"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          [
+            'Brest Neoplasms',
+            {
+              found: false,
+              suggestions: ['Breast Neoplasms'],
+            },
+          ],
+        ])
+      );
+
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
+        'Breast Neoplasms'
+      );
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('✗ mesh: "Brest Neoplasms"');
+      expect(output).toContain('Did you mean: "Breast Neoplasms"');
+    });
+
+    it('should suggest correct term for severely misspelled first word via step 4c', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: severe-first-word-typo-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetse Mellitus"
+    operator: OR
+`
+      );
+
+      const client = createMockMeSHClient(
+        new Map([
+          [
+            'Diabetse Mellitus',
+            {
+              found: false,
+              suggestions: ['Diabetes Mellitus'],
+            },
+          ],
+        ])
+      );
+
+      const result = await validateQueryCommand(queryPath, { meshClient: client });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
+        'Diabetes Mellitus'
+      );
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('✗ mesh: "Diabetse Mellitus"');
+      expect(output).toContain('Did you mean: "Diabetes Mellitus"');
+    });
+
     it('should skip vocab validation with --no-vocab', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
