@@ -18,13 +18,18 @@ const queryValidateRule: SuggestionRule = (ctx) => {
 
   if (ctx.validationSuccess === false) {
     const next = [{ command: `$EDITOR ${file}`, description: 'Fix errors and re-validate' }];
-    // Strongly recommend query init when no $schema link
+
     if (ctx.hasSchemaLink === false) {
-      next.push({
-        command: `search-hub query init -o ${file} --force`,
-        description: 'Regenerate with editor completion support',
-      });
+      return {
+        next,
+        or: {
+          label: 'Or create a new query from the template',
+          items: [{ command: 'search-hub query init -o query.yaml', description: '' }],
+        },
+        seeAlso: [],
+      };
     }
+
     return { next, seeAlso: [] };
   }
 
@@ -32,17 +37,17 @@ const queryValidateRule: SuggestionRule = (ctx) => {
     { command: `search-hub search ${file} --dry-run`, description: 'Check DB translations' },
     { command: `search-hub search ${file} --preview`, description: 'Preview hit counts + sample titles' },
   ];
-  const seeAlso: Array<{ command: string; description: string }> = [];
 
-  // Recommend query init when no $schema link (info level)
   if (ctx.hasSchemaLink === false) {
-    seeAlso.push({
-      command: `search-hub query init -o ${file} --force`,
-      description: 'Enable editor completion via $schema',
-    });
+    return {
+      tip: 'Tip: Start from a template to get $schema support and usage examples:\n'
+         + '     search-hub query init -o query.yaml',
+      next,
+      seeAlso: [],
+    };
   }
 
-  return { next, seeAlso };
+  return { next, seeAlso: [] };
 };
 
 const queryTranslateRule: SuggestionRule = (ctx) => {

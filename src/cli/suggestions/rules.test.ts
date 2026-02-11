@@ -53,10 +53,10 @@ describe('getSuggestion', () => {
     });
 
     describe('query validate $schema guidance', () => {
-      it('should suggest query init when no $schema and validation succeeds (info)', () => {
+      it('should show tip with query init when no $schema and validation succeeds', () => {
         const ctx: SuggestionContext = {
           command: 'query validate',
-          queryFile: 'query.yaml',
+          queryFile: 'manual-query.yaml',
           validationSuccess: true,
           hasSchemaLink: false,
         };
@@ -64,24 +64,17 @@ describe('getSuggestion', () => {
         expect(result).not.toBeNull();
         // Should still have the normal next suggestions
         expect(result!.next.some((s) => s.command.includes('--dry-run'))).toBe(true);
-        // Should recommend query init in seeAlso
-        expect(result!.seeAlso.some((s) => s.command.includes('query init'))).toBe(true);
+        // tip should be defined and include query init
+        expect(result!.tip).toBeDefined();
+        expect(result!.tip).toContain('query init');
+        // tip should suggest query.yaml (new file, not --force)
+        expect(result!.tip).toContain('query.yaml');
+        expect(result!.tip).not.toContain('--force');
+        // seeAlso should be empty (query init moved from seeAlso to tip)
+        expect(result!.seeAlso).toHaveLength(0);
       });
 
-      it('should strongly suggest query init when no $schema and validation fails', () => {
-        const ctx: SuggestionContext = {
-          command: 'query validate',
-          queryFile: 'query.yaml',
-          validationSuccess: false,
-          hasSchemaLink: false,
-        };
-        const result = getSuggestion(ctx);
-        expect(result).not.toBeNull();
-        // Should include query init in next (strong recommendation)
-        expect(result!.next.some((s) => s.command.includes('query init'))).toBe(true);
-      });
-
-      it('should not suggest query init when $schema is present and validation succeeds', () => {
+      it('should not show tip when $schema is present and validation succeeds', () => {
         const ctx: SuggestionContext = {
           command: 'query validate',
           queryFile: 'query.yaml',
@@ -90,12 +83,32 @@ describe('getSuggestion', () => {
         };
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
-        // No query init guidance
+        expect(result!.tip).toBeUndefined();
+        // No query init guidance anywhere
         expect(result!.next.some((s) => s.command.includes('query init'))).toBe(false);
         expect(result!.seeAlso.some((s) => s.command.includes('query init'))).toBe(false);
       });
 
-      it('should suggest using editor completion when $schema present but errors', () => {
+      it('should show or section with query init when no $schema and validation fails', () => {
+        const ctx: SuggestionContext = {
+          command: 'query validate',
+          queryFile: 'broken.yaml',
+          validationSuccess: false,
+          hasSchemaLink: false,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        // next should only have $EDITOR (1 item)
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('$EDITOR');
+        // or should be defined and include query init
+        expect(result!.or).toBeDefined();
+        expect(result!.or!.label).toMatch(/^Or/);
+        expect(result!.or!.items[0]!.command).toContain('query init');
+        expect(result!.or!.items[0]!.command).not.toContain('--force');
+      });
+
+      it('should not show or when $schema present but errors', () => {
         const ctx: SuggestionContext = {
           command: 'query validate',
           queryFile: 'query.yaml',
@@ -106,7 +119,9 @@ describe('getSuggestion', () => {
         expect(result).not.toBeNull();
         // Should suggest $EDITOR (standard error path)
         expect(result!.next.some((s) => s.command.includes('$EDITOR'))).toBe(true);
-        // Should NOT suggest query init since schema is already linked
+        expect(result!.next).toHaveLength(1);
+        // Should NOT have or section since schema is already linked
+        expect(result!.or).toBeUndefined();
         expect(result!.next.some((s) => s.command.includes('query init'))).toBe(false);
         expect(result!.seeAlso.some((s) => s.command.includes('query init'))).toBe(false);
       });

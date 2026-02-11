@@ -167,14 +167,14 @@ Each step follows the TDD cycle:
 成功 + $schema なしの場合、従来の `seeAlso` への query init 追加を `tip` に変更する。
 `--force` は使わず、新しいファイル名 `query.yaml` を提案する。
 
-- [ ] Write test: `src/cli/suggestions/rules.test.ts`
+- [x] Write test: `src/cli/suggestions/rules.test.ts`
   - 成功 + $schema なし: `tip` が定義されており "query init" を含むことを検証
   - 成功 + $schema なし: `tip` が `query.yaml` を含むことを検証（新規作成）
   - 成功 + $schema なし: `tip` が `--force` を含まないことを検証
   - 成功 + $schema なし: `seeAlso` が空であることを検証（旧: query init が入っていた）
   - 成功 + $schema あり: `tip` が undefined であることを検証（変更なし）
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/cli/suggestions/rules.ts` の `queryValidateRule` 成功パスを修正
+- [x] Verify test fails (Red)
+- [x] Implement: `src/cli/suggestions/rules.ts` の `queryValidateRule` 成功パスを修正
   ```typescript
   // 成功パス
   const next = [
@@ -193,23 +193,23 @@ Each step follows the TDD cycle:
 
   return { next, seeAlso: [] };
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 成功 + $schema なしで Tip が Next の前に表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 成功 + $schema なしで Tip が Next の前に表示される
 
 ### Step 4: `queryValidateRule` 更新 — 失敗時 (or)
 
 失敗 + $schema なしの場合、従来の `next` への query init 追加を `or` に変更する。
 `--force` は使わず、新しいファイル名 `query.yaml` を提案する。
 
-- [ ] Write test: `src/cli/suggestions/rules.test.ts`
+- [x] Write test: `src/cli/suggestions/rules.test.ts`
   - 失敗 + $schema なし: `next` が `$EDITOR` のみ（1件）であることを検証
   - 失敗 + $schema なし: `or` が定義されており "query init" を含むことを検証
   - 失敗 + $schema なし: `or.label` が "Or" で始まることを検証
   - 失敗 + $schema なし: `or.items[0].command` が `--force` を含まないことを検証
   - 失敗 + $schema あり: `or` が undefined で、`next` が `$EDITOR` のみであることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/cli/suggestions/rules.ts` の `queryValidateRule` 失敗パスを修正
+- [x] Verify test fails (Red)
+- [x] Implement: `src/cli/suggestions/rules.ts` の `queryValidateRule` 失敗パスを修正
   ```typescript
   if (ctx.validationSuccess === false) {
     const next = [{ command: `$EDITOR ${file}`, description: 'Fix errors and re-validate' }];
@@ -228,9 +228,9 @@ Each step follows the TDD cycle:
     return { next, seeAlso: [] };
   }
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 失敗 + $schema なしで "Or" セクションが Next の後に表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 失敗 + $schema なしで "Or" セクションが Next の後に表示される
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
