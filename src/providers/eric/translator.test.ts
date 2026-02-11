@@ -402,4 +402,34 @@ describe('ERIC Query Translator', () => {
       expect(result.native).toContain('subject:Literacy');
     });
   });
+
+  describe('Unsupported Vocabulary Warnings', () => {
+    it('should warn when block contains emtree terms', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: { emtree: ['Diabetes Mellitus'] },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toContainEqual(
+        'ERIC does not support Emtree terms — emtree terms in block 1 will be ignored'
+      );
+    });
+
+    it('should not warn when block contains eric terms (supported)', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: { eric: ['Medical Education'] },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toBeUndefined();
+    });
+  });
 });

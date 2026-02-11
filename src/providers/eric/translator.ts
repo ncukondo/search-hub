@@ -5,6 +5,7 @@
 
 import type { QueryAST, QueryBlock, Filters } from '../../query/types';
 import type { TranslatedQuery } from '../base/types';
+import { collectUnsupportedVocabWarnings } from '../base/warnings';
 
 /**
  * Field prefix mappings for ERIC.
@@ -185,10 +186,15 @@ export function translateQueryAST(ast: QueryAST): TranslatedQuery {
     }
   }
 
+  // Collect warnings for unsupported controlled vocabulary
+  // ERIC supports eric descriptors but not mesh or emtree
+  const warnings = collectUnsupportedVocabWarnings(ast.blocks, 'ERIC', new Set(['eric']));
+
   return {
     native,
     originalAst: ast,
     provider: 'eric',
+    ...(warnings.length > 0 ? { warnings } : {}),
   };
 }
 

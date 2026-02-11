@@ -75,7 +75,7 @@ Each step follows the TDD cycle:
 provider が対応していない統制語がブロックに含まれる場合に警告を出す。
 keywords の有無に関わらず、未対応統制語が含まれていれば常に警告する。
 
-- [ ] Write test
+- [x] Write test
   - arXiv + mesh を含むブロック → 警告が出ること
   - arXiv + keywords + mesh のブロック → 警告が出ること（keywords があっても警告）
   - Scopus + mesh を含むブロック → 警告が出ること
@@ -83,13 +83,13 @@ keywords の有無に関わらず、未対応統制語が含まれていれば�
   - PubMed + mesh → 警告なし（対応済み）
   - Scopus + emtree → 警告なし（本タスクで対応済み）
   - ERIC + eric → 警告なし（対応済み）
-- [ ] Verify test fails (Red)
-- [ ] Implement
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: 未対応統制語に対して適切な警告が表示される
+- [x] Verify test fails (Red)
+- [x] Implement
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 未対応統制語に対して適切な警告が表示される
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 

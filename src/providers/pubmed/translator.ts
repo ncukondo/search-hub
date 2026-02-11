@@ -5,6 +5,7 @@
 
 import type { QueryAST, FieldType, QueryBlock, Filters } from '../../query/types';
 import type { TranslatedQuery } from '../base/types';
+import { collectUnsupportedVocabWarnings } from '../base/warnings';
 
 /**
  * Field type to PubMed qualifier mapping.
@@ -268,9 +269,14 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
     native = andSection;
   }
 
+  // Collect warnings for unsupported controlled vocabulary
+  // PubMed supports mesh but not emtree or eric
+  const warnings = collectUnsupportedVocabWarnings(ast.blocks, 'PubMed', new Set(['mesh']));
+
   return {
     native,
     originalAst: ast,
     provider: 'pubmed',
+    ...(warnings.length > 0 ? { warnings } : {}),
   };
 }

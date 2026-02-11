@@ -370,4 +370,49 @@ describe('translateQuery', () => {
       expect(result.native).toContain('cat:cs.AI');
     });
   });
+
+  describe('Unsupported Vocabulary Warnings', () => {
+    it('should warn when block contains mesh terms', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: { mesh: ['Artificial Intelligence'] },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toContainEqual(
+        'arXiv does not support MeSH terms — mesh terms in block 1 will be ignored'
+      );
+    });
+
+    it('should warn when block contains keywords + mesh', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: { keywords: ['diabetes'], mesh: ['Diabetes Mellitus'] },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toContainEqual(
+        'arXiv does not support MeSH terms — mesh terms in block 1 will be ignored'
+      );
+    });
+
+    it('should not include warnings for keywords-only blocks', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: { keywords: ['diabetes'] },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toBeUndefined();
+    });
+  });
 });

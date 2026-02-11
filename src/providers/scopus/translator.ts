@@ -6,6 +6,7 @@
 
 import type { QueryAST, FieldType, QueryBlock, Filters, OverrideBlock } from '../../query/types';
 import type { TranslatedQuery } from '../base/types';
+import { collectUnsupportedVocabWarnings } from '../base/warnings';
 
 /**
  * Field function mappings for Scopus.
@@ -165,9 +166,14 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
   const allParts: string[] = [...blockParts, ...notClauses, ...filterParts];
   const native = allParts.join(' AND ');
 
+  // Collect warnings for unsupported controlled vocabulary
+  // Scopus supports emtree but not mesh or eric
+  const warnings = collectUnsupportedVocabWarnings(ast.blocks, 'Scopus', new Set(['emtree']));
+
   return {
     native,
     originalAst: ast,
     provider: 'scopus',
+    ...(warnings.length > 0 ? { warnings } : {}),
   };
 }

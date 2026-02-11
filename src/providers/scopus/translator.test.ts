@@ -608,6 +608,64 @@ describe('Scopus Query Translator', () => {
     });
   });
 
+  describe('Unsupported Vocabulary Warnings', () => {
+    it('should warn when block contains mesh terms', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { keywords: ['diabetes'], mesh: ['Diabetes Mellitus'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toContainEqual(
+        'Scopus does not support MeSH terms — mesh terms in block 1 will be ignored'
+      );
+    });
+
+    it('should not warn when block contains emtree terms (supported)', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { emtree: ['Diabetes Mellitus'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.warnings ?? []).toHaveLength(0);
+    });
+
+    it('should not include warnings field when no unsupported vocab', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { keywords: ['diabetes'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.warnings).toBeUndefined();
+    });
+  });
+
   describe('Complex Queries', () => {
     it('should handle complex multi-block query', () => {
       const ast: QueryAST = {
