@@ -2,7 +2,7 @@
  * Query validate command implementation.
  *
  * Validates a YAML query file and reports any errors.
- * Optionally validates controlled vocabulary terms (MeSH) against external APIs.
+ * Optionally validates controlled vocabulary terms (MeSH, ERIC, Emtree) against external APIs.
  */
 import { readFile } from 'node:fs/promises';
 import { parseQueryString, ValidationError } from '../../../query/index.js';
@@ -12,6 +12,7 @@ import type { QueryAST } from '../../../query/types.js';
 import {
   extractControlledVocabTerms,
   validateControlledVocab,
+  type CountVocabValidator,
   type VocabValidationResult,
 } from '../../../query/vocab-validator.js';
 
@@ -81,6 +82,7 @@ export async function validateQueryCommand(
   options?: {
     meshClient?: MeSHLookupClient;
     noVocab?: boolean;
+    countValidators?: CountVocabValidator[];
   }
 ): Promise<ValidateResult> {
   const parsed = await parseQueryFile(filePath);
@@ -101,7 +103,8 @@ export async function validateQueryCommand(
     if (terms.length > 0) {
       result.vocabResult = await validateControlledVocab(
         parsed.ast,
-        options.meshClient
+        options.meshClient,
+        options.countValidators ? { countValidators: options.countValidators } : undefined
       );
     }
   }

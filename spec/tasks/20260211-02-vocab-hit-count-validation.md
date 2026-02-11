@@ -47,57 +47,57 @@ Each step follows the TDD cycle:
 
 ### Step 1: VocabTerm の vocabulary 型を拡張
 
-- [ ] Write test: `src/query/vocab-validator.test.ts`
+- [x] Write test: `src/query/vocab-validator.test.ts`
   - `VocabTerm.vocabulary` が `'mesh' | 'eric' | 'emtree'` を受け付けること
   - `extractControlledVocabTerms()` が eric / emtree term も抽出すること
-- [ ] Verify test fails (Red)
-- [ ] Implement: vocabulary 型を union に拡張、extractControlledVocabTerms を更新
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: 全統制語が抽出される
+- [x] Verify test fails (Red)
+- [x] Implement: vocabulary 型を union に拡張、extractControlledVocabTerms を更新
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 全統制語が抽出される
 
 ### Step 2: count-only 検索による hit 数チェック
 
-- [ ] Write test
+- [x] Write test
   - ERIC descriptor を単独で count-only 検索し hit 数 0 で警告
   - Emtree term を Scopus で count-only 検索し hit 数 0 で警告
   - hit 数 > 0 の term には警告なし
   - レート制限・キャッシュが適用されること
-- [ ] Verify test fails (Red)
-- [ ] Implement
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: hit 数 0 の統制語に警告が出る
+- [x] Verify test fails (Red)
+- [x] Implement
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: hit 数 0 の統制語に警告が出る
 
 ### Step 3: `query validate` に統合
 
-- [ ] Write test
+- [x] Write test
   - `query validate` 実行時に ERIC/Emtree term の hit 数チェックが行われること
   - `--no-vocab` で全てのチェックがスキップされること
   - キャッシュにより2回目以降は高速であること
-- [ ] Verify test fails (Red)
-- [ ] Implement
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: validate コマンドで hit 数チェックが動作する
+- [x] Verify test fails (Red)
+- [x] Implement
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: validate コマンドで hit 数チェックが動作する
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Write E2E test
+- [x] Write E2E test
   - 存在する ERIC descriptor で警告なし
   - 存在しない ERIC descriptor で警告
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: タイポを含む YAML で validate を実行し警告を確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: タイポを含む YAML で validate を実行し警告を確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
