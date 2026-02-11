@@ -75,17 +75,17 @@ Each step follows the TDD cycle:
 
 ### Step 3: `query validate` に統合
 
-- [ ] Write test
+- [x] Write test
   - `query validate` 実行時に ERIC/Emtree term の hit 数チェックが行われること
   - `--no-vocab` で全てのチェックがスキップされること
   - キャッシュにより2回目以降は高速であること
-- [ ] Verify test fails (Red)
-- [ ] Implement
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: validate コマンドで hit 数チェックが動作する
+- [x] Verify test fails (Red)
+- [x] Implement
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: validate コマンドで hit 数チェックが動作する
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
