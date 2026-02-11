@@ -95,11 +95,11 @@ Each step follows the TDD cycle:
 `tip` はプレーンテキストのアドバイス。Next の前に表示される。
 `formatSection` は使わず、文字列をそのまま出力する。
 
-- [ ] Write test: `src/cli/suggestions/index.test.ts`
+- [x] Write test: `src/cli/suggestions/index.test.ts`
   - `tip` が存在する場合に Next の前にレンダリングされることを検証
   - `tip` が undefined の場合は従来通りの出力であることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement:
+- [x] Verify test fails (Red)
+- [x] Implement:
   - `src/cli/suggestions/types.ts`: `SuggestionResult` に `tip?: string` 追加
   - `src/cli/suggestions/index.ts`: `formatSuggestion` で tip を sections の先頭に追加
     ```typescript
@@ -122,9 +122,9 @@ Each step follows the TDD cycle:
       return '\n' + sections.join('\n\n');
     }
     ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: tip が Next の前に正しく表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: tip が Next の前に正しく表示される
 
 ### Step 2: `SuggestionResult` に `or` フィールド追加 + レンダリング
 

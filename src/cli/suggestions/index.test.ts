@@ -74,6 +74,35 @@ describe('formatSuggestion', () => {
     expect(output).toBe('');
   });
 
+  it('should render tip before Next section', () => {
+    const result: SuggestionResult = {
+      next: [{ command: 'search-hub search query.yaml --dry-run', description: 'Check DB translations' }],
+      seeAlso: [],
+      tip: 'Tip: Start from a template to get $schema support and usage examples:\n     search-hub query init -o query.yaml',
+    };
+
+    const output = formatSuggestion(result);
+
+    // Tip should appear before Next
+    const tipIndex = output.indexOf('Tip:');
+    const nextIndex = output.indexOf('Next:');
+    expect(tipIndex).toBeGreaterThan(-1);
+    expect(nextIndex).toBeGreaterThan(-1);
+    expect(tipIndex).toBeLessThan(nextIndex);
+  });
+
+  it('should render normally when tip is undefined', () => {
+    const result: SuggestionResult = {
+      next: [{ command: 'search-hub search query.yaml --dry-run', description: 'Check DB translations' }],
+      seeAlso: [],
+    };
+
+    const output = formatSuggestion(result);
+
+    expect(output).toContain('Next:');
+    expect(output).not.toContain('Tip:');
+  });
+
   it('should align inline comments', () => {
     const result: SuggestionResult = {
       next: [

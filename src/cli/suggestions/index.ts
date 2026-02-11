@@ -38,6 +38,11 @@ export function formatSuggestion(result: SuggestionResult | null): string {
 
   const sections: string[] = [];
 
+  // Tip (before Next)
+  if (result.tip) {
+    sections.push(result.tip);
+  }
+
   const nextSection = formatSection('Next', result.next);
   if (nextSection) sections.push(nextSection);
 
