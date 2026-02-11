@@ -53,6 +53,8 @@ export interface SuggestionContext {
   outputFile?: string | undefined;
   /** Whether validation succeeded (for query validate) */
   validationSuccess?: boolean | undefined;
+  /** Whether the query file has a $schema link */
+  hasSchemaLink?: boolean | undefined;
   /** Number of added articles in diff result */
   diffAddedCount?: number | undefined;
   /** Number of removed articles in diff result */

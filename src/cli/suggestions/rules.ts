@@ -17,20 +17,33 @@ const queryValidateRule: SuggestionRule = (ctx) => {
   const file = ctx.queryFile ?? '<query-file>';
 
   if (ctx.validationSuccess === false) {
-    return {
-      next: [{ command: `$EDITOR ${file}`, description: 'Fix errors and re-validate' }],
-      seeAlso: [],
-    };
+    const next = [{ command: `$EDITOR ${file}`, description: 'Fix errors and re-validate' }];
+    // Strongly recommend query init when no $schema link
+    if (ctx.hasSchemaLink === false) {
+      next.push({
+        command: `search-hub query init -o ${file} --force`,
+        description: 'Regenerate with editor completion support',
+      });
+    }
+    return { next, seeAlso: [] };
   }
 
-  return {
-    next: [
-      { command: `search-hub search ${file} --dry-run`, description: 'Check DB translations' },
-      { command: `search-hub search ${file} --preview`, description: 'Preview hit counts + sample titles' },
-    ],
-    seeAlso: [],
-  };
-};
+  const next = [
+    { command: `search-hub search ${file} --dry-run`, description: 'Check DB translations' },
+    { command: `search-hub search ${file} --preview`, description: 'Preview hit counts + sample titles' },
+  ];
+  const seeAlso: Array<{ command: string; description: string }> = [];
+
+  // Recommend query init when no $schema link (info level)
+  if (ctx.hasSchemaLink === false) {
+    seeAlso.push({
+      command: `search-hub query init -o ${file} --force`,
+      description: 'Enable editor completion via $schema',
+    });
+  }
+
+  return { next, seeAlso };
+};;
 
 const queryTranslateRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'query translate') return null;
