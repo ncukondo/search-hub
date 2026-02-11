@@ -6,7 +6,7 @@
  */
 import type { QueryAST } from './types.js';
 import type { MeSHLookupClient, MeSHLookupResult } from './mesh-lookup.js';
-import type { Provider, TranslatedQuery } from '../providers/base/types.js';
+import type { Provider, ProviderName, TranslatedQuery } from '../providers/base/types.js';
 import type { VocabCache } from './vocab-cache.js';
 
 /** Supported controlled vocabulary types. */
@@ -89,12 +89,34 @@ export interface CountVocabValidator {
   countTerm: (term: string) => Promise<number>;
 }
 
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+  let index = 0;
+  async function worker() {
+    while (index < items.length) {
+      const i = index++;
+      results[i] = await fn(items[i]!);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, () => worker())
+  );
+  return results;
+}
+
 /**
  * Validate all controlled vocabulary terms in a QueryAST.
  *
  * MeSH terms are validated via the MeSH lookup API (exact match + suggestions).
  * ERIC/Emtree terms are validated via count-only search when countValidators are provided.
  * Terms whose vocabulary has no validator are skipped silently.
+ *
+ * Different vocabulary groups are validated in parallel; within each group,
+ * concurrency is limited to 3 requests at a time.
  */
 export async function validateControlledVocab(
   ast: QueryAST,
@@ -108,65 +130,85 @@ export async function validateControlledVocab(
     countValidatorMap.set(cv.vocabulary, cv);
   }
 
-  const valid: VocabTermResult[] = [];
-  const invalid: VocabTermResult[] = [];
-  const errors: VocabTermError[] = [];
+  // Group terms by vocabulary
+  const meshTerms = terms.filter((t) => t.vocabulary === 'mesh');
+  const countGroups = new Map<VocabType, VocabTerm[]>();
+  for (const t of terms) {
+    if (t.vocabulary === 'mesh') continue;
+    const validator = countValidatorMap.get(t.vocabulary);
+    if (!validator) continue;
+    const group = countGroups.get(t.vocabulary) ?? [];
+    group.push(t);
+    countGroups.set(t.vocabulary, group);
+  }
 
-  for (const vocabTerm of terms) {
-    if (vocabTerm.vocabulary === 'mesh') {
-      // Validate via MeSH lookup API
-      let result: MeSHLookupResult;
-      try {
-        result = await meshClient.lookupTerm(vocabTerm.term);
-      } catch (err) {
-        errors.push({
+  type TermOutcome =
+    | { kind: 'valid'; result: VocabTermResult }
+    | { kind: 'invalid'; result: VocabTermResult }
+    | { kind: 'error'; error: VocabTermError };
+
+  const CONCURRENCY = 3;
+
+  // Validate MeSH terms
+  const meshTask = mapWithConcurrency(meshTerms, CONCURRENCY, async (vocabTerm): Promise<TermOutcome> => {
+    let result: MeSHLookupResult;
+    try {
+      result = await meshClient.lookupTerm(vocabTerm.term);
+    } catch (err) {
+      return {
+        kind: 'error',
+        error: {
           term: vocabTerm.term,
           vocabulary: vocabTerm.vocabulary,
           error: err instanceof Error ? err.message : String(err),
-        });
-        continue;
-      }
-      const termResult: VocabTermResult = {
-        term: vocabTerm.term,
-        vocabulary: vocabTerm.vocabulary,
-        found: result.found,
-        ...(result.suggestions ? { suggestions: result.suggestions } : {}),
+        },
       };
+    }
+    const termResult: VocabTermResult = {
+      term: vocabTerm.term,
+      vocabulary: vocabTerm.vocabulary,
+      found: result.found,
+      ...(result.suggestions ? { suggestions: result.suggestions } : {}),
+    };
+    return { kind: result.found ? 'valid' : 'invalid', result: termResult };
+  });
 
-      if (result.found) {
-        valid.push(termResult);
-      } else {
-        invalid.push(termResult);
-      }
-    } else {
-      // Validate via count-only search
-      const validator = countValidatorMap.get(vocabTerm.vocabulary);
-      if (!validator) continue; // No validator for this vocabulary — skip
-
+  // Validate count-based vocab groups in parallel
+  const countTasks = [...countGroups.entries()].map(([vocabType, groupTerms]) => {
+    const validator = countValidatorMap.get(vocabType)!;
+    return mapWithConcurrency(groupTerms, CONCURRENCY, async (vocabTerm): Promise<TermOutcome> => {
       let count: number;
       try {
         count = await validator.countTerm(vocabTerm.term);
       } catch (err) {
-        errors.push({
-          term: vocabTerm.term,
-          vocabulary: vocabTerm.vocabulary,
-          error: err instanceof Error ? err.message : String(err),
-        });
-        continue;
+        return {
+          kind: 'error',
+          error: {
+            term: vocabTerm.term,
+            vocabulary: vocabTerm.vocabulary,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        };
       }
-
       const termResult: VocabTermResult = {
         term: vocabTerm.term,
         vocabulary: vocabTerm.vocabulary,
         found: count > 0,
       };
+      return { kind: count > 0 ? 'valid' : 'invalid', result: termResult };
+    });
+  });
 
-      if (count > 0) {
-        valid.push(termResult);
-      } else {
-        invalid.push(termResult);
-      }
-    }
+  const allOutcomes = (await Promise.all([meshTask, ...countTasks])).flat();
+
+  const valid: VocabTermResult[] = [];
+  const invalid: VocabTermResult[] = [];
+  const errors: VocabTermError[] = [];
+
+  for (const outcome of allOutcomes) {
+    if (outcome.kind === 'valid') valid.push(outcome.result);
+    else if (outcome.kind === 'invalid') invalid.push(outcome.result);
+    else errors.push(outcome.error);
   }
 
   return { valid, invalid, errors };
@@ -177,7 +219,7 @@ export async function validateControlledVocab(
  * Uses subject: field with quoted term.
  */
 function buildEricCountQuery(term: string): string {
-  return `subject:"${term}"`;
+  return `subject:"${term.replace(/"/g, '')}"`;
 }
 
 /**
@@ -185,67 +227,49 @@ function buildEricCountQuery(term: string): string {
  * Uses INDEXTERMS() function with quoted term.
  */
 function buildEmtreeCountQuery(term: string): string {
-  return `INDEXTERMS("${term}")`;
+  return `INDEXTERMS("${term.replace(/"/g, '')}")`;
 }
 
-/**
- * Create a CountVocabValidator for ERIC descriptors.
- * Validates terms by running count-only searches against the ERIC API.
- */
+function createCountValidator(
+  vocabulary: VocabType,
+  provider: Provider,
+  buildQuery: (term: string) => string,
+  providerName: ProviderName,
+  options?: { cache?: VocabCache }
+): CountVocabValidator {
+  return {
+    vocabulary,
+    countTerm: async (term: string): Promise<number> => {
+      if (options?.cache) {
+        const cached = options.cache.get(vocabulary, term);
+        if (cached) return cached.found ? 1 : 0;
+      }
+
+      const query: TranslatedQuery = {
+        native: buildQuery(term),
+        provider: providerName,
+      };
+      const count = await provider.count(query);
+
+      if (options?.cache) {
+        options.cache.set(vocabulary, term, { term, found: count > 0 });
+      }
+
+      return count;
+    },
+  };
+}
+
 export function createEricCountValidator(
   provider: Provider,
   options?: { cache?: VocabCache }
 ): CountVocabValidator {
-  return {
-    vocabulary: 'eric',
-    countTerm: async (term: string): Promise<number> => {
-      if (options?.cache) {
-        const cached = options.cache.get('eric', term);
-        if (cached) return cached.found ? 1 : 0;
-      }
-
-      const query: TranslatedQuery = {
-        native: buildEricCountQuery(term),
-        provider: 'eric',
-      };
-      const count = await provider.count(query);
-
-      if (options?.cache) {
-        options.cache.set('eric', term, { term, found: count > 0 });
-      }
-
-      return count;
-    },
-  };
+  return createCountValidator('eric', provider, buildEricCountQuery, 'eric', options);
 }
 
-/**
- * Create a CountVocabValidator for Emtree terms.
- * Validates terms by running count-only searches against the Scopus API.
- */
 export function createEmtreeCountValidator(
   provider: Provider,
   options?: { cache?: VocabCache }
 ): CountVocabValidator {
-  return {
-    vocabulary: 'emtree',
-    countTerm: async (term: string): Promise<number> => {
-      if (options?.cache) {
-        const cached = options.cache.get('emtree', term);
-        if (cached) return cached.found ? 1 : 0;
-      }
-
-      const query: TranslatedQuery = {
-        native: buildEmtreeCountQuery(term),
-        provider: 'scopus',
-      };
-      const count = await provider.count(query);
-
-      if (options?.cache) {
-        options.cache.set('emtree', term, { term, found: count > 0 });
-      }
-
-      return count;
-    },
-  };
+  return createCountValidator('emtree', provider, buildEmtreeCountQuery, 'scopus', options);
 }

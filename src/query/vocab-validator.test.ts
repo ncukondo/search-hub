@@ -591,6 +591,17 @@ describe('createEricCountValidator', () => {
     const validator = createEricCountValidator(provider);
     expect(validator.vocabulary).toBe('eric');
   });
+
+  it('should strip double quotes from term in query', async () => {
+    const provider = createMockProvider(new Map([['with quotes', 5]]));
+    const validator = createEricCountValidator(provider);
+
+    await validator.countTerm('with "quotes"');
+    expect(provider.count).toHaveBeenCalledWith({
+      native: 'subject:"with quotes"',
+      provider: 'eric',
+    });
+  });
 });
 
 describe('createEmtreeCountValidator', () => {
@@ -649,5 +660,106 @@ describe('createEmtreeCountValidator', () => {
     const provider = createMockProvider(new Map());
     const validator = createEmtreeCountValidator(provider);
     expect(validator.vocabulary).toBe('emtree');
+  });
+
+  it('should strip double quotes from term in query', async () => {
+    const provider = createMockProvider(new Map([['with quotes', 10]]));
+    const validator = createEmtreeCountValidator(provider);
+
+    await validator.countTerm('with "quotes"');
+    expect(provider.count).toHaveBeenCalledWith({
+      native: 'INDEXTERMS("with quotes")',
+      provider: 'scopus',
+    });
+  });
+});
+
+describe('validateControlledVocab concurrency', () => {
+  it('should limit per-group concurrency to 3', async () => {
+    // Create 5 ERIC terms to verify max 3 concurrent
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          eric: ['A', 'B', 'C', 'D', 'E'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    let concurrent = 0;
+    let maxConcurrent = 0;
+
+    const ericValidator: CountVocabValidator = {
+      vocabulary: 'eric',
+      countTerm: vi.fn(async () => {
+        concurrent++;
+        if (concurrent > maxConcurrent) maxConcurrent = concurrent;
+        await new Promise((r) => setTimeout(r, 10));
+        concurrent--;
+        return 1;
+      }),
+    };
+
+    const meshClient = createMockMeSHClient(new Map());
+    await validateControlledVocab(ast, meshClient, {
+      countValidators: [ericValidator],
+    });
+
+    expect(maxConcurrent).toBeLessThanOrEqual(3);
+    expect(ericValidator.countTerm).toHaveBeenCalledTimes(5);
+  });
+
+  it('should run different vocab groups in parallel', async () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          eric: ['E1'],
+          emtree: ['M1'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const callOrder: string[] = [];
+
+    const ericValidator: CountVocabValidator = {
+      vocabulary: 'eric',
+      countTerm: vi.fn(async () => {
+        callOrder.push('eric-start');
+        await new Promise((r) => setTimeout(r, 20));
+        callOrder.push('eric-end');
+        return 1;
+      }),
+    };
+
+    const emtreeValidator: CountVocabValidator = {
+      vocabulary: 'emtree',
+      countTerm: vi.fn(async () => {
+        callOrder.push('emtree-start');
+        await new Promise((r) => setTimeout(r, 20));
+        callOrder.push('emtree-end');
+        return 1;
+      }),
+    };
+
+    const meshClient = createMockMeSHClient(new Map());
+    await validateControlledVocab(ast, meshClient, {
+      countValidators: [ericValidator, emtreeValidator],
+    });
+
+    // Both should start before either ends (parallel execution)
+    const ericStartIdx = callOrder.indexOf('eric-start');
+    const emtreeStartIdx = callOrder.indexOf('emtree-start');
+    const ericEndIdx = callOrder.indexOf('eric-end');
+    const emtreeEndIdx = callOrder.indexOf('emtree-end');
+
+    expect(ericStartIdx).toBeLessThan(ericEndIdx);
+    expect(emtreeStartIdx).toBeLessThan(emtreeEndIdx);
+    // Both started before either finished
+    expect(Math.max(ericStartIdx, emtreeStartIdx)).toBeLessThan(
+      Math.min(ericEndIdx, emtreeEndIdx)
+    );
   });
 });
