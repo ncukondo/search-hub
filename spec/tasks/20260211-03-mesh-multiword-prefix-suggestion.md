@@ -125,13 +125,13 @@ step 4 (先頭語 startsWith) の limit を 5 → 25 に増加し、
 注意: Step 2 で `words` 変数を step 2c で先に宣言するため、step 4 の既存 `words` 宣言を
 削除し、上位で共有する。
 
-- [ ] Write test: `src/query/mesh-lookup.test.ts`
+- [x] Write test: `src/query/mesh-lookup.test.ts`
   - step 4 まで到達するケースで、limit=25 の mock レスポンスから
     Levenshtein 距離の近い順にソートされた suggestion が返ることを検証
   - 例: "Artificial Inteligence" に対して "Artificial Intelligence" (距離1) が
     "Artificial Arm" (距離大) より先に来ること
-- [ ] Verify test fails (Red)
-- [ ] Implement: step 4 を修正
+- [x] Verify test fails (Red)
+- [x] Implement: step 4 を修正
   ```typescript
   if (words.length > 1) {
     const firstWord = words[0]!;
@@ -151,9 +151,9 @@ step 4 (先頭語 startsWith) の limit を 5 → 25 に増加し、
     }
   }
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: step 4 のサジェスチョンが入力に最も近い順に並ぶ
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: step 4 のサジェスチョンが入力に最も近い順に並ぶ
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 

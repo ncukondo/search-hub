@@ -484,6 +484,58 @@ describe('MeSHLookupClient', () => {
       vi.unstubAllGlobals();
     });
 
+    it('should re-rank step 4 results by Levenshtein distance', async () => {
+      // "Artificial Inteligence" → all steps 1-3 miss, step 4 hits with limit=25
+      // words[1] = "Inteligence" (11 chars) → step 2c: 3 iterations all miss
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith full miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-1 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-2 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-3 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=7 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=6 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=5 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 4: first-word startswith with limit=25
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Artificial Arm' },
+            { resource: 'x', label: 'Artificial Eye' },
+            { resource: 'x', label: 'Artificial Intelligence' },
+            { resource: 'x', label: 'Artificial Limbs' },
+            { resource: 'x', label: 'Artificial Organs' },
+            { resource: 'x', label: 'Artificial Cells' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Artificial Inteligence');
+
+      expect(result.found).toBe(false);
+      // "Artificial Intelligence" (distance 1) should be first
+      expect(result.suggestions![0]).toBe('Artificial Intelligence');
+      // Should return at most 5 suggestions
+      expect(result.suggestions!.length).toBeLessThanOrEqual(5);
+      // Verify step 4 was called with limit=25
+      const step4CallUrl = new URL(mockFetch.mock.calls[9]![0] as string);
+      expect(step4CallUrl.searchParams.get('limit')).toBe('25');
+      expect(step4CallUrl.searchParams.get('label')).toBe('Artificial');
+
+      vi.unstubAllGlobals();
+    });
+
     it('should handle network errors gracefully', async () => {
       const mockFetch = vi
         .fn()

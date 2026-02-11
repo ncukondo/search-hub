@@ -9,6 +9,7 @@
 
 import type { RateLimiter } from '../providers/base/rate-limiter.js';
 import type { VocabCache } from './vocab-cache.js';
+import { levenshteinDistance } from '../utils/levenshtein.js';
 
 const MESH_LOOKUP_BASE_URL = 'https://id.nlm.nih.gov/mesh/lookup/term';
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -140,16 +141,21 @@ export class MeSHLookupClient {
     }
 
     // 4. Try startsWith with first word only (for multi-word terms)
+    //    Fetch up to 25 results and re-rank by Levenshtein distance
     if (words.length > 1) {
       const firstWord = words[0]!;
-      const firstWordResults = await this.fetchLookup(firstWord, 'startswith', 5);
+      const firstWordResults = await this.fetchLookup(firstWord, 'startswith', 25);
 
       if (firstWordResults.length > 0) {
-        const result: MeSHLookupResult = {
-          term,
-          found: false,
-          suggestions: firstWordResults.map((s) => s.label),
-        };
+        const ranked = firstWordResults
+          .map((s) => ({
+            label: s.label,
+            distance: levenshteinDistance(term.toLowerCase(), s.label.toLowerCase()),
+          }))
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 5)
+          .map((s) => s.label);
+        const result: MeSHLookupResult = { term, found: false, suggestions: ranked };
         this.cache?.set('mesh', term, result);
         return result;
       }
