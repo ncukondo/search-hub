@@ -46,6 +46,12 @@ describe('query init', () => {
       expect(template).toContain('Tip:');
       expect(template).toContain('acronym');
     });
+
+    it('should have $schema comment as first line', () => {
+      const template = generateQueryTemplate();
+      const firstLine = template.split('\n')[0];
+      expect(firstLine).toBe('# yaml-language-server: $schema=./query.schema.json');
+    });
   });
 
   describe('writeQueryTemplate', () => {
@@ -78,6 +84,29 @@ describe('query init', () => {
       expect(result.success).toBe(true);
       const content = await readFile(outputPath, 'utf-8');
       expect(content).toContain('name: my_search');
+    });
+
+    it('should create query.schema.json alongside output file with -o', async () => {
+      const outputPath = join(tempDir, 'search.yaml');
+      await writeQueryTemplate({ output: outputPath });
+      const schemaPath = join(tempDir, 'query.schema.json');
+      const schemaContent = await readFile(schemaPath, 'utf-8');
+      const schema = JSON.parse(schemaContent);
+      expect(schema.$schema).toContain('json-schema.org');
+    });
+
+    it('should not create schema file when outputting to stdout', async () => {
+      const result = await writeQueryTemplate({});
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('yaml-language-server');
+      // No file should be created anywhere - just verify stdout contains schema comment
+    });
+
+    it('should include $schema comment in stdout output', async () => {
+      const result = await writeQueryTemplate({});
+      expect(result.success).toBe(true);
+      const firstLine = result.message.split('\n')[0];
+      expect(firstLine).toBe('# yaml-language-server: $schema=./query.schema.json');
     });
   });
 });

@@ -52,6 +52,66 @@ describe('getSuggestion', () => {
       });
     });
 
+    describe('query validate $schema guidance', () => {
+      it('should suggest query init when no $schema and validation succeeds (info)', () => {
+        const ctx: SuggestionContext = {
+          command: 'query validate',
+          queryFile: 'query.yaml',
+          validationSuccess: true,
+          hasSchemaLink: false,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        // Should still have the normal next suggestions
+        expect(result!.next.some((s) => s.command.includes('--dry-run'))).toBe(true);
+        // Should recommend query init in seeAlso
+        expect(result!.seeAlso.some((s) => s.command.includes('query init'))).toBe(true);
+      });
+
+      it('should strongly suggest query init when no $schema and validation fails', () => {
+        const ctx: SuggestionContext = {
+          command: 'query validate',
+          queryFile: 'query.yaml',
+          validationSuccess: false,
+          hasSchemaLink: false,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        // Should include query init in next (strong recommendation)
+        expect(result!.next.some((s) => s.command.includes('query init'))).toBe(true);
+      });
+
+      it('should not suggest query init when $schema is present and validation succeeds', () => {
+        const ctx: SuggestionContext = {
+          command: 'query validate',
+          queryFile: 'query.yaml',
+          validationSuccess: true,
+          hasSchemaLink: true,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        // No query init guidance
+        expect(result!.next.some((s) => s.command.includes('query init'))).toBe(false);
+        expect(result!.seeAlso.some((s) => s.command.includes('query init'))).toBe(false);
+      });
+
+      it('should suggest using editor completion when $schema present but errors', () => {
+        const ctx: SuggestionContext = {
+          command: 'query validate',
+          queryFile: 'query.yaml',
+          validationSuccess: false,
+          hasSchemaLink: true,
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        // Should suggest $EDITOR (standard error path)
+        expect(result!.next.some((s) => s.command.includes('$EDITOR'))).toBe(true);
+        // Should NOT suggest query init since schema is already linked
+        expect(result!.next.some((s) => s.command.includes('query init'))).toBe(false);
+        expect(result!.seeAlso.some((s) => s.command.includes('query init'))).toBe(false);
+      });
+    });
+
     describe('query translate', () => {
       it('should suggest preview and full search', () => {
         const ctx: SuggestionContext = {

@@ -142,6 +142,20 @@ export function hasVocabErrors(result: ValidateResult): boolean {
 }
 
 /**
+ * Detect whether a YAML file has a yaml-language-server $schema comment
+ * in its first 5 lines.
+ */
+export async function detectSchemaLink(filePath: string): Promise<boolean> {
+  try {
+    const content = await readFile(filePath, 'utf-8');
+    const lines = content.split('\n').slice(0, 5);
+    return lines.some((line) => /yaml-language-server.*\$schema=/.test(line));
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Format controlled vocabulary validation results for display.
  */
 export function formatVocabValidationOutput(
