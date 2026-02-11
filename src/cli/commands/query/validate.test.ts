@@ -379,6 +379,137 @@ query:
     });
   });
 
+  describe('validateQueryCommand with count validators', () => {
+    const yamlWithEric = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - education
+      eric:
+        - "Medical Education"
+        - "Medcial Education"
+    operator: OR
+`;
+
+    const yamlWithEmtree = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      emtree:
+        - "diabetes mellitus"
+        - "diabetis mellitus"
+    operator: OR
+`;
+
+    const yamlWithMixed = `
+name: test-query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+      eric:
+        - "Medical Education"
+      emtree:
+        - "diabetes mellitus"
+    operator: OR
+`;
+
+    it('should validate ERIC descriptors via count validators', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithEric);
+
+      const meshClient = createMockMeSHClient(new Map());
+      const ericValidator = {
+        vocabulary: 'eric' as const,
+        countTerm: vi.fn(async (term: string) => {
+          return term === 'Medical Education' ? 42 : 0;
+        }),
+      };
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient,
+        countValidators: [ericValidator],
+      });
+
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+      expect(result.vocabResult!.valid[0]!.term).toBe('Medical Education');
+      expect(result.vocabResult!.invalid[0]!.term).toBe('Medcial Education');
+    });
+
+    it('should validate Emtree terms via count validators', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithEmtree);
+
+      const meshClient = createMockMeSHClient(new Map());
+      const emtreeValidator = {
+        vocabulary: 'emtree' as const,
+        countTerm: vi.fn(async (term: string) => {
+          return term === 'diabetes mellitus' ? 100 : 0;
+        }),
+      };
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient,
+        countValidators: [emtreeValidator],
+      });
+
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+    });
+
+    it('should validate mixed vocabulary types together', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithMixed);
+
+      const meshClient = createMockMeSHClient(
+        new Map([['Diabetes Mellitus', { found: true }]])
+      );
+      const ericValidator = {
+        vocabulary: 'eric' as const,
+        countTerm: vi.fn(async () => 50),
+      };
+      const emtreeValidator = {
+        vocabulary: 'emtree' as const,
+        countTerm: vi.fn(async () => 100),
+      };
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient,
+        countValidators: [ericValidator, emtreeValidator],
+      });
+
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(3);
+    });
+
+    it('should skip vocab validation with --no-vocab even with count validators', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithEric);
+
+      const meshClient = createMockMeSHClient(new Map());
+      const ericValidator = {
+        vocabulary: 'eric' as const,
+        countTerm: vi.fn(async () => 42),
+      };
+
+      const result = await validateQueryCommand('/path/to/query.yaml', {
+        meshClient,
+        noVocab: true,
+        countValidators: [ericValidator],
+      });
+
+      expect(result.vocabResult).toBeUndefined();
+      expect(ericValidator.countTerm).not.toHaveBeenCalled();
+    });
+  });
+
   describe('formatVocabValidationOutput', () => {
     it('should format valid terms with checkmark', () => {
       const output = formatVocabValidationOutput({

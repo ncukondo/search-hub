@@ -28,6 +28,12 @@ import { MeSHLookupClient } from '../query/mesh-lookup.js';
 import { RateLimiter } from '../providers/base/rate-limiter.js';
 import { VocabCache } from '../query/vocab-cache.js';
 import {
+  createEricCountValidator,
+  createEmtreeCountValidator,
+  type CountVocabValidator,
+} from '../query/vocab-validator.js';
+import { createProviderInstance } from './commands/search-executor.js';
+import {
   translateQueryCommand,
   formatTranslateResult,
 } from './commands/query/translate.js';
@@ -408,7 +414,37 @@ Examples:
           ...(cache ? { cache } : {}),
         });
 
-        const result = await validateQueryCommand(file, { meshClient });
+        // Create count validators for ERIC/Emtree
+        const countValidators: CountVocabValidator[] = [];
+        let config: Config | undefined;
+        try {
+          config = await loadConfig(
+            globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
+          );
+        } catch {
+          // Config not available — skip count validators
+        }
+
+        if (config) {
+          const ericProvider = createProviderInstance('eric', config);
+          if (ericProvider) {
+            countValidators.push(
+              createEricCountValidator(ericProvider, cache ? { cache } : undefined)
+            );
+          }
+
+          const scopusProvider = createProviderInstance('scopus', config);
+          if (scopusProvider) {
+            countValidators.push(
+              createEmtreeCountValidator(scopusProvider, cache ? { cache } : undefined)
+            );
+          }
+        }
+
+        const result = await validateQueryCommand(file, {
+          meshClient,
+          ...(countValidators.length > 0 ? { countValidators } : {}),
+        });
 
         if (cache) {
           await cache.save();

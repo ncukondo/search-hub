@@ -2,10 +2,14 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   extractControlledVocabTerms,
   validateControlledVocab,
+  createEricCountValidator,
+  createEmtreeCountValidator,
   type CountVocabValidator,
 } from './vocab-validator.js';
 import type { QueryAST } from './types.js';
+import type { Provider, TranslatedQuery } from '../providers/base/types.js';
 import { createMockMeSHClient } from './__test-helpers__/mock-mesh-client.js';
+import { VocabCache } from './vocab-cache.js';
 
 function makeAST(blocks: QueryAST['blocks']): QueryAST {
   return {
@@ -514,5 +518,136 @@ describe('validateControlledVocab', () => {
       { term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true },
     ]);
     expect(result.invalid).toEqual([]);
+  });
+});
+
+describe('createEricCountValidator', () => {
+  function createMockProvider(countResults: Map<string, number>): Provider {
+    return {
+      name: 'eric',
+      count: vi.fn(async (query: TranslatedQuery) => {
+        // Extract term from subject:"term"
+        const match = query.native.match(/subject:"(.+?)"/);
+        const term = match ? match[1] : '';
+        return countResults.get(term ?? '') ?? 0;
+      }),
+      search: vi.fn(),
+      translateQuery: vi.fn(),
+      testConnection: vi.fn(),
+    } as unknown as Provider;
+  }
+
+  it('should return count from provider', async () => {
+    const provider = createMockProvider(
+      new Map([['Medical Education', 42]])
+    );
+    const validator = createEricCountValidator(provider);
+
+    const count = await validator.countTerm('Medical Education');
+    expect(count).toBe(42);
+    expect(provider.count).toHaveBeenCalledWith({
+      native: 'subject:"Medical Education"',
+      provider: 'eric',
+    });
+  });
+
+  it('should return 0 for non-existent term', async () => {
+    const provider = createMockProvider(new Map());
+    const validator = createEricCountValidator(provider);
+
+    const count = await validator.countTerm('Nonexistent Term');
+    expect(count).toBe(0);
+  });
+
+  it('should use cache when available', async () => {
+    const provider = createMockProvider(
+      new Map([['Medical Education', 42]])
+    );
+    const cache = new VocabCache({ cachePath: '/tmp/test-cache.json' });
+    cache.set('eric', 'Medical Education', { term: 'Medical Education', found: true });
+
+    const validator = createEricCountValidator(provider, { cache });
+
+    const count = await validator.countTerm('Medical Education');
+    expect(count).toBe(1); // Returns 1 for found=true from cache
+    expect(provider.count).not.toHaveBeenCalled(); // Provider not called
+  });
+
+  it('should store result in cache after lookup', async () => {
+    const provider = createMockProvider(
+      new Map([['Medical Education', 42]])
+    );
+    const cache = new VocabCache({ cachePath: '/tmp/test-cache.json' });
+    const validator = createEricCountValidator(provider, { cache });
+
+    await validator.countTerm('Medical Education');
+
+    const cached = cache.get('eric', 'Medical Education');
+    expect(cached).toEqual({ term: 'Medical Education', found: true });
+  });
+
+  it('should have vocabulary set to eric', () => {
+    const provider = createMockProvider(new Map());
+    const validator = createEricCountValidator(provider);
+    expect(validator.vocabulary).toBe('eric');
+  });
+});
+
+describe('createEmtreeCountValidator', () => {
+  function createMockProvider(countResults: Map<string, number>): Provider {
+    return {
+      name: 'scopus',
+      count: vi.fn(async (query: TranslatedQuery) => {
+        // Extract term from INDEXTERMS("term")
+        const match = query.native.match(/INDEXTERMS\("(.+?)"\)/);
+        const term = match ? match[1] : '';
+        return countResults.get(term ?? '') ?? 0;
+      }),
+      search: vi.fn(),
+      translateQuery: vi.fn(),
+      testConnection: vi.fn(),
+    } as unknown as Provider;
+  }
+
+  it('should return count from provider', async () => {
+    const provider = createMockProvider(
+      new Map([['diabetes mellitus', 100]])
+    );
+    const validator = createEmtreeCountValidator(provider);
+
+    const count = await validator.countTerm('diabetes mellitus');
+    expect(count).toBe(100);
+    expect(provider.count).toHaveBeenCalledWith({
+      native: 'INDEXTERMS("diabetes mellitus")',
+      provider: 'scopus',
+    });
+  });
+
+  it('should return 0 for non-existent term', async () => {
+    const provider = createMockProvider(new Map());
+    const validator = createEmtreeCountValidator(provider);
+
+    const count = await validator.countTerm('nonexistent');
+    expect(count).toBe(0);
+  });
+
+  it('should use cache when available', async () => {
+    const provider = createMockProvider(
+      new Map([['diabetes mellitus', 100]])
+    );
+    const cache = new VocabCache({ cachePath: '/tmp/test-cache.json' });
+    cache.set('emtree', 'diabetes mellitus', { term: 'diabetes mellitus', found: true });
+
+    const validator = createEmtreeCountValidator(provider, { cache });
+
+    const count = await validator.countTerm('diabetes mellitus');
+    expect(count).toBe(1); // Returns 1 for found=true from cache
+    expect(provider.count).not.toHaveBeenCalled();
+  });
+
+  it('should have vocabulary set to emtree', () => {
+    const provider = createMockProvider(new Map());
+    const validator = createEmtreeCountValidator(provider);
+    expect(validator.vocabulary).toBe('emtree');
   });
 });

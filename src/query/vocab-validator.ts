@@ -6,6 +6,8 @@
  */
 import type { QueryAST } from './types.js';
 import type { MeSHLookupClient, MeSHLookupResult } from './mesh-lookup.js';
+import type { Provider, TranslatedQuery } from '../providers/base/types.js';
+import type { VocabCache } from './vocab-cache.js';
 
 /** Supported controlled vocabulary types. */
 export type VocabType = 'mesh' | 'eric' | 'emtree';
@@ -168,4 +170,82 @@ export async function validateControlledVocab(
   }
 
   return { valid, invalid, errors };
+}
+
+/**
+ * Build a native count-only query for a single ERIC descriptor.
+ * Uses subject: field with quoted term.
+ */
+function buildEricCountQuery(term: string): string {
+  return `subject:"${term}"`;
+}
+
+/**
+ * Build a native count-only query for a single Emtree term.
+ * Uses INDEXTERMS() function with quoted term.
+ */
+function buildEmtreeCountQuery(term: string): string {
+  return `INDEXTERMS("${term}")`;
+}
+
+/**
+ * Create a CountVocabValidator for ERIC descriptors.
+ * Validates terms by running count-only searches against the ERIC API.
+ */
+export function createEricCountValidator(
+  provider: Provider,
+  options?: { cache?: VocabCache }
+): CountVocabValidator {
+  return {
+    vocabulary: 'eric',
+    countTerm: async (term: string): Promise<number> => {
+      if (options?.cache) {
+        const cached = options.cache.get('eric', term);
+        if (cached) return cached.found ? 1 : 0;
+      }
+
+      const query: TranslatedQuery = {
+        native: buildEricCountQuery(term),
+        provider: 'eric',
+      };
+      const count = await provider.count(query);
+
+      if (options?.cache) {
+        options.cache.set('eric', term, { term, found: count > 0 });
+      }
+
+      return count;
+    },
+  };
+}
+
+/**
+ * Create a CountVocabValidator for Emtree terms.
+ * Validates terms by running count-only searches against the Scopus API.
+ */
+export function createEmtreeCountValidator(
+  provider: Provider,
+  options?: { cache?: VocabCache }
+): CountVocabValidator {
+  return {
+    vocabulary: 'emtree',
+    countTerm: async (term: string): Promise<number> => {
+      if (options?.cache) {
+        const cached = options.cache.get('emtree', term);
+        if (cached) return cached.found ? 1 : 0;
+      }
+
+      const query: TranslatedQuery = {
+        native: buildEmtreeCountQuery(term),
+        provider: 'scopus',
+      };
+      const count = await provider.count(query);
+
+      if (options?.cache) {
+        options.cache.set('emtree', term, { term, found: count > 0 });
+      }
+
+      return count;
+    },
+  };
 }
