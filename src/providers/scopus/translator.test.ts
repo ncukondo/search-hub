@@ -565,7 +565,7 @@ describe('Scopus Query Translator', () => {
   });
 
   describe('Keywords-undefined blocks', () => {
-    it('should handle mesh-only block (keywords field output is empty)', () => {
+    it('should produce empty native query for mesh-only block (unsupported vocab)', () => {
       const ast: QueryAST = {
         name: 'test',
         blocks: [
@@ -580,11 +580,11 @@ describe('Scopus Query Translator', () => {
       };
 
       const result = translateQuery(ast);
-      // Scopus doesn't use mesh, so the block has empty keywords → empty TITLE-ABS-KEY()
-      expect(result.native).toBe('TITLE-ABS-KEY()');
+      // Scopus doesn't use mesh, so the block produces no output
+      expect(result.native).toBe('');
     });
 
-    it('should combine mesh-only block with keywords block', () => {
+    it('should skip unsupported-vocab-only block when combined with keywords block', () => {
       const ast: QueryAST = {
         name: 'test',
         blocks: [
@@ -604,7 +604,7 @@ describe('Scopus Query Translator', () => {
       };
 
       const result = translateQuery(ast);
-      expect(result.native).toBe('TITLE-ABS-KEY() AND TITLE-ABS-KEY(diabetes)');
+      expect(result.native).toBe('TITLE-ABS-KEY(diabetes)');
     });
   });
 

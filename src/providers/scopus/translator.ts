@@ -91,10 +91,10 @@ function translateBlock(block: QueryBlock): { query: string; notClause: string |
     parts.push(`INDEXTERMS(${emtree.join(` ${operator} `)})`);
   }
 
-  // Combine parts
+  // Combine parts (empty string when no supported terms)
   let query: string;
   if (parts.length === 0) {
-    query = `${field}()`;
+    query = '';
   } else if (parts.length === 1) {
     query = parts[0]!;
   } else {
@@ -152,8 +152,10 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
   // Translate query blocks
   const blockResults = ast.blocks.map(translateBlock);
 
-  // Collect query parts and NOT clauses
-  const blockParts = blockResults.map((r) => r.query);
+  // Collect query parts (filter empty blocks) and NOT clauses
+  const blockParts = blockResults
+    .map((r) => r.query)
+    .filter((s) => s.length > 0);
   const notClauses = blockResults
     .map((r) => r.notClause)
     .filter((s): s is string => s !== null);
