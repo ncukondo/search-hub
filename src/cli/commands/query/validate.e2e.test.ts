@@ -3,7 +3,7 @@
  *
  * Tests query file validation functionality.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
 import {
   setupE2EContext,
@@ -25,6 +25,7 @@ import { writeQueryTemplate } from './init.js';
 import { createMockMeSHClient } from '../../../query/__test-helpers__/mock-mesh-client.js';
 import { getSuggestion } from '../../suggestions/rules.js';
 import { formatSuggestion } from '../../suggestions/index.js';
+import type { CountVocabValidator } from '../../../query/vocab-validator.js';
 
 describe('search-hub query validate E2E', () => {
   let ctx: E2EContext;
@@ -1114,6 +1115,226 @@ query:
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).not.toContain('query init');
+    });
+  });
+
+  describe('ERIC/Emtree count-only validation E2E', () => {
+    it('should validate ERIC descriptors via count-only search', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: eric-count-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - education
+      eric:
+        - "Medical Education"
+        - "Medcial Education"
+    operator: OR
+`
+      );
+
+      const meshClient = createMockMeSHClient(new Map());
+      const ericValidator: CountVocabValidator = {
+        vocabulary: 'eric',
+        countTerm: vi.fn(async (term: string) => {
+          return term === 'Medical Education' ? 42 : 0;
+        }),
+      };
+
+      const result = await validateQueryCommand(queryPath, {
+        meshClient,
+        countValidators: [ericValidator],
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.valid[0]!.term).toBe('Medical Education');
+      expect(result.vocabResult!.valid[0]!.vocabulary).toBe('eric');
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+      expect(result.vocabResult!.invalid[0]!.term).toBe('Medcial Education');
+      expect(result.vocabResult!.invalid[0]!.vocabulary).toBe('eric');
+    });
+
+    it('should validate Emtree terms via count-only search', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: emtree-count-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      emtree:
+        - "diabetes mellitus"
+        - "diabetis mellitus"
+    operator: OR
+`
+      );
+
+      const meshClient = createMockMeSHClient(new Map());
+      const emtreeValidator: CountVocabValidator = {
+        vocabulary: 'emtree',
+        countTerm: vi.fn(async (term: string) => {
+          return term === 'diabetes mellitus' ? 100 : 0;
+        }),
+      };
+
+      const result = await validateQueryCommand(queryPath, {
+        meshClient,
+        countValidators: [emtreeValidator],
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.invalid).toHaveLength(1);
+    });
+
+    it('should format ERIC/Emtree validation output correctly', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: format-eric-test
+query:
+  - field: title_abstract
+    terms:
+      eric:
+        - "Medical Education"
+        - "Medcial Education"
+    operator: OR
+`
+      );
+
+      const meshClient = createMockMeSHClient(new Map());
+      const ericValidator: CountVocabValidator = {
+        vocabulary: 'eric',
+        countTerm: vi.fn(async (term: string) => {
+          return term === 'Medical Education' ? 42 : 0;
+        }),
+      };
+
+      const result = await validateQueryCommand(queryPath, {
+        meshClient,
+        countValidators: [ericValidator],
+      });
+
+      expect(result.vocabResult).toBeDefined();
+      const output = formatVocabValidationOutput(result.vocabResult!);
+
+      expect(output).toContain('Controlled vocabulary:');
+      expect(output).toContain('✓ eric: "Medical Education"');
+      expect(output).toContain('✗ eric: "Medcial Education" — not found');
+    });
+
+    it('should validate mixed vocabularies in a single query', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: mixed-vocab-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+      mesh:
+        - "Diabetes Mellitus"
+      eric:
+        - "Medical Education"
+      emtree:
+        - "diabetes mellitus"
+    operator: OR
+`
+      );
+
+      const meshClient = createMockMeSHClient(
+        new Map([['Diabetes Mellitus', { found: true }]])
+      );
+      const ericValidator: CountVocabValidator = {
+        vocabulary: 'eric',
+        countTerm: vi.fn(async () => 50),
+      };
+      const emtreeValidator: CountVocabValidator = {
+        vocabulary: 'emtree',
+        countTerm: vi.fn(async () => 100),
+      };
+
+      const result = await validateQueryCommand(queryPath, {
+        meshClient,
+        countValidators: [ericValidator, emtreeValidator],
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(3);
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('✓ mesh: "Diabetes Mellitus"');
+      expect(output).toContain('✓ eric: "Medical Education"');
+      expect(output).toContain('✓ emtree: "diabetes mellitus"');
+    });
+
+    it('should skip ERIC/Emtree when --no-vocab is set', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: no-vocab-count-test
+query:
+  - field: title_abstract
+    terms:
+      eric:
+        - "Medical Education"
+    operator: OR
+`
+      );
+
+      const result = await validateQueryCommand(queryPath, { noVocab: true });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeUndefined();
+    });
+
+    it('should gracefully handle count API errors', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: error-count-test
+query:
+  - field: title_abstract
+    terms:
+      eric:
+        - "Valid Term"
+        - "Error Term"
+    operator: OR
+`
+      );
+
+      const meshClient = createMockMeSHClient(new Map());
+      const ericValidator: CountVocabValidator = {
+        vocabulary: 'eric',
+        countTerm: vi.fn(async (term: string) => {
+          if (term === 'Error Term') throw new Error('ERIC API timeout');
+          return 10;
+        }),
+      };
+
+      const result = await validateQueryCommand(queryPath, {
+        meshClient,
+        countValidators: [ericValidator],
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.vocabResult).toBeDefined();
+      expect(result.vocabResult!.valid).toHaveLength(1);
+      expect(result.vocabResult!.errors).toHaveLength(1);
+      expect(result.vocabResult!.errors[0]!.error).toContain('ERIC API timeout');
+
+      const output = formatVocabValidationOutput(result.vocabResult!);
+      expect(output).toContain('⚠ eric: "Error Term" — ERIC API timeout');
     });
   });
 });
