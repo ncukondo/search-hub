@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
-import { readFile } from 'node:fs/promises';
+import { readFile, access } from 'node:fs/promises';
 import {
   setupE2EContext,
   type E2EContext,
@@ -104,6 +104,40 @@ describe('search-hub query init E2E', () => {
       expect(result.success).toBe(true);
       expect(result.queryName).toBe('my_search');
       expect(result.blockCount).toBe(1);
+    });
+  });
+
+  describe('$schema support', () => {
+    it('should have $schema comment as first line of generated template', () => {
+      const template = generateQueryTemplate();
+      const firstLine = template.split('\n')[0];
+      expect(firstLine).toBe('# yaml-language-server: $schema=./query.schema.json');
+    });
+
+    it('should generate query.schema.json alongside output file', async () => {
+      const outputPath = join(ctx.tempDir, 'search.yaml');
+      await writeQueryTemplate({ output: outputPath });
+
+      // query.schema.json should exist in the same directory
+      const schemaPath = join(ctx.tempDir, 'query.schema.json');
+      await expect(access(schemaPath)).resolves.toBeUndefined();
+
+      // Schema should be valid JSON Schema
+      const schemaContent = await readFile(schemaPath, 'utf-8');
+      const schema = JSON.parse(schemaContent);
+      expect(schema.$schema).toContain('json-schema.org');
+      expect(schema.type).toBe('object');
+      expect(schema.properties).toBeDefined();
+    });
+
+    it('should generate template that passes validateQueryCommand with $schema comment', async () => {
+      const outputPath = join(ctx.tempDir, 'with-schema.yaml');
+      await writeQueryTemplate({ output: outputPath });
+
+      // The file should pass validation despite having $schema comment
+      const result = await validateQueryCommand(outputPath);
+      expect(result.success).toBe(true);
+      expect(result.queryName).toBe('my_search');
     });
   });
 });

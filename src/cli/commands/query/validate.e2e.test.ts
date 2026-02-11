@@ -19,7 +19,9 @@ import {
   formatValidateResult,
   formatVocabValidationOutput,
   hasVocabErrors,
+  detectSchemaLink,
 } from './validate.js';
+import { writeQueryTemplate } from './init.js';
 import { createMockMeSHClient } from '../../../query/__test-helpers__/mock-mesh-client.js';
 import { getSuggestion } from '../../suggestions/rules.js';
 import { formatSuggestion } from '../../suggestions/index.js';
@@ -1002,6 +1004,116 @@ query:
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).not.toContain('Next:');
+    });
+  });
+
+  describe('$schema link detection', () => {
+    it('should detect $schema in query init output', async () => {
+      const outputPath = join(ctx.tempDir, 'init-schema.yaml');
+      await writeQueryTemplate({ output: outputPath });
+
+      const hasSchema = await detectSchemaLink(outputPath);
+      expect(hasSchema).toBe(true);
+    });
+
+    it('should not detect $schema in hand-written files', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: handwritten
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - test
+    operator: OR
+`
+      );
+
+      const hasSchema = await detectSchemaLink(queryPath);
+      expect(hasSchema).toBe(false);
+    });
+
+    it('should not show query init guidance for file with $schema', async () => {
+      const outputPath = join(ctx.tempDir, 'with-schema.yaml');
+      await writeQueryTemplate({ output: outputPath });
+
+      const result = await validateQueryCommand(outputPath);
+      expect(result.success).toBe(true);
+
+      const hasSchema = await detectSchemaLink(outputPath);
+      const suggestion = formatSuggestion(getSuggestion({
+        command: 'query validate',
+        queryFile: outputPath,
+        validationSuccess: result.success,
+        hasSchemaLink: hasSchema,
+      }));
+
+      // Should NOT contain query init since schema is present
+      expect(suggestion).not.toContain('query init');
+    });
+
+    it('should show query init guidance for hand-written file without $schema', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: no-schema
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - test
+    operator: OR
+`
+      );
+
+      const result = await validateQueryCommand(queryPath);
+      expect(result.success).toBe(true);
+
+      const hasSchema = await detectSchemaLink(queryPath);
+      const suggestion = formatSuggestion(getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success,
+        hasSchemaLink: hasSchema,
+      }));
+
+      // Should contain query init recommendation
+      expect(suggestion).toContain('query init');
+    });
+
+    it('should show query init in CLI stdout for file without $schema', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
+name: cli-schema-test
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - test
+    operator: OR
+`
+      );
+
+      const result = await execCli(
+        ['query', 'validate', queryPath, '--no-vocab', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('query init');
+    });
+
+    it('should not show query init in CLI stdout for file with $schema', async () => {
+      const outputPath = join(ctx.tempDir, 'cli-with-schema.yaml');
+      await writeQueryTemplate({ output: outputPath });
+
+      const result = await execCli(
+        ['query', 'validate', outputPath, '--no-vocab', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).not.toContain('query init');
     });
   });
 });
