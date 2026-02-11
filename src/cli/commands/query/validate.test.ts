@@ -3,6 +3,7 @@ import {
   validateQueryCommand,
   formatVocabValidationOutput,
   hasVocabErrors,
+  detectSchemaLink,
 } from './validate.js';
 import * as fs from 'node:fs/promises';
 import { createMockMeSHClient } from '../../../query/__test-helpers__/mock-mesh-client.js';
@@ -344,6 +345,37 @@ query:
         vocabResult: { valid: [], invalid: [], errors: [] },
       };
       expect(hasVocabErrors(result)).toBe(false);
+    });
+  });
+
+  describe('detectSchemaLink', () => {
+    it('should return true when $schema link is present', async () => {
+      const yamlWithSchema =
+        '# yaml-language-server: $schema=./query.schema.json\n' + validYaml;
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithSchema);
+      const result = await detectSchemaLink('/path/to/query.yaml');
+      expect(result).toBe(true);
+    });
+
+    it('should return false when $schema link is absent', async () => {
+      vi.mocked(fs.readFile).mockResolvedValue(validYaml);
+      const result = await detectSchemaLink('/path/to/query.yaml');
+      expect(result).toBe(false);
+    });
+
+    it('should detect schema link within first 5 lines', async () => {
+      const yamlWithSchemaLine3 =
+        '# comment 1\n# comment 2\n# yaml-language-server: $schema=./query.schema.json\n' +
+        validYaml;
+      vi.mocked(fs.readFile).mockResolvedValue(yamlWithSchemaLine3);
+      const result = await detectSchemaLink('/path/to/query.yaml');
+      expect(result).toBe(true);
+    });
+
+    it('should return false if file read fails', async () => {
+      vi.mocked(fs.readFile).mockRejectedValue(new Error('ENOENT'));
+      const result = await detectSchemaLink('/nonexistent.yaml');
+      expect(result).toBe(false);
     });
   });
 
