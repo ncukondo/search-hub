@@ -236,16 +236,16 @@ Each step follows the TDD cycle:
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
+- [x] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
   - 成功 + $schema なしの CLI 出力に "Tip:" が含まれることを確認
   - 失敗 + $schema なしの CLI 出力に "Or create" が含まれることを確認
   - 出力に `--force` が含まれないことを確認
   - 出力に `query.yaml` が含まれることを確認
   - 既存の $schema 関連テストを新フォーマットに合わせて更新
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: 手動で $schema なし YAML を validate し出力を確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: 手動で $schema なし YAML を validate し出力を確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

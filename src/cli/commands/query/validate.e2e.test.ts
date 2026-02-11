@@ -1054,7 +1054,7 @@ query:
       expect(suggestion).not.toContain('query init');
     });
 
-    it('should show query init guidance for hand-written file without $schema', async () => {
+    it('should show Tip with query init for hand-written file without $schema (success)', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
         `
@@ -1079,11 +1079,38 @@ query:
         hasSchemaLink: hasSchema,
       }));
 
-      // Should contain query init recommendation
+      // Should contain Tip with query init recommendation
+      expect(suggestion).toContain('Tip:');
       expect(suggestion).toContain('query init');
+      expect(suggestion).toContain('query.yaml');
+      expect(suggestion).not.toContain('--force');
     });
 
-    it('should show query init in CLI stdout for file without $schema', async () => {
+    it('should show Or section with query init for invalid file without $schema (failure)', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        invalidQueryFixtures.missingName
+      );
+
+      const result = await validateQueryCommand(queryPath);
+      expect(result.success).toBe(false);
+
+      const hasSchema = await detectSchemaLink(queryPath);
+      const suggestion = formatSuggestion(getSuggestion({
+        command: 'query validate',
+        queryFile: queryPath,
+        validationSuccess: result.success,
+        hasSchemaLink: hasSchema,
+      }));
+
+      // Should contain Or section with query init
+      expect(suggestion).toContain('Or create');
+      expect(suggestion).toContain('query init');
+      expect(suggestion).toContain('query.yaml');
+      expect(suggestion).not.toContain('--force');
+    });
+
+    it('should show Tip with query init in CLI stdout for valid file without $schema', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
         `
@@ -1102,7 +1129,27 @@ query:
       );
 
       expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('Tip:');
       expect(result.stdout).toContain('query init');
+      expect(result.stdout).toContain('query.yaml');
+      expect(result.stdout).not.toContain('--force');
+    });
+
+    it('should show Or section in CLI stdout for invalid file without $schema', async () => {
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        invalidQueryFixtures.missingName
+      );
+
+      const result = await execCli(
+        ['query', 'validate', queryPath, '--no-vocab', '--config', ctx.configPath],
+      );
+
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stdout).toContain('Or create');
+      expect(result.stdout).toContain('query init');
+      expect(result.stdout).toContain('query.yaml');
+      expect(result.stdout).not.toContain('--force');
     });
 
     it('should not show query init in CLI stdout for file with $schema', async () => {
