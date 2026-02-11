@@ -35,11 +35,20 @@ export function collectUnsupportedVocabWarnings(
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]!;
+    const hasKeywords = block.terms.keywords && block.terms.keywords.length > 0;
     for (const vocab of vocabTypes) {
       if (!supportedVocab.has(vocab) && block.terms[vocab] && block.terms[vocab].length > 0) {
-        warnings.push(
-          `${providerDisplayName} does not support ${VOCAB_DISPLAY_NAMES[vocab]} terms — ${vocab} terms in block ${i + 1} will be ignored`
-        );
+        const displayName = VOCAB_DISPLAY_NAMES[vocab];
+        const blockNum = i + 1;
+        if (hasKeywords) {
+          warnings.push(
+            `${providerDisplayName}: ${displayName} terms in block ${blockNum} ignored (not supported) — keywords still searched`
+          );
+        } else {
+          warnings.push(
+            `${providerDisplayName}: block ${blockNum} skipped (contains only ${displayName} terms, not supported)`
+          );
+        }
       }
     }
   }

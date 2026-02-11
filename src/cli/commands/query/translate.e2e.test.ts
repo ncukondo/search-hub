@@ -542,7 +542,7 @@ query:
       const arxiv = result.translations!['arxiv'];
       expect(arxiv!.warnings).toBeDefined();
       expect(arxiv!.warnings).toContainEqual(
-        'arXiv does not support MeSH terms — mesh terms in block 1 will be ignored'
+        'arXiv: MeSH terms in block 1 ignored (not supported) — keywords still searched'
       );
     });
 
@@ -567,7 +567,7 @@ query:
       expect(result.success).toBe(true);
       const scopus = result.translations!['scopus'];
       expect(scopus!.warnings).toContainEqual(
-        'Scopus does not support MeSH terms — mesh terms in block 1 will be ignored'
+        'Scopus: block 1 skipped (contains only MeSH terms, not supported)'
       );
     });
 
@@ -627,7 +627,7 @@ query:
       });
 
       const output = formatTranslateResult(result, queryPath);
-      expect(output).toContain('arXiv does not support MeSH terms');
+      expect(output).toContain('arXiv: MeSH terms in block 1 ignored (not supported)');
     });
   });
 

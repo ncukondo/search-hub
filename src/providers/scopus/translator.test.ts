@@ -625,7 +625,7 @@ describe('Scopus Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.warnings).toContainEqual(
-        'Scopus does not support MeSH terms — mesh terms in block 1 will be ignored'
+        'Scopus: MeSH terms in block 1 ignored (not supported) — keywords still searched'
       );
     });
 

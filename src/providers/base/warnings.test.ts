@@ -6,7 +6,7 @@ import { collectUnsupportedVocabWarnings } from './warnings';
 import type { QueryBlock } from '../../query/types';
 
 describe('collectUnsupportedVocabWarnings', () => {
-  it('should warn when arXiv block contains mesh terms', () => {
+  it('should warn (skipped) when arXiv block contains only mesh terms', () => {
     const blocks: QueryBlock[] = [
       {
         field: 'title_abstract',
@@ -17,11 +17,11 @@ describe('collectUnsupportedVocabWarnings', () => {
 
     const warnings = collectUnsupportedVocabWarnings(blocks, 'arXiv', new Set());
     expect(warnings).toContainEqual(
-      'arXiv does not support MeSH terms — mesh terms in block 1 will be ignored'
+      'arXiv: block 1 skipped (contains only MeSH terms, not supported)'
     );
   });
 
-  it('should warn when arXiv block contains keywords + mesh', () => {
+  it('should warn (ignored) when arXiv block contains keywords + mesh', () => {
     const blocks: QueryBlock[] = [
       {
         field: 'title_abstract',
@@ -32,11 +32,11 @@ describe('collectUnsupportedVocabWarnings', () => {
 
     const warnings = collectUnsupportedVocabWarnings(blocks, 'arXiv', new Set());
     expect(warnings).toContainEqual(
-      'arXiv does not support MeSH terms — mesh terms in block 1 will be ignored'
+      'arXiv: MeSH terms in block 1 ignored (not supported) — keywords still searched'
     );
   });
 
-  it('should warn when Scopus block contains mesh terms', () => {
+  it('should warn (skipped) when Scopus block contains only mesh terms', () => {
     const blocks: QueryBlock[] = [
       {
         field: 'title_abstract',
@@ -47,11 +47,11 @@ describe('collectUnsupportedVocabWarnings', () => {
 
     const warnings = collectUnsupportedVocabWarnings(blocks, 'Scopus', new Set(['emtree']));
     expect(warnings).toContainEqual(
-      'Scopus does not support MeSH terms — mesh terms in block 1 will be ignored'
+      'Scopus: block 1 skipped (contains only MeSH terms, not supported)'
     );
   });
 
-  it('should warn when PubMed block contains emtree terms', () => {
+  it('should warn (skipped) when PubMed block contains only emtree terms', () => {
     const blocks: QueryBlock[] = [
       {
         field: 'title_abstract',
@@ -62,7 +62,7 @@ describe('collectUnsupportedVocabWarnings', () => {
 
     const warnings = collectUnsupportedVocabWarnings(blocks, 'PubMed', new Set(['mesh']));
     expect(warnings).toContainEqual(
-      'PubMed does not support Emtree terms — emtree terms in block 1 will be ignored'
+      'PubMed: block 1 skipped (contains only Emtree terms, not supported)'
     );
   });
 
@@ -121,7 +121,7 @@ describe('collectUnsupportedVocabWarnings', () => {
 
     const warnings = collectUnsupportedVocabWarnings(blocks, 'ERIC', new Set(['eric']));
     expect(warnings).toContainEqual(
-      'ERIC does not support Emtree terms — emtree terms in block 2 will be ignored'
+      'ERIC: block 2 skipped (contains only Emtree terms, not supported)'
     );
   });
 

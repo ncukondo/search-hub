@@ -415,7 +415,7 @@ describe('ERIC Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.warnings).toContainEqual(
-        'ERIC does not support Emtree terms — emtree terms in block 1 will be ignored'
+        'ERIC: block 1 skipped (contains only Emtree terms, not supported)'
       );
     });
 

@@ -638,7 +638,7 @@ describe('PubMed Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.warnings).toContainEqual(
-        'PubMed does not support Emtree terms — emtree terms in block 1 will be ignored'
+        'PubMed: block 1 skipped (contains only Emtree terms, not supported)'
       );
     });
 
