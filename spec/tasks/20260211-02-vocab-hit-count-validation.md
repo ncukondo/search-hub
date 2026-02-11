@@ -60,18 +60,18 @@ Each step follows the TDD cycle:
 
 ### Step 2: count-only 検索による hit 数チェック
 
-- [ ] Write test
+- [x] Write test
   - ERIC descriptor を単独で count-only 検索し hit 数 0 で警告
   - Emtree term を Scopus で count-only 検索し hit 数 0 で警告
   - hit 数 > 0 の term には警告なし
   - レート制限・キャッシュが適用されること
-- [ ] Verify test fails (Red)
-- [ ] Implement
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: hit 数 0 の統制語に警告が出る
+- [x] Verify test fails (Red)
+- [x] Implement
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: hit 数 0 の統制語に警告が出る
 
 ### Step 3: `query validate` に統合
 
