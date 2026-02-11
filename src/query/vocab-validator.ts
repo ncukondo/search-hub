@@ -99,7 +99,8 @@ async function mapWithConcurrency<T, R>(
   async function worker() {
     while (index < items.length) {
       const i = index++;
-      results[i] = await fn(items[i]!);
+      const item = items[i];
+      if (item !== undefined) results[i] = await fn(item);
     }
   }
   await Promise.all(
@@ -175,7 +176,8 @@ export async function validateControlledVocab(
 
   // Validate count-based vocab groups in parallel
   const countTasks = [...countGroups.entries()].map(([vocabType, groupTerms]) => {
-    const validator = countValidatorMap.get(vocabType)!;
+    const validator = countValidatorMap.get(vocabType);
+    if (!validator) return Promise.resolve([]);
     return mapWithConcurrency(groupTerms, CONCURRENCY, async (vocabTerm): Promise<TermOutcome> => {
       let count: number;
       try {

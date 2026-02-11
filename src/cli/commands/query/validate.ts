@@ -2,7 +2,7 @@
  * Query validate command implementation.
  *
  * Validates a YAML query file and reports any errors.
- * Optionally validates controlled vocabulary terms (MeSH) against external APIs.
+ * Optionally validates controlled vocabulary terms (MeSH, ERIC, Emtree) against external APIs.
  */
 import { readFile } from 'node:fs/promises';
 import { parseQueryString, ValidationError } from '../../../query/index.js';
