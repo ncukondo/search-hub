@@ -54,13 +54,13 @@ Each step follows the TDD cycle:
 
 Zod v4 の `z.toJSONSchema()` を使い、`queryFileSchema` から JSON Schema を生成する。
 
-- [ ] Write test: `src/query/json-schema.test.ts`
+- [x] Write test: `src/query/json-schema.test.ts`
   - 生成される JSON Schema が valid な JSON Schema draft であること
   - `name` (required string), `query` (required array) 等の基本構造が反映されること
   - `field` の enum 値 (`title`, `abstract`, etc.) が反映されること
   - `operator` の enum 値 (`AND`, `OR`) が反映されること
-- [ ] Verify test fails (Red)
-- [ ] Create `src/query/json-schema.ts`
+- [x] Verify test fails (Red)
+- [x] Create `src/query/json-schema.ts`
   ```typescript
   import * as z from 'zod';
   import { queryFileSchema } from './validator.js';
@@ -69,11 +69,11 @@ Zod v4 の `z.toJSONSchema()` を使い、`queryFileSchema` から JSON Schema �
     return z.toJSONSchema(queryFileSchema);
   }
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: JSON Schema がプログラムで生成できる
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: JSON Schema がプログラムで生成できる
 
 ### Step 2: `query init` に `$schema` リンクと JSON Schema ファイル出力を追加
 
@@ -81,91 +81,91 @@ Zod v4 の `z.toJSONSchema()` を使い、`queryFileSchema` から JSON Schema �
 1. テンプレート先頭に `# yaml-language-server: $schema=./query.schema.json` を追加
 2. 出力先と同じディレクトリに `query.schema.json` を生成
 
-- [ ] Write test: `src/cli/commands/query/init.test.ts`
+- [x] Write test: `src/cli/commands/query/init.test.ts`
   - 生成テンプレートの1行目が `# yaml-language-server: $schema=./query.schema.json` であること
   - `-o` 指定時に同ディレクトリに `query.schema.json` が作成されること
   - `query.schema.json` が valid な JSON Schema であること
   - stdout 出力時（`-o` なし）は `$schema` コメントは付けるが JSON Schema ファイルは生成しない
-- [ ] Verify test fails (Red)
-- [ ] Implement:
+- [x] Verify test fails (Red)
+- [x] Implement:
   - `QUERY_TEMPLATE` の先頭に schema コメント行を追加
   - `-o` 指定時に `generateQueryJSONSchema()` の結果を同ディレクトリに書き出し
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: `query init -o search.yaml` で `search.yaml` と `query.schema.json` が同ディレクトリに生成される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: `query init -o search.yaml` で `search.yaml` と `query.schema.json` が同ディレクトリに生成される
 
 ### Step 3: `query validate` で `$schema` リンクの有無を検出する
 
 YAML ファイルの先頭コメントから `yaml-language-server: $schema=` の有無を検出する関数を作成。
 
-- [ ] Write test: `src/cli/commands/query/validate.test.ts`
+- [x] Write test: `src/cli/commands/query/validate.test.ts`
   - `$schema` リンクありの YAML で `hasSchemaLink: true` が返ること
   - `$schema` リンクなしの YAML で `hasSchemaLink: false` が返ること
   - YAML パース前（コメント行）で検出すること（スキーマバリデーションとは独立）
-- [ ] Verify test fails (Red)
-- [ ] Implement: `detectSchemaLink(filePath: string): Promise<boolean>`
+- [x] Verify test fails (Red)
+- [x] Implement: `detectSchemaLink(filePath: string): Promise<boolean>`
   - ファイル先頭5行を読み取り `yaml-language-server.*\$schema=` にマッチするか検出
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: `$schema` リンクの有無を正確に検出できる
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: `$schema` リンクの有無を正確に検出できる
 
 ### Step 4: `query validate` のガイダンス分岐を実装
 
 `$schema` リンクの有無とバリデーション結果に基づき、suggestion ルールを更新。
 
-- [ ] Write test: `src/cli/suggestions/rules.test.ts`
+- [x] Write test: `src/cli/suggestions/rules.test.ts`
   - `$schema` なし + 成功 → info レベルで `query init` 推奨の suggestion
   - `$schema` なし + エラー → `query init` を含む強い推奨 suggestion
   - `$schema` あり + 成功 → 従来通り（`query init` 誘導なし）
   - `$schema` あり + エラー → 従来通り（`$EDITOR` 案内）
-- [ ] Verify test fails (Red)
-- [ ] Implement:
+- [x] Verify test fails (Red)
+- [x] Implement:
   - `SuggestionContext` に `hasSchemaLink?: boolean` を追加
   - `queryValidateRule` を更新して分岐ロジックを実装
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: 4パターンのガイダンスが正しく分岐する
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 4パターンのガイダンスが正しく分岐する
 
 ### Step 5: `src/cli/index.ts` の validate アクションに suggestion を接続
 
 現在 validate コマンドで `getSuggestion()` / `formatSuggestion()` が呼ばれていない。
 他のコマンド（search, diff, merge 等）と同様に接続する。
 
-- [ ] Write test: CLI integration test
+- [x] Write test: CLI integration test
   - validate 成功時に suggestion が出力されること
   - validate 失敗時に suggestion が出力されること
   - `--quiet` 時に suggestion が出力されないこと
-- [ ] Verify test fails (Red)
-- [ ] Implement: validate アクション内で `getSuggestion()` / `formatSuggestion()` を呼び出し
+- [x] Verify test fails (Red)
+- [x] Implement: validate アクション内で `getSuggestion()` / `formatSuggestion()` を呼び出し
   - `hasSchemaLink` を `detectSchemaLink()` で取得し context に渡す
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: validate 実行後に適切な suggestion が表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: validate 実行後に適切な suggestion が表示される
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Write/update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
+- [x] Write/update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
   - `query init -o` で生成したファイルに `$schema` コメントがあること
   - `query init -o` で `query.schema.json` が生成されること
   - `$schema` つきファイルの validate で `query init` 誘導が出ないこと
   - 手書き（`$schema` なし）ファイルの validate で `query init` 誘導が出ること
-- [ ] Write/update E2E test: `src/cli/commands/query/init.e2e.test.ts`
+- [x] Write/update E2E test: `src/cli/commands/query/init.e2e.test.ts`
   - 生成テンプレートの先頭に `$schema` があること
   - 生成テンプレートが `query validate` をパスすること
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: `query init -o` → `query validate` の一連のフローを手動確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: `query init -o` → `query validate` の一連のフローを手動確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
