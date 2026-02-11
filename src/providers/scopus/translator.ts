@@ -75,7 +75,7 @@ function quoteTerm(term: string): string {
  */
 function translateBlock(block: QueryBlock): { query: string; notClause: string | null } {
   const field = FIELD_MAP[block.field];
-  const terms = block.terms.keywords.map(quoteTerm);
+  const terms = (block.terms.keywords ?? []).map(quoteTerm);
   const operator = block.operator;
 
   const termsStr = terms.join(` ${operator} `);

@@ -44,14 +44,14 @@ Each step follows the TDD cycle:
 
 ### Step 1: `keywords` をオプションにし、最低1種の用語を必須にする
 
-- [ ] Write test: `src/query/validator.test.ts`
+- [x] Write test: `src/query/validator.test.ts`
   - `mesh` のみ（`keywords` なし）のブロックが valid であること
   - `eric` のみのブロックが valid であること
   - `keywords` のみのブロックが valid であること（既存動作の維持）
   - `keywords`, `mesh`, `eric`, `emtree` のすべてが欠けたブロックが invalid であること
   - エラーメッセージが "At least one of keywords, mesh, emtree, or eric is required" であること
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/query/validator.ts`
+- [x] Verify test fails (Red)
+- [x] Implement: `src/query/validator.ts`
   ```typescript
   const termBlockSchema = z.object({
     keywords: z.array(z.string()).min(1).optional(),
@@ -64,39 +64,39 @@ Each step follows the TDD cycle:
     { message: 'At least one of keywords, mesh, emtree, or eric is required' }
   );
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: keywords なしの MeSH-only ブロックが valid
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: keywords なしの MeSH-only ブロックが valid
 
 ### Step 2: 各 provider translator が keywords なしでも正しく動作することを確認
 
 keywords が `undefined` の場合にクエリ変換が壊れないことを確認する。
 
-- [ ] Write test: 各 translator のテストファイル
+- [x] Write test: 各 translator のテストファイル
   - `keywords: undefined, mesh: ["Artificial Intelligence"]` のブロックで
     正しいクエリ文字列が生成されることを検証（PubMed, ERIC, arXiv, Scopus）
   - keywords と mesh 両方ある場合の既存動作が維持されることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement: 各 translator で `keywords` が undefined の場合のハンドリングを追加
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: 全 provider で keywords なしのブロックが正しくクエリ変換される
+- [x] Verify test fails (Red)
+- [x] Implement: 各 translator で `keywords` が undefined の場合のハンドリングを追加
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: 全 provider で keywords なしのブロックが正しくクエリ変換される
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Write E2E test: `src/query/validator.e2e.test.ts` or update `validate.e2e.test.ts`
+- [x] Write E2E test: `src/query/validator.e2e.test.ts` or update `validate.e2e.test.ts`
   - MeSH のみのクエリファイルが validate をパスすること
   - MeSH のみのクエリで `query translate` が正しく動作すること
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: MeSH のみの YAML を作成し validate → translate の一連のフローを確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: MeSH のみの YAML を作成し validate → translate の一連のフローを確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

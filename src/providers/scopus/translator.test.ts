@@ -485,6 +485,50 @@ describe('Scopus Query Translator', () => {
     });
   });
 
+  describe('Keywords-undefined blocks', () => {
+    it('should handle mesh-only block (keywords field output is empty)', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { mesh: ['Artificial Intelligence'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      // Scopus doesn't use mesh, so the block has empty keywords → empty TITLE-ABS-KEY()
+      expect(result.native).toBe('TITLE-ABS-KEY()');
+    });
+
+    it('should combine mesh-only block with keywords block', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { mesh: ['Artificial Intelligence'] },
+            operator: 'OR',
+          },
+          {
+            field: 'title_abstract',
+            terms: { keywords: ['diabetes'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe('TITLE-ABS-KEY() AND TITLE-ABS-KEY(diabetes)');
+    });
+  });
+
   describe('Complex Queries', () => {
     it('should handle complex multi-block query', () => {
       const ast: QueryAST = {

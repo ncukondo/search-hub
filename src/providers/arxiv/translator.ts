@@ -72,7 +72,7 @@ function translateBlock(block: QueryBlock): { query: string; notClause: string |
   const { field, terms, operator } = block;
 
   // arXiv only uses keywords; ignore mesh and emtree
-  const keywords = terms.keywords;
+  const keywords = terms.keywords ?? [];
 
   let query = '';
 

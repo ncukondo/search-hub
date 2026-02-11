@@ -524,6 +524,41 @@ describe('PubMed Query Translator', () => {
     });
   });
 
+  describe('Keywords-undefined (mesh-only) blocks', () => {
+    it('should translate mesh-only block without keywords', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: { mesh: ['Artificial Intelligence'] },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe('("Artificial Intelligence"[mh])');
+    });
+
+    it('should combine mesh-only block with keywords block', () => {
+      const ast = createQueryAST([
+        {
+          field: 'title_abstract',
+          terms: { mesh: ['Artificial Intelligence'] },
+          operator: 'OR',
+        },
+        {
+          field: 'title_abstract',
+          terms: { keywords: ['diabetes', 'T2DM'] },
+          operator: 'OR',
+        },
+      ]);
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe(
+        '("Artificial Intelligence"[mh]) AND (diabetes[tiab] OR T2DM[tiab])'
+      );
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle empty keyword list', () => {
       const ast = createQueryAST([

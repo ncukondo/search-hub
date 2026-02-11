@@ -259,6 +259,30 @@ describe('ERIC Query Translator', () => {
     });
   });
 
+  describe('Keywords-undefined (eric-only) blocks', () => {
+    it('should translate eric-only block without keywords', () => {
+      const block: QueryBlock = {
+        field: 'title_abstract',
+        terms: { eric: ['Medical Education'] },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      expect(result.native).toBe('subject:"Medical Education"');
+    });
+
+    it('should translate multiple eric descriptors without keywords', () => {
+      const block: QueryBlock = {
+        field: 'title_abstract',
+        terms: { eric: ['Medical Education', 'Clinical Experience'] },
+        operator: 'OR',
+      };
+      const ast = createQueryAST([block]);
+      const result = translateQueryAST(ast);
+      expect(result.native).toBe('(subject:"Medical Education" OR subject:"Clinical Experience")');
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle empty keywords array', () => {
       const ast = createQueryAST([createBlock('title', [])]);

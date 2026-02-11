@@ -244,6 +244,24 @@ describe('translateQuery', () => {
     });
   });
 
+  describe('keywords-undefined blocks', () => {
+    it('should produce empty query for mesh-only block (arXiv ignores mesh)', () => {
+      const ast = createQueryAST([
+        createBlock('title_abstract', { mesh: ['Artificial Intelligence'] }),
+      ]);
+      const result = translateQuery(ast);
+      expect(result.native).toBe('');
+    });
+
+    it('should still work when keywords is undefined but has no arXiv-relevant terms', () => {
+      const ast = createQueryAST([
+        createBlock('title', { mesh: ['Diabetes Mellitus'] }),
+      ]);
+      const result = translateQuery(ast);
+      expect(result.native).toBe('');
+    });
+  });
+
   describe('keyword field (unsupported)', () => {
     it('should skip keyword field (not supported by arXiv)', () => {
       const ast = createQueryAST([createBlock('keyword', { keywords: ['diabetes'] })]);

@@ -24,12 +24,15 @@ export const fieldTypeSchema = z.enum([
  * Schema for term block containing search terms.
  */
 export const termBlockSchema = z.object({
-  keywords: z.array(z.string()).min(1),
+  keywords: z.array(z.string()).min(1).optional(),
   mesh: z.array(z.string()).optional(),
   emtree: z.array(z.string()).optional(),
   eric: z.array(z.string()).optional(),
   exclude: z.array(z.string()).optional(),
-});
+}).refine(
+  (data) => data.keywords?.length || data.mesh?.length || data.emtree?.length || data.eric?.length,
+  { message: 'At least one of keywords, mesh, emtree, or eric is required' }
+);
 
 /**
  * Schema for operator.

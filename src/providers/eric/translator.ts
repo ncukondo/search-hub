@@ -87,7 +87,7 @@ function translateEricDescriptors(descriptors: string[]): string[] {
  */
 function translateBlock(block: QueryBlock): { query: string; notClause: string | null } {
   const { field, terms, operator } = block;
-  const keywords = terms.keywords;
+  const keywords = terms.keywords ?? [];
   const eric = terms.eric ?? [];
 
   const allTerms: string[] = [];
