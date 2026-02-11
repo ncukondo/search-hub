@@ -52,8 +52,9 @@ export class MeSHLookupClient {
    * 1. exact — exact match
    * 2. startsWith (full term) — prefix match
    * 2b. startsWith (truncated) — suffix typo recovery (1-3 chars removed)
+   * 2c. startsWith (word1 + word2 prefix) — multi-word progressive prefix (max 3 calls)
    * 3. contains (full term) — substring match
-   * 4. startsWith (first word) — for multi-word terms
+   * 4. startsWith (first word, limit=25) — re-ranked by Levenshtein distance
    *
    * Returns on the first strategy that produces results.
    * Results are cached when a VocabCache is provided.
