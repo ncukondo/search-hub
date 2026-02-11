@@ -8,12 +8,19 @@ search-hub <command> [options]
 Commands:
   init        Initialize configuration
   config      View/edit configuration
-  query       Query utilities (validate, translate)
+  query       Query utilities (init, validate, translate)
   search      Execute search across databases
   status      Show session status
+  results     List session articles
+  summary     Show session statistics
+  diff        Compare two sessions
+  merge       Combine session results
   resume      Resume interrupted session
   export      Export session results
   register    Register results with reference-manager
+  review      Multi-reviewer screening workflow
+  notes       Session notes management
+  assess      Record quality assessment
   fulltext    Manage fulltext retrieval
 ```
 
@@ -70,24 +77,65 @@ search-hub config providers.pubmed.api_key "your-key"
 
 ---
 
-## query validate
+## query init
 
-Validate a query file.
+Generate a query YAML template with JSON Schema support for editor autocompletion.
 
 ```bash
-search-hub query validate <query.yaml>
+search-hub query init [options]
 ```
+
+| Option | Description |
+|--------|-------------|
+| `-o, --output <path>` | Write to file (default: stdout) |
+| `--force` | Overwrite existing file |
+
+When writing to a file, also generates a `query.schema.json` alongside it. The YAML template includes a `$schema` comment that enables autocompletion in editors with YAML language support (e.g., VS Code with Red Hat YAML extension).
 
 Examples:
 ```bash
+# Print template to stdout
+search-hub query init
+
+# Generate query.yaml and query.schema.json
+search-hub query init -o query.yaml
+```
+
+---
+
+## query validate
+
+Validate a query file. Checks YAML structure and optionally validates controlled vocabulary terms (MeSH, ERIC descriptors, Emtree) against external APIs.
+
+```bash
+search-hub query validate <query.yaml> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--no-vocab` | Skip controlled vocabulary validation |
+| `--no-cache` | Skip vocabulary lookup cache |
+
+When controlled vocabulary terms are present, the command automatically validates them:
+- **MeSH terms** are checked against the NLM MeSH Lookup API with typo suggestions
+- **ERIC descriptors** and **Emtree terms** are validated via count-only search (valid if hits > 0)
+
+If a query file lacks a `$schema` link, the output includes a tip suggesting `query init` to enable editor autocompletion.
+
+Examples:
+```bash
+# Validate structure and vocabulary
 search-hub query validate ./my-search.yaml
+
+# Skip vocabulary validation
+search-hub query validate ./my-search.yaml --no-vocab
 ```
 
 ---
 
 ## query translate
 
-Show translated queries for each database.
+Show translated queries for each database. Displays warnings when a query contains controlled vocabulary terms unsupported by a provider (e.g., Emtree terms in PubMed).
 
 ```bash
 search-hub query translate <query.yaml> [--db <provider>]
@@ -110,16 +158,21 @@ search-hub query translate ./query.yaml --db pubmed
 Execute search across databases.
 
 ```bash
-search-hub search <query.yaml> [options]
+search-hub search [query-file] [options]
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--db <provider>` | Target specific database(s), comma-separated |
+| `--db <providers>` | Target specific database(s), comma-separated |
+| `--query <string>` | Direct query in database-native syntax (requires `--db`) |
 | `--name <string>` | Session name |
 | `--max-results <n>` | Limit results per database |
-| `--dry-run` | Show queries without executing |
-| `--no-resume` | Start fresh session |
+| `--dry-run` | Show translated queries without executing |
+| `--count-only` | Get hit counts without downloading results (no session created) |
+| `--preview` | Get hit counts and first 5 titles without creating session |
+| `--skip-connection-test` | Skip API connection test during dry-run |
+| `--no-resume` | Start fresh even if session exists |
+| `--strict` | Require all targeted databases to succeed |
 
 Examples:
 ```bash
@@ -129,11 +182,20 @@ search-hub search ./query.yaml
 # Search specific databases
 search-hub search ./query.yaml --db pubmed,eric
 
-# Dry run
+# Check hit counts only
+search-hub search ./query.yaml --count-only
+
+# Preview counts with sample titles
+search-hub search ./query.yaml --preview
+
+# Dry run to see translated queries
 search-hub search ./query.yaml --dry-run
 
 # Limit results
 search-hub search ./query.yaml --max-results 100
+
+# Direct query (advanced)
+search-hub search --db pubmed --query "diabetes AND machine learning"
 ```
 
 ---
@@ -184,6 +246,116 @@ search-hub resume 20240115_diabetes_a3f2c1 --retry-failed
 
 ---
 
+## results
+
+List articles from a session.
+
+```bash
+search-hub results <session-id> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--limit <n>` | Maximum number of results to show |
+| `--offset <n>` | Skip first n results |
+| `--json` | Output as JSON array |
+| `--fields <fields>` | Fields to display (comma-separated) |
+| `--db <providers>` | Filter by database(s), comma-separated |
+| `--filter-year <range>` | Year range filter (e.g., "2023-2025") |
+| `--filter-title <keywords>` | Title keyword filter (comma-separated) |
+| `--filter-abstract <keywords>` | Abstract keyword filter (comma-separated) |
+| `--abstract` | Show abstracts with results |
+| `--abstract-length <n>` | Maximum abstract length in characters (default: 300) |
+
+Examples:
+```bash
+# Show first 50 results
+search-hub results SESSION_ID --limit 50
+
+# Filter by year and show abstracts
+search-hub results SESSION_ID --filter-year 2023-2025 --abstract
+
+# JSON output for scripting
+search-hub results SESSION_ID --json
+```
+
+---
+
+## summary
+
+Show session statistics.
+
+```bash
+search-hub summary <session-id> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output as JSON |
+
+Examples:
+```bash
+search-hub summary SESSION_ID
+search-hub summary SESSION_ID --json
+```
+
+---
+
+## diff
+
+Compare two sessions to see what changed between query iterations.
+
+```bash
+search-hub diff <session-id-1> <session-id-2> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--show <section>` | Show only: `added`, `removed`, or `common` |
+| `--json` | Output as JSON |
+| `--no-query-diff` | Hide query changes section |
+
+Matches articles by identifiers (DOI, PMID, arXiv ID, etc.). Also compares query blocks and filters between sessions.
+
+Examples:
+```bash
+# Full diff between two sessions
+search-hub diff SESSION_V1 SESSION_V2
+
+# Show only removed articles
+search-hub diff SESSION_V1 SESSION_V2 --show removed
+
+# JSON output
+search-hub diff SESSION_V1 SESSION_V2 --json
+```
+
+---
+
+## merge
+
+Combine results from multiple sessions into one.
+
+```bash
+search-hub merge <session-ids...> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--name <string>` | Name for merged session |
+| `--dry-run` | Show what would be merged without creating session |
+| `--json` | Output as JSON |
+
+Examples:
+```bash
+# Merge two sessions
+search-hub merge SESSION_1 SESSION_2 --name combined
+
+# Preview merge
+search-hub merge SESSION_1 SESSION_2 --dry-run
+```
+
+---
+
 ## export
 
 Export session results.
@@ -194,10 +366,14 @@ search-hub export <session-id> [options]
 
 | Option | Description |
 |--------|-------------|
-| `--format <fmt>` | Output format: `ids`, `json`, `jsonl` |
-| `--output <path>` | Output file (default: stdout) |
-| `--db <provider>` | Export specific database only |
+| `--format <fmt>` | Output format: `ids`, `json`, `jsonl`, `csl-json` (default: `jsonl`) |
+| `-o, --output <path>` | Output file (default: stdout) |
+| `--db <providers>` | Export specific database(s) only |
 | `--id-type <type>` | For ids format: `doi`, `pmid`, `all` |
+| `--no-dedup` | Disable deduplication of results |
+| `--filter-year <range>` | Year range filter (e.g., "2023-2025") |
+| `--filter-title <keywords>` | Title keyword filter (comma-separated) |
+| `--filter-abstract <keywords>` | Abstract keyword filter (comma-separated) |
 
 Examples:
 ```bash
@@ -207,8 +383,11 @@ search-hub export SESSION_ID --format ids --id-type doi
 # Export full JSON
 search-hub export SESSION_ID --format json -o results.json
 
-# Export as JSON lines
-search-hub export SESSION_ID --format jsonl
+# Export as CSL-JSON (for citation managers)
+search-hub export SESSION_ID --format csl-json -o refs.json
+
+# Export with year filter
+search-hub export SESSION_ID --format jsonl --filter-year 2023-2025
 ```
 
 ---
@@ -223,14 +402,19 @@ search-hub register <session-id> [options]
 
 | Option | Description |
 |--------|-------------|
-| `--db <provider>` | Register specific database only |
+| `--db <providers>` | Register specific database(s) only |
 | `--dry-run` | Show what would be registered |
 | `--with-abstracts` | Also update abstracts |
+| `--reviewed` | Register only articles with `finalDecision=include` |
+| `--all` | Register all articles (ignore reviews) |
+| `--force` | Skip confirmation prompts |
+| `--no-attach-fulltext` | Skip automatic fulltext attachment |
 
 Examples:
 ```bash
 search-hub register SESSION_ID
 search-hub register SESSION_ID --dry-run
+search-hub register SESSION_ID --reviewed
 ```
 
 ---
@@ -434,28 +618,197 @@ search-hub fulltext pending my-session --export urls.txt
 
 ---
 
-## register (fulltext integration)
+## review
 
-The `register` command automatically attaches fulltext files when registering articles with reference-manager.
+Multi-reviewer screening workflow for systematic literature review.
+
+### review init
+
+Generate `reviews.yaml` from deduplicated search results.
 
 ```bash
-search-hub register <session-id> [options]
+search-hub review init --session <session-id> [options]
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--no-attach-fulltext` | Skip automatic fulltext attachment |
-| `--dry-run` | Show what would be registered |
+| `--session <id>` | Session ID (required) |
+| `-f, --force` | Overwrite existing `reviews.yaml` |
 
-After importing articles, any available fulltext files (PDF and Markdown) are automatically attached to the corresponding reference-manager entries.
+### review status
+
+Show review progress summary.
+
+```bash
+search-hub review status --session <session-id> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--session <id>` | Session ID (required) |
+| `--json` | Output as JSON |
+
+### review list
+
+List articles with optional status filtering.
+
+```bash
+search-hub review list --session <session-id> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--session <id>` | Session ID (required) |
+| `--filter <type>` | Filter: `pending`, `incomplete`, `uncertain`, `agreed-include`, `agreed-exclude`, `conflicting`, `finalized`, `all` (default: `all`) |
+| `--json` | Output as JSON |
+
+### review extract
+
+Extract a subset of articles into a work file for distributed review.
+
+```bash
+search-hub review extract --session <session-id> --name <name> --reviewer <id> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--session <id>` | Session ID (required) |
+| `--name <name>` | Name for the review subset (output: `for-review/<name>/review.yaml`) |
+| `--reviewer <id>` | Reviewer identifier (e.g., `"ai:claude"`) (required) |
+| `--filter <types>` | Filter by status (comma-separated) |
+| `--sort <method>` | Sort: `year`, `title`, `random`, `none` (default: `none`) |
+| `--limit <n>` | Limit number of articles |
+| `--offset <n>` | Skip first n articles |
+| `--seed <n>` | Random seed for reproducible sorting |
+| `--basis <type>` | Basis for review: `title`, `abstract`, or `fulltext` |
+| `--finalize` | Extract for final decision (includes reviewHistory and finalDecision) |
+
+### review merge
+
+Merge edited review file back into main `reviews.yaml`.
+
+```bash
+search-hub review merge --session <session-id> --name <name> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--session <id>` | Session ID (required) |
+| `--name <name>` | Name of the review subset to merge |
+| `--dry-run` | Show changes without applying |
+
+### review mark
+
+Mark a decision in a work file.
+
+```bash
+search-hub review mark --file <path> --id <id> --decision <decision> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--file <path>` | Path to work file (required) |
+| `--id <id>` | Article ID to mark |
+| `--decision <decision>` | Decision: `include`, `exclude`, or `uncertain` |
+| `--comment <text>` | Optional comment |
+
+### review export
+
+Export articles based on final decision.
+
+```bash
+search-hub review export --session <session-id> --only <filter> -o <path> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--session <id>` | Session ID (required) |
+| `--only <filter>` | Export filter: `included` or `excluded` |
+| `-o, --output <path>` | Output file path (required) |
+| `--format <fmt>` | Output format: `yaml`, `json`, `jsonl` (default: `yaml`) |
+
+### review finalize
+
+Auto-set `finalDecision` for articles with reviewer consensus.
+
+```bash
+search-hub review finalize --session <session-id> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--session <id>` | Session ID (required) |
+| `--dry-run` | Preview without changes |
+| `--min-reviewers <n>` | Minimum agreeing reviewers needed (default: 1) |
 
 Examples:
 ```bash
-# Register with automatic fulltext attachment
-search-hub register my-session
+# Full review workflow
+search-hub review init --session SESSION_ID
+search-hub review extract --session SESSION_ID --name title-screening --reviewer reviewer1 --basis title
+# (edit for-review/title-screening/review.yaml)
+search-hub review merge --session SESSION_ID --name title-screening
+search-hub review finalize --session SESSION_ID
+search-hub review export --session SESSION_ID --only included -o included.yaml
+```
 
-# Register without attaching fulltexts
-search-hub register my-session --no-attach-fulltext
+---
+
+## notes
+
+Manage session notes.
+
+### notes list
+
+List notes for a session or across all sessions.
+
+```bash
+search-hub notes list [session-id] [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--all` | Show notes from all sessions |
+| `--json` | Output as JSON |
+
+### notes add
+
+Add a note to a session.
+
+```bash
+search-hub notes add <session-id> [text] [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--file <path>` | Read note text from a file instead |
+
+### notes assess
+
+Add a structured quality assessment to a session.
+
+```bash
+search-hub notes assess <session-id> [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--precision <value>` | Estimated precision (e.g., `"~54%"`, `"15/28"`) |
+| `--verdict <value>` | Quality judgment: `good`, `refine`, `reject` |
+| `--comment <text>` | Free text explanation |
+
+At least one of `--precision`, `--verdict`, or `--comment` is required.
+
+Examples:
+```bash
+# Add a note
+search-hub notes add SESSION_ID "Expanded MeSH terms for better coverage"
+
+# Record assessment
+search-hub notes assess SESSION_ID --precision "~54%" --verdict good --comment "Good recall"
+
+# List all session notes
+search-hub notes list --all
 ```
 
 ---

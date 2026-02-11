@@ -64,6 +64,7 @@ Elsevier's abstract and citation database.
 
 **Features:**
 - Broad multidisciplinary coverage
+- Emtree (controlled vocabulary) support
 - Citation data
 - Source type filtering
 
@@ -83,7 +84,7 @@ Elsevier's abstract and citation database.
 | Biomedical | Strong | - | Some | Good |
 | Education | - | Strong | - | Good |
 | CS/AI | Some | - | Strong | Good |
-| Controlled vocab | MeSH | Descriptors | - | - |
+| Controlled vocab | MeSH | Descriptors | - | Emtree |
 | Full text | Via PMC | Some | Yes | - |
 | Citations | - | - | - | Yes |
 
@@ -103,6 +104,7 @@ Elsevier's abstract and citation database.
 - Use category filters to narrow results
 
 ### Scopus
+- Use Emtree terms for Scopus-specific controlled vocabulary
 - Good for cross-disciplinary searches
 - Useful for citation analysis
 - Requires institutional access

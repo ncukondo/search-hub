@@ -8,9 +8,12 @@ A CLI tool for systematic literature searching across multiple academic database
 ## Features
 
 - **Multi-database search**: PubMed, ERIC, arXiv, Scopus (Web of Science, Embase planned)
-- **Unified query syntax**: YAML-based DSL with automatic translation
+- **Unified query syntax**: YAML-based DSL with automatic translation and JSON Schema support
+- **Controlled vocabulary validation**: Validates MeSH, ERIC descriptors, and Emtree terms with typo suggestions
 - **Reproducible searches**: Full session logging for PRISMA reporting
+- **Session comparison**: Diff results between query iterations to track refinements
 - **Resume support**: Continue interrupted searches at DB or page level
+- **Review workflow**: Multi-reviewer screening with agreement tracking and finalization
 - **Fulltext management**: OA discovery, automatic retrieval, PMC XML to Markdown conversion
 - **Reference manager integration**: Works with [reference-manager](https://github.com/ncukondo/reference-manager)
 
@@ -37,8 +40,15 @@ This creates config and data directories in platform-specific locations:
 | macOS | `~/Library/Preferences/search-hub/` | `~/Library/Application Support/search-hub/` |
 | Windows | `%APPDATA%/search-hub/Config/` | `%LOCALAPPDATA%/search-hub/Data/` |
 
-2. Create a query file (`query.yaml`):
+2. Create a query file:
+```bash
+search-hub query init -o query.yaml
+```
+
+This generates a YAML template with JSON Schema support for editor autocompletion. Edit it to define your search:
+
 ```yaml
+# yaml-language-server: $schema=./query.schema.json
 name: my_review
 description: "Literature search for scoping review"
 
@@ -56,12 +66,19 @@ filters:
     - en
 ```
 
-3. Run search:
+3. Validate the query:
+```bash
+search-hub query validate query.yaml
+```
+
+This checks structure, validates controlled vocabulary terms (MeSH, ERIC descriptors, Emtree) against external APIs, and suggests corrections for typos.
+
+4. Run search:
 ```bash
 search-hub search query.yaml
 ```
 
-4. Export results:
+5. Export results:
 ```bash
 search-hub export <session-id> --format ids
 ```
@@ -106,6 +123,11 @@ Developing an effective search query is iterative. Start broad, then refine base
   search-hub search query.yaml --count-only
   ```
 
+- **Use `--preview`** to see hit counts with sample titles:
+  ```bash
+  search-hub search query.yaml --preview
+  ```
+
 - **Use `--dry-run`** to preview translations: See exactly what query each database will receive.
   ```bash
   search-hub search query.yaml --dry-run
@@ -139,10 +161,10 @@ See [Fulltext Management Guide](./docs/fulltext.md) for details.
 
 ## Documentation
 
-- [Query Guide](./docs/query-guide.md) - How to write query files
+- [Query Guide](./docs/query-guide.md) - How to write query files (DSL, JSON Schema, vocabulary validation)
 - [Command Reference](./docs/commands.md) - All CLI commands and options
 - [Configuration](./docs/configuration.md) - Setup and configuration
-- [Databases](./docs/databases.md) - Supported databases and tips
+- [Databases](./docs/databases.md) - Supported databases, controlled vocabularies, and tips
 - [Fulltext Management](./docs/fulltext.md) - Fulltext retrieval and management
 
 ## Development
