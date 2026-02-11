@@ -218,6 +218,35 @@ export class MeSHLookupClient {
           return result;
         }
       }
+
+      // 4c. Contains last word + Levenshtein re-ranking
+      //     Final fallback for severely misspelled first words
+      const lastWord = words[words.length - 1]!;
+      const containsLastResults = await this.fetchLookup(
+        lastWord,
+        'contains',
+        25
+      );
+      if (containsLastResults.length > 0) {
+        const ranked = containsLastResults
+          .map((s) => ({
+            label: s.label,
+            distance: levenshteinDistance(
+              term.toLowerCase(),
+              s.label.toLowerCase()
+            ),
+          }))
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 5)
+          .map((s) => s.label);
+        const result: MeSHLookupResult = {
+          term,
+          found: false,
+          suggestions: ranked,
+        };
+        this.cache?.set('mesh', term, result);
+        return result;
+      }
     }
 
     const result: MeSHLookupResult = { term, found: false };

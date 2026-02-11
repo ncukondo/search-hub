@@ -459,6 +459,7 @@ describe('MeSHLookupClient', () => {
       // "Xyzzy Not A Term" (16 chars) → truncated tries: 15, 14, 13 chars (3 iterations)
       // words[1] = "Not" (3 chars) → step 2c skipped
       // step 4b: "Xyzzy" (5 chars) → len=4 "Xyzz", len=3 "Xyz" (2 iterations)
+      // step 4c: contains("Term") miss
       const mockFetch = vi
         .fn()
         // exact miss
@@ -478,6 +479,8 @@ describe('MeSHLookupClient', () => {
         // step 4b: startsWith("Xyzz") miss
         .mockResolvedValueOnce({ ok: true, json: async () => [] })
         // step 4b: startsWith("Xyz") miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 4c: contains("Term") miss
         .mockResolvedValueOnce({ ok: true, json: async () => [] });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -699,6 +702,105 @@ describe('MeSHLookupClient', () => {
       expect(result.suggestions).toBeUndefined();
       // 5 calls only - no step 4, 4b, or 4c for single word
       expect(mockFetch).toHaveBeenCalledTimes(5);
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should suggest correct term via step 4c when first word is severely misspelled (Diabetse Mellitus)', async () => {
+      // "Diabetse Mellitus" → words[1] = "Mellitus" (8 chars)
+      // step 2c: startN = min(8-4, 8-1) = 4, endN = 3 → N=4,3 (2 iterations)
+      // step 4b: "Diabetse" (8 chars) → len=7,6,5 (3 iterations)
+      // step 4c: contains("Mellitus", 25) → hit
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith full miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-1 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-2 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith len-3 miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=4 "Diabetse Mell" miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: N=3 "Diabetse Mel" miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains full miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 4: startsWith("Diabetse", 25) → empty
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 4b: startsWith("Diabets", 25) miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 4b: startsWith("Diabet", 25) miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 4b: startsWith("Diabe", 25) miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 4c: contains("Mellitus", 25) → hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Diabetes Mellitus' },
+            { resource: 'x', label: 'Diabetes Mellitus, Type 2' },
+            { resource: 'x', label: 'Diabetes Mellitus, Type 1' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Diabetse Mellitus');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions![0]).toBe('Diabetes Mellitus');
+      // Verify step 4c was called with contains and last word
+      const step4cCallUrl = new URL(mockFetch.mock.calls[12]![0] as string);
+      expect(step4cCallUrl.searchParams.get('label')).toBe('Mellitus');
+      expect(step4cCallUrl.searchParams.get('match')).toBe('contains');
+      expect(step4cCallUrl.searchParams.get('limit')).toBe('25');
+
+      vi.unstubAllGlobals();
+    });
+
+    it('should not reach step 4c when step 4b succeeds', async () => {
+      // "Brest Neoplasms" → step 4b catches it, step 4c not reached
+      // (same as the step 4b test above)
+      // words[1] = "Neoplasms" (9 chars) → step 2c: 3 iterations
+      const mockFetch = vi
+        .fn()
+        // exact miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // startswith full miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // truncated startswith 3 misses
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 2c: 3 misses
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // contains miss
+        .mockResolvedValueOnce({ ok: true, json: async () => [] })
+        // step 4: startsWith("Brest", 25) → filtered out
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [{ resource: 'x', label: 'Brestan' }],
+        })
+        // step 4b: startsWith("Bres", 25) → hit
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [
+            { resource: 'x', label: 'Breast Neoplasms' },
+          ],
+        });
+      vi.stubGlobal('fetch', mockFetch);
+
+      const result = await client.lookupTerm('Brest Neoplasms');
+
+      expect(result.found).toBe(false);
+      expect(result.suggestions).toContain('Breast Neoplasms');
+      // 11 calls total — step 4c not reached
+      expect(mockFetch).toHaveBeenCalledTimes(11);
 
       vi.unstubAllGlobals();
     });
