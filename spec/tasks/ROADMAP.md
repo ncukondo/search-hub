@@ -114,7 +114,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 105 | Wire Next Step Suggestions to `query validate` | 57 | ✅ Completed | [20260210-10](completed/20260210-10-wire-validate-suggestions.md) |
 | 106 | Remove Deprecated `--vocab` Flag | 100 | ✅ Completed | [20260210-11](completed/20260210-11-remove-deprecated-vocab-flag.md) |
 | 107 | Scopus Emtree Support & Unsupported Vocab Warnings | 104 | ✅ Completed | [20260211-01](completed/20260211-01-scopus-emtree-support.md) |
-| 108 | Controlled Vocabulary Hit Count Validation | 107 | 📋 Planned | [20260211-02](20260211-02-vocab-hit-count-validation.md) |
+| 108 | Controlled Vocabulary Hit Count Validation | 107 | ✅ Completed | [20260211-02](completed/20260211-02-vocab-hit-count-validation.md) |
 
 ## Development Flow
 
