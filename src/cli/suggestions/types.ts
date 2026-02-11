@@ -19,6 +19,15 @@ export interface SuggestionResult {
   next: Suggestion[];
   /** Alternative paths (0-2 items) */
   seeAlso: Suggestion[];
+  /** Tip displayed before Next (plain text) */
+  tip?: string;
+  /** Alternative section displayed after Next, before See also */
+  or?: {
+    /** Section label (e.g. "Or create a new query from the template") */
+    label: string;
+    /** Command items */
+    items: Suggestion[];
+  };
 }
 
 /**

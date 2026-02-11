@@ -95,11 +95,11 @@ Each step follows the TDD cycle:
 `tip` はプレーンテキストのアドバイス。Next の前に表示される。
 `formatSection` は使わず、文字列をそのまま出力する。
 
-- [ ] Write test: `src/cli/suggestions/index.test.ts`
+- [x] Write test: `src/cli/suggestions/index.test.ts`
   - `tip` が存在する場合に Next の前にレンダリングされることを検証
   - `tip` が undefined の場合は従来通りの出力であることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement:
+- [x] Verify test fails (Red)
+- [x] Implement:
   - `src/cli/suggestions/types.ts`: `SuggestionResult` に `tip?: string` 追加
   - `src/cli/suggestions/index.ts`: `formatSuggestion` で tip を sections の先頭に追加
     ```typescript
@@ -122,9 +122,9 @@ Each step follows the TDD cycle:
       return '\n' + sections.join('\n\n');
     }
     ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: tip が Next の前に正しく表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: tip が Next の前に正しく表示される
 
 ### Step 2: `SuggestionResult` に `or` フィールド追加 + レンダリング
 
@@ -133,13 +133,13 @@ Each step follows the TDD cycle:
 `or.items` の description が空の場合はコメント (`# ...`) を省略する。
 `formatSection` を再利用するか、`or` 用の軽量フォーマットを用意する。
 
-- [ ] Write test: `src/cli/suggestions/index.test.ts`
+- [x] Write test: `src/cli/suggestions/index.test.ts`
   - `or` が Next の後に表示されることを検証
   - `or.label` がセクションラベルとして使われることを検証
   - `or.items` の description が空の場合にコメントが省略されることを検証
   - `or` が undefined の場合は従来通りの出力であることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement:
+- [x] Verify test fails (Red)
+- [x] Implement:
   - `src/cli/suggestions/types.ts`: `SuggestionResult` に追加
     ```typescript
     or?: {
@@ -158,23 +158,23 @@ Each step follows the TDD cycle:
     }
     ```
     ※ Next の push の後、See also の push の前に配置
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: or セクションが正しいラベルとフォーマットで表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: or セクションが正しいラベルとフォーマットで表示される
 
 ### Step 3: `queryValidateRule` 更新 — 成功時 (tip)
 
 成功 + $schema なしの場合、従来の `seeAlso` への query init 追加を `tip` に変更する。
 `--force` は使わず、新しいファイル名 `query.yaml` を提案する。
 
-- [ ] Write test: `src/cli/suggestions/rules.test.ts`
+- [x] Write test: `src/cli/suggestions/rules.test.ts`
   - 成功 + $schema なし: `tip` が定義されており "query init" を含むことを検証
   - 成功 + $schema なし: `tip` が `query.yaml` を含むことを検証（新規作成）
   - 成功 + $schema なし: `tip` が `--force` を含まないことを検証
   - 成功 + $schema なし: `seeAlso` が空であることを検証（旧: query init が入っていた）
   - 成功 + $schema あり: `tip` が undefined であることを検証（変更なし）
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/cli/suggestions/rules.ts` の `queryValidateRule` 成功パスを修正
+- [x] Verify test fails (Red)
+- [x] Implement: `src/cli/suggestions/rules.ts` の `queryValidateRule` 成功パスを修正
   ```typescript
   // 成功パス
   const next = [
@@ -193,23 +193,23 @@ Each step follows the TDD cycle:
 
   return { next, seeAlso: [] };
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 成功 + $schema なしで Tip が Next の前に表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 成功 + $schema なしで Tip が Next の前に表示される
 
 ### Step 4: `queryValidateRule` 更新 — 失敗時 (or)
 
 失敗 + $schema なしの場合、従来の `next` への query init 追加を `or` に変更する。
 `--force` は使わず、新しいファイル名 `query.yaml` を提案する。
 
-- [ ] Write test: `src/cli/suggestions/rules.test.ts`
+- [x] Write test: `src/cli/suggestions/rules.test.ts`
   - 失敗 + $schema なし: `next` が `$EDITOR` のみ（1件）であることを検証
   - 失敗 + $schema なし: `or` が定義されており "query init" を含むことを検証
   - 失敗 + $schema なし: `or.label` が "Or" で始まることを検証
   - 失敗 + $schema なし: `or.items[0].command` が `--force` を含まないことを検証
   - 失敗 + $schema あり: `or` が undefined で、`next` が `$EDITOR` のみであることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/cli/suggestions/rules.ts` の `queryValidateRule` 失敗パスを修正
+- [x] Verify test fails (Red)
+- [x] Implement: `src/cli/suggestions/rules.ts` の `queryValidateRule` 失敗パスを修正
   ```typescript
   if (ctx.validationSuccess === false) {
     const next = [{ command: `$EDITOR ${file}`, description: 'Fix errors and re-validate' }];
@@ -228,24 +228,24 @@ Each step follows the TDD cycle:
     return { next, seeAlso: [] };
   }
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 失敗 + $schema なしで "Or" セクションが Next の後に表示される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 失敗 + $schema なしで "Or" セクションが Next の後に表示される
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
+- [x] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
   - 成功 + $schema なしの CLI 出力に "Tip:" が含まれることを確認
   - 失敗 + $schema なしの CLI 出力に "Or create" が含まれることを確認
   - 出力に `--force` が含まれないことを確認
   - 出力に `query.yaml` が含まれることを確認
   - 既存の $schema 関連テストを新フォーマットに合わせて更新
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: 手動で $schema なし YAML を validate し出力を確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: 手動で $schema なし YAML を validate し出力を確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
