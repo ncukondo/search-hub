@@ -75,11 +75,30 @@ function quoteTerm(term: string): string {
  */
 function translateBlock(block: QueryBlock): { query: string; notClause: string | null } {
   const field = FIELD_MAP[block.field];
-  const terms = (block.terms.keywords ?? []).map(quoteTerm);
   const operator = block.operator;
+  const parts: string[] = [];
 
-  const termsStr = terms.join(` ${operator} `);
-  const query = `${field}(${termsStr})`;
+  // Translate keywords
+  const keywords = (block.terms.keywords ?? []).map(quoteTerm);
+  if (keywords.length > 0) {
+    parts.push(`${field}(${keywords.join(` ${operator} `)})`);
+  }
+
+  // Translate Emtree terms (always use INDEXTERMS)
+  const emtree = (block.terms.emtree ?? []).map(quoteTerm);
+  if (emtree.length > 0) {
+    parts.push(`INDEXTERMS(${emtree.join(` ${operator} `)})`);
+  }
+
+  // Combine parts
+  let query: string;
+  if (parts.length === 0) {
+    query = `${field}()`;
+  } else if (parts.length === 1) {
+    query = parts[0]!;
+  } else {
+    query = parts.join(` ${operator} `);
+  }
 
   // Translate exclude terms (without AND prefix - will be added during join)
   let notClause: string | null = null;

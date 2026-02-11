@@ -58,17 +58,17 @@ Each step follows the TDD cycle:
 
 ### Step 1: Scopus translator に Emtree term サポートを追加
 
-- [ ] Write test: `src/providers/scopus/translator.test.ts`
+- [x] Write test: `src/providers/scopus/translator.test.ts`
   - emtree のみのブロックで正しいクエリが生成されること
   - keywords + emtree 両方のブロックで正しくクエリが生成されること
   - emtree term のフィールドマッピングが正しいこと
-- [ ] Verify test fails (Red)
-- [ ] Implement: `translateBlock()` で `terms.emtree` を処理
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: Emtree term が Scopus クエリに反映される
+- [x] Verify test fails (Red)
+- [x] Implement: `translateBlock()` で `terms.emtree` を処理
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: Emtree term が Scopus クエリに反映される
 
 ### Step 2: 未対応統制語の警告
 

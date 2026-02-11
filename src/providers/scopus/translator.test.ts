@@ -485,6 +485,85 @@ describe('Scopus Query Translator', () => {
     });
   });
 
+  describe('Emtree Term Support', () => {
+    it('should translate emtree-only block using INDEXTERMS()', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { emtree: ['Artificial Intelligence'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe('INDEXTERMS("Artificial Intelligence")');
+    });
+
+    it('should translate multiple emtree terms with OR', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: { emtree: ['Diabetes Mellitus', 'Insulin Resistance'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe('INDEXTERMS("Diabetes Mellitus" OR "Insulin Resistance")');
+    });
+
+    it('should combine keywords and emtree terms with block operator', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title_abstract',
+            terms: {
+              keywords: ['diabetes', 'T2DM'],
+              emtree: ['Diabetes Mellitus'],
+            },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe(
+        'TITLE-ABS-KEY(diabetes OR T2DM) OR INDEXTERMS("Diabetes Mellitus")'
+      );
+    });
+
+    it('should use INDEXTERMS regardless of block field setting', () => {
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [
+          {
+            field: 'title',
+            terms: { emtree: ['Neoplasm'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {},
+        overrides: {},
+      };
+
+      const result = translateQuery(ast);
+      expect(result.native).toBe('INDEXTERMS(Neoplasm)');
+    });
+  });
+
   describe('Keywords-undefined blocks', () => {
     it('should handle mesh-only block (keywords field output is empty)', () => {
       const ast: QueryAST = {
