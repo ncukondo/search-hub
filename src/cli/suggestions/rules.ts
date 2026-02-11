@@ -43,7 +43,7 @@ const queryValidateRule: SuggestionRule = (ctx) => {
   }
 
   return { next, seeAlso };
-};;
+};
 
 const queryTranslateRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'query translate') return null;
