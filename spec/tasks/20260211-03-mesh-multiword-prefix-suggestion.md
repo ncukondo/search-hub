@@ -159,13 +159,14 @@ step 4 (先頭語 startsWith) の limit を 5 → 25 に増加し、
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
+- [x] Update E2E test: `src/cli/commands/query/validate.e2e.test.ts`
   - 中間タイポの MeSH 用語（"Artificial Inteligence" 等）で
     "Artificial Intelligence" がサジェスチョンに含まれることを確認
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: "Artificial Inteligence" で validate を実行しサジェスチョンを確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: "Artificial Inteligence" で validate を実行しサジェスチョンを確認
+  - curl で NLM API の直接テスト:  startsWith("Artificial Intel") → "Artificial Intelligence" ヒット確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
