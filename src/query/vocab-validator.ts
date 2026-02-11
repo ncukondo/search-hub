@@ -79,41 +79,91 @@ export function extractControlledVocabTerms(ast: QueryAST): VocabTerm[] {
 }
 
 /**
+ * A count-based vocabulary validator.
+ * Validates terms by executing a count-only search — hit count 0 means invalid.
+ */
+export interface CountVocabValidator {
+  vocabulary: VocabType;
+  countTerm: (term: string) => Promise<number>;
+}
+
+/**
  * Validate all controlled vocabulary terms in a QueryAST.
+ *
+ * MeSH terms are validated via the MeSH lookup API (exact match + suggestions).
+ * ERIC/Emtree terms are validated via count-only search when countValidators are provided.
+ * Terms whose vocabulary has no validator are skipped silently.
  */
 export async function validateControlledVocab(
   ast: QueryAST,
-  meshClient: MeSHLookupClient
+  meshClient: MeSHLookupClient,
+  options?: { countValidators?: CountVocabValidator[] }
 ): Promise<VocabValidationResult> {
   const terms = extractControlledVocabTerms(ast);
+
+  const countValidatorMap = new Map<VocabType, CountVocabValidator>();
+  for (const cv of options?.countValidators ?? []) {
+    countValidatorMap.set(cv.vocabulary, cv);
+  }
 
   const valid: VocabTermResult[] = [];
   const invalid: VocabTermResult[] = [];
   const errors: VocabTermError[] = [];
 
   for (const vocabTerm of terms) {
-    let result: MeSHLookupResult;
-    try {
-      result = await meshClient.lookupTerm(vocabTerm.term);
-    } catch (err) {
-      errors.push({
+    if (vocabTerm.vocabulary === 'mesh') {
+      // Validate via MeSH lookup API
+      let result: MeSHLookupResult;
+      try {
+        result = await meshClient.lookupTerm(vocabTerm.term);
+      } catch (err) {
+        errors.push({
+          term: vocabTerm.term,
+          vocabulary: vocabTerm.vocabulary,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        continue;
+      }
+      const termResult: VocabTermResult = {
         term: vocabTerm.term,
         vocabulary: vocabTerm.vocabulary,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      continue;
-    }
-    const termResult: VocabTermResult = {
-      term: vocabTerm.term,
-      vocabulary: vocabTerm.vocabulary,
-      found: result.found,
-      ...(result.suggestions ? { suggestions: result.suggestions } : {}),
-    };
+        found: result.found,
+        ...(result.suggestions ? { suggestions: result.suggestions } : {}),
+      };
 
-    if (result.found) {
-      valid.push(termResult);
+      if (result.found) {
+        valid.push(termResult);
+      } else {
+        invalid.push(termResult);
+      }
     } else {
-      invalid.push(termResult);
+      // Validate via count-only search
+      const validator = countValidatorMap.get(vocabTerm.vocabulary);
+      if (!validator) continue; // No validator for this vocabulary — skip
+
+      let count: number;
+      try {
+        count = await validator.countTerm(vocabTerm.term);
+      } catch (err) {
+        errors.push({
+          term: vocabTerm.term,
+          vocabulary: vocabTerm.vocabulary,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        continue;
+      }
+
+      const termResult: VocabTermResult = {
+        term: vocabTerm.term,
+        vocabulary: vocabTerm.vocabulary,
+        found: count > 0,
+      };
+
+      if (count > 0) {
+        valid.push(termResult);
+      } else {
+        invalid.push(termResult);
+      }
     }
   }
 

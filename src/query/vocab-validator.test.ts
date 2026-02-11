@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   extractControlledVocabTerms,
   validateControlledVocab,
+  type CountVocabValidator,
 } from './vocab-validator.js';
 import type { QueryAST } from './types.js';
 import { createMockMeSHClient } from './__test-helpers__/mock-mesh-client.js';
@@ -355,5 +356,163 @@ describe('validateControlledVocab', () => {
         found: false,
       },
     ]);
+  });
+
+  it('should validate eric descriptors via count-only search', async () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          eric: ['Medical Education', 'Medcial Education'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const ericValidator: CountVocabValidator = {
+      vocabulary: 'eric',
+      countTerm: vi.fn(async (term: string) => {
+        return term === 'Medical Education' ? 42 : 0;
+      }),
+    };
+
+    const meshClient = createMockMeSHClient(new Map());
+    const result = await validateControlledVocab(ast, meshClient, {
+      countValidators: [ericValidator],
+    });
+
+    expect(result.valid).toEqual([
+      { term: 'Medical Education', vocabulary: 'eric', found: true },
+    ]);
+    expect(result.invalid).toEqual([
+      { term: 'Medcial Education', vocabulary: 'eric', found: false },
+    ]);
+  });
+
+  it('should validate emtree terms via count-only search', async () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          emtree: ['diabetes mellitus', 'diabetis mellitus'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const emtreeValidator: CountVocabValidator = {
+      vocabulary: 'emtree',
+      countTerm: vi.fn(async (term: string) => {
+        return term === 'diabetes mellitus' ? 100 : 0;
+      }),
+    };
+
+    const meshClient = createMockMeSHClient(new Map());
+    const result = await validateControlledVocab(ast, meshClient, {
+      countValidators: [emtreeValidator],
+    });
+
+    expect(result.valid).toEqual([
+      { term: 'diabetes mellitus', vocabulary: 'emtree', found: true },
+    ]);
+    expect(result.invalid).toEqual([
+      { term: 'diabetis mellitus', vocabulary: 'emtree', found: false },
+    ]);
+  });
+
+  it('should handle count-only search errors gracefully', async () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          eric: ['Valid Term', 'Error Term'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const ericValidator: CountVocabValidator = {
+      vocabulary: 'eric',
+      countTerm: vi.fn(async (term: string) => {
+        if (term === 'Error Term') throw new Error('API timeout');
+        return 10;
+      }),
+    };
+
+    const meshClient = createMockMeSHClient(new Map());
+    const result = await validateControlledVocab(ast, meshClient, {
+      countValidators: [ericValidator],
+    });
+
+    expect(result.valid).toEqual([
+      { term: 'Valid Term', vocabulary: 'eric', found: true },
+    ]);
+    expect(result.errors).toEqual([
+      { term: 'Error Term', vocabulary: 'eric', error: 'API timeout' },
+    ]);
+  });
+
+  it('should validate mixed mesh, eric, and emtree terms', async () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          mesh: ['Diabetes Mellitus'],
+          eric: ['Medical Education'],
+          emtree: ['diabetes mellitus'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const meshClient = createMockMeSHClient(
+      new Map([['Diabetes Mellitus', { found: true }]])
+    );
+
+    const ericValidator: CountVocabValidator = {
+      vocabulary: 'eric',
+      countTerm: vi.fn(async () => 50),
+    };
+    const emtreeValidator: CountVocabValidator = {
+      vocabulary: 'emtree',
+      countTerm: vi.fn(async () => 100),
+    };
+
+    const result = await validateControlledVocab(ast, meshClient, {
+      countValidators: [ericValidator, emtreeValidator],
+    });
+
+    expect(result.valid).toHaveLength(3);
+    expect(result.valid).toEqual([
+      { term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true },
+      { term: 'Medical Education', vocabulary: 'eric', found: true },
+      { term: 'diabetes mellitus', vocabulary: 'emtree', found: true },
+    ]);
+  });
+
+  it('should skip eric/emtree terms when no count validators provided', async () => {
+    const ast = makeAST([
+      {
+        field: 'title_abstract',
+        terms: {
+          mesh: ['Diabetes Mellitus'],
+          eric: ['Medical Education'],
+          emtree: ['diabetes mellitus'],
+        },
+        operator: 'OR',
+      },
+    ]);
+
+    const meshClient = createMockMeSHClient(
+      new Map([['Diabetes Mellitus', { found: true }]])
+    );
+
+    const result = await validateControlledVocab(ast, meshClient);
+
+    // Only MeSH terms validated, eric/emtree skipped
+    expect(result.valid).toEqual([
+      { term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true },
+    ]);
+    expect(result.invalid).toEqual([]);
   });
 });
