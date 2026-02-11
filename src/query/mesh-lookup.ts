@@ -142,23 +142,81 @@ export class MeSHLookupClient {
     }
 
     // 4. Try startsWith with first word only (for multi-word terms)
-    //    Fetch up to 25 results and re-rank by Levenshtein distance
+    //    Fetch up to 25 results, filter by rest words, and re-rank by Levenshtein distance
     if (words.length > 1) {
       const firstWord = words[0]!;
+      const restWords = words.slice(1).join(' ').toLowerCase();
+      const restWordsPrefix = restWords.slice(0, 4);
       const firstWordResults = await this.fetchLookup(firstWord, 'startswith', 25);
 
       if (firstWordResults.length > 0) {
-        const ranked = firstWordResults
-          .map((s) => ({
-            label: s.label,
-            distance: levenshteinDistance(term.toLowerCase(), s.label.toLowerCase()),
-          }))
-          .sort((a, b) => a.distance - b.distance)
-          .slice(0, 5)
-          .map((s) => s.label);
-        const result: MeSHLookupResult = { term, found: false, suggestions: ranked };
-        this.cache?.set('mesh', term, result);
-        return result;
+        // Filter by rest words when prefix is long enough to be meaningful
+        const candidates =
+          restWordsPrefix.length >= 4
+            ? firstWordResults.filter((r) =>
+                r.label.toLowerCase().includes(restWordsPrefix)
+              )
+            : firstWordResults;
+
+        if (candidates.length > 0) {
+          const ranked = candidates
+            .map((s) => ({
+              label: s.label,
+              distance: levenshteinDistance(
+                term.toLowerCase(),
+                s.label.toLowerCase()
+              ),
+            }))
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 5)
+            .map((s) => s.label);
+          const result: MeSHLookupResult = {
+            term,
+            found: false,
+            suggestions: ranked,
+          };
+          this.cache?.set('mesh', term, result);
+          return result;
+        }
+        // No relevant results after filtering — fall through to step 4b
+      }
+
+      // 4b. Truncated first word startsWith + rest word filter
+      //     Handle first-word typos by progressively shortening the first word
+      for (
+        let len = firstWord.length - 1, iterations = 0;
+        len >= 3 && iterations < 3;
+        len--, iterations++
+      ) {
+        const truncated = firstWord.slice(0, len);
+        const truncResults = await this.fetchLookup(
+          truncated,
+          'startswith',
+          25
+        );
+        const filtered = truncResults.filter((r) =>
+          r.label.toLowerCase().includes(restWordsPrefix)
+        );
+        if (filtered.length > 0) {
+          const ranked = filtered
+            .map((s) => ({
+              label: s.label,
+              distance: levenshteinDistance(
+                term.toLowerCase(),
+                s.label.toLowerCase()
+              ),
+            }))
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 5)
+            .map((s) => s.label);
+          const result: MeSHLookupResult = {
+            term,
+            found: false,
+            suggestions: ranked,
+          };
+          this.cache?.set('mesh', term, result);
+          return result;
+        }
       }
     }
 
