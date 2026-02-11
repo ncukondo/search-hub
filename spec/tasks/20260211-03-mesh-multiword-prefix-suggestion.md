@@ -58,36 +58,17 @@ Each step follows the TDD cycle:
 `src/utils/levenshtein.ts` に Wagner-Fischer アルゴリズムを実装する。
 外部依存なし、~20行の pure TypeScript。
 
-- [ ] Write test: `src/utils/levenshtein.test.ts`
+- [x] Write test: `src/utils/levenshtein.test.ts`
   - `levenshteinDistance('', '') === 0`
   - `levenshteinDistance('abc', '') === 3`
   - `levenshteinDistance('kitten', 'sitting') === 3`
   - `levenshteinDistance('Artificial Inteligence', 'Artificial Intelligence') === 1`
   - `levenshteinDistance('a', 'a') === 0`
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/utils/levenshtein.ts`
-  ```typescript
-  export function levenshteinDistance(a: string, b: string): number {
-    const m = a.length, n = b.length;
-    const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-    for (let i = 0; i <= m; i++) dp[i]![0] = i;
-    for (let j = 0; j <= n; j++) dp[0]![j] = j;
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        dp[i]![j] = Math.min(
-          dp[i - 1]![j]! + 1,
-          dp[i]![j - 1]! + 1,
-          dp[i - 1]![j - 1]! + cost
-        );
-      }
-    }
-    return dp[m]![n]!;
-  }
-  ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 全テストケースが正しい距離を返す
+- [x] Verify test fails (Red)
+- [x] Implement: `src/utils/levenshtein.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 全テストケースが正しい距離を返す
 
 ### Step 2: Multi-word progressive prefix (step 2c)
 
@@ -117,23 +98,23 @@ if (words.length >= 2 && words[1].length > 3) {
 - N=6: "Artificial Inteli" → miss
 - N=5: "Artificial Intel" → ✓ "Artificial Intelligence" がヒット
 
-- [ ] Write test: `src/query/mesh-lookup.test.ts`
+- [x] Write test: `src/query/mesh-lookup.test.ts`
   - "Artificial Inteligence" で step 2c により "Artificial Intelligence" が suggestion に含まれることを検証
   - step 2（全体 startsWith）でヒットする場合は step 2c が呼ばれないことを検証
   - 単語が1語の場合は step 2c がスキップされることを検証
   - words[1].length <= 3 の場合は step 2c がスキップされることを検証
-- [ ] Verify test fails (Red)
-- [ ] Implement: `lookupTerm` に step 2c を追加（step 2b の後、step 3 の前）
-- [ ] Verify test passes (Green)
-- [ ] **既存テストの更新**: step 2c の追加により、多語用語の既存テストで
+- [x] Verify test fails (Red)
+- [x] Implement: `lookupTerm` に step 2c を追加（step 2b の後、step 3 の前）
+- [x] Verify test passes (Green)
+- [x] **既存テストの更新**: step 2c の追加により、多語用語の既存テストで
   mock シーケンスが変わる（step 2c の API コール分が追加される）。
   以下のテストの mock を更新:
   - `'should return suggestions via contains when startswith fails (typo)'`
   - `'should return suggestions via first-word startswith for multi-word terms'`
   - `'should fall back to contains when truncated startswith also fails'`
-  - `'should return found=false with no suggestions when all fallbacks fail'`
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: 中間タイポの多語用語で正しいサジェスチョンが得られる
+  - (skipped `'should return found=false...'` — words[1]="Not" (3 chars) doesn't trigger step 2c)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: 中間タイポの多語用語で正しいサジェスチョンが得られる
 
 ### Step 3: Step 4 強化（Levenshtein 再ランキング）
 

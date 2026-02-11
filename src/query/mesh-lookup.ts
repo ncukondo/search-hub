@@ -105,6 +105,27 @@ export class MeSHLookupClient {
       }
     }
 
+    // 2c. Multi-word progressive prefix: try word1 + word2.slice(0, N)
+    const words = term.split(/\s+/);
+    if (words.length >= 2 && words[1]!.length > 3) {
+      const startN = Math.min(words[1]!.length - 4, words[1]!.length - 1);
+      const endN = 3;
+      let iterations = 0;
+      for (let n = startN; n >= endN && iterations < 3; n--, iterations++) {
+        const prefix = words[0]! + ' ' + words[1]!.slice(0, n);
+        const prefixResults = await this.fetchLookup(prefix, 'startswith', 5);
+        if (prefixResults.length > 0) {
+          const result: MeSHLookupResult = {
+            term,
+            found: false,
+            suggestions: prefixResults.map((s) => s.label),
+          };
+          this.cache?.set('mesh', term, result);
+          return result;
+        }
+      }
+    }
+
     // 3. Try contains (full term) for typos and variant spellings
     const containsResults = await this.fetchLookup(term, 'contains', 5);
 
@@ -119,7 +140,6 @@ export class MeSHLookupClient {
     }
 
     // 4. Try startsWith with first word only (for multi-word terms)
-    const words = term.split(/\s+/);
     if (words.length > 1) {
       const firstWord = words[0]!;
       const firstWordResults = await this.fetchLookup(firstWord, 'startswith', 5);
