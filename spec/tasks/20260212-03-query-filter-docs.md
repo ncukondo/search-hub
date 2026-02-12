@@ -19,14 +19,14 @@ Update all documentation to reflect the new `-q` / `--query` filter on `results`
 
 ### Step 1: Update `spec/cli/commands.md`
 
-- [ ] Add `-q, --query <expr>` to `results` command options table
-- [ ] Add query expression syntax section under `results`
-- [ ] Add deprecation note to `--filter-year`, `--filter-title`, `--filter-abstract` in `results`
-- [ ] Add `-q, --query <expr>` to `export` command options table
-- [ ] Add deprecation note to `--filter-*` in `export`
-- [ ] Add new `## check` section with full syntax, options, examples
-- [ ] Add `check` to Command Overview list at top
-- [ ] Acceptance: spec accurately reflects implementation
+- [x] Add `-q, --query <expr>` to `results` command options table
+- [x] Add query expression syntax section under `results`
+- [x] Add deprecation note to `--filter-year`, `--filter-title`, `--filter-abstract` in `results`
+- [x] Add `-q, --query <expr>` to `export` command options table
+- [x] Add deprecation note to `--filter-*` in `export`
+- [x] Add new `## check` section with full syntax, options, examples
+- [x] Add `check` to Command Overview list at top
+- [x] Acceptance: spec accurately reflects implementation
 
 ### Step 2: Update `docs/commands.md`
 
