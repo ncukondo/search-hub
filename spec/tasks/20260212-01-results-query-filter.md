@@ -138,12 +138,12 @@ The `export` command also gains the `-q` flag (same engine). Legacy flags are de
 - [x] Add query syntax examples to `results --help` afterText
 - [x] Add query syntax examples to `export --help` afterText
 - [x] Add deprecation note to `--filter-*` flag descriptions
-- [ ] Add hint to `results` output footer: `Tip: Use -q to filter: results SESSION -q "author:smith year:2023"`
+- [x] Add hint to `results` output footer: `Tip: Use -q to filter: results SESSION -q "author:smith year:2023"`
 - [x] Acceptance: `results --help` clearly shows query syntax and examples
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: `src/cli/commands/query-filter.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/query-filter.e2e.test.ts`
   - Create a session with known articles
   - Run `results -q "known-title"` → finds the article
   - Run `results -q "doi:10.xxxx"` → finds exact match
@@ -151,10 +151,10 @@ The `export` command also gains the `-q` flag (same engine). Legacy flags are de
   - Run `results -q "author:smith year:2023"` → combined filter
   - Run `export -q "year:2023" --format ids` → filtered export
   - Run `results -q "x" --filter-title "y"` → error
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test the feature manually
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test the feature manually
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
