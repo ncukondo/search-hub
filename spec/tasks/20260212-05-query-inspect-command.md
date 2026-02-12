@@ -58,38 +58,38 @@ Query: diabetes_ai_scoping
 
 ### Step 1: Inspect logic
 
-- [ ] Write test: `src/cli/commands/query/inspect.test.ts`
+- [x] Write test: `src/cli/commands/query/inspect.test.ts`
   - Query with no `providers` → all cells show "default"
   - Query with `providers.arxiv.replaces.population` → arXiv/population shows "replaced"
   - Query with `providers.pubmed.adds.filters` → filter table shows added filters
   - Query with multiple providers customized → correct matrix
   - Format output as aligned table
-- [ ] Create `src/cli/commands/query/inspect.ts`
+- [x] Create `src/cli/commands/query/inspect.ts`
   - `inspectQuery(ast: QueryAST, enabledProviders: ProviderName[]): InspectResult`
   - `formatInspectOutput(result: InspectResult): string`
-- [ ] Verify test fails (Red) → Implement → Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: inspect logic tests pass
+- [x] Verify test fails (Red) → Implement → Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: inspect logic tests pass
 
 ### Step 2: Wire to CLI
 
-- [ ] Register `query inspect <file>` subcommand in `src/cli/index.ts`
+- [x] Register `query inspect <file>` subcommand in `src/cli/index.ts`
   - Parse YAML, run inspect, print output
   - Use config to determine enabled providers
-- [ ] Write test: `src/cli/commands/query/inspect.test.ts` (CLI integration)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub query inspect` runs correctly
+- [x] Write test: `src/cli/commands/query/inspect.test.ts` (CLI integration)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub query inspect` runs correctly
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: `src/cli/commands/query/inspect.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/query/inspect.e2e.test.ts`
   - Create YAML with providers section, run inspect, verify table output
   - Create YAML without providers, run inspect, verify all "default"
   - Verify output includes all configured providers
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Run `query inspect` on real query files
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Run `query inspect` on real query files
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
