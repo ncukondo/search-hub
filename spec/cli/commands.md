@@ -14,8 +14,10 @@ Commands:
   summary     Show session result statistics
   config      View/edit configuration
   init        Initialize configuration
+  results     Display and filter session articles
   diff        Compare results between sessions
   merge       Merge results from multiple sessions
+  check       Verify coverage of known articles
   query       Query utilities (init, validate, translate)
 ```
 
@@ -175,11 +177,12 @@ search-hub export <session-id> [options]
 |--------|-------------|
 | `--format <fmt>` | Output format: `ids`, `json`, `jsonl`, `csl-json` |
 | `--output <path>` | Output file (default: stdout) |
-| `--db <provider>` | Export only specific database(s) |
+| `-q, --query <expr>` | Filter by query expression (same syntax as `results -q`) |
 | `--id-type <type>` | For ids format: `doi`, `pmid`, `all` |
-| `--filter-year <range>` | Year range filter (e.g., `"2023-2025"`) |
-| `--filter-title <keywords>` | Title keyword filter (comma-separated, OR within) |
-| `--filter-abstract <keywords>` | Abstract keyword filter (comma-separated, OR within) |
+| `--db <provider>` | _(deprecated, use `-q "source:provider"`)_ Export only specific database(s) |
+| `--filter-year <range>` | _(deprecated, use `-q "year:range"`)_ Year range filter |
+| `--filter-title <keywords>` | _(deprecated, use `-q "title:keyword"`)_ Title keyword filter |
+| `--filter-abstract <keywords>` | _(deprecated, use `-q "abstract:keyword"`)_ Abstract keyword filter |
 
 ### Examples
 
@@ -193,16 +196,14 @@ search-hub export 20240115_diabetes-ai_a3f2c1 --format ids --id-type pmid > pmid
 # Export full JSON
 search-hub export 20240115_diabetes-ai_a3f2c1 --format json -o results.json
 
-# Export specific database
-search-hub export 20240115_diabetes-ai_a3f2c1 --db pubmed --format jsonl
-
 # Export as CSL-JSON
 search-hub export 20240115_diabetes-ai_a3f2c1 --format csl-json -o results.json
 
-# Export with filters
-search-hub export 20240115_diabetes-ai_a3f2c1 --format json --filter-year "2023-2025"
-search-hub export 20240115_diabetes-ai_a3f2c1 --format ids --filter-title "machine learning,deep learning"
-search-hub export 20240115_diabetes-ai_a3f2c1 --format json --filter-year "2024-2025" --filter-abstract "randomized"
+# Export with query filter
+search-hub export 20240115_diabetes-ai_a3f2c1 --format json -q "year:2023-2025"
+search-hub export 20240115_diabetes-ai_a3f2c1 --format ids -q "title:machine learning"
+search-hub export 20240115_diabetes-ai_a3f2c1 --format json -q "year:2024-2025 abstract:randomized"
+search-hub export 20240115_diabetes-ai_a3f2c1 --format ids -q "source:pubmed"
 ```
 
 ---
@@ -236,6 +237,138 @@ search-hub register 20240115_diabetes-ai_a3f2c1 --with-abstracts
 
 # Dry run
 search-hub register 20240115_diabetes-ai_a3f2c1 --dry-run
+```
+
+---
+
+## results
+
+Display and filter articles from a session's results.
+
+### Syntax
+
+```bash
+search-hub results <session-id> [options]
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `-q, --query <expr>` | Filter by query expression (see Query Expression Syntax below) |
+| `--limit <n>` | Maximum number of results to show |
+| `--offset <n>` | Skip first n results |
+| `--json` | Output as JSON array |
+| `--fields <fields>` | Fields to display (comma-separated) |
+| `--abstract` | Show abstracts with results |
+| `--abstract-length <n>` | Maximum abstract length in characters (default: 300) |
+| `--db <providers>` | _(deprecated, use `-q "source:pubmed"`)_ Filter by database(s) |
+| `--filter-year <range>` | _(deprecated, use `-q "year:2023-2025"`)_ Year range filter |
+| `--filter-title <keywords>` | _(deprecated, use `-q "title:keyword"`)_ Title keyword filter |
+| `--filter-abstract <keywords>` | _(deprecated, use `-q "abstract:keyword"`)_ Abstract keyword filter |
+
+### Query Expression Syntax
+
+The `-q` flag accepts a query expression with free text and field-specific terms:
+
+```
+query       = term ( SP term )*
+term        = field_term | text_term
+field_term  = field_name ":" value
+text_term   = quoted_phrase | word        # searches title + abstract
+```
+
+**Supported fields:**
+
+| Field | Matching | Example |
+|---|---|---|
+| _(free text)_ | title OR abstract substring | `"diabetes"` |
+| `title:` | title substring | `title:learning` |
+| `abstract:` | abstract substring | `abstract:randomized` |
+| `author:` | author name substring | `author:tanaka` |
+| `journal:` | journal name substring | `journal:lancet` |
+| `year:` | exact or range | `year:2023`, `year:2020-2024` |
+| `doi:` | case-insensitive exact | `doi:10.1234/xxx` |
+| `pmid:` | exact match | `pmid:37654321` |
+| `arxiv:` | exact match | `arxiv:2301.12345` |
+| `scopus:` | exact match | `scopus:xxx` |
+| `eric:` | exact match | `eric:EJ123456` |
+| `source:` | provider name exact | `source:pubmed` |
+
+**Logic:** AND between different fields, OR within same field.
+
+### Examples
+
+```bash
+# Show all articles
+search-hub results SESSION_ID
+
+# Free text search (title + abstract)
+search-hub results SESSION_ID -q "machine learning"
+
+# Field-specific filter
+search-hub results SESSION_ID -q "author:smith year:2020-2024"
+
+# Check specific article by DOI
+search-hub results SESSION_ID -q "doi:10.1001/jama.2023.12345"
+
+# Combined filter with abstract display
+search-hub results SESSION_ID -q "title:diabetes year:2023" --abstract
+```
+
+---
+
+## check
+
+Verify whether known articles are present in a session's results. Used for search query quality validation against prior reviews or reference lists.
+
+### Syntax
+
+```bash
+search-hub check <session-id> [options]
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--file <path>` | File with identifiers to check (one per line) |
+| `--doi <ids>` | Comma-separated DOIs to check |
+| `--pmid <ids>` | Comma-separated PMIDs to check |
+| `--json` | Output as JSON |
+| `--missing-only` | Show only missing articles |
+
+At least one of `--file`, `--doi`, or `--pmid` is required.
+
+### Identifier File Format
+
+Plain text, one identifier per line:
+
+```
+10.1001/jama.2023.12345          # DOI (starts with "10.")
+37654321                          # PMID (numeric only)
+DOI:10.1038/s41586-023-xxxxx    # DOI (explicit prefix)
+PMID:36543210                    # PMID (explicit prefix)
+arxiv:2301.12345                 # arXiv ID (explicit prefix)
+# comment lines are ignored
+```
+
+Auto-detection: `10.*` → DOI, all-digits → PMID. Explicit prefixes (`DOI:`, `PMID:`, `ARXIV:`) are also accepted (case-insensitive).
+
+### Examples
+
+```bash
+# Check coverage from file
+search-hub check SESSION_ID --file prior-review-dois.txt
+
+# Check specific DOIs
+search-hub check SESSION_ID --doi "10.1001/jama.2023.12345,10.1016/j.lancet.2022.xxx"
+
+# JSON output for scripting
+search-hub check SESSION_ID --file refs.txt --json
+
+# Show only missing articles
+search-hub check SESSION_ID --file refs.txt --missing-only
 ```
 
 ---
