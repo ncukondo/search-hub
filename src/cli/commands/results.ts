@@ -1,8 +1,7 @@
 /**
  * Results command - display articles from a session in the terminal.
  */
-import type { ProviderName, Article } from '../../providers/base/types.js';
-import { parseProviderNames } from '../utils/validation.js';
+import type { Article } from '../../providers/base/types.js';
 import type { ExportFilter } from './export.js';
 
 export interface ResultsCommandOptions {
@@ -11,7 +10,7 @@ export interface ResultsCommandOptions {
   offset?: number;
   json: boolean;
   fields?: string[];
-  providers?: ProviderName[];
+  query?: string;
   filter?: ExportFilter;
   showAbstract: boolean;
   abstractLength?: number;
@@ -22,7 +21,7 @@ export interface CommandLineOptions {
   offset?: string | undefined;
   json?: boolean | undefined;
   fields?: string | undefined;
-  db?: string | undefined;
+  query?: string | undefined;
   filterYear?: string | undefined;
   filterTitle?: string | undefined;
   filterAbstract?: string | undefined;
@@ -71,11 +70,12 @@ export function parseResultsOptions(
     result.fields = options.fields.split(',').map((f) => f.trim());
   }
 
-  if (options.db) {
-    result.providers = parseProviderNames(options.db);
+  // Handle -q / --query
+  if (options.query !== undefined) {
+    result.query = options.query;
   }
 
-  // Parse filters
+  // Parse legacy filters
   const filter: ExportFilter = {};
   let hasFilter = false;
 
@@ -133,6 +133,14 @@ export function validateResultsInput(options: ResultsCommandOptions): Validation
     return {
       valid: false,
       error: 'offset must be a non-negative number',
+    };
+  }
+
+  // -q and legacy filter flags are mutually exclusive
+  if (options.query !== undefined && options.query !== '' && options.filter) {
+    return {
+      valid: false,
+      error: 'Cannot use -q/--query together with --filter-year, --filter-title, or --filter-abstract. Use -q only.',
     };
   }
 
@@ -214,6 +222,11 @@ export function formatResultsList(
     }
 
     lines.push('');
+  }
+
+  // Tip: show query filter hint when not already filtering
+  if (options.filteredFrom === undefined) {
+    lines.push('Tip: Use -q to filter: results SESSION -q "author:smith year:2023"');
   }
 
   return lines.join('\n').trimEnd();

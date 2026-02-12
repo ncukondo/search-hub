@@ -389,12 +389,6 @@ describe('parseResultsOptions', () => {
     expect(result.fields).toEqual(['title', 'year', 'journal', 'doi']);
   });
 
-  it('parses db option', () => {
-    const result = parseResultsOptions('my-session', { db: 'pubmed,scopus' });
-
-    expect(result.providers).toEqual(['pubmed', 'scopus']);
-  });
-
   it('parses filter-year option for range', () => {
     const result = parseResultsOptions('my-session', { filterYear: '2023-2025' });
 
@@ -419,6 +413,18 @@ describe('parseResultsOptions', () => {
     const result = parseResultsOptions('my-session', { filterAbstract: 'machine learning' });
 
     expect(result.filter?.abstractKeywords).toEqual(['machine learning']);
+  });
+
+  it('parses -q/--query option', () => {
+    const result = parseResultsOptions('my-session', { query: 'author:smith year:2023' });
+
+    expect(result.query).toBe('author:smith year:2023');
+  });
+
+  it('passes empty -q as query', () => {
+    const result = parseResultsOptions('my-session', { query: '' });
+
+    expect(result.query).toBe('');
   });
 });
 
@@ -486,5 +492,46 @@ describe('validateResultsInput', () => {
 
     expect(result.valid).toBe(false);
     expect(result.error).toContain('offset');
+  });
+
+  it('rejects -q combined with legacy filter flags', () => {
+    const options: ResultsCommandOptions = {
+      sessionId: 'my-session',
+      json: false,
+      showAbstract: false,
+      query: 'diabetes',
+      filter: { titleKeywords: ['diabetes'] },
+    };
+
+    const result = validateResultsInput(options);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('-q/--query');
+  });
+
+  it('accepts -q without legacy filter flags', () => {
+    const options: ResultsCommandOptions = {
+      sessionId: 'my-session',
+      json: false,
+      showAbstract: false,
+      query: 'diabetes',
+    };
+
+    const result = validateResultsInput(options);
+
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts empty -q string (no filtering)', () => {
+    const options: ResultsCommandOptions = {
+      sessionId: 'my-session',
+      json: false,
+      showAbstract: false,
+      query: '',
+    };
+
+    const result = validateResultsInput(options);
+
+    expect(result.valid).toBe(true);
   });
 });

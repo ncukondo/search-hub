@@ -1,6 +1,4 @@
-import type { ProviderName } from '../../providers/base/types.js';
 import type { Article } from '../../providers/base/types.js';
-import { parseProviderNames } from '../utils/validation.js';
 import { articlesToCslJson } from '../../integration/csl-json.js';
 import { getArticleKeys } from './session-utils.js';
 
@@ -18,15 +16,17 @@ export interface ExportCommandOptions {
   sessionId: string;
   format: ExportFormat;
   outputPath?: string;
-  providers?: ProviderName[];
   idType?: IdType;
 }
 
 export interface CommandLineOptions {
   format?: string | undefined;
   output?: string | undefined;
-  db?: string | undefined;
   idType?: string | undefined;
+  query?: string | undefined;
+  filterYear?: string | undefined;
+  filterTitle?: string | undefined;
+  filterAbstract?: string | undefined;
 }
 
 export interface ValidationResult {
@@ -48,10 +48,6 @@ export function parseExportOptions(
 
   if (options.output) {
     result.outputPath = options.output;
-  }
-
-  if (options.db) {
-    result.providers = parseProviderNames(options.db);
   }
 
   if (options.idType) {

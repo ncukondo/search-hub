@@ -73,23 +73,23 @@ The `export` command also gains the `-q` flag (same engine). Legacy flags are de
 
 ### Step 1: Query tokenizer
 
-- [ ] Write test: `src/cli/commands/query-filter.test.ts`
+- [x] Write test: `src/cli/commands/query-filter.test.ts`
   - Tokenizes `"diabetes"` → `[{type: 'text', value: 'diabetes'}]`
   - Tokenizes `"author:smith year:2023"` → `[{type: 'field', field: 'author', value: 'smith'}, {type: 'field', field: 'year', value: '2023'}]`
   - Tokenizes `title:"deep learning"` → `[{type: 'field', field: 'title', value: 'deep learning'}]`
   - Tokenizes `year:2020-2024` → `[{type: 'field', field: 'year', value: '2020-2024'}]`
   - Handles edge cases: empty string, only whitespace, unclosed quotes
-- [ ] Create stub: `src/cli/commands/query-filter.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `tokenizeQuery()` function
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: all tokenizer tests pass
+- [x] Create stub: `src/cli/commands/query-filter.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `tokenizeQuery()` function
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: all tokenizer tests pass
 
 ### Step 2: Query matcher
 
-- [ ] Write test: `src/cli/commands/query-filter.test.ts` (add matcher tests)
+- [x] Write test: `src/cli/commands/query-filter.test.ts` (add matcher tests)
   - Free text matches title or abstract
   - `title:` matches only title
   - `abstract:` matches only abstract
@@ -104,46 +104,46 @@ The `export` command also gains the `-q` flag (same engine). Legacy flags are de
   - OR logic for repeated same field
   - Case-insensitive matching
   - Missing fields (no abstract, no journal) don't crash
-- [ ] Implement `matchArticle(article, tokens)` and `filterByQuery(articles, query)` functions
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: all matcher tests pass
+- [x] Implement `matchArticle(article, tokens)` and `filterByQuery(articles, query)` functions
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: all matcher tests pass
 
 ### Step 3: Wire `-q` to `results` command
 
-- [ ] Write test: update `src/cli/commands/results.test.ts`
+- [x] Write test: update `src/cli/commands/results.test.ts`
   - `-q "diabetes"` filters results by title/abstract
   - `-q "author:smith year:2023"` applies combined filter
   - `-q` and `--filter-title` used together → error
   - Empty `-q ""` → no filtering (show all)
-- [ ] Add `-q, --query <expr>` option to `results` command in `src/cli/index.ts`
-- [ ] Integrate `filterByQuery()` into results pipeline
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `results -q` works end-to-end
+- [x] Add `-q, --query <expr>` option to `results` command in `src/cli/index.ts`
+- [x] Integrate `filterByQuery()` into results pipeline
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `results -q` works end-to-end
 
 ### Step 4: Wire `-q` to `export` command
 
-- [ ] Write test: update `src/cli/commands/export.test.ts`
+- [x] Write test: update `src/cli/commands/export.test.ts`
   - `-q "year:2023"` filters exported articles
   - `-q` and `--filter-year` used together → error
-- [ ] Add `-q, --query <expr>` option to `export` command in `src/cli/index.ts`
-- [ ] Integrate `filterByQuery()` into export pipeline
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `export -q` works end-to-end
+- [x] Add `-q, --query <expr>` option to `export` command in `src/cli/index.ts`
+- [x] Integrate `filterByQuery()` into export pipeline
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `export -q` works end-to-end
 
 ### Step 5: Help text with query syntax documentation
 
-- [ ] Add query syntax examples to `results --help` afterText
-- [ ] Add query syntax examples to `export --help` afterText
-- [ ] Add deprecation note to `--filter-*` flag descriptions
-- [ ] Add hint to `results` output footer: `Tip: Use -q to filter: results SESSION -q "author:smith year:2023"`
-- [ ] Acceptance: `results --help` clearly shows query syntax and examples
+- [x] Add query syntax examples to `results --help` afterText
+- [x] Add query syntax examples to `export --help` afterText
+- [x] Add deprecation note to `--filter-*` flag descriptions
+- [x] Add hint to `results` output footer: `Tip: Use -q to filter: results SESSION -q "author:smith year:2023"`
+- [x] Acceptance: `results --help` clearly shows query syntax and examples
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: `src/cli/commands/query-filter.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/query-filter.e2e.test.ts`
   - Create a session with known articles
   - Run `results -q "known-title"` → finds the article
   - Run `results -q "doi:10.xxxx"` → finds exact match
@@ -151,10 +151,10 @@ The `export` command also gains the `-q` flag (same engine). Legacy flags are de
   - Run `results -q "author:smith year:2023"` → combined filter
   - Run `export -q "year:2023" --format ids` → filtered export
   - Run `results -q "x" --filter-title "y"` → error
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test the feature manually
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test the feature manually
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

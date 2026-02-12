@@ -8,7 +8,7 @@
  * - --id-type doi filters to DOIs
  * - --id-type pmid filters to PMIDs
  * - --output writes to file
- * - --db filters to specific database
+ * - source: query filters to specific database
  * - stdout output when no --output
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -197,12 +197,6 @@ describe('search-hub export E2E', () => {
       expect(options.outputPath).toBe('results.json');
     });
 
-    it('should parse --db option', () => {
-      const options = parseExportOptions('session-001', { db: 'pubmed' });
-
-      expect(options.providers).toEqual(['pubmed']);
-    });
-
     it('should parse --id-type option', () => {
       const options = parseExportOptions('session-001', { idType: 'doi' });
 
@@ -385,8 +379,8 @@ describe('search-hub export E2E', () => {
     });
   });
 
-  describe('--db filters to specific database', () => {
-    it('should only include articles from specified provider', async () => {
+  describe('source: query filters to specific database', () => {
+    it('should only include articles from specified provider via source: query', async () => {
       // Create session with articles from multiple providers
       const pubmedArticles = sampleArticles.filter((a) => a.source === 'pubmed');
       const arxivArticles = sampleArticles.filter((a) => a.source === 'arxiv');
@@ -397,16 +391,22 @@ describe('search-hub export E2E', () => {
         ['pubmed', 'arxiv']
       );
 
-      // Read only pubmed results
-      const pubmedResultsPath = join(ctx.sessionsDir, 'multi-provider-export', 'pubmed_results.jsonl');
-      const pubmedContent = await readFile(pubmedResultsPath, 'utf-8');
-      const pubmedLines = pubmedContent.trim().split('\n').filter(l => l);
+      // Read all results from session
+      const allArticles: Article[] = [];
+      for (const provider of ['pubmed', 'arxiv']) {
+        const resultsPath = join(ctx.sessionsDir, 'multi-provider-export', `${provider}_results.jsonl`);
+        const content = await readFile(resultsPath, 'utf-8');
+        for (const line of content.trim().split('\n').filter(l => l)) {
+          allArticles.push(JSON.parse(line));
+        }
+      }
 
-      expect(pubmedLines.length).toBe(pubmedArticles.length);
+      // Filter using source: query (replaces --db)
+      const { filterByQuery } = await import('./query-filter.js');
+      const filtered = filterByQuery(allArticles, 'source:pubmed');
 
-      // Each article should be from pubmed
-      for (const line of pubmedLines) {
-        const article = JSON.parse(line);
+      expect(filtered.length).toBe(pubmedArticles.length);
+      for (const article of filtered) {
         expect(article.source).toBe('pubmed');
       }
     });
