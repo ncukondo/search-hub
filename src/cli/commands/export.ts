@@ -27,6 +27,10 @@ export interface CommandLineOptions {
   output?: string | undefined;
   db?: string | undefined;
   idType?: string | undefined;
+  query?: string | undefined;
+  filterYear?: string | undefined;
+  filterTitle?: string | undefined;
+  filterAbstract?: string | undefined;
 }
 
 export interface ValidationResult {

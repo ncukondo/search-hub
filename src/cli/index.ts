@@ -1040,21 +1040,21 @@ Examples:
     .option('--db <providers>', 'export only specific database(s)')
     .option('--id-type <type>', 'for ids format: doi, pmid, all')
     .option('--no-dedup', 'disable deduplication of results')
-    .option('--filter-year <range>', 'year range filter (e.g., "2023-2025")')
-    .option('--filter-title <keywords>', 'title keyword filter (comma-separated)')
-    .option('--filter-abstract <keywords>', 'abstract keyword filter (comma-separated)')
+    .option('-q, --query <expr>', 'filter results with query expression')
+    .option('--filter-year <range>', 'year range filter (deprecated, use -q)')
+    .option('--filter-title <keywords>', 'title keyword filter (deprecated, use -q)')
+    .option('--filter-abstract <keywords>', 'abstract keyword filter (deprecated, use -q)')
     .addHelpText('after', `
 Examples:
   $ search-hub export SESSION_ID                             # JSONL to stdout
   $ search-hub export SESSION_ID --format json               # JSON to stdout
+  $ search-hub export SESSION_ID -q "year:2023"              # Filter by query
+  $ search-hub export SESSION_ID -q "author:smith" --format ids  # Filtered IDs
   $ search-hub export SESSION_ID --format json -o results.json  # JSON to file
   $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs to stdout
-  $ search-hub export SESSION_ID --format csl-json -o refs.json  # CSL-JSON to file
   $ search-hub export SESSION_ID --db pubmed --format jsonl
   $ search-hub export SESSION_ID --no-dedup  # Export without deduplication
-  $ search-hub export SESSION_ID --format jsonl | jq '.title'  # Pipe to jq
-  $ search-hub export SESSION_ID --filter-year 2023-2025     # Filter by year
-  $ search-hub export SESSION_ID --filter-title "machine learning,AI"  # Filter by title`)
+  $ search-hub export SESSION_ID --format jsonl | jq '.title'  # Pipe to jq`)
     .action(
       async (
         sessionId: string,
@@ -1064,6 +1064,7 @@ Examples:
           db?: string;
           idType?: string;
           dedup?: boolean;
+          query?: string;
           filterYear?: string;
           filterTitle?: string;
           filterAbstract?: string;
@@ -1071,6 +1072,16 @@ Examples:
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
+          // Validate -q vs legacy flag conflict
+          const hasLegacyFilter = options?.filterYear || options?.filterTitle || options?.filterAbstract;
+          if (options?.query && hasLegacyFilter) {
+            if (!globalOpts.quiet) {
+              console.error('Error: Cannot use -q/--query together with --filter-year, --filter-title, or --filter-abstract. Use -q only.');
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
           // Parse and validate options
           const exportOpts = parseExportOptions(sessionId, {
             format: options?.format,
@@ -1120,37 +1131,43 @@ Examples:
             exportArticles = articles;
           }
 
-          // Apply filters
-          const filter: ExportFilter = {};
-          if (options?.filterYear) {
-            const parts = options.filterYear.split('-');
-            if (parts.length === 2) {
-              const from = parseInt(parts[0]!, 10);
-              const to = parseInt(parts[1]!, 10);
-              if (!Number.isNaN(from)) filter.yearFrom = from;
-              if (!Number.isNaN(to)) filter.yearTo = to;
-            } else if (parts.length === 1) {
-              const year = parseInt(parts[0]!, 10);
-              if (!Number.isNaN(year)) {
-                filter.yearFrom = year;
-                filter.yearTo = year;
+          // Apply filters (-q or legacy)
+          const preFilterCount = exportArticles.length;
+          let hasFilter = false;
+          if (options?.query) {
+            exportArticles = filterByQuery(exportArticles, options.query);
+            hasFilter = exportArticles.length !== preFilterCount;
+          } else {
+            const filter: ExportFilter = {};
+            if (options?.filterYear) {
+              const parts = options.filterYear.split('-');
+              if (parts.length === 2) {
+                const from = parseInt(parts[0]!, 10);
+                const to = parseInt(parts[1]!, 10);
+                if (!Number.isNaN(from)) filter.yearFrom = from;
+                if (!Number.isNaN(to)) filter.yearTo = to;
+              } else if (parts.length === 1) {
+                const year = parseInt(parts[0]!, 10);
+                if (!Number.isNaN(year)) {
+                  filter.yearFrom = year;
+                  filter.yearTo = year;
+                }
               }
             }
-          }
-          if (options?.filterTitle) {
-            filter.titleKeywords = options.filterTitle.split(',').map((s) => s.trim()).filter(Boolean);
-          }
-          if (options?.filterAbstract) {
-            filter.abstractKeywords = options.filterAbstract.split(',').map((s) => s.trim()).filter(Boolean);
-          }
+            if (options?.filterTitle) {
+              filter.titleKeywords = options.filterTitle.split(',').map((s) => s.trim()).filter(Boolean);
+            }
+            if (options?.filterAbstract) {
+              filter.abstractKeywords = options.filterAbstract.split(',').map((s) => s.trim()).filter(Boolean);
+            }
 
-          const preFilterCount = exportArticles.length;
-          const hasFilter = filter.yearFrom !== undefined || filter.yearTo !== undefined
-            || (filter.titleKeywords && filter.titleKeywords.length > 0)
-            || (filter.abstractKeywords && filter.abstractKeywords.length > 0);
+            hasFilter = !!(filter.yearFrom !== undefined || filter.yearTo !== undefined
+              || (filter.titleKeywords && filter.titleKeywords.length > 0)
+              || (filter.abstractKeywords && filter.abstractKeywords.length > 0));
 
-          if (hasFilter) {
-            exportArticles = filterArticles(exportArticles, filter);
+            if (hasFilter) {
+              exportArticles = filterArticles(exportArticles, filter);
+            }
           }
 
           // Format output
