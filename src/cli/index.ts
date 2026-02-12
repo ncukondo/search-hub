@@ -220,7 +220,7 @@ export function createProgram(): Command {
     .option('-c, --config <path>', 'path to config file')
     .option('--session-dir <path>', 'path to session directory')
     .option('-v, --verbose', 'enable verbose output', false)
-    .option('-q, --quiet', 'suppress all output except errors', false)
+    .option('--quiet', 'suppress all output except errors', false)
     .option('--no-color', 'disable color output')
     .addHelpText('after', `
 Workflow:

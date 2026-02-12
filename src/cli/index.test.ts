@@ -72,7 +72,7 @@ describe('CLI Entry Point', () => {
     it('should support --quiet option', () => {
       const quietOption = program.options.find((opt) => opt.long === '--quiet');
       expect(quietOption).toBeDefined();
-      expect(quietOption?.short).toBe('-q');
+      expect(quietOption?.short).toBeUndefined();
     });
 
     it('should support --no-color option', () => {
@@ -88,7 +88,7 @@ describe('CLI Entry Point', () => {
         .option('-c, --config <path>', 'path to config file')
         .option('--session-dir <path>', 'path to session directory')
         .option('-v, --verbose', 'enable verbose output', false)
-        .option('-q, --quiet', 'suppress all output except errors', false)
+        .option('--quiet', 'suppress all output except errors', false)
         .option('--no-color', 'disable color output');
 
       program.exitOverride();
@@ -113,7 +113,7 @@ describe('CLI Entry Point', () => {
         .option('-c, --config <path>', 'path to config file')
         .option('--session-dir <path>', 'path to session directory')
         .option('-v, --verbose', 'enable verbose output', false)
-        .option('-q, --quiet', 'suppress all output except errors', false)
+        .option('--quiet', 'suppress all output except errors', false)
         .option('--no-color', 'disable color output');
 
       program.exitOverride();
