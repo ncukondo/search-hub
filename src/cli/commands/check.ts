@@ -31,7 +31,7 @@ function parseLine(line: string, lineNumber: number): ParsedIdentifier {
   const prefixMatch = line.match(/^(doi|pmid|arxiv):(.+)$/i);
   if (prefixMatch) {
     const prefix = prefixMatch[1]!.toLowerCase() as 'doi' | 'pmid' | 'arxiv';
-    return { type: prefix, value: prefixMatch[2]!, raw: line };
+    return { type: prefix, value: prefixMatch[2]!.trim(), raw: line };
   }
 
   // Auto-detect: starts with "10." → DOI
@@ -151,7 +151,7 @@ export function formatCheckResult(result: CheckResult, options: FormatCheckOptio
     lines.push('');
     lines.push(`Found (${result.foundCount}):`);
     for (const f of result.found) {
-      lines.push(`  ${f.query}  → ${f.sources.join(', ')}`);
+      lines.push(`  ${f.query} → ${f.title} (${f.sources.join(', ')})`);
     }
   }
 

@@ -34,6 +34,15 @@ describe('parseIdentifierFile', () => {
     ]);
   });
 
+  it('trims whitespace after prefix colon', () => {
+    const result = parseIdentifierFile('DOI: 10.1038/abc\nPMID: 12345\narxiv: 2301.12345');
+    expect(result).toEqual([
+      { type: 'doi', value: '10.1038/abc', raw: 'DOI: 10.1038/abc' },
+      { type: 'pmid', value: '12345', raw: 'PMID: 12345' },
+      { type: 'arxiv', value: '2301.12345', raw: 'arxiv: 2301.12345' },
+    ]);
+  });
+
   it('parses prefixed PMIDs (case-insensitive prefix)', () => {
     const result = parseIdentifierFile('PMID:36543210\npmid:12345678');
     expect(result).toEqual([
@@ -241,8 +250,8 @@ describe('formatCheckResult', () => {
   it('lists found identifiers with source databases', () => {
     const output = formatCheckResult(baseResult, { sessionId: 'test_session', source: 'refs.txt' });
     expect(output).toContain('Found (2):');
-    expect(output).toMatch(/10\.1038\/s41586-023-xxxxx\s+→ pubmed, scopus/);
-    expect(output).toMatch(/10\.1001\/jama\.2023\.12345\s+→ pubmed/);
+    expect(output).toContain('10.1038/s41586-023-xxxxx → Multi-source Article (pubmed, scopus)');
+    expect(output).toContain('10.1001/jama.2023.12345 → Single-source Article (pubmed)');
   });
 
   it('--missing-only shows only missing', () => {
