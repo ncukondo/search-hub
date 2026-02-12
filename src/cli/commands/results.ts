@@ -231,6 +231,11 @@ export function formatResultsList(
     lines.push('');
   }
 
+  // Tip: show query filter hint when not already filtering
+  if (options.filteredFrom === undefined) {
+    lines.push('Tip: Use -q to filter: results SESSION -q "author:smith year:2023"');
+  }
+
   return lines.join('\n').trimEnd();
 }
 
