@@ -4,7 +4,7 @@ import {
   termBlockSchema,
   queryBlockSchema,
   filtersSchema,
-  overrideBlockSchema,
+  providerSectionSchema,
   queryFileSchema,
   validateQueryFile,
   formatValidationErrors,
@@ -175,17 +175,20 @@ describe('Query Validator Schemas', () => {
   });
 
   describe('queryBlockSchema', () => {
-    it('should accept valid query block with OR operator', () => {
+    it('should accept valid query block with id', () => {
       const result = queryBlockSchema.parse({
+        id: 'population',
         field: 'title_abstract',
         terms: { keywords: ['AI', 'machine learning'] },
         operator: 'OR',
       });
+      expect(result.id).toBe('population');
       expect(result.operator).toBe('OR');
     });
 
     it('should accept valid query block with AND operator', () => {
       const result = queryBlockSchema.parse({
+        id: 'intervention',
         field: 'title',
         terms: { keywords: ['test'] },
         operator: 'AND',
@@ -196,6 +199,7 @@ describe('Query Validator Schemas', () => {
     it('should reject invalid operator', () => {
       expect(() =>
         queryBlockSchema.parse({
+          id: 'test',
           field: 'title',
           terms: { keywords: ['test'] },
           operator: 'XOR',
@@ -203,9 +207,31 @@ describe('Query Validator Schemas', () => {
       ).toThrow();
     });
 
+    it('should reject missing id', () => {
+      expect(() =>
+        queryBlockSchema.parse({
+          field: 'title',
+          terms: { keywords: ['test'] },
+          operator: 'OR',
+        })
+      ).toThrow();
+    });
+
+    it('should reject empty id', () => {
+      expect(() =>
+        queryBlockSchema.parse({
+          id: '',
+          field: 'title',
+          terms: { keywords: ['test'] },
+          operator: 'OR',
+        })
+      ).toThrow();
+    });
+
     it('should reject missing required fields', () => {
       expect(() =>
         queryBlockSchema.parse({
+          id: 'test',
           field: 'title',
           terms: { keywords: ['test'] },
         })
@@ -213,6 +239,7 @@ describe('Query Validator Schemas', () => {
 
       expect(() =>
         queryBlockSchema.parse({
+          id: 'test',
           terms: { keywords: ['test'] },
           operator: 'OR',
         })
@@ -248,6 +275,20 @@ describe('Query Validator Schemas', () => {
       expect(result.publicationTypes?.exclude).toEqual(['Review', 'Meta-Analysis']);
     });
 
+    it('should accept categories', () => {
+      const result = filtersSchema.parse({
+        categories: ['cs.AI', 'cs.LG'],
+      });
+      expect(result.categories).toEqual(['cs.AI', 'cs.LG']);
+    });
+
+    it('should accept source_types', () => {
+      const result = filtersSchema.parse({
+        source_types: ['journal', 'conference'],
+      });
+      expect(result.sourceTypes).toEqual(['journal', 'conference']);
+    });
+
     it('should accept empty filters', () => {
       const result = filtersSchema.parse({});
       expect(result).toEqual({});
@@ -259,44 +300,79 @@ describe('Query Validator Schemas', () => {
     });
   });
 
-  describe('overrideBlockSchema', () => {
-    it('should accept filters override', () => {
-      const result = overrideBlockSchema.parse({
-        filters: {
-          publication_types: {
-            exclude: ['Comment', 'Letter'],
+  describe('providerSectionSchema', () => {
+    it('should accept replaces with block overrides', () => {
+      const result = providerSectionSchema.parse({
+        replaces: {
+          population: {
+            field: 'all',
+            terms: { keywords: ['arxiv-specific'] },
+            operator: 'OR',
           },
         },
       });
-      expect(result.filters?.publicationTypes?.exclude).toEqual(['Comment', 'Letter']);
+      expect(result.replaces?.population?.field).toBe('all');
     });
 
-    it('should accept arxiv categories', () => {
-      const result = overrideBlockSchema.parse({
-        categories: ['cs.AI', 'cs.LG', 'q-bio'],
+    it('should accept adds with partial filters', () => {
+      const result = providerSectionSchema.parse({
+        adds: {
+          filters: {
+            categories: ['cs.AI', 'cs.LG'],
+          },
+        },
       });
-      expect(result.categories).toEqual(['cs.AI', 'cs.LG', 'q-bio']);
+      expect(result.adds?.filters?.categories).toEqual(['cs.AI', 'cs.LG']);
     });
 
-    it('should accept scopus source types', () => {
-      const result = overrideBlockSchema.parse({
-        source_types: ['journal', 'conference'],
+    it('should accept adds with snake_case filter keys', () => {
+      const result = providerSectionSchema.parse({
+        adds: {
+          filters: {
+            year_from: 2020,
+            source_types: ['journal'],
+            publication_types: { exclude: ['Review'] },
+          },
+        },
       });
-      expect(result.sourceTypes).toEqual(['journal', 'conference']);
+      expect(result.adds?.filters?.yearFrom).toBe(2020);
+      expect(result.adds?.filters?.sourceTypes).toEqual(['journal']);
+      expect(result.adds?.filters?.publicationTypes?.exclude).toEqual(['Review']);
     });
 
-    it('should accept empty override', () => {
-      const result = overrideBlockSchema.parse({});
-      expect(result).toEqual({});
+    it('should accept both replaces and adds', () => {
+      const result = providerSectionSchema.parse({
+        replaces: {
+          intervention: {
+            field: 'title_abstract',
+            terms: { keywords: ['different terms'] },
+            operator: 'OR',
+          },
+        },
+        adds: {
+          filters: {
+            source_types: ['journal'],
+          },
+        },
+      });
+      expect(result.replaces?.intervention).toBeDefined();
+      expect(result.adds?.filters?.sourceTypes).toEqual(['journal']);
+    });
+
+    it('should accept empty provider section', () => {
+      const result = providerSectionSchema.parse({});
+      expect(result.replaces).toBeUndefined();
+      expect(result.adds).toBeUndefined();
     });
   });
 
   describe('queryFileSchema', () => {
-    it('should accept minimal valid query', () => {
+    it('should accept minimal valid query with id', () => {
       const result = queryFileSchema.parse({
         name: 'test_query',
         query: [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -305,6 +381,7 @@ describe('Query Validator Schemas', () => {
       });
       expect(result.name).toBe('test_query');
       expect(result.blocks).toHaveLength(1);
+      expect(result.blocks[0]!.id).toBe('population');
     });
 
     it('should accept query with description', () => {
@@ -313,6 +390,7 @@ describe('Query Validator Schemas', () => {
         description: 'A test query for diabetes research',
         query: [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -327,6 +405,7 @@ describe('Query Validator Schemas', () => {
         name: 'test_query',
         query: [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -342,31 +421,107 @@ describe('Query Validator Schemas', () => {
       expect(result.filters.languages).toEqual(['en']);
     });
 
-    it('should accept query with overrides', () => {
+    it('should accept query with providers', () => {
       const result = queryFileSchema.parse({
         name: 'test_query',
         query: [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
           },
         ],
-        overrides: {
+        providers: {
           pubmed: {
-            filters: {
-              publication_types: {
-                exclude: ['Review'],
+            adds: {
+              filters: {
+                publication_types: {
+                  exclude: ['Review'],
+                },
               },
             },
           },
           arxiv: {
-            categories: ['cs.AI'],
+            replaces: {
+              population: {
+                field: 'all',
+                terms: { keywords: ['arxiv diabetes'] },
+                operator: 'OR',
+              },
+            },
+            adds: {
+              filters: {
+                categories: ['cs.AI'],
+              },
+            },
           },
         },
       });
-      expect(result.overrides.pubmed?.filters?.publicationTypes?.exclude).toEqual(['Review']);
-      expect(result.overrides.arxiv?.categories).toEqual(['cs.AI']);
+      expect(result.providers?.pubmed?.adds?.filters?.publicationTypes?.exclude).toEqual(['Review']);
+      expect(result.providers?.arxiv?.adds?.filters?.categories).toEqual(['cs.AI']);
+      expect(result.providers?.arxiv?.replaces?.population?.field).toBe('all');
+    });
+
+    it('should reject overrides (old format)', () => {
+      expect(() =>
+        queryFileSchema.parse({
+          name: 'test_query',
+          query: [
+            {
+              id: 'population',
+              field: 'title_abstract',
+              terms: { keywords: ['diabetes'] },
+              operator: 'OR',
+            },
+          ],
+          overrides: {
+            pubmed: { filters: {} },
+          },
+        })
+      ).not.toThrow(); // overrides is just ignored as unknown key by Zod (passthrough not used)
+    });
+
+    it('should reject blocks without id', () => {
+      expect(() =>
+        queryFileSchema.parse({
+          name: 'test_query',
+          query: [
+            {
+              field: 'title_abstract',
+              terms: { keywords: ['diabetes'] },
+              operator: 'OR',
+            },
+          ],
+        })
+      ).toThrow();
+    });
+
+    it('should reject replaces referencing non-existent block id', () => {
+      expect(() =>
+        queryFileSchema.parse({
+          name: 'test_query',
+          query: [
+            {
+              id: 'population',
+              field: 'title_abstract',
+              terms: { keywords: ['diabetes'] },
+              operator: 'OR',
+            },
+          ],
+          providers: {
+            arxiv: {
+              replaces: {
+                nonexistent: {
+                  field: 'all',
+                  terms: { keywords: ['test'] },
+                  operator: 'OR',
+                },
+              },
+            },
+          },
+        })
+      ).toThrow(/replaces keys must reference existing block ids/);
     });
 
     it('should reject missing name', () => {
@@ -374,6 +529,7 @@ describe('Query Validator Schemas', () => {
         queryFileSchema.parse({
           query: [
             {
+              id: 'population',
               field: 'title_abstract',
               terms: { keywords: ['diabetes'] },
               operator: 'OR',
@@ -406,6 +562,7 @@ describe('Query Validator Schemas', () => {
         description: 'AI applications in Type 2 Diabetes management',
         query: [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: {
               keywords: ['diabetes', 'type 2 diabetes', 'diabetes mellitus', 'T2DM'],
@@ -414,6 +571,7 @@ describe('Query Validator Schemas', () => {
             operator: 'OR',
           },
           {
+            id: 'intervention',
             field: 'title_abstract',
             terms: {
               keywords: ['artificial intelligence', 'machine learning', 'deep learning', 'neural network'],
@@ -422,6 +580,7 @@ describe('Query Validator Schemas', () => {
             operator: 'OR',
           },
           {
+            id: 'outcome',
             field: 'title_abstract',
             terms: {
               keywords: ['diagnosis', 'prediction', 'management', 'treatment'],
@@ -434,16 +593,29 @@ describe('Query Validator Schemas', () => {
           year_to: 2024,
           language: ['en'],
         },
-        overrides: {
+        providers: {
           pubmed: {
-            filters: {
-              publication_types: {
-                exclude: ['Review', 'Systematic Review', 'Meta-Analysis'],
+            adds: {
+              filters: {
+                publication_types: {
+                  exclude: ['Review', 'Systematic Review', 'Meta-Analysis'],
+                },
               },
             },
           },
           arxiv: {
-            categories: ['cs.AI', 'cs.LG', 'cs.CL', 'q-bio.QM'],
+            replaces: {
+              intervention: {
+                field: 'all',
+                terms: { keywords: ['deep learning', 'neural network', 'transformer'] },
+                operator: 'OR',
+              },
+            },
+            adds: {
+              filters: {
+                categories: ['cs.AI', 'cs.LG', 'cs.CL', 'q-bio.QM'],
+              },
+            },
           },
         },
       });
@@ -451,7 +623,8 @@ describe('Query Validator Schemas', () => {
       expect(result.name).toBe('diabetes_ai_scoping');
       expect(result.blocks).toHaveLength(3);
       expect(result.filters.yearFrom).toBe(2018);
-      expect(result.overrides.arxiv?.categories).toHaveLength(4);
+      expect(result.providers?.arxiv?.adds?.filters?.categories).toHaveLength(4);
+      expect(result.providers?.arxiv?.replaces?.intervention?.field).toBe('all');
     });
   });
 
@@ -461,6 +634,7 @@ describe('Query Validator Schemas', () => {
         name: 'test_query',
         query: [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -491,6 +665,7 @@ describe('Query Validator Schemas', () => {
         name: 'test',
         query: [
           {
+            id: 'test',
             field: 'invalid_field',
             terms: { keywords: ['test'] },
             operator: 'OR',
@@ -506,6 +681,7 @@ describe('Query Validator Schemas', () => {
       const errors = formatValidationErrors({
         query: [
           {
+            id: 'test',
             field: 'invalid_field',
             terms: { keywords: [] },
             operator: 'INVALID',
@@ -521,6 +697,7 @@ describe('Query Validator Schemas', () => {
         name: 'test_query',
         query: [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',

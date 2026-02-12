@@ -40,9 +40,10 @@ export const termBlockSchema = z.object({
 export const operatorSchema = z.enum(['AND', 'OR']);
 
 /**
- * Schema for query block.
+ * Schema for query block (with required id).
  */
 export const queryBlockSchema = z.object({
+  id: z.string().min(1),
   field: fieldTypeSchema,
   terms: termBlockSchema,
   operator: operatorSchema,
@@ -66,6 +67,8 @@ export const filtersSchema = z
     year_to: z.number().int().optional(),
     language: z.array(z.string()).optional(),
     publication_types: publicationTypeFilterSchema.optional(),
+    categories: z.array(z.string()).optional(),
+    source_types: z.array(z.string()).optional(),
   })
   .optional()
   .default({})
@@ -74,33 +77,6 @@ export const filtersSchema = z
     yearTo: data.year_to,
     languages: data.language,
     publicationTypes: data.publication_types,
-  }));
-
-/**
- * Schema for override block (YAML input format).
- */
-export const overrideBlockSchema = z
-  .object({
-    filters: z
-      .object({
-        year_from: z.number().int().optional(),
-        year_to: z.number().int().optional(),
-        language: z.array(z.string()).optional(),
-        publication_types: publicationTypeFilterSchema.optional(),
-      })
-      .optional(),
-    categories: z.array(z.string()).optional(),
-    source_types: z.array(z.string()).optional(),
-  })
-  .transform((data) => ({
-    filters: data.filters
-      ? {
-          yearFrom: data.filters.year_from,
-          yearTo: data.filters.year_to,
-          languages: data.filters.language,
-          publicationTypes: data.filters.publication_types,
-        }
-      : undefined,
     categories: data.categories,
     sourceTypes: data.source_types,
   }));
@@ -118,16 +94,56 @@ export const providerNameSchema = z.enum([
 ]);
 
 /**
- * Schema for overrides object (partial record of provider -> override).
+ * Schema for a block replacement (QueryBlock without id).
  */
-const overridesSchema = z
+const blockReplacementSchema = z.object({
+  field: fieldTypeSchema,
+  terms: termBlockSchema,
+  operator: operatorSchema,
+});
+
+/**
+ * Schema for partial filters in adds section (YAML snake_case → camelCase).
+ */
+const addsFiltersSchema = z
   .object({
-    pubmed: overrideBlockSchema.optional(),
-    scopus: overrideBlockSchema.optional(),
-    eric: overrideBlockSchema.optional(),
-    arxiv: overrideBlockSchema.optional(),
-    wos: overrideBlockSchema.optional(),
-    embase: overrideBlockSchema.optional(),
+    year_from: z.number().int().optional(),
+    year_to: z.number().int().optional(),
+    language: z.array(z.string()).optional(),
+    publication_types: publicationTypeFilterSchema.optional(),
+    categories: z.array(z.string()).optional(),
+    source_types: z.array(z.string()).optional(),
+  })
+  .transform((data) => ({
+    yearFrom: data.year_from,
+    yearTo: data.year_to,
+    languages: data.language,
+    publicationTypes: data.publication_types,
+    categories: data.categories,
+    sourceTypes: data.source_types,
+  }));
+
+/**
+ * Schema for provider section with replaces and adds.
+ */
+export const providerSectionSchema = z.object({
+  replaces: z.record(z.string(), blockReplacementSchema).optional(),
+  adds: z.object({
+    filters: addsFiltersSchema.optional(),
+  }).optional(),
+});
+
+/**
+ * Schema for providers object (partial record of provider -> section).
+ */
+const providersSchema = z
+  .object({
+    pubmed: providerSectionSchema.optional(),
+    scopus: providerSectionSchema.optional(),
+    eric: providerSectionSchema.optional(),
+    arxiv: providerSectionSchema.optional(),
+    wos: providerSectionSchema.optional(),
+    embase: providerSectionSchema.optional(),
   })
   .optional()
   .default({});
@@ -142,14 +158,31 @@ export const queryFileSchema = z
     description: z.string().optional(),
     query: z.array(queryBlockSchema).min(1),
     filters: filtersSchema,
-    overrides: overridesSchema,
+    providers: providersSchema,
   })
+  .refine(
+    (data) => {
+      // Cross-validation: replaces keys must reference existing block ids
+      const blockIds = new Set(data.query.map((b) => b.id));
+      for (const [, section] of Object.entries(data.providers ?? {})) {
+        if (section?.replaces) {
+          for (const key of Object.keys(section.replaces)) {
+            if (!blockIds.has(key)) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    },
+    { message: 'replaces keys must reference existing block ids' }
+  )
   .transform((data) => ({
     name: data.name,
     description: data.description,
     blocks: data.query,
     filters: data.filters,
-    overrides: data.overrides,
+    providers: data.providers,
   }));
 
 /**
