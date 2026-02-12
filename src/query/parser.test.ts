@@ -6,11 +6,12 @@ import { parseQueryFile, parseQueryString, detectShortKeywords } from './parser.
 
 describe('Query Parser', () => {
   describe('parseQueryString', () => {
-    it('should parse simple query YAML', () => {
+    it('should parse simple query YAML with id', () => {
       const yaml = `
 name: test_query
 query:
-  - field: title_abstract
+  - id: population
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -20,6 +21,7 @@ query:
       expect(result.name).toBe('test_query');
       expect(result.blocks).toHaveLength(1);
       const block = result.blocks[0]!;
+      expect(block.id).toBe('population');
       expect(block.field).toBe('title_abstract');
       expect(block.terms.keywords).toEqual(['diabetes']);
       expect(block.operator).toBe('OR');
@@ -30,7 +32,8 @@ query:
 name: test_query
 description: A test query for diabetes research
 query:
-  - field: title
+  - id: population
+    field: title
     terms:
       keywords:
         - test
@@ -45,7 +48,8 @@ query:
 name: diabetes_ai_scoping
 description: AI applications in Type 2 Diabetes management
 query:
-  - field: title_abstract
+  - id: population
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -56,7 +60,8 @@ query:
         - Diabetes Mellitus, Type 2
         - Diabetes Mellitus
     operator: OR
-  - field: title_abstract
+  - id: intervention
+    field: title_abstract
     terms:
       keywords:
         - artificial intelligence
@@ -68,7 +73,8 @@ query:
         - Machine Learning
         - Deep Learning
     operator: OR
-  - field: title_abstract
+  - id: outcome
+    field: title_abstract
     terms:
       keywords:
         - diagnosis
@@ -88,7 +94,8 @@ query:
       const yaml = `
 name: test_query
 query:
-  - field: title_abstract
+  - id: population
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -114,46 +121,61 @@ filters:
       expect(result.filters.publicationTypes?.exclude).toEqual(['Review', 'Meta-Analysis']);
     });
 
-    it('should parse query with overrides', () => {
+    it('should parse query with providers section', () => {
       const yaml = `
 name: test_query
 query:
-  - field: title_abstract
+  - id: population
+    field: title_abstract
     terms:
       keywords:
         - test
     operator: OR
-overrides:
+providers:
   pubmed:
-    filters:
-      publication_types:
-        exclude:
-          - Comment
-          - Letter
+    adds:
+      filters:
+        publication_types:
+          exclude:
+            - Comment
+            - Letter
   arxiv:
-    categories:
-      - cs.AI
-      - cs.LG
-      - q-bio
+    replaces:
+      population:
+        field: all
+        terms:
+          keywords:
+            - arxiv-specific test
+        operator: OR
+    adds:
+      filters:
+        categories:
+          - cs.AI
+          - cs.LG
+          - q-bio
   scopus:
-    source_types:
-      - journal
-      - conference
+    adds:
+      filters:
+        source_types:
+          - journal
+          - conference
 `;
       const result = parseQueryString(yaml);
-      expect(result.overrides.pubmed?.filters?.publicationTypes?.exclude).toEqual([
+      expect(result.providers?.pubmed?.adds?.filters?.publicationTypes?.exclude).toEqual([
         'Comment',
         'Letter',
       ]);
-      expect(result.overrides.arxiv?.categories).toEqual(['cs.AI', 'cs.LG', 'q-bio']);
-      expect(result.overrides.scopus?.sourceTypes).toEqual(['journal', 'conference']);
+      expect(result.providers?.arxiv?.replaces?.population?.field).toBe('all');
+      expect(result.providers?.arxiv?.adds?.filters?.categories).toEqual(['cs.AI', 'cs.LG', 'q-bio']);
+      expect(result.providers?.scopus?.adds?.filters?.sourceTypes).toEqual(['journal', 'conference']);
     });
 
     it('should throw for invalid YAML syntax', () => {
       const yaml = `
 name: test_query
 query:
-  - field: title_abstract
+  - id: population
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -168,7 +190,8 @@ query:
       // Missing name
       const yaml1 = `
 query:
-  - field: title_abstract
+  - id: population
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -195,7 +218,8 @@ query: []
       const yaml = `
 name: test_query
 query:
-  - field: invalid_field
+  - id: population
+    field: invalid_field
     terms:
       keywords:
         - test
@@ -208,7 +232,8 @@ query:
       const yaml = `
 name: test_query
 query:
-  - field: title
+  - id: population
+    field: title
     terms:
       keywords:
         - test
@@ -222,7 +247,8 @@ query:
 name: epa_query
 description: Search for EPA (entrustable professional activities)
 query:
-  - field: title_abstract
+  - id: concept
+    field: title_abstract
     terms:
       keywords:
         - EPA
@@ -243,7 +269,8 @@ query:
       const yaml = `
 name: diabetes_exclude
 query:
-  - field: title_abstract
+  - id: population
+    field: title_abstract
     terms:
       keywords:
         - diabetes management
@@ -265,7 +292,8 @@ query:
       const yaml = `
 name: eric_descriptor_test
 query:
-  - field: title_abstract
+  - id: concept
+    field: title_abstract
     terms:
       keywords:
         - medical education
@@ -283,7 +311,8 @@ query:
       const yaml = `
 name: eric_empty_test
 query:
-  - field: title_abstract
+  - id: concept
+    field: title_abstract
     terms:
       keywords:
         - education
@@ -298,7 +327,8 @@ query:
       const yaml = `
 name: eric_single_test
 query:
-  - field: title_abstract
+  - id: concept
+    field: title_abstract
     terms:
       keywords:
         - learning
@@ -314,7 +344,8 @@ query:
       const yaml = `
 name: all_vocab_test
 query:
-  - field: title_abstract
+  - id: concept
+    field: title_abstract
     terms:
       keywords:
         - medical education
@@ -335,6 +366,19 @@ query:
       expect(result.blocks[0]!.terms.emtree).toEqual(['medical education']);
       expect(result.blocks[0]!.terms.eric).toEqual(['Medical Education', 'Competency Based Education']);
       expect(result.blocks[0]!.terms.exclude).toEqual(['veterinary']);
+    });
+
+    it('should throw for blocks without id', () => {
+      const yaml = `
+name: test_query
+query:
+  - field: title_abstract
+    terms:
+      keywords:
+        - diabetes
+    operator: OR
+`;
+      expect(() => parseQueryString(yaml)).toThrow();
     });
   });
 
@@ -357,7 +401,8 @@ query:
         `
 name: file_test_query
 query:
-  - field: title
+  - id: population
+    field: title
     terms:
       keywords:
         - test
@@ -382,7 +427,7 @@ query:
       await expect(parseQueryFile(filePath)).rejects.toThrow();
     });
 
-    it('should parse complete example from spec', async () => {
+    it('should parse complete example with providers', async () => {
       const filePath = join(testDir, 'complete-example.yaml');
       await writeFile(
         filePath,
@@ -391,7 +436,8 @@ name: diabetes_ai_scoping
 description: AI applications in Type 2 Diabetes management
 
 query:
-  - field: title_abstract
+  - id: population
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -403,7 +449,8 @@ query:
         - Diabetes Mellitus
     operator: OR
 
-  - field: title_abstract
+  - id: intervention
+    field: title_abstract
     terms:
       keywords:
         - artificial intelligence
@@ -416,7 +463,8 @@ query:
         - Deep Learning
     operator: OR
 
-  - field: title_abstract
+  - id: outcome
+    field: title_abstract
     terms:
       keywords:
         - diagnosis
@@ -431,21 +479,32 @@ filters:
   language:
     - en
 
-overrides:
+providers:
   pubmed:
-    filters:
-      publication_types:
-        exclude:
-          - Review
-          - Systematic Review
-          - Meta-Analysis
+    adds:
+      filters:
+        publication_types:
+          exclude:
+            - Review
+            - Systematic Review
+            - Meta-Analysis
 
   arxiv:
-    categories:
-      - cs.AI
-      - cs.LG
-      - cs.CL
-      - q-bio.QM
+    replaces:
+      intervention:
+        field: all
+        terms:
+          keywords:
+            - deep learning
+            - neural network
+        operator: OR
+    adds:
+      filters:
+        categories:
+          - cs.AI
+          - cs.LG
+          - cs.CL
+          - q-bio.QM
 `
       );
 
@@ -454,7 +513,8 @@ overrides:
       expect(result.description).toBe('AI applications in Type 2 Diabetes management');
       expect(result.blocks).toHaveLength(3);
       expect(result.filters.yearFrom).toBe(2018);
-      expect(result.overrides.arxiv?.categories).toHaveLength(4);
+      expect(result.providers?.arxiv?.adds?.filters?.categories).toHaveLength(4);
+      expect(result.providers?.arxiv?.replaces?.intervention?.field).toBe('all');
     });
   });
 
@@ -463,7 +523,8 @@ overrides:
       const ast = parseQueryString(`
 name: test_query
 query:
-  - field: title_abstract
+  - id: concept
+    field: title_abstract
     terms:
       keywords:
         - EPA
@@ -483,7 +544,8 @@ query:
       const ast = parseQueryString(`
 name: test_query
 query:
-  - field: title_abstract
+  - id: concept
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -498,12 +560,14 @@ query:
       const ast = parseQueryString(`
 name: test_query
 query:
-  - field: title_abstract
+  - id: block1
+    field: title_abstract
     terms:
       keywords:
         - EPA
     operator: OR
-  - field: title_abstract
+  - id: block2
+    field: title_abstract
     terms:
       keywords:
         - CBE
@@ -519,12 +583,14 @@ query:
       const ast = parseQueryString(`
 name: test_query
 query:
-  - field: title_abstract
+  - id: block1
+    field: title_abstract
     terms:
       keywords:
         - EPA
     operator: OR
-  - field: title
+  - id: block2
+    field: title
     terms:
       keywords:
         - EPA
@@ -538,7 +604,8 @@ query:
       const ast = parseQueryString(`
 name: test_query
 query:
-  - field: title_abstract
+  - id: concept
+    field: title_abstract
     terms:
       keywords:
         - OSCE
