@@ -47,6 +47,8 @@ export interface TermBlock {
  * A single query block targeting a specific field.
  */
 export interface QueryBlock {
+  /** Unique identifier for cross-referencing in provider sections */
+  id: string;
   /** Target field for the search */
   field: FieldType;
   /** Search terms */
@@ -77,19 +79,22 @@ export interface Filters {
   languages?: string[] | undefined;
   /** Publication type filters */
   publicationTypes?: PublicationTypeFilter | undefined;
+  /** arXiv categories */
+  categories?: string[] | undefined;
+  /** Scopus source types */
+  sourceTypes?: string[] | undefined;
 }
 
 /**
- * Database-specific override block.
- * Allows customization of filters and database-specific options.
+ * Provider-specific section with block replacements and filter additions.
  */
-export interface OverrideBlock {
-  /** Override global filters for this provider */
-  filters?: Filters | undefined;
-  /** arXiv categories (arXiv only) */
-  categories?: string[] | undefined;
-  /** Source types (Scopus only) */
-  sourceTypes?: string[] | undefined;
+export interface ProviderSection {
+  /** Block replacements keyed by block id */
+  replaces?: Record<string, Omit<QueryBlock, 'id'>> | undefined;
+  /** Additional filters to merge with defaults */
+  adds?: {
+    filters?: Partial<Filters> | undefined;
+  } | undefined;
 }
 
 /**
@@ -105,6 +110,22 @@ export interface QueryAST {
   blocks: QueryBlock[];
   /** Global filters */
   filters: Filters;
-  /** Provider-specific overrides */
-  overrides: Partial<Record<ProviderName, OverrideBlock | undefined>>;
+  /** Provider-specific sections */
+  providers?: Partial<Record<ProviderName, ProviderSection | undefined>> | undefined;
+}
+
+/**
+ * Resolved AST — output of resolveForProvider.
+ * Contains blocks with replacements applied and filters merged.
+ * No provider-specific sections remain.
+ */
+export interface ResolvedAST {
+  /** Query identifier */
+  name: string;
+  /** Human-readable description */
+  description?: string | undefined;
+  /** Query blocks with provider replacements applied */
+  blocks: QueryBlock[];
+  /** Filters with provider additions merged */
+  filters: Filters;
 }
