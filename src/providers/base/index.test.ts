@@ -9,7 +9,7 @@ import {
   type ProviderError,
   type SearchState,
   type SearchResumeResult,
-  type QueryAST,
+  type ResolvedAST,
   // Type guards
   createProviderError,
   isProviderError,
@@ -29,14 +29,13 @@ import {
 } from './index';
 
 /**
- * Helper to create a minimal QueryAST for testing.
+ * Helper to create a minimal ResolvedAST for testing.
  */
-function createMockQueryAST(name = 'test-query'): QueryAST {
+function createMockResolvedAST(name = 'test-query'): ResolvedAST {
   return {
     name,
     blocks: [],
     filters: {},
-    overrides: {},
   };
 }
 
@@ -66,7 +65,7 @@ describe('Module exports', () => {
     it('exports TranslatedQuery type', () => {
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
       expect(query.native).toBe('test');
@@ -92,7 +91,7 @@ describe('Module exports', () => {
         provider: 'pubmed',
         query: {
           native: 'test',
-          originalAst: createMockQueryAST(),
+  
           provider: 'pubmed',
         },
         totalResults: 100,
@@ -168,7 +167,7 @@ describe('Module exports', () => {
         provider: 'pubmed',
         query: {
           native: 'test',
-          originalAst: createMockQueryAST(),
+  
           provider: 'pubmed',
         },
         totalResults: 100,
@@ -185,7 +184,7 @@ describe('Module exports', () => {
         provider: 'pubmed',
         query: {
           native: 'test',
-          originalAst: createMockQueryAST(),
+  
           provider: 'pubmed',
         },
         totalResults: 100,
@@ -215,7 +214,7 @@ describe('Module exports', () => {
 
       expect(provider.name).toBe('eric');
 
-      const query = provider.translateQuery(createMockQueryAST());
+      const query = provider.translateQuery(createMockResolvedAST());
       expect(query.provider).toBe('eric');
 
       const articles = [];

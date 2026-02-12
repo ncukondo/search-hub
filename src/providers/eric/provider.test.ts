@@ -15,7 +15,7 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
     name,
     blocks: [],
     filters: {},
-    overrides: {},
+    providers: {},
   };
 }
 
@@ -57,13 +57,14 @@ describe('ERIC Provider', () => {
         name: 'test',
         blocks: [
           {
+            id: 'block-1',
             field: 'title',
             terms: { keywords: ['education'] },
             operator: 'OR',
           },
         ],
         filters: {},
-        overrides: {},
+        providers: {},
       };
 
       const result = provider.translateQuery(ast);
@@ -77,6 +78,7 @@ describe('ERIC Provider', () => {
         name: 'test',
         blocks: [
           {
+            id: 'block-1',
             field: 'title_abstract',
             terms: { keywords: ['special education', 'learning disabilities'] },
             operator: 'OR',
@@ -86,7 +88,7 @@ describe('ERIC Provider', () => {
           yearFrom: 2020,
           yearTo: 2024,
         },
-        overrides: {},
+        providers: {},
       };
 
       const result = provider.translateQuery(ast);
@@ -123,7 +125,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:education',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 
@@ -168,7 +170,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:education',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 
@@ -198,7 +200,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:education',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 
@@ -221,7 +223,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:nonexistent',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 
@@ -278,7 +280,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:test',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 
@@ -302,7 +304,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:test',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 
@@ -330,7 +332,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:test',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 
@@ -356,7 +358,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:test',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 
@@ -395,7 +397,7 @@ describe('ERIC Provider', () => {
 
       const query: TranslatedQuery = {
         native: 'title:education',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 
@@ -423,7 +425,7 @@ describe('ERIC Provider', () => {
         provider: 'eric' as const,
         query: {
           native: 'title:test',
-          originalAst: createMockQueryAST(),
+  
           provider: 'eric' as const,
         },
         totalResults: 100,
@@ -456,7 +458,7 @@ describe('ERIC Provider', () => {
         provider: 'eric' as const,
         query: {
           native: 'title:education',
-          originalAst: createMockQueryAST(),
+  
           provider: 'eric' as const,
         },
         totalResults: 100,

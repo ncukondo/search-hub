@@ -9,7 +9,7 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
-  QueryAST,
+  ResolvedAST,
   ProviderError,
   SearchState,
   SearchResumeResult,
@@ -88,9 +88,9 @@ export abstract class BaseProvider implements Provider {
   abstract count(query: TranslatedQuery): Promise<number>;
 
   /**
-   * Convert QueryAST to database-native syntax.
+   * Convert ResolvedAST to database-native syntax.
    */
-  abstract translateQuery(ast: QueryAST): TranslatedQuery;
+  abstract translateQuery(resolved: ResolvedAST): TranslatedQuery;
 
   /**
    * Verify API access and credentials.

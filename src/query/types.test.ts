@@ -4,8 +4,9 @@ import type {
   TermBlock,
   QueryBlock,
   Filters,
-  OverrideBlock,
+  ProviderSection,
   QueryAST,
+  ResolvedAST,
   ProviderName,
 } from './types.js';
 
@@ -93,8 +94,9 @@ describe('Query AST Types', () => {
   });
 
   describe('QueryBlock', () => {
-    it('should require field, terms, and operator', () => {
+    it('should require field, terms, operator, and id', () => {
       const block: QueryBlock = {
+        id: 'population',
         field: 'title_abstract',
         terms: {
           keywords: ['AI', 'machine learning'],
@@ -102,10 +104,12 @@ describe('Query AST Types', () => {
         operator: 'OR',
       };
       expect(block.operator).toBe('OR');
+      expect(block.id).toBe('population');
     });
 
     it('should accept AND operator', () => {
       const block: QueryBlock = {
+        id: 'intervention',
         field: 'title',
         terms: { keywords: ['test'] },
         operator: 'AND',
@@ -145,32 +149,71 @@ describe('Query AST Types', () => {
       const filters: Filters = {};
       expect(Object.keys(filters)).toHaveLength(0);
     });
+
+    it('should accept categories (arXiv)', () => {
+      const filters: Filters = {
+        categories: ['cs.AI', 'cs.LG', 'q-bio'],
+      };
+      expect(filters.categories).toHaveLength(3);
+    });
+
+    it('should accept sourceTypes (Scopus)', () => {
+      const filters: Filters = {
+        sourceTypes: ['journal', 'conference'],
+      };
+      expect(filters.sourceTypes).toHaveLength(2);
+    });
   });
 
-  describe('OverrideBlock', () => {
-    it('should accept filters override', () => {
-      const override: OverrideBlock = {
-        filters: {
-          publicationTypes: {
-            exclude: ['Comment', 'Letter'],
+  describe('ProviderSection', () => {
+    it('should accept replaces with block overrides', () => {
+      const section: ProviderSection = {
+        replaces: {
+          population: {
+            field: 'all',
+            terms: { keywords: ['arxiv-specific terms'] },
+            operator: 'OR',
           },
         },
       };
-      expect(override.filters?.publicationTypes?.exclude).toHaveLength(2);
+      expect(section.replaces?.['population']).toBeDefined();
+      expect(section.replaces?.['population']?.field).toBe('all');
     });
 
-    it('should accept arxiv categories', () => {
-      const override: OverrideBlock = {
-        categories: ['cs.AI', 'cs.LG', 'q-bio'],
+    it('should accept adds with partial filters', () => {
+      const section: ProviderSection = {
+        adds: {
+          filters: {
+            categories: ['cs.AI', 'cs.LG'],
+          },
+        },
       };
-      expect(override.categories).toHaveLength(3);
+      expect(section.adds?.filters?.categories).toHaveLength(2);
     });
 
-    it('should accept scopus source types', () => {
-      const override: OverrideBlock = {
-        sourceTypes: ['journal', 'conference'],
+    it('should accept both replaces and adds', () => {
+      const section: ProviderSection = {
+        replaces: {
+          intervention: {
+            field: 'title_abstract',
+            terms: { keywords: ['different terms'] },
+            operator: 'OR',
+          },
+        },
+        adds: {
+          filters: {
+            sourceTypes: ['journal'],
+          },
+        },
       };
-      expect(override.sourceTypes).toHaveLength(2);
+      expect(section.replaces?.['intervention']).toBeDefined();
+      expect(section.adds?.filters?.sourceTypes).toHaveLength(1);
+    });
+
+    it('should accept empty provider section', () => {
+      const section: ProviderSection = {};
+      expect(section.replaces).toBeUndefined();
+      expect(section.adds).toBeUndefined();
     });
   });
 
@@ -189,21 +232,23 @@ describe('Query AST Types', () => {
   });
 
   describe('QueryAST', () => {
-    it('should require name and blocks', () => {
+    it('should require name, blocks with ids, and providers', () => {
       const ast: QueryAST = {
         name: 'test_query',
         blocks: [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
           },
         ],
         filters: {},
-        overrides: {},
+        providers: {},
       };
       expect(ast.name).toBe('test_query');
       expect(ast.blocks).toHaveLength(1);
+      expect(ast.blocks[0]!.id).toBe('population');
     });
 
     it('should accept optional description', () => {
@@ -212,17 +257,18 @@ describe('Query AST Types', () => {
         description: 'A test query for diabetes research',
         blocks: [],
         filters: {},
-        overrides: {},
+        providers: {},
       };
       expect(ast.description).toBe('A test query for diabetes research');
     });
 
-    it('should accept complete QueryAST with all fields', () => {
+    it('should accept complete QueryAST with providers', () => {
       const ast: QueryAST = {
         name: 'diabetes_ai_scoping',
         description: 'AI applications in Type 2 Diabetes management',
         blocks: [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: {
               keywords: ['diabetes', 'type 2 diabetes'],
@@ -231,6 +277,7 @@ describe('Query AST Types', () => {
             operator: 'OR',
           },
           {
+            id: 'intervention',
             field: 'title_abstract',
             terms: {
               keywords: ['artificial intelligence', 'machine learning'],
@@ -243,24 +290,72 @@ describe('Query AST Types', () => {
           yearTo: 2024,
           languages: ['en'],
         },
-        overrides: {
+        providers: {
           pubmed: {
-            filters: {
-              publicationTypes: {
-                exclude: ['Review', 'Systematic Review'],
+            adds: {
+              filters: {
+                publicationTypes: {
+                  exclude: ['Review', 'Systematic Review'],
+                },
               },
             },
           },
           arxiv: {
-            categories: ['cs.AI', 'cs.LG'],
+            replaces: {
+              intervention: {
+                field: 'all',
+                terms: { keywords: ['deep learning', 'neural network'] },
+                operator: 'OR',
+              },
+            },
+            adds: {
+              filters: {
+                categories: ['cs.AI', 'cs.LG'],
+              },
+            },
           },
         },
       };
 
       expect(ast.blocks).toHaveLength(2);
       expect(ast.filters.yearFrom).toBe(2018);
-      expect(ast.overrides.pubmed?.filters?.publicationTypes?.exclude).toContain('Review');
-      expect(ast.overrides.arxiv?.categories).toContain('cs.AI');
+      expect(ast.providers?.pubmed?.adds?.filters?.publicationTypes?.exclude).toContain('Review');
+      expect(ast.providers?.arxiv?.adds?.filters?.categories).toContain('cs.AI');
+      expect(ast.providers?.arxiv?.replaces?.['intervention']?.field).toBe('all');
+    });
+  });
+
+  describe('ResolvedAST', () => {
+    it('should have blocks and filters but no providers', () => {
+      const resolved: ResolvedAST = {
+        name: 'test_query',
+        blocks: [
+          {
+            id: 'population',
+            field: 'title_abstract',
+            terms: { keywords: ['diabetes'] },
+            operator: 'OR',
+          },
+        ],
+        filters: {
+          yearFrom: 2020,
+        },
+      };
+      expect(resolved.name).toBe('test_query');
+      expect(resolved.blocks).toHaveLength(1);
+      expect(resolved.filters.yearFrom).toBe(2020);
+      // ResolvedAST should not have providers property
+      expect('providers' in resolved).toBe(false);
+    });
+
+    it('should accept optional description', () => {
+      const resolved: ResolvedAST = {
+        name: 'test',
+        description: 'A resolved query',
+        blocks: [],
+        filters: {},
+      };
+      expect(resolved.description).toBe('A resolved query');
     });
   });
 });

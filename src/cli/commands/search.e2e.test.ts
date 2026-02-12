@@ -326,7 +326,8 @@ describe('search-hub search --dry-run E2E', () => {
         `
 name: filtered-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - cancer
@@ -1912,7 +1913,8 @@ describe('search-hub search: Query Refinement UX (Task #07)', () => {
       const queryPath = await createRawQueryFile(ctx.tempDir, `
 name: short_keywords_test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - EPA

@@ -13,7 +13,7 @@ import type {
   SearchOptions,
   SearchState,
   SearchResumeResult,
-  QueryAST,
+  ResolvedAST,
   ConnectionTestResult,
 } from '../base/types.js';
 import { ArxivClient } from './client.js';
@@ -57,10 +57,10 @@ export class ArxivProvider extends BaseProvider {
   }
 
   /**
-   * Translate QueryAST to arXiv-native query syntax.
+   * Translate ResolvedAST to arXiv-native query syntax.
    */
-  translateQuery(ast: QueryAST): TranslatedQuery {
-    return translateQuery(ast);
+  translateQuery(resolved: ResolvedAST): TranslatedQuery {
+    return translateQuery(resolved);
   }
 
   /**

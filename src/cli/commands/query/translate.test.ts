@@ -8,7 +8,8 @@ const validYaml = `
 name: test-query
 description: A test query
 query:
-  - field: title_abstract
+  - id: concept-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes

@@ -22,13 +22,14 @@ function createQueryAST(): QueryAST {
     name: 'test-query',
     blocks: [
       {
+        id: 'block-1',
         field: 'title',
         terms: { keywords: ['quantum'] },
         operator: 'OR',
       },
     ],
     filters: {},
-    overrides: {},
+    providers: {},
   };
 }
 
@@ -38,7 +39,6 @@ function createQueryAST(): QueryAST {
 function createTranslatedQuery(): TranslatedQuery {
   return {
     native: 'ti:quantum',
-    originalAst: createQueryAST(),
     provider: 'arxiv',
   };
 }

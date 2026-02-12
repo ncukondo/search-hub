@@ -402,14 +402,16 @@ describe('search-hub diff E2E', () => {
 name: medical-ai-search-v1
 description: Version 1 - broad search
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - "medical education"
         - "artificial intelligence"
         - "machine learning"
     operator: OR
-  - field: title_abstract
+  - id: block-2
+    field: title_abstract
     terms:
       keywords:
         - diagnosis
@@ -426,13 +428,15 @@ filters:
 name: medical-ai-search-v2
 description: Version 2 - narrower search with OSCE
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - "medical education"
         - "artificial intelligence"
     operator: OR
-  - field: title_abstract
+  - id: block-2
+    field: title_abstract
     terms:
       keywords:
         - OSCE

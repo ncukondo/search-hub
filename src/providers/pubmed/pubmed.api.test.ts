@@ -41,6 +41,7 @@ function createTestQuery(keyword: string): QueryAST {
     name: 'test-query',
     blocks: [
       {
+        id: 'block-1',
         field: 'title_abstract',
         operator: 'OR',
         terms: {
@@ -49,7 +50,7 @@ function createTestQuery(keyword: string): QueryAST {
       },
     ],
     filters: {},
-    overrides: {},
+    providers: {},
   };
 }
 
@@ -81,6 +82,7 @@ describe.skipIf(skip)('PubMed Provider E2E', () => {
         name: 'field-query',
         blocks: [
           {
+            id: 'block-1',
             field: 'title',
             operator: 'OR',
             terms: {
@@ -89,7 +91,7 @@ describe.skipIf(skip)('PubMed Provider E2E', () => {
           },
         ],
         filters: {},
-        overrides: {},
+        providers: {},
       };
       const query = translateQuery(ast);
 

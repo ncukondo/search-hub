@@ -3,30 +3,29 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { QueryAST, QueryBlock, Filters } from '../../query/types';
+import type { ResolvedAST, QueryBlock, Filters } from '../../query/types';
 import { translateQuery } from './translator';
 
 /**
- * Helper to create a minimal QueryAST for testing.
+ * Helper to create a minimal ResolvedAST for testing.
  */
-function createQueryAST(
+function createResolvedAST(
   blocks: QueryBlock[],
-  filters: Filters = {},
-  overrides: QueryAST['overrides'] = {}
-): QueryAST {
+  filters: Filters = {}
+): ResolvedAST {
   return {
     name: 'test-query',
     blocks,
     filters,
-    overrides,
   };
 }
 
 describe('PubMed Query Translator', () => {
   describe('Field Mapping', () => {
     it('should translate title field to [ti]', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title',
           terms: { keywords: ['diabetes'] },
           operator: 'OR',
@@ -39,8 +38,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate abstract field to [ab]', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'abstract',
           terms: { keywords: ['machine learning'] },
           operator: 'OR',
@@ -52,8 +52,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate title_abstract field to [tiab]', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { keywords: ['AI'] },
           operator: 'OR',
@@ -65,8 +66,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate author field to [au]', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'author',
           terms: { keywords: ['Smith J'] },
           operator: 'OR',
@@ -78,8 +80,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate keyword field to [mh] for MeSH', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'keyword',
           terms: { keywords: ['diabetes'] },
           operator: 'OR',
@@ -91,8 +94,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should not add qualifier for all field', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'all',
           terms: { keywords: ['diabetes'] },
           operator: 'OR',
@@ -106,8 +110,9 @@ describe('PubMed Query Translator', () => {
 
   describe('MeSH Term Handling', () => {
     it('should translate MeSH terms with [mh] qualifier', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: {
             keywords: [],
@@ -122,8 +127,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should combine keywords and MeSH terms with OR', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: {
             keywords: ['diabetes', 'T2DM'],
@@ -142,8 +148,9 @@ describe('PubMed Query Translator', () => {
 
   describe('Boolean Operators', () => {
     it('should combine terms with OR operator', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { keywords: ['diabetes', 'hyperglycemia'] },
           operator: 'OR',
@@ -155,8 +162,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should combine terms with AND operator', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { keywords: ['diabetes', 'treatment'] },
           operator: 'AND',
@@ -168,13 +176,15 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should AND multiple query blocks together', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'population',
           field: 'title_abstract',
           terms: { keywords: ['diabetes'] },
           operator: 'OR',
         },
         {
+          id: 'intervention',
           field: 'title_abstract',
           terms: { keywords: ['AI', 'machine learning'] },
           operator: 'OR',
@@ -190,8 +200,9 @@ describe('PubMed Query Translator', () => {
 
   describe('Phrase Handling', () => {
     it('should quote multi-word terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title',
           terms: { keywords: ['type 2 diabetes'] },
           operator: 'OR',
@@ -203,8 +214,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should not quote single-word terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title',
           terms: { keywords: ['diabetes'] },
           operator: 'OR',
@@ -216,8 +228,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should preserve existing quotes in terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title',
           terms: { keywords: ['"exact phrase"'] },
           operator: 'OR',
@@ -231,9 +244,10 @@ describe('PubMed Query Translator', () => {
 
   describe('Date Filter Translation', () => {
     it('should translate year_from filter', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -247,9 +261,10 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate year_to filter', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -263,9 +278,10 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate year range filter', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -281,9 +297,10 @@ describe('PubMed Query Translator', () => {
 
   describe('Language Filter Translation', () => {
     it('should translate single language filter', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -297,9 +314,10 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate multiple language filters with OR', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -315,9 +333,10 @@ describe('PubMed Query Translator', () => {
 
   describe('Publication Type Filter Translation', () => {
     it('should translate exclude publication type filter', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -337,9 +356,10 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate single exclude publication type filter', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -358,9 +378,10 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate combined include and exclude publication type filters', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -381,9 +402,10 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate include publication type filter', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -403,11 +425,12 @@ describe('PubMed Query Translator', () => {
     });
   });
 
-  describe('Provider Overrides', () => {
-    it('should apply PubMed-specific filter overrides', () => {
-      const ast = createQueryAST(
+  describe('Provider-Resolved Filters', () => {
+    it('should apply publication type filters from resolved filters', () => {
+      const ast = createResolvedAST(
         [
           {
+            id: 'block1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
@@ -415,14 +438,8 @@ describe('PubMed Query Translator', () => {
         ],
         {
           yearFrom: 2020,
-        },
-        {
-          pubmed: {
-            filters: {
-              publicationTypes: {
-                exclude: ['Comment', 'Letter'],
-              },
-            },
+          publicationTypes: {
+            exclude: ['Comment', 'Letter'],
           },
         }
       );
@@ -435,8 +452,9 @@ describe('PubMed Query Translator', () => {
 
   describe('TranslatedQuery Object', () => {
     it('should return a complete TranslatedQuery object', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title',
           terms: { keywords: ['diabetes'] },
           operator: 'OR',
@@ -446,17 +464,16 @@ describe('PubMed Query Translator', () => {
       const result = translateQuery(ast);
 
       expect(result).toHaveProperty('native');
-      expect(result).toHaveProperty('originalAst');
       expect(result).toHaveProperty('provider');
-      expect(result.originalAst).toEqual(ast);
       expect(result.provider).toBe('pubmed');
     });
   });
 
   describe('Exclude Term Translation', () => {
     it('should translate single exclude term with NOT', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: {
             keywords: ['EPA', 'entrustable professional activities'],
@@ -472,8 +489,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate multiple exclude terms with OR in NOT clause', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: {
             keywords: ['EPA'],
@@ -488,8 +506,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should translate exclude terms with same field qualifier as keywords', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title',
           terms: {
             keywords: ['diabetes'],
@@ -505,8 +524,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should combine exclude with mesh terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: {
             keywords: ['diabetes'],
@@ -526,8 +546,9 @@ describe('PubMed Query Translator', () => {
 
   describe('Keywords-undefined (mesh-only) blocks', () => {
     it('should translate mesh-only block without keywords', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { mesh: ['Artificial Intelligence'] },
           operator: 'OR',
@@ -539,13 +560,15 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should combine mesh-only block with keywords block', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'population',
           field: 'title_abstract',
           terms: { mesh: ['Artificial Intelligence'] },
           operator: 'OR',
         },
         {
+          id: 'intervention',
           field: 'title_abstract',
           terms: { keywords: ['diabetes', 'T2DM'] },
           operator: 'OR',
@@ -561,8 +584,9 @@ describe('PubMed Query Translator', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty keyword list', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { keywords: [], mesh: ['Diabetes Mellitus'] },
           operator: 'OR',
@@ -574,7 +598,7 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should handle exclude-only query without leading space', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [], // no query blocks
         { publicationTypes: { exclude: ['Review'] } }
       );
@@ -584,9 +608,10 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should handle complex combined query', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           {
+            id: 'population',
             field: 'title_abstract',
             terms: {
               keywords: ['diabetes', 'type 2 diabetes'],
@@ -595,6 +620,7 @@ describe('PubMed Query Translator', () => {
             operator: 'OR',
           },
           {
+            id: 'intervention',
             field: 'title_abstract',
             terms: { keywords: ['artificial intelligence', 'machine learning'] },
             operator: 'OR',
@@ -628,8 +654,9 @@ describe('PubMed Query Translator', () => {
 
   describe('Unsupported Vocabulary Warnings', () => {
     it('should warn when block contains emtree terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { emtree: ['Diabetes Mellitus'] },
           operator: 'OR',
@@ -643,8 +670,9 @@ describe('PubMed Query Translator', () => {
     });
 
     it('should not warn when block contains mesh terms (supported)', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { mesh: ['Diabetes Mellitus'] },
           operator: 'OR',

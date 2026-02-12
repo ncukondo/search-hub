@@ -112,8 +112,7 @@ describe('CLI Help Discoverability E2E', () => {
       expect(helpOutput).toContain('terms.exclude');
       expect(helpOutput).toContain('mesh/eric:');
       expect(helpOutput).toContain('terms.mesh, terms.eric');
-      expect(helpOutput).toContain('overrides:');
-      expect(helpOutput).toContain('pubmed, scopus, eric, arxiv');
+      expect(helpOutput).toContain('providers:');
     });
   });
 

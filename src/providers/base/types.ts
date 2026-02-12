@@ -3,10 +3,10 @@
  * These types define the common interface for all database providers.
  */
 
-import type { QueryAST } from '../../query/types.js';
+import type { QueryAST, ResolvedAST } from '../../query/types.js';
 
-// Re-export QueryAST for convenience
-export type { QueryAST };
+// Re-export QueryAST and ResolvedAST for convenience
+export type { QueryAST, ResolvedAST };
 
 /**
  * Supported provider names.
@@ -67,8 +67,6 @@ export interface Article {
 export interface TranslatedQuery {
   /** Database-native query string */
   native: string;
-  /** Reference to original AST (optional for direct query mode) */
-  originalAst?: QueryAST;
   /** Provider that produced this translation */
   provider: ProviderName;
   /** Warnings about unsupported controlled vocabulary */
@@ -124,9 +122,9 @@ export interface Provider {
   count(query: TranslatedQuery): Promise<number>;
 
   /**
-   * Convert QueryAST to database-native syntax.
+   * Convert ResolvedAST to database-native syntax.
    */
-  translateQuery(ast: QueryAST): TranslatedQuery;
+  translateQuery(resolved: ResolvedAST): TranslatedQuery;
 
   /**
    * Verify API access and credentials.

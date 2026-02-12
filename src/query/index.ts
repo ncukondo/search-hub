@@ -16,12 +16,16 @@ export type {
   QueryBlock,
   Filters,
   PublicationTypeFilter,
-  OverrideBlock,
+  ProviderSection,
   QueryAST,
+  ResolvedAST,
 } from './types.js';
 
 // Parser exports
 export { parseQueryFile, parseQueryString } from './parser.js';
+
+// Resolver exports
+export { resolveForProvider } from './resolver.js';
 
 // Validator exports
 export {
@@ -33,7 +37,7 @@ export {
   termBlockSchema,
   queryBlockSchema,
   filtersSchema,
-  overrideBlockSchema,
+  providerSectionSchema,
   queryFileSchema,
 } from './validator.js';
 

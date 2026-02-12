@@ -46,7 +46,7 @@ describe('search-hub query init E2E', () => {
     it('should contain helpful comments', () => {
       const template = generateQueryTemplate();
       expect(template).toContain('# filters:');
-      expect(template).toContain('# overrides:');
+      expect(template).toContain('# providers:');
       expect(template).toContain('# mesh:');
     });
 

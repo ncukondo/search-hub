@@ -27,6 +27,7 @@ describe('ERIC Provider E2E', () => {
       name: 'e2e-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title',
           terms: { keywords: ['education'] },
           operator: 'OR',
@@ -36,7 +37,7 @@ describe('ERIC Provider E2E', () => {
         yearFrom: 2020,
         yearTo: 2024,
       },
-      overrides: {},
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -58,13 +59,14 @@ describe('ERIC Provider E2E', () => {
       name: 'e2e-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title_abstract',
           terms: { keywords: ['special education'] },
           operator: 'OR',
         },
       ],
       filters: {},
-      overrides: {},
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -84,6 +86,7 @@ describe('ERIC Provider E2E', () => {
       name: 'e2e-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title',
           terms: { keywords: ['technology'] },
           operator: 'OR',
@@ -92,7 +95,7 @@ describe('ERIC Provider E2E', () => {
       filters: {
         yearFrom: 2023,
       },
-      overrides: {},
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -122,6 +125,7 @@ describe('ERIC Provider E2E', () => {
       name: 'e2e-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'all',
           terms: { keywords: ['learning'] },
           operator: 'OR',
@@ -131,7 +135,7 @@ describe('ERIC Provider E2E', () => {
         yearFrom: 2023,
         yearTo: 2024,
       },
-      overrides: {},
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -175,6 +179,7 @@ describe('ERIC Provider E2E', () => {
       name: 'e2e-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title',
           terms: { keywords: ['mathematics'] },
           operator: 'OR',
@@ -183,7 +188,7 @@ describe('ERIC Provider E2E', () => {
       filters: {
         yearFrom: 2023,
       },
-      overrides: {},
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);

@@ -1,7 +1,7 @@
 /**
  * arXiv Query Translator
  *
- * Translates QueryAST to arXiv-native query syntax.
+ * Translates ResolvedAST to arXiv-native query syntax.
  *
  * Field mappings:
  * - title → ti:
@@ -16,7 +16,7 @@
  * Category filter: cat:cs.AI
  */
 
-import type { QueryAST, QueryBlock, FieldType, Operator } from '../../query/types.js';
+import type { QueryBlock, FieldType, Operator, ResolvedAST } from '../../query/types.js';
 import type { TranslatedQuery } from '../base/types.js';
 import { collectUnsupportedVocabWarnings } from '../base/warnings.js';
 
@@ -197,14 +197,14 @@ function translateCategories(categories: string[]): string {
 }
 
 /**
- * Translate a complete QueryAST to arXiv-native syntax.
+ * Translate a ResolvedAST to arXiv-native syntax.
  */
-export function translateQuery(ast: QueryAST): TranslatedQuery {
+export function translateQuery(resolved: ResolvedAST): TranslatedQuery {
   const parts: string[] = [];
   const notClauses: string[] = [];
 
   // Translate all blocks (AND'd together)
-  const blockResults = ast.blocks.map(translateBlock);
+  const blockResults = resolved.blocks.map(translateBlock);
   const blockParts = blockResults.map((r) => r.query).filter((part) => part !== '');
   const blockNotClauses = blockResults
     .map((r) => r.notClause)
@@ -221,15 +221,14 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
   }
 
   // Add date filter if present
-  const dateFilter = translateDateFilter(ast.filters.yearFrom, ast.filters.yearTo);
+  const dateFilter = translateDateFilter(resolved.filters.yearFrom, resolved.filters.yearTo);
   if (dateFilter) {
     parts.push(`(${dateFilter})`);
   }
 
-  // Add category filter from arXiv overrides
-  const arxivOverrides = ast.overrides.arxiv;
-  if (arxivOverrides?.categories && arxivOverrides.categories.length > 0) {
-    const categoryFilter = translateCategories(arxivOverrides.categories);
+  // Add category filter from resolved filters (was in overrides)
+  if (resolved.filters.categories && resolved.filters.categories.length > 0) {
+    const categoryFilter = translateCategories(resolved.filters.categories);
     if (categoryFilter) {
       parts.push(`(${categoryFilter})`);
     }
@@ -256,11 +255,10 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
 
   // Collect warnings for unsupported controlled vocabulary
   // arXiv does not support any controlled vocabulary
-  const warnings = collectUnsupportedVocabWarnings(ast.blocks, 'arXiv', new Set());
+  const warnings = collectUnsupportedVocabWarnings(resolved.blocks, 'arXiv', new Set());
 
   return {
     native,
-    originalAst: ast,
     provider: 'arxiv',
     ...(warnings.length > 0 ? { warnings } : {}),
   };

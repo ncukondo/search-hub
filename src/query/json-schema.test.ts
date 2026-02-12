@@ -59,9 +59,19 @@ describe('generateQueryJSONSchema', () => {
     expect(schema['properties']['filters']).toBeDefined();
   });
 
-  it('should include overrides as optional', () => {
+  it('should include providers as optional', () => {
     const schema = generateQueryJSONSchema() as JSONSchema;
-    expect(schema['required']).not.toContain('overrides');
-    expect(schema['properties']['overrides']).toBeDefined();
+    expect(schema['required']).not.toContain('providers');
+    expect(schema['properties']['providers']).toBeDefined();
+  });
+
+  it('should include id as required in query block', () => {
+    const schema = generateQueryJSONSchema() as JSONSchema;
+    const blockSchema = schema['properties']['query']['items'];
+    expect(blockSchema['required']).toContain('id');
+    expect(blockSchema['properties']['id']).toMatchObject({
+      type: 'string',
+      minLength: 1,
+    });
   });
 });

@@ -11,11 +11,14 @@ import {
   type QueryBlock,
   type Filters,
   type PublicationTypeFilter,
-  type OverrideBlock,
+  type ProviderSection,
   type QueryAST,
+  type ResolvedAST,
   // Parser functions
   parseQueryFile,
   parseQueryString,
+  // Resolver
+  resolveForProvider,
   // Validator functions
   validateQueryFile,
   formatValidationErrors,
@@ -25,7 +28,7 @@ import {
   termBlockSchema,
   queryBlockSchema,
   filtersSchema,
-  overrideBlockSchema,
+  providerSectionSchema,
   queryFileSchema,
   // Vocabulary validation
   MeSHLookupClient,
@@ -51,6 +54,7 @@ describe('Query Module Exports', () => {
       };
 
       const queryBlock: QueryBlock = {
+        id: 'concept-1',
         field,
         terms: termBlock,
         operator,
@@ -66,12 +70,21 @@ describe('Query Module Exports', () => {
         yearTo: 2024,
         languages: ['en'],
         publicationTypes: publicationFilter,
-      };
-
-      const override: OverrideBlock = {
-        filters,
         categories: ['cs.AI'],
         sourceTypes: ['journal'],
+      };
+
+      const section: ProviderSection = {
+        replaces: {
+          'concept-1': {
+            field: 'title',
+            terms: { keywords: ['test'] },
+            operator: 'OR',
+          },
+        },
+        adds: {
+          filters: { yearFrom: 2021 },
+        },
       };
 
       const ast: QueryAST = {
@@ -79,12 +92,15 @@ describe('Query Module Exports', () => {
         description: 'Test query',
         blocks: [queryBlock],
         filters,
-        overrides: {
-          [provider]: override,
+        providers: {
+          [provider]: section,
         },
       };
 
+      const resolved: ResolvedAST = resolveForProvider(ast, 'pubmed');
+
       expect(ast.name).toBe('test_query');
+      expect(resolved.name).toBe('test_query');
     });
   });
 
@@ -94,7 +110,7 @@ describe('Query Module Exports', () => {
       expect(termBlockSchema).toBeDefined();
       expect(queryBlockSchema).toBeDefined();
       expect(filtersSchema).toBeDefined();
-      expect(overrideBlockSchema).toBeDefined();
+      expect(providerSectionSchema).toBeDefined();
       expect(queryFileSchema).toBeDefined();
     });
   });
@@ -108,6 +124,11 @@ describe('Query Module Exports', () => {
     it('should export parseQueryFile', () => {
       expect(parseQueryFile).toBeDefined();
       expect(typeof parseQueryFile).toBe('function');
+    });
+
+    it('should export resolveForProvider', () => {
+      expect(resolveForProvider).toBeDefined();
+      expect(typeof resolveForProvider).toBe('function');
     });
 
     it('should export validateQueryFile', () => {
@@ -175,7 +196,8 @@ name: integration_test
 description: End-to-end integration test
 
 query:
-  - field: title_abstract
+  - id: ml-terms
+    field: title_abstract
     terms:
       keywords:
         - machine learning
@@ -184,7 +206,8 @@ query:
         - Machine Learning
     operator: OR
 
-  - field: title_abstract
+  - id: domain-terms
+    field: title_abstract
     terms:
       keywords:
         - healthcare
@@ -197,16 +220,19 @@ filters:
   language:
     - en
 
-overrides:
+providers:
   pubmed:
-    filters:
-      publication_types:
-        exclude:
-          - Review
+    adds:
+      filters:
+        publication_types:
+          exclude:
+            - Review
   arxiv:
-    categories:
-      - cs.AI
-      - cs.LG
+    adds:
+      filters:
+        categories:
+          - cs.AI
+          - cs.LG
 `
       );
 
@@ -219,6 +245,7 @@ overrides:
 
       // Verify first block
       const block1 = ast.blocks[0]!;
+      expect(block1.id).toBe('ml-terms');
       expect(block1.field).toBe('title_abstract');
       expect(block1.terms.keywords).toEqual(['machine learning', 'deep learning']);
       expect(block1.terms.mesh).toEqual(['Machine Learning']);
@@ -229,9 +256,9 @@ overrides:
       expect(ast.filters.yearTo).toBe(2024);
       expect(ast.filters.languages).toEqual(['en']);
 
-      // Verify overrides
-      expect(ast.overrides.pubmed?.filters?.publicationTypes?.exclude).toEqual(['Review']);
-      expect(ast.overrides.arxiv?.categories).toEqual(['cs.AI', 'cs.LG']);
+      // Verify providers
+      expect(ast.providers?.pubmed?.adds?.filters?.publicationTypes?.exclude).toEqual(['Review']);
+      expect(ast.providers?.arxiv?.adds?.filters?.categories).toEqual(['cs.AI', 'cs.LG']);
     });
 
     it('should report validation errors for invalid file', async () => {

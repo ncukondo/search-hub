@@ -1,9 +1,9 @@
 /**
  * PubMed query translator.
- * Converts QueryAST to PubMed E-utilities search syntax.
+ * Converts ResolvedAST to PubMed E-utilities search syntax.
  */
 
-import type { QueryAST, FieldType, QueryBlock, Filters } from '../../query/types';
+import type { FieldType, QueryBlock, Filters, ResolvedAST } from '../../query/types';
 import type { TranslatedQuery } from '../base/types';
 import { collectUnsupportedVocabWarnings } from '../base/warnings';
 
@@ -180,41 +180,13 @@ function translatePublicationTypeFilters(
 }
 
 /**
- * Merge global filters with provider-specific overrides.
+ * Translate a ResolvedAST to PubMed search syntax.
  */
-function mergeFilters(global: Filters, overrides?: Filters): Filters {
-  if (!overrides) {
-    return global;
-  }
-
-  return {
-    yearFrom: overrides.yearFrom ?? global.yearFrom,
-    yearTo: overrides.yearTo ?? global.yearTo,
-    languages: overrides.languages ?? global.languages,
-    publicationTypes: overrides.publicationTypes
-      ? {
-          include:
-            overrides.publicationTypes.include ??
-            global.publicationTypes?.include,
-          exclude: [
-            ...(global.publicationTypes?.exclude ?? []),
-            ...(overrides.publicationTypes.exclude ?? []),
-          ],
-        }
-      : global.publicationTypes,
-  };
-}
-
-/**
- * Translate a QueryAST to PubMed search syntax.
- */
-export function translateQuery(ast: QueryAST): TranslatedQuery {
-  // Merge filters with PubMed-specific overrides
-  const pubmedOverride = ast.overrides.pubmed;
-  const filters = mergeFilters(ast.filters, pubmedOverride?.filters);
+export function translateQuery(resolved: ResolvedAST): TranslatedQuery {
+  const { filters } = resolved;
 
   // Translate query blocks
-  const blockResults = ast.blocks.map((block) => translateBlock(block));
+  const blockResults = resolved.blocks.map((block) => translateBlock(block));
 
   // Collect query parts and NOT clauses
   const blockStrings = blockResults
@@ -271,11 +243,10 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
 
   // Collect warnings for unsupported controlled vocabulary
   // PubMed supports mesh but not emtree or eric
-  const warnings = collectUnsupportedVocabWarnings(ast.blocks, 'PubMed', new Set(['mesh']));
+  const warnings = collectUnsupportedVocabWarnings(resolved.blocks, 'PubMed', new Set(['mesh']));
 
   return {
     native,
-    originalAst: ast,
     provider: 'pubmed',
     ...(warnings.length > 0 ? { warnings } : {}),
   };

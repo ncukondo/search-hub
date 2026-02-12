@@ -7,7 +7,7 @@
 import { BaseProvider } from '../base/provider.js';
 import type {
   Article,
-  QueryAST,
+  ResolvedAST,
   SearchOptions,
   SearchState,
   TranslatedQuery,
@@ -181,10 +181,10 @@ export class PubMedProvider extends BaseProvider {
   }
 
   /**
-   * Convert QueryAST to PubMed native syntax.
+   * Convert ResolvedAST to PubMed native syntax.
    */
-  translateQuery(ast: QueryAST): TranslatedQuery {
-    return translateQuery(ast);
+  translateQuery(resolved: ResolvedAST): TranslatedQuery {
+    return translateQuery(resolved);
   }
 
   /**
