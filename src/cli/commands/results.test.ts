@@ -389,32 +389,6 @@ describe('parseResultsOptions', () => {
     expect(result.fields).toEqual(['title', 'year', 'journal', 'doi']);
   });
 
-  it('parses filter-year option for range', () => {
-    const result = parseResultsOptions('my-session', { filterYear: '2023-2025' });
-
-    expect(result.filter?.yearFrom).toBe(2023);
-    expect(result.filter?.yearTo).toBe(2025);
-  });
-
-  it('parses filter-year option for single year', () => {
-    const result = parseResultsOptions('my-session', { filterYear: '2024' });
-
-    expect(result.filter?.yearFrom).toBe(2024);
-    expect(result.filter?.yearTo).toBe(2024);
-  });
-
-  it('parses filter-title option', () => {
-    const result = parseResultsOptions('my-session', { filterTitle: 'diabetes,AI' });
-
-    expect(result.filter?.titleKeywords).toEqual(['diabetes', 'AI']);
-  });
-
-  it('parses filter-abstract option', () => {
-    const result = parseResultsOptions('my-session', { filterAbstract: 'machine learning' });
-
-    expect(result.filter?.abstractKeywords).toEqual(['machine learning']);
-  });
-
   it('parses -q/--query option', () => {
     const result = parseResultsOptions('my-session', { query: 'author:smith year:2023' });
 
@@ -494,22 +468,7 @@ describe('validateResultsInput', () => {
     expect(result.error).toContain('offset');
   });
 
-  it('rejects -q combined with legacy filter flags', () => {
-    const options: ResultsCommandOptions = {
-      sessionId: 'my-session',
-      json: false,
-      showAbstract: false,
-      query: 'diabetes',
-      filter: { titleKeywords: ['diabetes'] },
-    };
-
-    const result = validateResultsInput(options);
-
-    expect(result.valid).toBe(false);
-    expect(result.error).toContain('-q/--query');
-  });
-
-  it('accepts -q without legacy filter flags', () => {
+  it('accepts -q option', () => {
     const options: ResultsCommandOptions = {
       sessionId: 'my-session',
       json: false,

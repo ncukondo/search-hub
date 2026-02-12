@@ -180,9 +180,6 @@ search-hub export <session-id> [options]
 | `-q, --query <expr>` | Filter by query expression (same syntax as `results -q`) |
 | `--id-type <type>` | For ids format: `doi`, `pmid`, `all` |
 | `--db <provider>` | _(deprecated, use `-q "source:provider"`)_ Export only specific database(s) |
-| `--filter-year <range>` | _(deprecated, use `-q "year:range"`)_ Year range filter |
-| `--filter-title <keywords>` | _(deprecated, use `-q "title:keyword"`)_ Title keyword filter |
-| `--filter-abstract <keywords>` | _(deprecated, use `-q "abstract:keyword"`)_ Abstract keyword filter |
 
 ### Examples
 
@@ -263,9 +260,6 @@ search-hub results <session-id> [options]
 | `--abstract` | Show abstracts with results |
 | `--abstract-length <n>` | Maximum abstract length in characters (default: 300) |
 | `--db <providers>` | _(deprecated, use `-q "source:pubmed"`)_ Filter by database(s) |
-| `--filter-year <range>` | _(deprecated, use `-q "year:2023-2025"`)_ Year range filter |
-| `--filter-title <keywords>` | _(deprecated, use `-q "title:keyword"`)_ Title keyword filter |
-| `--filter-abstract <keywords>` | _(deprecated, use `-q "abstract:keyword"`)_ Abstract keyword filter |
 
 ### Query Expression Syntax
 

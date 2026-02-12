@@ -2,7 +2,6 @@
  * Results command - display articles from a session in the terminal.
  */
 import type { Article } from '../../providers/base/types.js';
-import type { ExportFilter } from './export.js';
 
 export interface ResultsCommandOptions {
   sessionId: string;
@@ -11,7 +10,6 @@ export interface ResultsCommandOptions {
   json: boolean;
   fields?: string[];
   query?: string;
-  filter?: ExportFilter;
   showAbstract: boolean;
   abstractLength?: number;
 }
@@ -22,9 +20,6 @@ export interface CommandLineOptions {
   json?: boolean | undefined;
   fields?: string | undefined;
   query?: string | undefined;
-  filterYear?: string | undefined;
-  filterTitle?: string | undefined;
-  filterAbstract?: string | undefined;
   abstract?: boolean | undefined;
   abstractLength?: string | undefined;
 }
@@ -75,42 +70,6 @@ export function parseResultsOptions(
     result.query = options.query;
   }
 
-  // Parse legacy filters
-  const filter: ExportFilter = {};
-  let hasFilter = false;
-
-  if (options.filterYear) {
-    const parts = options.filterYear.split('-');
-    if (parts.length === 2) {
-      const from = parseInt(parts[0]!, 10);
-      const to = parseInt(parts[1]!, 10);
-      if (!Number.isNaN(from)) filter.yearFrom = from;
-      if (!Number.isNaN(to)) filter.yearTo = to;
-      hasFilter = true;
-    } else if (parts.length === 1) {
-      const year = parseInt(parts[0]!, 10);
-      if (!Number.isNaN(year)) {
-        filter.yearFrom = year;
-        filter.yearTo = year;
-        hasFilter = true;
-      }
-    }
-  }
-
-  if (options.filterTitle) {
-    filter.titleKeywords = options.filterTitle.split(',').map((s) => s.trim()).filter(Boolean);
-    hasFilter = true;
-  }
-
-  if (options.filterAbstract) {
-    filter.abstractKeywords = options.filterAbstract.split(',').map((s) => s.trim()).filter(Boolean);
-    hasFilter = true;
-  }
-
-  if (hasFilter) {
-    result.filter = filter;
-  }
-
   return result;
 }
 
@@ -133,14 +92,6 @@ export function validateResultsInput(options: ResultsCommandOptions): Validation
     return {
       valid: false,
       error: 'offset must be a non-negative number',
-    };
-  }
-
-  // -q and legacy filter flags are mutually exclusive
-  if (options.query !== undefined && options.query !== '' && options.filter) {
-    return {
-      valid: false,
-      error: 'Cannot use -q/--query together with --filter-year, --filter-title, or --filter-abstract. Use -q only.',
     };
   }
 

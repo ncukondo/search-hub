@@ -19,7 +19,7 @@ import {
   formatResultsList,
   formatResultsJson,
 } from './results.js';
-import { deduplicateArticles, filterArticles, type ExportFilter } from './export.js';
+import { deduplicateArticles } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 
 describe('search-hub results E2E', () => {
@@ -297,56 +297,6 @@ describe('search-hub results E2E', () => {
       expect(output).toContain('Showing 3-4 of 5 articles');
       // First article should be numbered 3
       expect(output).toContain('3.');
-    });
-
-    it('should support year filtering', async () => {
-      await createTestSession(
-        'results-e2e-filter-year',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
-
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-filter-year',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
-      const dedupResult = deduplicateArticles(allArticles);
-      const filter: ExportFilter = { yearFrom: 2024, yearTo: 2024 };
-      const filtered = filterArticles(dedupResult.articles, filter);
-
-      const output = formatResultsList(filtered, {
-        sessionId: 'results-e2e-filter-year',
-        sessionName: 'results-e2e-test',
-        total: filtered.length,
-        filteredFrom: dedupResult.articles.length,
-      });
-
-      expect(output).toContain('filtered from 5');
-      // All displayed articles should be from 2024
-      expect(output).toContain('[2024]');
-      expect(output).not.toContain('[2023]');
-      expect(output).not.toContain('[2025]');
-    });
-
-    it('should support title keyword filtering', async () => {
-      await createTestSession(
-        'results-e2e-filter-title',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
-
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-filter-title',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
-      const dedupResult = deduplicateArticles(allArticles);
-      const filter: ExportFilter = { titleKeywords: ['Machine Learning', 'Deep Learning'] };
-      const filtered = filterArticles(dedupResult.articles, filter);
-
-      expect(filtered.length).toBe(2);
-      const titles = filtered.map((a) => a.title);
-      expect(titles).toContain('Machine Learning Applications in Healthcare');
-      expect(titles).toContain('Deep Learning Methods for Clinical Data');
     });
 
     it('should deduplicate articles by DOI', async () => {

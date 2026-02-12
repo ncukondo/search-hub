@@ -15,8 +15,6 @@ import {
 import {
   formatResultsList,
   formatResultsJson,
-  parseResultsOptions,
-  validateResultsInput,
 } from './results.js';
 import {
   deduplicateArticles,
@@ -258,47 +256,4 @@ describe('query filter E2E', () => {
     });
   });
 
-  describe('validation: -q with legacy flags', () => {
-    it('rejects -q combined with --filter-title', () => {
-      const opts = parseResultsOptions('test-session', {
-        query: 'diabetes',
-        filterTitle: 'something',
-      });
-      const validation = validateResultsInput(opts);
-
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toContain('-q/--query');
-    });
-
-    it('rejects -q combined with --filter-year', () => {
-      const opts = parseResultsOptions('test-session', {
-        query: 'diabetes',
-        filterYear: '2023',
-      });
-      const validation = validateResultsInput(opts);
-
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toContain('-q/--query');
-    });
-
-    it('rejects -q combined with --filter-abstract', () => {
-      const opts = parseResultsOptions('test-session', {
-        query: 'diabetes',
-        filterAbstract: 'something',
-      });
-      const validation = validateResultsInput(opts);
-
-      expect(validation.valid).toBe(false);
-      expect(validation.error).toContain('-q/--query');
-    });
-
-    it('accepts -q alone', () => {
-      const opts = parseResultsOptions('test-session', {
-        query: 'author:smith year:2023',
-      });
-      const validation = validateResultsInput(opts);
-
-      expect(validation.valid).toBe(true);
-    });
-  });
 });
