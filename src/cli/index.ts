@@ -222,11 +222,11 @@ export function createProgram(): Command {
 Workflow:
   1. query init → edit → validate / --dry-run        Query preparation
   2. search --preview → search                       Preview & execute
-  3. results / summary / diff                        Inspect & compare
+  3. results / summary / diff / check                Inspect & verify
   4. review init → extract → merge → status          Systematic review
   5. register / export                               Output
 
-  Iterate: search v1 → search v2 → diff             Query refinement
+  Iterate: search → results -q → check → diff       Query refinement
 
 Quick Start:
   $ search-hub query init -o search.yaml        # Create query template
