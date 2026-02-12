@@ -123,7 +123,7 @@ Found (12):
 
 ### Step 1: Identifier file parser
 
-- [ ] Write test: `src/cli/commands/check.test.ts`
+- [x] Write test: `src/cli/commands/check.test.ts`
   - Parses DOIs (`10.xxxx/yyyy`)
   - Parses PMIDs (numeric)
   - Parses prefixed identifiers (`DOI:xxx`, `PMID:xxx`, `ARXIV:xxx`)
@@ -131,16 +131,16 @@ Found (12):
   - Trims whitespace
   - Errors on unrecognizable lines (with line number)
   - Handles mixed identifier types in one file
-- [ ] Create stub: `src/cli/commands/check.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement `parseIdentifierFile(content: string)` function
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: parser correctly handles all identifier formats
+- [x] Create stub: `src/cli/commands/check.ts`
+- [x] Verify test fails (Red)
+- [x] Implement `parseIdentifierFile(content: string)` function
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: parser correctly handles all identifier formats
 
 ### Step 2: Coverage matching engine
 
-- [ ] Write test: `src/cli/commands/check.test.ts` (add matching tests)
+- [x] Write test: `src/cli/commands/check.test.ts` (add matching tests)
   - Matches DOI (case-insensitive)
   - Matches PMID (exact)
   - Reports found articles with their source databases
@@ -149,37 +149,37 @@ Found (12):
   - Handles articles with multiple identifiers (any match counts)
   - Handles empty session (0% coverage)
   - Handles empty identifier list (error or 0/0)
-- [ ] Implement `checkCoverage(articles, identifiers)` function
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: matching engine correct for all cases
+- [x] Implement `checkCoverage(articles, identifiers)` function
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: matching engine correct for all cases
 
 ### Step 3: Text output formatter
 
-- [ ] Write test: `src/cli/commands/check.test.ts` (add formatting tests)
+- [x] Write test: `src/cli/commands/check.test.ts` (add formatting tests)
   - Shows coverage summary (found/total with percentage)
   - Lists missing identifiers
   - Lists found identifiers with source databases
   - `--missing-only` shows only missing
   - Includes article title for found items
-- [ ] Implement `formatCheckResult()` function
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: output format matches design
+- [x] Implement `formatCheckResult()` function
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: output format matches design
 
 ### Step 4: JSON output formatter
 
-- [ ] Write test: `src/cli/commands/check.test.ts` (add JSON tests)
+- [x] Write test: `src/cli/commands/check.test.ts` (add JSON tests)
   - JSON structure matches design
   - Includes session ID, source, total, found, missing, coverage, details
-- [ ] Implement `formatCheckResultJson()` function
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: JSON output matches specification
+- [x] Implement `formatCheckResultJson()` function
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: JSON output matches specification
 
 ### Step 5: CLI command registration
 
-- [ ] Write test: CLI integration tests
+- [x] Write test: CLI integration tests
   - `check SESSION --file known.txt` → runs and shows coverage
   - `check SESSION --doi "10.xxx"` → checks single DOI
   - `check SESSION --pmid "12345"` → checks single PMID
@@ -188,24 +188,24 @@ Found (12):
   - Error: no `--file` or `--doi`/`--pmid` → helpful error message
   - Error: file not found → error with path
   - Error: session not found → error with session ID
-- [ ] Register `check` command in `src/cli/index.ts`
+- [x] Register `check` command in `src/cli/index.ts`
   - Add command with description: "Verify coverage of known articles against session results"
   - Add `--file`, `--doi`, `--pmid`, `--json`, `--missing-only` options
   - Add help text with examples
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: full CLI integration working
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: full CLI integration working
 
 ### Step 6: Discoverability integration
 
-- [ ] Update `search-hub --help` workflow section to include `check`
-- [ ] Add hint to `results` command output footer mentioning `check`
-- [ ] Add `check` to Quick Start section in help text
-- [ ] Acceptance: `check` is visible in help text at appropriate points
+- [x] Update `search-hub --help` workflow section to include `check`
+- [x] Add hint to `results` command output footer mentioning `check`
+- [x] Add `check` to Quick Start section in help text
+- [x] Acceptance: `check` is visible in help text at appropriate points
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: `src/cli/commands/check.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/check.e2e.test.ts`
   - Create session with known articles (with DOIs and PMIDs)
   - Create identifier file with mix of found and missing IDs
   - Run `check SESSION --file ids.txt` → correct coverage report
@@ -213,10 +213,10 @@ Found (12):
   - Run `check SESSION --doi "unknown-doi"` → missing
   - Run `check SESSION --file ids.txt --json` → valid JSON with correct fields
   - Run `check SESSION --file ids.txt --missing-only` → only missing shown
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test with real session data
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test with real session data
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

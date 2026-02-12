@@ -228,6 +228,7 @@ export function formatResultsList(
   if (options.filteredFrom === undefined) {
     lines.push('Tip: Use -q to filter: results SESSION -q "author:smith year:2023"');
   }
+  lines.push('Tip: Use check to verify coverage: check SESSION --file known-dois.txt');
 
   return lines.join('\n').trimEnd();
 }

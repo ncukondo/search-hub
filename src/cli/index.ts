@@ -183,6 +183,7 @@ import { fileURLToPath } from 'node:url';
 import { getSessionsDir } from './utils/sessions-dir.js';
 import { expandPath } from '../utils/path.js';
 import { loadSessionArticles, loadSessionQuery } from './commands/session-utils.js';
+import { parseIdentifierFile, checkCoverage, formatCheckResult, formatCheckResultJson } from './commands/check.js';
 
 /**
  * Global CLI options available to all commands.
@@ -221,11 +222,11 @@ export function createProgram(): Command {
 Workflow:
   1. query init → edit → validate / --dry-run        Query preparation
   2. search --preview → search                       Preview & execute
-  3. results / summary / diff                        Inspect & compare
+  3. results / summary / diff / check                Inspect & verify
   4. review init → extract → merge → status          Systematic review
   5. register / export                               Output
 
-  Iterate: search v1 → search v2 → diff             Query refinement
+  Iterate: search → results -q → check → diff       Query refinement
 
 Quick Start:
   $ search-hub query init -o search.yaml        # Create query template
@@ -1602,6 +1603,135 @@ Query Refinement Workflow:
             );
           }
           process.exitCode = EXIT_CODES.SESSION_ERROR;
+        }
+      }
+    );
+
+  // Register check command
+  program
+    .command('check')
+    .description('Verify coverage of known articles against session results')
+    .argument('<session-id>', 'session ID to check against')
+    .option('--file <path>', 'file with identifiers (one per line)')
+    .option('--doi <ids>', 'comma-separated DOIs to check')
+    .option('--pmid <ids>', 'comma-separated PMIDs to check')
+    .option('--json', 'output as JSON')
+    .option('--missing-only', 'show only missing identifiers')
+    .addHelpText('after', `
+Examples:
+  $ search-hub check SESSION --file known-dois.txt              # Check from file
+  $ search-hub check SESSION --doi "10.1001/jama.2023.12345"    # Check single DOI
+  $ search-hub check SESSION --pmid "37654321,36543210"         # Check PMIDs
+  $ search-hub check SESSION --file refs.txt --json             # JSON output
+  $ search-hub check SESSION --file refs.txt --missing-only     # Only missing
+
+Input file format (one identifier per line):
+  10.1001/jama.2023.12345          DOI (starts with "10.")
+  37654321                          PMID (numeric only)
+  DOI:10.1038/s41586-023-xxxxx    DOI (explicit prefix)
+  PMID:36543210                    PMID (explicit prefix)
+  arxiv:2301.12345                 arXiv ID (explicit prefix)
+  # comment                        Comments and empty lines ignored`)
+    .action(
+      async (
+        sessionId: string,
+        options?: { file?: string; doi?: string; pmid?: string; json?: boolean; missingOnly?: boolean }
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          // Parse identifiers from input sources
+          let identifiers;
+          let source: string;
+
+          if (options?.file) {
+            const filePath = expandPath(options.file);
+            let content: string;
+            try {
+              content = await readFile(filePath, 'utf-8');
+            } catch {
+              if (!globalOpts.quiet) {
+                console.error(`Error: File not found: ${filePath}`);
+              }
+              process.exitCode = EXIT_CODES.GENERAL_ERROR;
+              return;
+            }
+            try {
+              identifiers = parseIdentifierFile(content);
+            } catch (error) {
+              if (!globalOpts.quiet) {
+                console.error(`Error: ${error instanceof Error ? error.message : 'Failed to parse identifier file'}`);
+              }
+              process.exitCode = EXIT_CODES.GENERAL_ERROR;
+              return;
+            }
+            source = options.file;
+          } else if (options?.doi || options?.pmid) {
+            const lines: string[] = [];
+            if (options.doi) {
+              lines.push(...options.doi.split(',').map(d => d.trim()).filter(Boolean));
+            }
+            if (options.pmid) {
+              lines.push(...options.pmid.split(',').map(p => `PMID:${p.trim()}`).filter(Boolean));
+            }
+            identifiers = parseIdentifierFile(lines.join('\n'));
+            source = 'command line';
+          } else {
+            if (!globalOpts.quiet) {
+              console.error('Error: Provide --file, --doi, or --pmid');
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          }
+
+          if (identifiers.length === 0) {
+            if (!globalOpts.quiet) {
+              console.error('Error: No identifiers found in input');
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          }
+
+          // Load session
+          const sessionsDir = await getSessionsDir(globalOpts);
+          let session;
+          try {
+            session = await loadSession(sessionId, sessionsDir);
+          } catch (error) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`
+              );
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          // Load articles and check coverage
+          const articles = await loadSessionArticles(session, sessionId, sessionsDir);
+          const result = checkCoverage(articles, identifiers);
+
+          // Format output
+          if (options?.json) {
+            console.log(formatCheckResultJson(result, { sessionId, source }));
+          } else {
+            if (!globalOpts.quiet) {
+              console.log(formatCheckResult(result, {
+                sessionId,
+                source,
+                missingOnly: options?.missingOnly,
+              }));
+            }
+          }
+
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error(
+              'Error:',
+              error instanceof Error ? error.message : error
+            );
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
         }
       }
     );
