@@ -22,13 +22,6 @@ const filtersInputSchema = z
     year_to: z.number().int().optional(),
     language: z.array(z.string()).optional(),
     publication_types: publicationTypeFilterSchema.optional(),
-  })
-  .optional();
-
-/** Override block input schema (without transform) */
-const overrideBlockInputSchema = z
-  .object({
-    filters: filtersInputSchema,
     categories: z.array(z.string()).optional(),
     source_types: z.array(z.string()).optional(),
   })
@@ -45,10 +38,30 @@ const termBlockInputSchema = z.object({
 
 /** Query block input schema */
 const queryBlockInputSchema = z.object({
+  id: z.string().min(1),
   field: fieldTypeSchema,
   terms: termBlockInputSchema,
   operator: operatorSchema,
 });
+
+/** Block replacement input schema (without id) */
+const blockReplacementInputSchema = z.object({
+  field: fieldTypeSchema,
+  terms: termBlockInputSchema,
+  operator: operatorSchema,
+});
+
+/** Provider section input schema */
+const providerSectionInputSchema = z
+  .object({
+    replaces: z.record(z.string(), blockReplacementInputSchema).optional(),
+    adds: z
+      .object({
+        filters: filtersInputSchema,
+      })
+      .optional(),
+  })
+  .optional();
 
 /** Query file input schema (without transform) - mirrors queryFileSchema input */
 const queryFileInputSchema = z.object({
@@ -56,14 +69,14 @@ const queryFileInputSchema = z.object({
   description: z.string().optional(),
   query: z.array(queryBlockInputSchema).min(1),
   filters: filtersInputSchema,
-  overrides: z
+  providers: z
     .object({
-      pubmed: overrideBlockInputSchema,
-      scopus: overrideBlockInputSchema,
-      eric: overrideBlockInputSchema,
-      arxiv: overrideBlockInputSchema,
-      wos: overrideBlockInputSchema,
-      embase: overrideBlockInputSchema,
+      pubmed: providerSectionInputSchema,
+      scopus: providerSectionInputSchema,
+      eric: providerSectionInputSchema,
+      arxiv: providerSectionInputSchema,
+      wos: providerSectionInputSchema,
+      embase: providerSectionInputSchema,
     })
     .optional(),
 });
