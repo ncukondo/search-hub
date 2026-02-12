@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseIdentifierFile,
+  checkCoverage,
   type ParsedIdentifier,
+  type CheckResult,
 } from './check.js';
+import type { Article } from '../../providers/base/types.js';
 
 describe('parseIdentifierFile', () => {
   it('parses DOIs starting with 10.', () => {
@@ -88,5 +91,115 @@ arxiv:2301.12345`;
   it('returns empty array for empty input', () => {
     expect(parseIdentifierFile('')).toEqual([]);
     expect(parseIdentifierFile('# only comments\n\n')).toEqual([]);
+  });
+});
+
+function makeArticle(overrides: Partial<Article> & { title: string }): Article {
+  return {
+    authors: [],
+    source: 'pubmed',
+    retrievedAt: '2024-01-15T00:00:00Z',
+    ...overrides,
+  };
+}
+
+describe('checkCoverage', () => {
+  const articles: Article[] = [
+    makeArticle({ doi: '10.1001/jama.2023.12345', pmid: '37654321', title: 'Article A', source: 'pubmed' }),
+    makeArticle({ doi: '10.1038/s41586-023-xxxxx', title: 'Article B', source: 'pubmed' }),
+    makeArticle({ doi: '10.1038/s41586-023-xxxxx', title: 'Article B (scopus)', source: 'scopus' }),
+    makeArticle({ pmid: '11111111', title: 'Article C', source: 'pubmed' }),
+  ];
+
+  it('matches DOI case-insensitively', () => {
+    const ids: ParsedIdentifier[] = [
+      { type: 'doi', value: '10.1001/JAMA.2023.12345', raw: '10.1001/JAMA.2023.12345' },
+    ];
+    const result = checkCoverage(articles, ids);
+    expect(result.found).toHaveLength(1);
+    expect(result.found[0]!.query).toBe('10.1001/JAMA.2023.12345');
+    expect(result.found[0]!.title).toBe('Article A');
+  });
+
+  it('matches PMID exactly', () => {
+    const ids: ParsedIdentifier[] = [
+      { type: 'pmid', value: '37654321', raw: 'PMID:37654321' },
+    ];
+    const result = checkCoverage(articles, ids);
+    expect(result.found).toHaveLength(1);
+    expect(result.found[0]!.title).toBe('Article A');
+  });
+
+  it('reports found articles with source databases', () => {
+    const ids: ParsedIdentifier[] = [
+      { type: 'doi', value: '10.1038/s41586-023-xxxxx', raw: '10.1038/s41586-023-xxxxx' },
+    ];
+    const result = checkCoverage(articles, ids);
+    expect(result.found).toHaveLength(1);
+    expect(result.found[0]!.sources).toEqual(['pubmed', 'scopus']);
+  });
+
+  it('reports missing identifiers', () => {
+    const ids: ParsedIdentifier[] = [
+      { type: 'doi', value: '10.9999/not-found', raw: '10.9999/not-found' },
+      { type: 'pmid', value: '99999999', raw: '99999999' },
+    ];
+    const result = checkCoverage(articles, ids);
+    expect(result.missing).toHaveLength(2);
+    expect(result.found).toHaveLength(0);
+  });
+
+  it('calculates coverage percentage', () => {
+    const ids: ParsedIdentifier[] = [
+      { type: 'doi', value: '10.1001/jama.2023.12345', raw: '10.1001/jama.2023.12345' },
+      { type: 'doi', value: '10.9999/not-found', raw: '10.9999/not-found' },
+    ];
+    const result = checkCoverage(articles, ids);
+    expect(result.total).toBe(2);
+    expect(result.foundCount).toBe(1);
+    expect(result.missingCount).toBe(1);
+    expect(result.coverage).toBeCloseTo(0.5);
+  });
+
+  it('handles articles with multiple identifiers (any match counts)', () => {
+    // Article A has both DOI and PMID - searching by PMID should find it
+    const ids: ParsedIdentifier[] = [
+      { type: 'pmid', value: '37654321', raw: '37654321' },
+    ];
+    const result = checkCoverage(articles, ids);
+    expect(result.found).toHaveLength(1);
+    expect(result.found[0]!.title).toBe('Article A');
+    expect(result.found[0]!.sources).toEqual(['pubmed']);
+  });
+
+  it('handles empty session (0% coverage)', () => {
+    const ids: ParsedIdentifier[] = [
+      { type: 'doi', value: '10.1001/jama.2023.12345', raw: '10.1001/jama.2023.12345' },
+    ];
+    const result = checkCoverage([], ids);
+    expect(result.foundCount).toBe(0);
+    expect(result.missingCount).toBe(1);
+    expect(result.coverage).toBe(0);
+  });
+
+  it('handles empty identifier list', () => {
+    const result = checkCoverage(articles, []);
+    expect(result.total).toBe(0);
+    expect(result.foundCount).toBe(0);
+    expect(result.missingCount).toBe(0);
+    expect(result.coverage).toBe(0);
+  });
+
+  it('deduplicates when same article matched via multiple input identifiers', () => {
+    // Article A has DOI and PMID - if both are in input, should appear once in found
+    const ids: ParsedIdentifier[] = [
+      { type: 'doi', value: '10.1001/jama.2023.12345', raw: '10.1001/jama.2023.12345' },
+      { type: 'pmid', value: '37654321', raw: 'PMID:37654321' },
+    ];
+    const result = checkCoverage(articles, ids);
+    // Both identifiers are "found" but they match the same article
+    expect(result.found).toHaveLength(2);
+    expect(result.total).toBe(2);
+    expect(result.foundCount).toBe(2);
   });
 });
