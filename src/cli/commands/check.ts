@@ -127,7 +127,7 @@ function identifierToKey(id: ParsedIdentifier): string {
 export interface FormatCheckOptions {
   sessionId: string;
   source: string;
-  missingOnly?: boolean;
+  missingOnly?: boolean | undefined;
 }
 
 export function formatCheckResult(result: CheckResult, options: FormatCheckOptions): string {
