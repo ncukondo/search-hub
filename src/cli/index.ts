@@ -88,6 +88,7 @@ import {
   formatResultsList,
   formatResultsJson,
 } from './commands/results.js';
+import { filterByQuery } from './commands/query-filter.js';
 import {
   loadNotes,
   addNote,
@@ -1295,20 +1296,36 @@ Examples:
     .option('--json', 'output as JSON array')
     .option('--fields <fields>', 'fields to display (comma-separated)')
     .option('--db <providers>', 'filter by database(s), comma-separated')
-    .option('--filter-year <range>', 'year range filter (e.g., "2023-2025")')
-    .option('--filter-title <keywords>', 'title keyword filter (comma-separated)')
-    .option('--filter-abstract <keywords>', 'abstract keyword filter (comma-separated)')
+    .option('-q, --query <expr>', 'filter results with query expression')
+    .option('--filter-year <range>', 'year range filter (deprecated, use -q)')
+    .option('--filter-title <keywords>', 'title keyword filter (deprecated, use -q)')
+    .option('--filter-abstract <keywords>', 'abstract keyword filter (deprecated, use -q)')
     .option('--abstract', 'show abstracts with results')
     .option('--abstract-length <n>', 'maximum abstract length in characters (default: 300)')
     .addHelpText('after', `
 Examples:
-  $ search-hub results SESSION_ID                         # List all articles
-  $ search-hub results SESSION_ID --limit 20              # First 20 articles
-  $ search-hub results SESSION_ID --limit 20 --offset 40  # Articles 41-60
-  $ search-hub results SESSION_ID --json                  # JSON output for scripting
-  $ search-hub results SESSION_ID --db pubmed             # Only PubMed articles
-  $ search-hub results SESSION_ID --filter-year 2023-2025 # Filter by year
-  $ search-hub results SESSION_ID --abstract              # Show with abstracts`)
+  $ search-hub results SESSION_ID                              # List all articles
+  $ search-hub results SESSION_ID --limit 20                   # First 20 articles
+  $ search-hub results SESSION_ID -q "diabetes"                # Free text filter
+  $ search-hub results SESSION_ID -q "author:smith year:2023"  # Combined filter
+  $ search-hub results SESSION_ID -q "doi:10.1001/xxx"         # Exact ID match
+  $ search-hub results SESSION_ID --json                       # JSON output
+  $ search-hub results SESSION_ID --db pubmed                  # Only PubMed
+  $ search-hub results SESSION_ID --abstract                   # Show abstracts
+
+Query syntax:
+  Free text        diabetes             Search title and abstract
+  title:VALUE      title:learning       Title substring
+  abstract:VALUE   abstract:randomized  Abstract substring
+  author:VALUE     author:tanaka        Author name substring
+  journal:VALUE    journal:lancet       Journal name substring
+  year:VALUE       year:2023            Exact year
+  year:FROM-TO     year:2020-2024       Year range
+  doi:VALUE        doi:10.1001/xxx      DOI exact match
+  pmid:VALUE       pmid:12345678        PMID exact match
+  source:VALUE     source:pubmed        Provider exact match
+
+  Multiple terms: different fields = AND, same field = OR`)
     .action(
       async (
         sessionId: string,
@@ -1318,6 +1335,7 @@ Examples:
           json?: boolean;
           fields?: string;
           db?: string;
+          query?: string;
           filterYear?: string;
           filterTitle?: string;
           filterAbstract?: string;
@@ -1334,6 +1352,7 @@ Examples:
             json: options?.json,
             fields: options?.fields,
             db: options?.db,
+            query: options?.query,
             filterYear: options?.filterYear,
             filterTitle: options?.filterTitle,
             filterAbstract: options?.filterAbstract,
@@ -1373,9 +1392,15 @@ Examples:
           const dedupResult = deduplicateArticles(articles);
           let displayArticles = dedupResult.articles;
 
-          // Apply filters
+          // Apply filters (-q or legacy)
           let filteredFrom: number | undefined;
-          if (resultsOpts.filter) {
+          if (resultsOpts.query) {
+            const preFilterCount = displayArticles.length;
+            displayArticles = filterByQuery(displayArticles, resultsOpts.query);
+            if (displayArticles.length !== preFilterCount) {
+              filteredFrom = preFilterCount;
+            }
+          } else if (resultsOpts.filter) {
             const preFilterCount = displayArticles.length;
             displayArticles = filterArticles(displayArticles, resultsOpts.filter);
             if (displayArticles.length !== preFilterCount) {
