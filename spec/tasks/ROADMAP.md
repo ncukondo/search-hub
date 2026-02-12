@@ -121,6 +121,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 112 | Results Query Filter (`-q` / `--query`) | 38 | 🔲 Pending | [20260212-01](20260212-01-results-query-filter.md) |
 | 113 | Coverage Check Command (`check`) | 112 | 🔲 Pending | [20260212-02](20260212-02-check-coverage-command.md) |
 | 114 | Documentation Update (Query Filter & Check) | 112, 113 | 🔲 Pending | [20260212-03](20260212-03-query-filter-docs.md) |
+| 115 | Query DSL Provider-Aware Redesign | 3 | 🔲 Pending | [20260212-04](20260212-04-query-dsl-provider-aware-redesign.md) |
+| 116 | Query Inspect Command | 115 | 🔲 Pending | [20260212-05](20260212-05-query-inspect-command.md) |
 
 ## Development Flow
 
