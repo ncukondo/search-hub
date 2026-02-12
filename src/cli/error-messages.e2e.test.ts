@@ -161,7 +161,8 @@ describe('CLI Error Messages E2E', () => {
         ctx.tempDir,
         `
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -191,7 +192,8 @@ query:
         `
 name: test-query
 query:
-  - field: invalid_field_type
+  - id: block-1
+    field: invalid_field_type
     terms:
       keywords:
         - test
@@ -221,7 +223,8 @@ query:
         `
 name: test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords
         - missing colon after keywords

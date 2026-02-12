@@ -424,7 +424,6 @@ const createQueryAST = (overrides: Partial<QueryAST> & { blocks?: QueryBlock[] }
   name: 'test-query',
   blocks: [],
   filters: {},
-  overrides: {},
   ...overrides,
 });
 
@@ -432,8 +431,9 @@ const createQueryAST = (overrides: Partial<QueryAST> & { blocks?: QueryBlock[] }
 const createBlock = (
   field: QueryBlock['field'],
   keywords: string[],
-  options: { mesh?: string[]; emtree?: string[]; exclude?: string[] } = {}
+  options: { id?: string; mesh?: string[]; emtree?: string[]; exclude?: string[] } = {}
 ): QueryBlock => ({
+  id: options.id ?? 'block-1',
   field,
   terms: {
     keywords,

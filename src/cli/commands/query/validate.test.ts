@@ -14,7 +14,8 @@ const validYaml = `
 name: test-query
 description: A test query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -25,14 +26,16 @@ query:
 const invalidYaml = `
 name: 123
 query:
-  - field: invalid_field
+  - id: block-1
+    field: invalid_field
     terms: not_an_object
 `;
 
 const malformedYaml = `
 name: test
 query:
-  - field: title
+  - id: block-1
+    field: title
   terms:  # wrong indentation
 `;
 
@@ -108,7 +111,8 @@ describe('query validate command', () => {
     const yamlWithMesh = `
 name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -172,7 +176,8 @@ query:
     const yamlWithMesh = `
 name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -245,7 +250,8 @@ query:
     const yamlWithMesh = `
 name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -383,7 +389,8 @@ query:
     const yamlWithEric = `
 name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - education
@@ -396,7 +403,8 @@ query:
     const yamlWithEmtree = `
 name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -409,7 +417,8 @@ query:
     const yamlWithMixed = `
 name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes

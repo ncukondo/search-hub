@@ -93,7 +93,6 @@ export class MockProvider extends BaseProvider {
         name: 'mock-query',
         blocks: [],
         filters: {},
-        overrides: {},
       },
       provider: this.name,
     };

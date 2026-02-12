@@ -35,13 +35,13 @@ describe('arXiv Provider E2E', () => {
         name: 'test-query',
         blocks: [
           {
+            id: 'block-1',
             field: 'title',
             terms: { keywords: ['quantum computing'] },
             operator: 'OR',
           },
         ],
         filters: {},
-        overrides: {},
       };
 
       const query = translateQuery(ast);
@@ -67,13 +67,13 @@ describe('arXiv Provider E2E', () => {
         name: 'test-query',
         blocks: [
           {
+            id: 'block-1',
             field: 'author',
             terms: { keywords: ['Smith'] },
             operator: 'OR',
           },
         ],
         filters: {},
-        overrides: {},
       };
 
       const query = translateQuery(ast);
@@ -92,16 +92,14 @@ describe('arXiv Provider E2E', () => {
         name: 'test-query',
         blocks: [
           {
+            id: 'block-1',
             field: 'all',
             terms: { keywords: ['machine learning'] },
             operator: 'OR',
           },
         ],
-        filters: {},
-        overrides: {
-          arxiv: {
-            categories: ['cs.AI'],
-          },
+        filters: {
+          categories: ['cs.AI'],
         },
       };
 
@@ -126,13 +124,13 @@ describe('arXiv Provider E2E', () => {
         name: 'test-query',
         blocks: [
           {
+            id: 'block-1',
             field: 'title',
             terms: { keywords: ['neural network'] },
             operator: 'OR',
           },
         ],
         filters: {},
-        overrides: {},
       };
 
       const query = translateQuery(ast);
@@ -166,13 +164,13 @@ describe('arXiv Provider E2E', () => {
         name: 'test-query',
         blocks: [
           {
+            id: 'block-1',
             field: 'title',
             terms: { keywords: ['physics'] },
             operator: 'OR',
           },
         ],
         filters: {},
-        overrides: {},
       };
 
       const query = translateQuery(ast);
@@ -193,13 +191,13 @@ describe('arXiv Provider E2E', () => {
         name: 'test-query',
         blocks: [
           {
+            id: 'block-1',
             field: 'title',
             terms: { keywords: ['test'] },
             operator: 'OR',
           },
         ],
         filters: {},
-        overrides: {},
       };
 
       const query = translateQuery(ast);

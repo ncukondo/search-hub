@@ -74,7 +74,8 @@ describe('search-hub query validate E2E', () => {
         `
 name: filter-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -163,7 +164,8 @@ filters:
         `
 name: invalid-year-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -202,7 +204,8 @@ filters:
         `
 name: test
 query:
-  - field: invalid_field_type
+  - id: block-1
+    field: invalid_field_type
     terms:
       keywords:
         - test
@@ -225,7 +228,8 @@ query:
         `
 name: test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords: "not an array"
     operator: AND
@@ -244,7 +248,8 @@ query:
         `
 name: test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -310,7 +315,8 @@ query:
         `
 name: minimal-query
 query:
-  - field: all
+  - id: block-1
+    field: all
     terms:
       keywords:
         - single
@@ -331,7 +337,8 @@ query:
 name: described-query
 description: This is a detailed description of the query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -345,28 +352,30 @@ query:
       expect(result.queryName).toBe('described-query');
     });
 
-    it('should handle query with provider overrides', async () => {
+    it('should handle query with provider sections', async () => {
       const queryPath = await createRawQueryFile(
         ctx.tempDir,
         `
-name: override-query
+name: provider-query
 query:
-  - field: title_abstract
+  - id: concept-1
+    field: title_abstract
     terms:
       keywords:
         - test
     operator: AND
-overrides:
+providers:
   pubmed:
-    filters:
-      year_from: 2022
+    adds:
+      filters:
+        year_from: 2022
 `
       );
 
       const result = await validateQueryCommand(queryPath);
 
       expect(result.success).toBe(true);
-      expect(result.queryName).toBe('override-query');
+      expect(result.queryName).toBe('provider-query');
     });
   });
 
@@ -377,7 +386,8 @@ overrides:
         `
 name: mesh-vocab-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -409,7 +419,8 @@ query:
         `
 name: invalid-mesh-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -450,7 +461,8 @@ query:
         `
 name: format-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - AI
@@ -501,7 +513,8 @@ query: not_valid
         `
 name: no-vocab-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -523,7 +536,8 @@ query:
         `
 name: exit-code-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -553,7 +567,8 @@ query:
         `
 name: all-valid-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -643,7 +658,8 @@ query:
         `
 name: mesh-suggestion-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -683,7 +699,8 @@ query:
         `
 name: vocab-error-suggestion-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -725,7 +742,8 @@ query:
         `
 name: mesh-only-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       mesh:
         - "Artificial Intelligence"
@@ -746,7 +764,8 @@ query:
         `
 name: eric-only-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       eric:
         - "Medical Education"
@@ -767,7 +786,8 @@ query:
         `
 name: empty-terms-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       exclude:
         - "animal"
@@ -789,12 +809,14 @@ query:
         `
 name: mixed-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       mesh:
         - "Artificial Intelligence"
     operator: OR
-  - field: title_abstract
+  - id: block-2
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -818,7 +840,8 @@ query:
         `
 name: auto-vocab-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -850,7 +873,8 @@ query:
         `
 name: suffix-typo-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - AI
@@ -892,7 +916,8 @@ query:
         `
 name: middle-typo-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - AI
@@ -934,7 +959,8 @@ query:
         `
 name: first-word-typo-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - cancer
@@ -976,7 +1002,8 @@ query:
         `
 name: severe-first-word-typo-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -1018,7 +1045,8 @@ query:
         `
 name: no-vocab-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -1047,7 +1075,8 @@ query:
         `
 name: keywords-only-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -1070,7 +1099,8 @@ query:
         `
 name: api-error-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -1149,7 +1179,8 @@ query:
         `
 name: handwritten
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -1186,7 +1217,8 @@ query:
         `
 name: no-schema
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -1242,7 +1274,8 @@ query:
         `
 name: cli-schema-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - test
@@ -1298,7 +1331,8 @@ query:
         `
 name: eric-count-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - education
@@ -1338,7 +1372,8 @@ query:
         `
 name: emtree-count-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -1374,7 +1409,8 @@ query:
         `
 name: format-eric-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       eric:
         - "Medical Education"
@@ -1410,7 +1446,8 @@ query:
         `
 name: mixed-vocab-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -1457,7 +1494,8 @@ query:
         `
 name: no-vocab-count-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       eric:
         - "Medical Education"
@@ -1477,7 +1515,8 @@ query:
         `
 name: error-count-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       eric:
         - "Valid Term"

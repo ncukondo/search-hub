@@ -62,7 +62,8 @@ retries = 2
     const queryFile = join(tempDir, 'setup-search.yaml');
     const queryContent = `name: api-test-setup
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes

@@ -30,6 +30,7 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
     name,
     blocks: [
       {
+        id: 'block-1',
         field: 'title_abstract',
         operator: 'OR',
         terms: {
@@ -38,7 +39,6 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
       },
     ],
     filters: {},
-    overrides: {},
   };
 }
 
@@ -120,7 +120,7 @@ describe('PubMedProvider', () => {
       expect(result.provider).toBe('pubmed');
       expect(result.native).toContain('diabetes');
       expect(result.native).toContain('[tiab]');
-      expect(result.originalAst).toBe(ast);
+      // originalAst is set by the search executor, not the translator
     });
 
     it('handles complex queries with MeSH terms', () => {
@@ -129,6 +129,7 @@ describe('PubMedProvider', () => {
         name: 'complex-query',
         blocks: [
           {
+            id: 'block-1',
             field: 'title_abstract',
             operator: 'OR',
             terms: {
@@ -138,7 +139,6 @@ describe('PubMedProvider', () => {
           },
         ],
         filters: {},
-        overrides: {},
       };
       const result = provider.translateQuery(ast);
 

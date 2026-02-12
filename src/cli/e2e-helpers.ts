@@ -212,6 +212,7 @@ export async function createQueryFile(
     name: query.name,
     description: query.description,
     query: query.blocks.map((block) => ({
+      id: block.id,
       field: block.field,
       terms: {
         keywords: block.terms.keywords,
@@ -232,8 +233,8 @@ export async function createQueryFile(
         publication_types: query.filters.publicationTypes,
       }),
     },
-    ...(Object.keys(query.overrides).length > 0 && {
-      overrides: query.overrides,
+    ...(query.providers && Object.keys(query.providers).length > 0 && {
+      providers: query.providers,
     }),
   };
 
@@ -366,6 +367,7 @@ export function createSimpleQuery(name = 'test-query'): QueryAST {
     description: 'Test query for E2E tests',
     blocks: [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: {
           keywords: ['diabetes', 'mellitus'],
@@ -376,7 +378,6 @@ export function createSimpleQuery(name = 'test-query'): QueryAST {
     filters: {
       yearFrom: 2024,
     },
-    overrides: {},
   };
 }
 
@@ -393,11 +394,13 @@ export const queryFixtures = {
     description: 'Multi-block query for testing',
     blocks: [
       {
+        id: 'block-1',
         field: 'title_abstract' as const,
         terms: { keywords: ['diabetes'] },
         operator: 'AND' as const,
       },
       {
+        id: 'block-2',
         field: 'keyword' as const,
         terms: { keywords: ['treatment', 'therapy'] },
         operator: 'OR' as const,
@@ -408,7 +411,6 @@ export const queryFixtures = {
       yearTo: 2024,
       languages: ['en'],
     },
-    overrides: {},
   } satisfies QueryAST,
 
   /** Query with MeSH terms (PubMed-specific) */
@@ -416,6 +418,7 @@ export const queryFixtures = {
     name: 'mesh-test',
     blocks: [
       {
+        id: 'block-1',
         field: 'title_abstract' as const,
         terms: {
           keywords: ['diabetes'],
@@ -425,7 +428,6 @@ export const queryFixtures = {
       },
     ],
     filters: {},
-    overrides: {},
   } satisfies QueryAST,
 };
 

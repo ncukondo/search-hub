@@ -43,9 +43,8 @@ describe('arXiv module exports', () => {
   it('should be able to use translateQuery', () => {
     const ast: QueryAST = {
       name: 'test',
-      blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+      blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
       filters: {},
-      overrides: {},
     };
     const result = translateQuery(ast);
     expect(result.native).toBe('ti:test');

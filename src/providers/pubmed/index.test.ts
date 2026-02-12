@@ -28,6 +28,7 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
     name,
     blocks: [
       {
+        id: 'block-1',
         field: 'title_abstract',
         operator: 'OR',
         terms: {
@@ -36,7 +37,6 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
       },
     ],
     filters: {},
-    overrides: {},
   };
 }
 

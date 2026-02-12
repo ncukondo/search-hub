@@ -20,7 +20,8 @@ const QUERY_TEMPLATE =
   "description: \"\"\n" +
   "\n" +
   "query:\n" +
-  "  - field: title_abstract    # title, abstract, title_abstract, author, keyword, all\n" +
+  "  - id: concept-1             # Unique block identifier (for provider replacements)\n" +
+  "    field: title_abstract    # title, abstract, title_abstract, author, keyword, all\n" +
   "    terms:\n" +
   "      keywords:\n" +
   "        - \"search term 1\"\n" +
@@ -37,7 +38,8 @@ const QUERY_TEMPLATE =
   "    operator: OR             # How to combine terms within this block\n" +
   "\n" +
   "  # Add more blocks — blocks are AND'd together\n" +
-  "  # - field: title_abstract\n" +
+  "  # - id: concept-2\n" +
+  "  #   field: title_abstract\n" +
   "  #   terms:\n" +
   "  #     keywords:\n" +
   "  #       - \"another term\"\n" +
@@ -53,12 +55,20 @@ const QUERY_TEMPLATE =
   "#       - \"Review\"\n" +
   "#       - \"Comment\"\n" +
   "\n" +
-  "# overrides:                 # Optional: database-specific settings\n" +
+  "# providers:                 # Optional: per-database block replacements & filter additions\n" +
   "#   pubmed:\n" +
-  "#     filters:\n" +
-  "#       publication_types:\n" +
-  "#         exclude:\n" +
-  "#           - \"Letter\"\n";
+  "#     replaces:\n" +
+  "#       concept-1:           # Replace block by id\n" +
+  "#         field: keyword\n" +
+  "#         terms:\n" +
+  "#           mesh:\n" +
+  "#             - \"MeSH Heading\"\n" +
+  "#         operator: OR\n" +
+  "#     adds:\n" +
+  "#       filters:\n" +
+  "#         publication_types:\n" +
+  "#           exclude:\n" +
+  "#             - \"Letter\"\n";
 
 /**
  * Generate the query template YAML string.

@@ -209,7 +209,7 @@ describe('CLI Entry Point', () => {
       expect(helpOutput).toContain('filters:');
       expect(helpOutput).toContain('exclude:');
       expect(helpOutput).toContain('mesh/eric:');
-      expect(helpOutput).toContain('overrides:');
+      expect(helpOutput).toContain('providers:');
       expect(helpOutput).toContain('query init');
     });
   });

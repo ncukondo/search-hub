@@ -22,13 +22,13 @@ function createQueryAST(): QueryAST {
     name: 'test-query',
     blocks: [
       {
+        id: 'block-1',
         field: 'title',
         terms: { keywords: ['quantum'] },
         operator: 'OR',
       },
     ],
     filters: {},
-    overrides: {},
   };
 }
 

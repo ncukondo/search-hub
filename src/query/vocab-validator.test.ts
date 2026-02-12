@@ -16,7 +16,6 @@ function makeAST(blocks: QueryAST['blocks']): QueryAST {
     name: 'test',
     blocks,
     filters: {},
-    overrides: {},
   };
 }
 
@@ -24,6 +23,7 @@ describe('extractControlledVocabTerms', () => {
   it('should extract mesh terms from a single block', () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['diabetes'],
@@ -44,6 +44,7 @@ describe('extractControlledVocabTerms', () => {
   it('should extract mesh terms from multiple blocks', () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['diabetes'],
@@ -52,6 +53,7 @@ describe('extractControlledVocabTerms', () => {
         operator: 'OR',
       },
       {
+        id: 'b2',
         field: 'title_abstract',
         terms: {
           keywords: ['AI'],
@@ -72,6 +74,7 @@ describe('extractControlledVocabTerms', () => {
   it('should deduplicate terms across blocks', () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['diabetes'],
@@ -80,6 +83,7 @@ describe('extractControlledVocabTerms', () => {
         operator: 'OR',
       },
       {
+        id: 'b2',
         field: 'keyword',
         terms: {
           keywords: ['diabetes'],
@@ -99,6 +103,7 @@ describe('extractControlledVocabTerms', () => {
   it('should return empty array when no controlled vocab terms exist', () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: { keywords: ['diabetes'] },
         operator: 'OR',
@@ -112,6 +117,7 @@ describe('extractControlledVocabTerms', () => {
   it('should extract eric descriptors from blocks', () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['education'],
@@ -132,6 +138,7 @@ describe('extractControlledVocabTerms', () => {
   it('should extract emtree terms from blocks', () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['diabetes'],
@@ -152,6 +159,7 @@ describe('extractControlledVocabTerms', () => {
   it('should extract all vocabulary types from mixed blocks', () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['diabetes'],
@@ -175,6 +183,7 @@ describe('extractControlledVocabTerms', () => {
   it('should deduplicate eric and emtree terms across blocks', () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           eric: ['Medical Education'],
@@ -183,6 +192,7 @@ describe('extractControlledVocabTerms', () => {
         operator: 'OR',
       },
       {
+        id: 'b2',
         field: 'keyword',
         terms: {
           eric: ['Medical Education'],
@@ -205,6 +215,7 @@ describe('validateControlledVocab', () => {
   it('should validate mesh terms and return results', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['diabetes'],
@@ -239,6 +250,7 @@ describe('validateControlledVocab', () => {
   it('should return empty results when no controlled vocab terms exist', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: { keywords: ['diabetes'] },
         operator: 'OR',
@@ -256,6 +268,7 @@ describe('validateControlledVocab', () => {
   it('should handle all valid terms', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['AI'],
@@ -281,6 +294,7 @@ describe('validateControlledVocab', () => {
   it('should catch API errors and put them in errors array', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['diabetes'],
@@ -338,6 +352,7 @@ describe('validateControlledVocab', () => {
   it('should handle invalid terms without suggestions', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           keywords: ['xyz'],
@@ -365,6 +380,7 @@ describe('validateControlledVocab', () => {
   it('should validate eric descriptors via count-only search', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           eric: ['Medical Education', 'Medcial Education'],
@@ -396,6 +412,7 @@ describe('validateControlledVocab', () => {
   it('should validate emtree terms via count-only search', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           emtree: ['diabetes mellitus', 'diabetis mellitus'],
@@ -427,6 +444,7 @@ describe('validateControlledVocab', () => {
   it('should handle count-only search errors gracefully', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           eric: ['Valid Term', 'Error Term'],
@@ -459,6 +477,7 @@ describe('validateControlledVocab', () => {
   it('should validate mixed mesh, eric, and emtree terms', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           mesh: ['Diabetes Mellitus'],
@@ -497,6 +516,7 @@ describe('validateControlledVocab', () => {
   it('should skip eric/emtree terms when no count validators provided', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           mesh: ['Diabetes Mellitus'],
@@ -679,6 +699,7 @@ describe('validateControlledVocab concurrency', () => {
     // Create 5 ERIC terms to verify max 3 concurrent
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           eric: ['A', 'B', 'C', 'D', 'E'],
@@ -713,6 +734,7 @@ describe('validateControlledVocab concurrency', () => {
   it('should run different vocab groups in parallel', async () => {
     const ast = makeAST([
       {
+        id: 'b1',
         field: 'title_abstract',
         terms: {
           eric: ['E1'],

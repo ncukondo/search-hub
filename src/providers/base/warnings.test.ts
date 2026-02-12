@@ -9,6 +9,7 @@ describe('collectUnsupportedVocabWarnings', () => {
   it('should warn (skipped) when arXiv block contains only mesh terms', () => {
     const blocks: QueryBlock[] = [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: { mesh: ['Artificial Intelligence'] },
         operator: 'OR',
@@ -24,6 +25,7 @@ describe('collectUnsupportedVocabWarnings', () => {
   it('should warn (ignored) when arXiv block contains keywords + mesh', () => {
     const blocks: QueryBlock[] = [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: { keywords: ['diabetes'], mesh: ['Diabetes Mellitus'] },
         operator: 'OR',
@@ -39,6 +41,7 @@ describe('collectUnsupportedVocabWarnings', () => {
   it('should warn (skipped) when Scopus block contains only mesh terms', () => {
     const blocks: QueryBlock[] = [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: { mesh: ['Neoplasms'] },
         operator: 'OR',
@@ -54,6 +57,7 @@ describe('collectUnsupportedVocabWarnings', () => {
   it('should warn (skipped) when PubMed block contains only emtree terms', () => {
     const blocks: QueryBlock[] = [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: { emtree: ['Diabetes Mellitus'] },
         operator: 'OR',
@@ -69,6 +73,7 @@ describe('collectUnsupportedVocabWarnings', () => {
   it('should not warn when PubMed block contains mesh terms (supported)', () => {
     const blocks: QueryBlock[] = [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: { mesh: ['Diabetes Mellitus'] },
         operator: 'OR',
@@ -82,6 +87,7 @@ describe('collectUnsupportedVocabWarnings', () => {
   it('should not warn when Scopus block contains emtree terms (supported)', () => {
     const blocks: QueryBlock[] = [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: { emtree: ['Diabetes Mellitus'] },
         operator: 'OR',
@@ -95,6 +101,7 @@ describe('collectUnsupportedVocabWarnings', () => {
   it('should not warn when ERIC block contains eric terms (supported)', () => {
     const blocks: QueryBlock[] = [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: { eric: ['Medical Education'] },
         operator: 'OR',
@@ -108,11 +115,13 @@ describe('collectUnsupportedVocabWarnings', () => {
   it('should report correct block number for multiple blocks', () => {
     const blocks: QueryBlock[] = [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: { keywords: ['diabetes'] },
         operator: 'OR',
       },
       {
+        id: 'block-2',
         field: 'title_abstract',
         terms: { emtree: ['Diabetes Mellitus'] },
         operator: 'OR',
@@ -128,6 +137,7 @@ describe('collectUnsupportedVocabWarnings', () => {
   it('should not warn for keywords-only blocks', () => {
     const blocks: QueryBlock[] = [
       {
+        id: 'block-1',
         field: 'title_abstract',
         terms: { keywords: ['diabetes'] },
         operator: 'OR',

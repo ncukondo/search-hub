@@ -165,7 +165,7 @@ providers:
         'Comment',
         'Letter',
       ]);
-      expect(result.providers?.arxiv?.replaces?.population?.field).toBe('all');
+      expect(result.providers?.arxiv?.replaces?.['population']?.field).toBe('all');
       expect(result.providers?.arxiv?.adds?.filters?.categories).toEqual(['cs.AI', 'cs.LG', 'q-bio']);
       expect(result.providers?.scopus?.adds?.filters?.sourceTypes).toEqual(['journal', 'conference']);
     });
@@ -514,7 +514,7 @@ providers:
       expect(result.blocks).toHaveLength(3);
       expect(result.filters.yearFrom).toBe(2018);
       expect(result.providers?.arxiv?.adds?.filters?.categories).toHaveLength(4);
-      expect(result.providers?.arxiv?.replaces?.intervention?.field).toBe('all');
+      expect(result.providers?.arxiv?.replaces?.['intervention']?.field).toBe('all');
     });
   });
 

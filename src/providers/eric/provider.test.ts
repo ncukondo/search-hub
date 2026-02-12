@@ -15,7 +15,6 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
     name,
     blocks: [],
     filters: {},
-    overrides: {},
   };
 }
 
@@ -57,13 +56,13 @@ describe('ERIC Provider', () => {
         name: 'test',
         blocks: [
           {
+            id: 'block-1',
             field: 'title',
             terms: { keywords: ['education'] },
             operator: 'OR',
           },
         ],
         filters: {},
-        overrides: {},
       };
 
       const result = provider.translateQuery(ast);
@@ -77,6 +76,7 @@ describe('ERIC Provider', () => {
         name: 'test',
         blocks: [
           {
+            id: 'block-1',
             field: 'title_abstract',
             terms: { keywords: ['special education', 'learning disabilities'] },
             operator: 'OR',
@@ -86,7 +86,6 @@ describe('ERIC Provider', () => {
           yearFrom: 2020,
           yearTo: 2024,
         },
-        overrides: {},
       };
 
       const result = provider.translateQuery(ast);

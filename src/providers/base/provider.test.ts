@@ -21,7 +21,6 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
     name,
     blocks: [],
     filters: {},
-    overrides: {},
   };
 }
 
@@ -580,7 +579,7 @@ describe('State serialization', () => {
         provider: 'pubmed',
         query: {
           native: 'covid[Title]',
-          originalAst: { name: 'covid-query', blocks: [], filters: {}, overrides: {} },
+          originalAst: { name: 'covid-query', blocks: [], filters: {} },
           provider: 'pubmed',
         },
         totalResults: 1000,
@@ -601,7 +600,7 @@ describe('State serialization', () => {
         provider: 'pubmed',
         query: {
           native: 'covid[Title]',
-          originalAst: { name: 'covid-query', blocks: [], filters: {}, overrides: {} },
+          originalAst: { name: 'covid-query', blocks: [], filters: {} },
           provider: 'pubmed',
         },
         totalResults: 1000,

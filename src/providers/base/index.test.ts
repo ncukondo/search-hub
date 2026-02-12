@@ -36,7 +36,6 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
     name,
     blocks: [],
     filters: {},
-    overrides: {},
   };
 }
 

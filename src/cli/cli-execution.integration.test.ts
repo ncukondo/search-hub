@@ -74,7 +74,8 @@ enabled = true
       const queryFile = join(tempDir, 'valid-query.yaml');
       const queryContent = `name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -136,7 +137,8 @@ filters:
       const queryFile = join(tempDir, 'translate-query.yaml');
       const queryContent = `name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -163,7 +165,8 @@ filters: {}
       const queryFile = join(tempDir, 'translate-query.yaml');
       const queryContent = `name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -317,7 +320,8 @@ filters: {}
       const queryFile = join(tempDir, 'search-query.yaml');
       const queryContent = `name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -540,7 +544,8 @@ filters: {}
       const queryFile = join(tempDir, 'success-query.yaml');
       const queryContent = `name: test-query
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - test

@@ -311,7 +311,7 @@ describe('Query Validator Schemas', () => {
           },
         },
       });
-      expect(result.replaces?.population?.field).toBe('all');
+      expect(result.replaces?.['population']?.field).toBe('all');
     });
 
     it('should accept adds with partial filters', () => {
@@ -355,7 +355,7 @@ describe('Query Validator Schemas', () => {
           },
         },
       });
-      expect(result.replaces?.intervention).toBeDefined();
+      expect(result.replaces?.['intervention']).toBeDefined();
       expect(result.adds?.filters?.sourceTypes).toEqual(['journal']);
     });
 
@@ -460,7 +460,7 @@ describe('Query Validator Schemas', () => {
       });
       expect(result.providers?.pubmed?.adds?.filters?.publicationTypes?.exclude).toEqual(['Review']);
       expect(result.providers?.arxiv?.adds?.filters?.categories).toEqual(['cs.AI']);
-      expect(result.providers?.arxiv?.replaces?.population?.field).toBe('all');
+      expect(result.providers?.arxiv?.replaces?.['population']?.field).toBe('all');
     });
 
     it('should reject overrides (old format)', () => {
@@ -624,7 +624,7 @@ describe('Query Validator Schemas', () => {
       expect(result.blocks).toHaveLength(3);
       expect(result.filters.yearFrom).toBe(2018);
       expect(result.providers?.arxiv?.adds?.filters?.categories).toHaveLength(4);
-      expect(result.providers?.arxiv?.replaces?.intervention?.field).toBe('all');
+      expect(result.providers?.arxiv?.replaces?.['intervention']?.field).toBe('all');
     });
   });
 

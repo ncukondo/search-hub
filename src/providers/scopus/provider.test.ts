@@ -40,13 +40,13 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [
           {
+            id: 'block-1',
             field: 'title',
             terms: { keywords: ['diabetes'] },
             operator: 'OR',
           },
         ],
         filters: {},
-        overrides: {},
       };
 
       const result = provider.translateQuery(ast);
@@ -84,9 +84,8 @@ describe('ScopusProvider', () => {
       const provider = new ScopusProvider(config);
       const ast: QueryAST = {
         name: 'test',
-        blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
-        overrides: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -141,9 +140,8 @@ describe('ScopusProvider', () => {
       const provider = new ScopusProvider(config);
       const ast: QueryAST = {
         name: 'test',
-        blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
-        overrides: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -176,9 +174,8 @@ describe('ScopusProvider', () => {
       const provider = new ScopusProvider(config);
       const ast: QueryAST = {
         name: 'test',
-        blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
-        overrides: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -238,9 +235,8 @@ describe('ScopusProvider', () => {
       const provider = new ScopusProvider(config);
       const ast: QueryAST = {
         name: 'test',
-        blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
-        overrides: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -284,9 +280,8 @@ describe('ScopusProvider', () => {
       const provider = new ScopusProvider(config);
       const ast: QueryAST = {
         name: 'test',
-        blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
-        overrides: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -306,9 +301,8 @@ describe('ScopusProvider', () => {
       const provider = new ScopusProvider(config);
       const ast: QueryAST = {
         name: 'test',
-        blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
-        overrides: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -393,9 +387,8 @@ describe('ScopusProvider', () => {
       const provider = new ScopusProvider(config);
       const ast: QueryAST = {
         name: 'test',
-        blocks: [{ field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
-        overrides: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -441,9 +434,8 @@ describe('ScopusProvider', () => {
       const provider = new ScopusProvider(config);
       const ast: QueryAST = {
         name: 'test',
-        blocks: [{ field: 'title', terms: { keywords: ['diabetes'] }, operator: 'OR' }],
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['diabetes'] }, operator: 'OR' }],
         filters: {},
-        overrides: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -468,9 +460,8 @@ describe('ScopusProvider', () => {
       const provider = new ScopusProvider(config);
       const ast: QueryAST = {
         name: 'test',
-        blocks: [{ field: 'title', terms: { keywords: ['nonexistent'] }, operator: 'OR' }],
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['nonexistent'] }, operator: 'OR' }],
         filters: {},
-        overrides: {},
       };
       const query = provider.translateQuery(ast);
 

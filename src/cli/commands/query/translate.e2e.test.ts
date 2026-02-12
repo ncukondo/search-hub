@@ -272,7 +272,8 @@ describe('search-hub query translate E2E', () => {
         `
 name: eric-descriptor-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - medical education
@@ -301,7 +302,8 @@ query:
         `
 name: eric-combined-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - competency based education
@@ -333,7 +335,8 @@ query:
         `
 name: eric-ignored-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - education
@@ -363,7 +366,8 @@ query:
         `
 name: mesh-only-translate-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       mesh:
         - "Artificial Intelligence"
@@ -387,7 +391,8 @@ query:
         `
 name: mesh-only-all-providers
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       mesh:
         - "Artificial Intelligence"
@@ -410,12 +415,14 @@ query:
         `
 name: mixed-blocks-translate
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       mesh:
         - "Artificial Intelligence"
     operator: OR
-  - field: title_abstract
+  - id: block-2
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -441,7 +448,8 @@ query:
         `
 name: emtree-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       emtree:
         - Diabetes Mellitus
@@ -467,7 +475,8 @@ query:
         `
 name: emtree-combined-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -496,7 +505,8 @@ query:
         `
 name: emtree-only-all
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       emtree:
         - Artificial Intelligence
@@ -524,7 +534,8 @@ query:
         `
 name: mesh-warning-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -552,7 +563,8 @@ query:
         `
 name: scopus-mesh-warning
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       mesh:
         - Neoplasms
@@ -589,7 +601,8 @@ query:
         `
 name: scopus-emtree-no-warning
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       emtree:
         - Diabetes Mellitus
@@ -612,7 +625,8 @@ query:
         `
 name: warning-format-test
 query:
-  - field: title_abstract
+  - id: block-1
+    field: title_abstract
     terms:
       keywords:
         - diabetes
@@ -638,7 +652,8 @@ query:
         `
 name: title-test
 query:
-  - field: title
+  - id: block-1
+    field: title
     terms:
       keywords:
         - machine learning
@@ -658,7 +673,8 @@ query:
         `
 name: all-field-test
 query:
-  - field: all
+  - id: block-1
+    field: all
     terms:
       keywords:
         - artificial intelligence
@@ -677,7 +693,8 @@ query:
         `
 name: keyword-test
 query:
-  - field: keyword
+  - id: block-1
+    field: keyword
     terms:
       keywords:
         - neural network

@@ -176,8 +176,8 @@ describe('Query AST Types', () => {
           },
         },
       };
-      expect(section.replaces?.population).toBeDefined();
-      expect(section.replaces?.population?.field).toBe('all');
+      expect(section.replaces?.['population']).toBeDefined();
+      expect(section.replaces?.['population']?.field).toBe('all');
     });
 
     it('should accept adds with partial filters', () => {
@@ -206,7 +206,7 @@ describe('Query AST Types', () => {
           },
         },
       };
-      expect(section.replaces?.intervention).toBeDefined();
+      expect(section.replaces?.['intervention']).toBeDefined();
       expect(section.adds?.filters?.sourceTypes).toHaveLength(1);
     });
 
@@ -321,7 +321,7 @@ describe('Query AST Types', () => {
       expect(ast.filters.yearFrom).toBe(2018);
       expect(ast.providers?.pubmed?.adds?.filters?.publicationTypes?.exclude).toContain('Review');
       expect(ast.providers?.arxiv?.adds?.filters?.categories).toContain('cs.AI');
-      expect(ast.providers?.arxiv?.replaces?.intervention?.field).toBe('all');
+      expect(ast.providers?.arxiv?.replaces?.['intervention']?.field).toBe('all');
     });
   });
 

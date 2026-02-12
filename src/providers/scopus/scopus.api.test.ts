@@ -44,6 +44,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       name: 'e2e-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title',
           terms: { keywords: ['machine learning'] },
           operator: 'AND',
@@ -53,7 +54,6 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
         yearFrom: 2024,
         yearTo: 2024,
       },
-      overrides: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -82,6 +82,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       name: 'field-functions-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title_abstract',
           terms: { keywords: ['deep learning'] },
           operator: 'OR',
@@ -91,7 +92,6 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
         yearFrom: 2023,
         yearTo: 2024,
       },
-      overrides: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -110,6 +110,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       name: 'year-filter-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title',
           terms: { keywords: ['COVID-19'] },
           operator: 'OR',
@@ -119,7 +120,6 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
         yearFrom: 2020,
         yearTo: 2021,
       },
-      overrides: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -147,6 +147,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       name: 'pagination-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title',
           terms: { keywords: ['neural network'] },
           operator: 'AND',
@@ -155,7 +156,6 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       filters: {
         yearFrom: 2024,
       },
-      overrides: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -179,6 +179,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       name: 'rate-limit-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title',
           terms: { keywords: ['artificial intelligence'] },
           operator: 'OR',
@@ -187,7 +188,6 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       filters: {
         yearFrom: 2024,
       },
-      overrides: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -213,6 +213,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       name: 'resume-test',
       blocks: [
         {
+          id: 'block-1',
           field: 'title',
           terms: { keywords: ['quantum computing'] },
           operator: 'OR',
@@ -221,7 +222,6 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       filters: {
         yearFrom: 2024,
       },
-      overrides: {},
     };
 
     const query = provider.translateQuery(ast);
