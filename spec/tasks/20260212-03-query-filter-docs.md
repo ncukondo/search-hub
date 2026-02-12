@@ -49,11 +49,11 @@ Update all documentation to reflect the new `-q` / `--query` filter on `results`
 
 ### Step 4: Verify cross-references and consistency
 
-- [ ] Verify `spec/README.md` Reading Order table includes `check` command context
-- [ ] Verify all `-q` examples are consistent across README, docs, and spec
-- [ ] Verify `check` input format documentation is consistent
-- [ ] Run any link checkers or verify manual navigation
-- [ ] Acceptance: no inconsistencies between documentation files
+- [x] Verify `spec/README.md` Reading Order table includes `check` command context
+- [x] Verify all `-q` examples are consistent across README, docs, and spec
+- [x] Verify `check` input format documentation is consistent
+- [x] Run any link checkers or verify manual navigation
+- [x] Acceptance: no inconsistencies between documentation files
 
 ## Notes
 
