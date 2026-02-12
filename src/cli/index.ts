@@ -38,6 +38,10 @@ import {
   formatTranslateResult,
 } from './commands/query/translate.js';
 import {
+  inspectQueryCommand,
+  formatInspectOutput,
+} from './commands/query/inspect.js';
+import {
   generateQueryTemplate,
   writeQueryTemplate,
 } from './commands/query/init.js';
@@ -503,6 +507,44 @@ Examples:
         process.exitCode = result.success
           ? EXIT_CODES.SUCCESS
           : EXIT_CODES.QUERY_ERROR;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error(
+            'Error:',
+            error instanceof Error ? error.message : error
+          );
+        }
+        process.exitCode = EXIT_CODES.QUERY_ERROR;
+      }
+    });
+
+  queryCommand
+    .command('inspect')
+    .description('Show how a query resolves per provider (block replacements and added filters)')
+    .argument('<file>', 'path to query YAML file')
+    .option('--db <provider>', 'show resolution for specific provider only')
+    .addHelpText('after', `
+Examples:
+  $ search-hub query inspect ./diabetes-ai.yaml            # All databases
+  $ search-hub query inspect ./diabetes-ai.yaml --db pubmed # PubMed only`)
+    .action(async (file: string, options: { db?: string }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const inspectOptions = options.db
+          ? { providers: [options.db as ProviderName] }
+          : {};
+        const result = await inspectQueryCommand(file, inspectOptions);
+        if (!result.success) {
+          if (!globalOpts.quiet) {
+            console.error(`\u2717 Failed to inspect: ${file}\n  Error: ${result.error}`);
+          }
+          process.exitCode = EXIT_CODES.QUERY_ERROR;
+          return;
+        }
+        if (!globalOpts.quiet) {
+          console.log(formatInspectOutput(result.result!));
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
           console.error(
