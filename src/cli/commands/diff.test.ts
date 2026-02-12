@@ -424,6 +424,7 @@ const createQueryAST = (overrides: Partial<QueryAST> & { blocks?: QueryBlock[] }
   name: 'test-query',
   blocks: [],
   filters: {},
+  providers: {},
   ...overrides,
 });
 

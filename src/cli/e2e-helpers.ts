@@ -378,6 +378,7 @@ export function createSimpleQuery(name = 'test-query'): QueryAST {
     filters: {
       yearFrom: 2024,
     },
+    providers: {},
   };
 }
 
@@ -411,6 +412,7 @@ export const queryFixtures = {
       yearTo: 2024,
       languages: ['en'],
     },
+    providers: {},
   } satisfies QueryAST,
 
   /** Query with MeSH terms (PubMed-specific) */
@@ -428,6 +430,7 @@ export const queryFixtures = {
       },
     ],
     filters: {},
+    providers: {},
   } satisfies QueryAST,
 };
 

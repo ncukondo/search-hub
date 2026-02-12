@@ -28,6 +28,7 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
     name,
     blocks: [],
     filters: {},
+    providers: {},
   };
 }
 
@@ -115,10 +116,9 @@ describe('Provider Types', () => {
   });
 
   describe('TranslatedQuery', () => {
-    it('contains native query string and AST reference', () => {
+    it('contains native query string and provider', () => {
       const query: TranslatedQuery = {
         native: '(covid[Title/Abstract]) AND (vaccine[MeSH Terms])',
-        originalAst: createMockQueryAST('covid-vaccine-query'),
         provider: 'pubmed',
       };
       expect(query.native).toContain('covid');
@@ -321,7 +321,7 @@ describe('Provider Types', () => {
     it('has correct structure with required fields', () => {
       const query: TranslatedQuery = {
         native: 'covid[Title]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -344,7 +344,7 @@ describe('Provider Types', () => {
     it('accepts provider-specific state', () => {
       const query: TranslatedQuery = {
         native: 'covid[Title]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -369,7 +369,7 @@ describe('Provider Types', () => {
     it('accepts offset-based provider state', () => {
       const query: TranslatedQuery = {
         native: 'education policy',
-        originalAst: createMockQueryAST(),
+
         provider: 'eric',
       };
 

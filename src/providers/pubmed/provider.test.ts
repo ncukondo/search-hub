@@ -39,6 +39,7 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
       },
     ],
     filters: {},
+    providers: {},
   };
 }
 
@@ -120,7 +121,7 @@ describe('PubMedProvider', () => {
       expect(result.provider).toBe('pubmed');
       expect(result.native).toContain('diabetes');
       expect(result.native).toContain('[tiab]');
-      // originalAst is set by the search executor, not the translator
+
     });
 
     it('handles complex queries with MeSH terms', () => {
@@ -139,6 +140,7 @@ describe('PubMedProvider', () => {
           },
         ],
         filters: {},
+        providers: {},
       };
       const result = provider.translateQuery(ast);
 
@@ -164,7 +166,7 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
         native: 'diabetes[tiab]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -188,7 +190,7 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
         native: 'nonexistent[tiab]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -226,7 +228,7 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
         native: 'test[tiab]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -255,7 +257,7 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
         native: 'test[tiab]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -308,7 +310,7 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
         native: 'test[tiab]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -336,7 +338,7 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
         native: 'test[tiab]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -355,7 +357,6 @@ describe('PubMedProvider', () => {
   describe('retry behavior', () => {
     const retryQuery: TranslatedQuery = {
       native: 'test[tiab]',
-      originalAst: createMockQueryAST(),
       provider: 'pubmed',
     };
 
@@ -467,7 +468,7 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
         native: 'test[tiab]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -502,7 +503,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-          originalAst: createMockQueryAST(),
+  
           provider: 'pubmed' as const,
         },
         totalResults: 100,
@@ -535,7 +536,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-          originalAst: createMockQueryAST(),
+  
           provider: 'pubmed' as const,
         },
         totalResults: 102,
@@ -570,7 +571,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-          originalAst: createMockQueryAST(),
+  
           provider: 'pubmed' as const,
         },
         totalResults: 100,
@@ -590,7 +591,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-          originalAst: createMockQueryAST(),
+  
           provider: 'pubmed' as const,
         },
         totalResults: 100,
@@ -618,7 +619,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-          originalAst: createMockQueryAST(),
+  
           provider: 'pubmed' as const,
         },
         totalResults: 100,
@@ -645,7 +646,7 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
         native: 'diabetes[tiab]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -662,7 +663,7 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
         native: 'nonexistent_query_xyz[tiab]',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 

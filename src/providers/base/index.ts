@@ -16,6 +16,7 @@ export type {
   RateLimitError,
   AuthError,
   QueryAST,
+  ResolvedAST,
   ProviderErrorCode,
   SearchState,
   SearchResumeResult,

@@ -29,6 +29,7 @@ function createQueryAST(): QueryAST {
       },
     ],
     filters: {},
+    providers: {},
   };
 }
 
@@ -38,7 +39,6 @@ function createQueryAST(): QueryAST {
 function createTranslatedQuery(): TranslatedQuery {
   return {
     native: 'ti:quantum',
-    originalAst: createQueryAST(),
     provider: 'arxiv',
   };
 }

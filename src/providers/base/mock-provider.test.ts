@@ -1,19 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MockProvider } from './mock-provider';
 import { BaseProvider } from './provider';
-import type { TranslatedQuery, Article, ProviderError, QueryAST } from './types';
+import type { TranslatedQuery, Article, ProviderError, ResolvedAST } from './types';
 import { createProviderError } from './types';
-
-/**
- * Helper to create a minimal QueryAST for testing.
- */
-function createMockQueryAST(name = 'test-query'): QueryAST {
-  return {
-    name,
-    blocks: [],
-    filters: {},
-  };
-}
 
 describe('MockProvider', () => {
   describe('interface implementation', () => {
@@ -45,7 +34,7 @@ describe('MockProvider', () => {
       const provider = new MockProvider();
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -80,7 +69,7 @@ describe('MockProvider', () => {
       const provider = new MockProvider({ articles: customArticles });
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -106,7 +95,7 @@ describe('MockProvider', () => {
       const provider = new MockProvider({ articles: customArticles });
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -122,12 +111,12 @@ describe('MockProvider', () => {
       const provider = new MockProvider({
         translatedQuery: {
           native: 'custom translated query',
-          originalAst: createMockQueryAST('custom-query'),
           provider: 'pubmed',
         },
       });
 
-      const result = provider.translateQuery(createMockQueryAST());
+      const resolved: ResolvedAST = { name: 'test', blocks: [], filters: {} };
+      const result = provider.translateQuery(resolved);
 
       expect(result.native).toBe('custom translated query');
     });
@@ -154,7 +143,7 @@ describe('MockProvider', () => {
       const provider = new MockProvider({ searchDelay: 100 });
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -186,7 +175,7 @@ describe('MockProvider', () => {
       const provider = new MockProvider({ searchError: error });
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -209,7 +198,7 @@ describe('MockProvider', () => {
       const provider = new MockProvider({ searchError: rateLimitError });
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: createMockQueryAST(),
+
         provider: 'pubmed',
       };
 
@@ -234,7 +223,7 @@ describe('MockProvider', () => {
       });
       const query: TranslatedQuery = {
         native: 'test',
-        originalAst: createMockQueryAST(),
+
         provider: 'scopus',
       };
 

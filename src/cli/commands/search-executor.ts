@@ -210,6 +210,7 @@ export async function executeSearch(
         },
       ],
       filters: {},
+      providers: {},
     };
 
     // Generate YAML safely using yaml library to handle special characters
@@ -557,6 +558,7 @@ export async function executeCountOnly(
         },
       ],
       filters: {},
+      providers: {},
     };
   } else if (options.queryFile) {
     const queryContent = await readFile(options.queryFile, 'utf-8');
@@ -638,6 +640,7 @@ export async function executePreview(
         },
       ],
       filters: {},
+      providers: {},
     };
   } else if (options.queryFile) {
     const queryContent = await readFile(options.queryFile, 'utf-8');

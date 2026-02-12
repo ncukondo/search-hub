@@ -188,8 +188,17 @@ export const queryFileSchema = z
 /**
  * Validate a parsed YAML object against the query schema.
  * Returns a validated QueryAST.
+ *
+ * @throws Error if the input contains the old `overrides` key (migration message provided)
  */
 export function validateQueryFile(data: unknown): QueryAST {
+  // Check for legacy `overrides` key before Zod parsing (which silently strips unknown keys)
+  if (typeof data === 'object' && data !== null && 'overrides' in data) {
+    throw new Error(
+      'The "overrides" key is no longer supported. ' +
+      'Migrate to the new "providers" format. See spec/models/query-dsl.md for details.'
+    );
+  }
   return queryFileSchema.parse(data);
 }
 
@@ -213,6 +222,17 @@ export class ValidationError extends Error {
  * @returns Array of ValidationError objects (empty if valid)
  */
 export function formatValidationErrors(data: unknown): ValidationError[] {
+  // Check for legacy `overrides` key
+  if (typeof data === 'object' && data !== null && 'overrides' in data) {
+    return [
+      new ValidationError(
+        'overrides',
+        'The "overrides" key is no longer supported. ' +
+        'Migrate to the new "providers" format. See spec/models/query-dsl.md for details.'
+      ),
+    ];
+  }
+
   const result = queryFileSchema.safeParse(data);
 
   if (result.success) {

@@ -37,6 +37,7 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
       },
     ],
     filters: {},
+    providers: {},
   };
 }
 

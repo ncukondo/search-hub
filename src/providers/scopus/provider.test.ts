@@ -47,6 +47,7 @@ describe('ScopusProvider', () => {
           },
         ],
         filters: {},
+        providers: {},
       };
 
       const result = provider.translateQuery(ast);
@@ -86,6 +87,7 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
+        providers: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -142,6 +144,7 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
+        providers: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -176,6 +179,7 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
+        providers: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -237,6 +241,7 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
+        providers: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -282,6 +287,7 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
+        providers: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -303,6 +309,7 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
+        providers: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -389,6 +396,7 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
         filters: {},
+        providers: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -436,6 +444,7 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['diabetes'] }, operator: 'OR' }],
         filters: {},
+        providers: {},
       };
       const query = provider.translateQuery(ast);
 
@@ -462,6 +471,7 @@ describe('ScopusProvider', () => {
         name: 'test',
         blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['nonexistent'] }, operator: 'OR' }],
         filters: {},
+        providers: {},
       };
       const query = provider.translateQuery(ast);
 

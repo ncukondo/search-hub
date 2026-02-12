@@ -463,9 +463,9 @@ describe('Query Validator Schemas', () => {
       expect(result.providers?.arxiv?.replaces?.['population']?.field).toBe('all');
     });
 
-    it('should reject overrides (old format)', () => {
+    it('should reject overrides (old format) with migration message', () => {
       expect(() =>
-        queryFileSchema.parse({
+        validateQueryFile({
           name: 'test_query',
           query: [
             {
@@ -479,7 +479,7 @@ describe('Query Validator Schemas', () => {
             pubmed: { filters: {} },
           },
         })
-      ).not.toThrow(); // overrides is just ignored as unknown key by Zod (passthrough not used)
+      ).toThrow(/overrides.*no longer supported.*providers/i);
     });
 
     it('should reject blocks without id', () => {

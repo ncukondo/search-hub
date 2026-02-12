@@ -54,6 +54,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
         yearFrom: 2024,
         yearTo: 2024,
       },
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -92,6 +93,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
         yearFrom: 2023,
         yearTo: 2024,
       },
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -120,6 +122,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
         yearFrom: 2020,
         yearTo: 2021,
       },
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -156,6 +159,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       filters: {
         yearFrom: 2024,
       },
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -188,6 +192,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       filters: {
         yearFrom: 2024,
       },
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);
@@ -222,6 +227,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
       filters: {
         yearFrom: 2024,
       },
+      providers: {},
     };
 
     const query = provider.translateQuery(ast);

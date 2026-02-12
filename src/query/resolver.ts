@@ -48,15 +48,15 @@ function deepMergeFilters(base: Filters, override: Partial<Filters>): Filters {
  * @throws Error if replaces references a non-existent block id
  */
 export function resolveForProvider(ast: QueryAST, provider: ProviderName): ResolvedAST {
-  const section = ast.providers?.[provider];
+  const section = ast.providers[provider];
 
   // No provider section — return defaults
   if (!section) {
     return {
       name: ast.name,
       description: ast.description,
-      blocks: ast.blocks.map((b) => ({ ...b })),
-      filters: { ...ast.filters },
+      blocks: ast.blocks.map((b) => structuredClone(b)),
+      filters: structuredClone(ast.filters),
     };
   }
 
@@ -73,12 +73,12 @@ export function resolveForProvider(ast: QueryAST, provider: ProviderName): Resol
     blocks = ast.blocks.map((block) => {
       const replacement = section.replaces?.[block.id];
       if (replacement) {
-        return { id: block.id, ...replacement };
+        return { id: block.id, ...structuredClone(replacement) };
       }
-      return { ...block };
+      return structuredClone(block);
     });
   } else {
-    blocks = ast.blocks.map((b) => ({ ...b }));
+    blocks = ast.blocks.map((b) => structuredClone(b));
   }
 
   // Apply filter additions
@@ -86,7 +86,7 @@ export function resolveForProvider(ast: QueryAST, provider: ProviderName): Resol
   if (section.adds?.filters) {
     filters = deepMergeFilters(ast.filters, section.adds.filters);
   } else {
-    filters = { ...ast.filters };
+    filters = structuredClone(ast.filters);
   }
 
   return {

@@ -42,6 +42,7 @@ describe('arXiv Provider E2E', () => {
           },
         ],
         filters: {},
+        providers: {},
       };
 
       const query = translateQuery(ast);
@@ -74,6 +75,7 @@ describe('arXiv Provider E2E', () => {
           },
         ],
         filters: {},
+        providers: {},
       };
 
       const query = translateQuery(ast);
@@ -101,6 +103,7 @@ describe('arXiv Provider E2E', () => {
         filters: {
           categories: ['cs.AI'],
         },
+        providers: {},
       };
 
       const query = translateQuery(ast);
@@ -131,6 +134,7 @@ describe('arXiv Provider E2E', () => {
           },
         ],
         filters: {},
+        providers: {},
       };
 
       const query = translateQuery(ast);
@@ -171,6 +175,7 @@ describe('arXiv Provider E2E', () => {
           },
         ],
         filters: {},
+        providers: {},
       };
 
       const query = translateQuery(ast);
@@ -198,6 +203,7 @@ describe('arXiv Provider E2E', () => {
           },
         ],
         filters: {},
+        providers: {},
       };
 
       const query = translateQuery(ast);

@@ -16,6 +16,7 @@ function makeAST(blocks: QueryAST['blocks']): QueryAST {
     name: 'test',
     blocks,
     filters: {},
+    providers: {},
   };
 }
 

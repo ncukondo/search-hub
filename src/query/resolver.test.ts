@@ -24,6 +24,7 @@ function makeAST(overrides?: Partial<QueryAST>): QueryAST {
       yearTo: 2024,
       languages: ['en'],
     },
+    providers: {},
     ...overrides,
   };
 }
@@ -225,6 +226,29 @@ describe('resolveForProvider', () => {
     resolveForProvider(ast, 'arxiv');
     expect(ast.blocks).toEqual(originalBlocks);
     expect(ast.filters).toEqual(originalFilters);
+  });
+
+  it('should produce deeply independent copies (no shared references)', () => {
+    const ast = makeAST({
+      providers: {
+        pubmed: {
+          replaces: {
+            population: {
+              field: 'title_abstract',
+              terms: { keywords: ['modified'] },
+              operator: 'OR',
+            },
+          },
+        },
+      },
+    });
+    const resolved = resolveForProvider(ast, 'pubmed');
+    // Mutating resolved block's terms should not affect the input AST providers section
+    resolved.blocks[0]!.terms.keywords!.push('extra-term');
+    expect(ast.providers!.pubmed!.replaces!['population']!.terms.keywords).toEqual(['modified']);
+    // Mutating non-replaced block's terms should not affect input
+    resolved.blocks[1]!.terms.keywords!.push('extra-term');
+    expect(ast.blocks[1]!.terms.keywords).toEqual(['AI', 'machine learning']);
   });
 
   it('should preserve name and description', () => {

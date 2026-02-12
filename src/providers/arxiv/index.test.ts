@@ -45,6 +45,7 @@ describe('arXiv module exports', () => {
       name: 'test',
       blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
       filters: {},
+      providers: {},
     };
     const result = translateQuery(ast);
     expect(result.native).toBe('ti:test');

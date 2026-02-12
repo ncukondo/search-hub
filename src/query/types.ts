@@ -110,8 +110,8 @@ export interface QueryAST {
   blocks: QueryBlock[];
   /** Global filters */
   filters: Filters;
-  /** Provider-specific sections */
-  providers?: Partial<Record<ProviderName, ProviderSection | undefined>> | undefined;
+  /** Provider-specific sections (defaults to {} when parsed from YAML) */
+  providers: Partial<Record<ProviderName, ProviderSection | undefined>>;
 }
 
 /**

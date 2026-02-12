@@ -50,6 +50,7 @@ function createTestQuery(keyword: string): QueryAST {
       },
     ],
     filters: {},
+    providers: {},
   };
 }
 
@@ -90,6 +91,7 @@ describe.skipIf(skip)('PubMed Provider E2E', () => {
           },
         ],
         filters: {},
+        providers: {},
       };
       const query = translateQuery(ast);
 
