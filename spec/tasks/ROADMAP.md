@@ -118,7 +118,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 109 | MeSH Multi-word Progressive Prefix Suggestion | 103 | ✅ Completed | [20260211-03](completed/20260211-03-mesh-multiword-prefix-suggestion.md) |
 | 110 | Improve $schema Absence Messaging | 105 | ✅ Completed | [20260211-04](completed/20260211-04-validate-schema-tip-messaging.md) |
 | 111 | MeSH First-Word Typo Suggestion Improvement | 109 | ✅ Completed | [20260211-05](completed/20260211-05-mesh-first-word-typo-suggestion.md) |
-| 112 | Results Query Filter (`-q` / `--query`) | 38 | 🔲 Pending | [20260212-01](20260212-01-results-query-filter.md) |
+| 112 | Results Query Filter (`-q` / `--query`) | 38 | ✅ Completed | [20260212-01](completed/20260212-01-results-query-filter.md) |
 | 113 | Coverage Check Command (`check`) | 112 | 🔲 Pending | [20260212-02](20260212-02-check-coverage-command.md) |
 | 114 | Documentation Update (Query Filter & Check) | 112, 113 | 🔲 Pending | [20260212-03](20260212-03-query-filter-docs.md) |
 | 115 | Query DSL Provider-Aware Redesign | 3 | 🔲 Pending | [20260212-04](20260212-04-query-dsl-provider-aware-redesign.md) |
