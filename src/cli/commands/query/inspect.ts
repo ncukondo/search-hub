@@ -45,6 +45,16 @@ export interface InspectCommandResult {
 }
 
 /**
+ * Default providers to inspect for.
+ */
+const DEFAULT_PROVIDERS: ProviderName[] = [
+  'pubmed',
+  'eric',
+  'arxiv',
+  'scopus',
+];
+
+/**
  * Inspect a QueryAST to determine block resolution and filter additions per provider.
  */
 export function inspectQuery(
@@ -152,7 +162,7 @@ export function formatInspectOutput(result: InspectResult): string {
   if (result.addedFilters.length > 0) {
     lines.push('');
     const filterRows = result.addedFilters.map((filter) => [
-      filter.filterKey,
+      camelToSnakeCase(filter.filterKey),
       ...result.providers.map((p) => filter.values[p] || '\u2014'),
     ]);
     lines.push(
@@ -161,6 +171,13 @@ export function formatInspectOutput(result: InspectResult): string {
   }
 
   return lines.join('\n');
+}
+
+/**
+ * Convert a camelCase string to snake_case.
+ */
+function camelToSnakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }
 
 /**
@@ -227,12 +244,6 @@ export async function inspectQueryCommand(
     return { success: false, error: message };
   }
 
-  const DEFAULT_PROVIDERS: ProviderName[] = [
-    'pubmed',
-    'eric',
-    'arxiv',
-    'scopus',
-  ];
   const providers = options.providers ?? DEFAULT_PROVIDERS;
   const result = inspectQuery(ast, providers);
 

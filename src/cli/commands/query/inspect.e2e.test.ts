@@ -16,7 +16,6 @@ import {
   inspectQueryCommand,
   formatInspectOutput,
 } from './inspect.js';
-import type { QueryAST } from '../../../query/types.js';
 
 describe('search-hub query inspect E2E', () => {
   let ctx: E2EContext;
