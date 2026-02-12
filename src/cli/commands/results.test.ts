@@ -389,12 +389,6 @@ describe('parseResultsOptions', () => {
     expect(result.fields).toEqual(['title', 'year', 'journal', 'doi']);
   });
 
-  it('parses db option', () => {
-    const result = parseResultsOptions('my-session', { db: 'pubmed,scopus' });
-
-    expect(result.providers).toEqual(['pubmed', 'scopus']);
-  });
-
   it('parses filter-year option for range', () => {
     const result = parseResultsOptions('my-session', { filterYear: '2023-2025' });
 

@@ -1037,7 +1037,6 @@ Examples:
     .argument('<session-id>', 'session ID to export')
     .option('--format <fmt>', 'output format: ids, json, jsonl, csl-json', 'jsonl')
     .option('-o, --output <path>', 'output file path (default: stdout)')
-    .option('--db <providers>', 'export only specific database(s)')
     .option('--id-type <type>', 'for ids format: doi, pmid, all')
     .option('--no-dedup', 'disable deduplication of results')
     .option('-q, --query <expr>', 'filter results with query expression')
@@ -1052,16 +1051,28 @@ Examples:
   $ search-hub export SESSION_ID -q "author:smith" --format ids  # Filtered IDs
   $ search-hub export SESSION_ID --format json -o results.json  # JSON to file
   $ search-hub export SESSION_ID --format ids --id-type doi  # Export DOIs to stdout
-  $ search-hub export SESSION_ID --db pubmed --format jsonl
   $ search-hub export SESSION_ID --no-dedup  # Export without deduplication
-  $ search-hub export SESSION_ID --format jsonl | jq '.title'  # Pipe to jq`)
+  $ search-hub export SESSION_ID --format jsonl | jq '.title'  # Pipe to jq
+
+Query syntax:
+  Free text        diabetes             Search title and abstract
+  title:VALUE      title:learning       Title substring
+  abstract:VALUE   abstract:randomized  Abstract substring
+  author:VALUE     author:tanaka        Author name substring
+  journal:VALUE    journal:lancet       Journal name substring
+  year:VALUE       year:2023            Exact year
+  year:FROM-TO     year:2020-2024       Year range
+  doi:VALUE        doi:10.1001/xxx      DOI exact match
+  pmid:VALUE       pmid:12345678        PMID exact match
+  source:VALUE     source:pubmed        Provider exact match
+
+  Multiple terms: different fields = AND, same field = OR`)
     .action(
       async (
         sessionId: string,
         options?: {
           format?: string;
           output?: string;
-          db?: string;
           idType?: string;
           dedup?: boolean;
           query?: string;
@@ -1086,7 +1097,6 @@ Examples:
           const exportOpts = parseExportOptions(sessionId, {
             format: options?.format,
             output: options?.output,
-            db: options?.db,
             idType: options?.idType,
           });
 
@@ -1116,7 +1126,7 @@ Examples:
           }
 
           // Collect articles from result files
-          const articles = await loadSessionArticles(session, sessionId, sessionsDir, exportOpts.providers);
+          const articles = await loadSessionArticles(session, sessionId, sessionsDir);
 
           // Deduplicate articles unless --no-dedup is set
           const shouldDedup = options?.dedup !== false;
@@ -1136,7 +1146,7 @@ Examples:
           let hasFilter = false;
           if (options?.query) {
             exportArticles = filterByQuery(exportArticles, options.query);
-            hasFilter = exportArticles.length !== preFilterCount;
+            hasFilter = true;
           } else {
             const filter: ExportFilter = {};
             if (options?.filterYear) {
@@ -1312,7 +1322,6 @@ Examples:
     .option('--offset <n>', 'skip first n results')
     .option('--json', 'output as JSON array')
     .option('--fields <fields>', 'fields to display (comma-separated)')
-    .option('--db <providers>', 'filter by database(s), comma-separated')
     .option('-q, --query <expr>', 'filter results with query expression')
     .option('--filter-year <range>', 'year range filter (deprecated, use -q)')
     .option('--filter-title <keywords>', 'title keyword filter (deprecated, use -q)')
@@ -1327,7 +1336,7 @@ Examples:
   $ search-hub results SESSION_ID -q "author:smith year:2023"  # Combined filter
   $ search-hub results SESSION_ID -q "doi:10.1001/xxx"         # Exact ID match
   $ search-hub results SESSION_ID --json                       # JSON output
-  $ search-hub results SESSION_ID --db pubmed                  # Only PubMed
+  $ search-hub results SESSION_ID -q "source:pubmed"           # Only PubMed
   $ search-hub results SESSION_ID --abstract                   # Show abstracts
 
 Query syntax:
@@ -1351,7 +1360,6 @@ Query syntax:
           offset?: string;
           json?: boolean;
           fields?: string;
-          db?: string;
           query?: string;
           filterYear?: string;
           filterTitle?: string;
@@ -1368,7 +1376,6 @@ Query syntax:
             offset: options?.offset,
             json: options?.json,
             fields: options?.fields,
-            db: options?.db,
             query: options?.query,
             filterYear: options?.filterYear,
             filterTitle: options?.filterTitle,
@@ -1403,7 +1410,7 @@ Query syntax:
           }
 
           // Collect articles from result files
-          const articles = await loadSessionArticles(session, sessionId, sessionsDir, resultsOpts.providers);
+          const articles = await loadSessionArticles(session, sessionId, sessionsDir);
 
           // Deduplicate articles
           const dedupResult = deduplicateArticles(articles);

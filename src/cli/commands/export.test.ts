@@ -77,14 +77,6 @@ describe('export command', () => {
       expect(result.outputPath).toBe('/path/to/output.json');
     });
 
-    it('should parse provider filter', () => {
-      const result = parseExportOptions('session-123', {
-        db: 'pubmed,eric',
-      });
-
-      expect(result.providers).toEqual(['pubmed', 'eric']);
-    });
-
     it('should parse id-type option', () => {
       const result = parseExportOptions('session-123', {
         idType: 'doi',
