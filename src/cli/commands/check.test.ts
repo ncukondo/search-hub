@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   parseIdentifierFile,
   checkCoverage,
+  formatCheckResult,
+  formatCheckResultJson,
   type ParsedIdentifier,
   type CheckResult,
 } from './check.js';
@@ -201,5 +203,95 @@ describe('checkCoverage', () => {
     expect(result.found).toHaveLength(2);
     expect(result.total).toBe(2);
     expect(result.foundCount).toBe(2);
+  });
+});
+
+describe('formatCheckResult', () => {
+  const baseResult: CheckResult = {
+    total: 3,
+    foundCount: 2,
+    missingCount: 1,
+    coverage: 2 / 3,
+    found: [
+      { query: '10.1038/s41586-023-xxxxx', type: 'doi', sources: ['pubmed', 'scopus'], title: 'Multi-source Article' },
+      { query: '10.1001/jama.2023.12345', type: 'doi', sources: ['pubmed'], title: 'Single-source Article' },
+    ],
+    missing: [
+      { query: '10.9999/not-found', type: 'doi' },
+    ],
+  };
+
+  it('shows coverage summary with found/total and percentage', () => {
+    const output = formatCheckResult(baseResult, { sessionId: 'test_session', source: 'refs.txt' });
+    expect(output).toContain('Found: 2/3 (66.7%)');
+  });
+
+  it('shows session and source info', () => {
+    const output = formatCheckResult(baseResult, { sessionId: 'test_session', source: 'refs.txt' });
+    expect(output).toContain('Coverage: test_session');
+    expect(output).toContain('Source: refs.txt (3 identifiers)');
+  });
+
+  it('lists missing identifiers', () => {
+    const output = formatCheckResult(baseResult, { sessionId: 'test_session', source: 'refs.txt' });
+    expect(output).toContain('Missing (1):');
+    expect(output).toContain('10.9999/not-found');
+  });
+
+  it('lists found identifiers with source databases', () => {
+    const output = formatCheckResult(baseResult, { sessionId: 'test_session', source: 'refs.txt' });
+    expect(output).toContain('Found (2):');
+    expect(output).toMatch(/10\.1038\/s41586-023-xxxxx\s+→ pubmed, scopus/);
+    expect(output).toMatch(/10\.1001\/jama\.2023\.12345\s+→ pubmed/);
+  });
+
+  it('--missing-only shows only missing', () => {
+    const output = formatCheckResult(baseResult, { sessionId: 'test_session', source: 'refs.txt', missingOnly: true });
+    expect(output).toContain('Missing (1):');
+    expect(output).toContain('10.9999/not-found');
+    expect(output).not.toContain('Found (2):');
+  });
+});
+
+describe('formatCheckResultJson', () => {
+  const baseResult: CheckResult = {
+    total: 2,
+    foundCount: 1,
+    missingCount: 1,
+    coverage: 0.5,
+    found: [
+      { query: '10.1038/s41586-023-xxxxx', type: 'doi', sources: ['pubmed', 'scopus'], title: 'Test Article' },
+    ],
+    missing: [
+      { query: '10.9999/not-found', type: 'doi' },
+    ],
+  };
+
+  it('returns valid JSON with correct structure', () => {
+    const json = formatCheckResultJson(baseResult, { sessionId: 'test_session', source: 'refs.txt' });
+    const parsed = JSON.parse(json);
+    expect(parsed.session).toBe('test_session');
+    expect(parsed.source).toBe('refs.txt');
+    expect(parsed.total).toBe(2);
+    expect(parsed.found).toBe(1);
+    expect(parsed.missing).toBe(1);
+    expect(parsed.coverage).toBe(0.5);
+    expect(parsed.details.found).toHaveLength(1);
+    expect(parsed.details.missing).toHaveLength(1);
+  });
+
+  it('includes correct detail fields', () => {
+    const json = formatCheckResultJson(baseResult, { sessionId: 'test_session', source: 'refs.txt' });
+    const parsed = JSON.parse(json);
+    expect(parsed.details.found[0]).toEqual({
+      query: '10.1038/s41586-023-xxxxx',
+      type: 'doi',
+      sources: ['pubmed', 'scopus'],
+      title: 'Test Article',
+    });
+    expect(parsed.details.missing[0]).toEqual({
+      query: '10.9999/not-found',
+      type: 'doi',
+    });
   });
 });

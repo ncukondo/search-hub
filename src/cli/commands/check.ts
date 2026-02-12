@@ -123,3 +123,60 @@ function identifierToKey(id: ParsedIdentifier): string {
   }
   return `${id.type}:${id.value}`;
 }
+
+export interface FormatCheckOptions {
+  sessionId: string;
+  source: string;
+  missingOnly?: boolean;
+}
+
+export function formatCheckResult(result: CheckResult, options: FormatCheckOptions): string {
+  const lines: string[] = [];
+  const pct = result.total > 0 ? (result.coverage * 100).toFixed(1) : '0.0';
+
+  lines.push(`Coverage: ${options.sessionId}`);
+  lines.push(`Source: ${options.source} (${result.total} identifiers)`);
+  lines.push('');
+  lines.push(`Found: ${result.foundCount}/${result.total} (${pct}%)`);
+
+  if (result.missing.length > 0) {
+    lines.push('');
+    lines.push(`Missing (${result.missingCount}):`);
+    for (const m of result.missing) {
+      lines.push(`  ${m.query}`);
+    }
+  }
+
+  if (!options.missingOnly && result.found.length > 0) {
+    lines.push('');
+    lines.push(`Found (${result.foundCount}):`);
+    for (const f of result.found) {
+      lines.push(`  ${f.query}  → ${f.sources.join(', ')}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+export function formatCheckResultJson(result: CheckResult, options: FormatCheckOptions): string {
+  return JSON.stringify({
+    session: options.sessionId,
+    source: options.source,
+    total: result.total,
+    found: result.foundCount,
+    missing: result.missingCount,
+    coverage: result.coverage,
+    details: {
+      found: result.found.map(f => ({
+        query: f.query,
+        type: f.type,
+        sources: f.sources,
+        title: f.title,
+      })),
+      missing: result.missing.map(m => ({
+        query: m.query,
+        type: m.type,
+      })),
+    },
+  }, null, 2);
+}
