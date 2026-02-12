@@ -1,25 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import { translateQuery, translateFieldPrefix, translateTerms } from './translator.js';
-import type { QueryAST, QueryBlock, TermBlock, Filters } from '../../query/types.js';
+import type { ResolvedAST, QueryBlock, TermBlock, Filters } from '../../query/types.js';
 
 /**
- * Helper to create a minimal QueryAST for testing
+ * Helper to create a minimal ResolvedAST for testing
  */
-function createQueryAST(blocks: QueryBlock[], filters: Filters = {}, overrides = {}): QueryAST {
+function createResolvedAST(blocks: QueryBlock[], filters: Filters = {}): ResolvedAST {
   return {
     name: 'test-query',
     blocks,
     filters,
-    overrides,
   };
 }
 
 function createBlock(
   field: QueryBlock['field'],
   terms: TermBlock,
-  operator: QueryBlock['operator'] = 'OR'
+  operator: QueryBlock['operator'] = 'OR',
+  id = 'block1'
 ): QueryBlock {
-  return { field, terms, operator };
+  return { id, field, terms, operator };
 }
 
 describe('translateFieldPrefix', () => {
@@ -83,26 +83,26 @@ describe('translateTerms', () => {
 describe('translateQuery', () => {
   describe('field mappings', () => {
     it('should translate title field', () => {
-      const ast = createQueryAST([createBlock('title', { keywords: ['diabetes'] })]);
+      const ast = createResolvedAST([createBlock('title', { keywords: ['diabetes'] })]);
       const result = translateQuery(ast);
       expect(result.native).toBe('ti:diabetes');
       expect(result.provider).toBe('arxiv');
     });
 
     it('should translate abstract field', () => {
-      const ast = createQueryAST([createBlock('abstract', { keywords: ['machine learning'] })]);
+      const ast = createResolvedAST([createBlock('abstract', { keywords: ['machine learning'] })]);
       const result = translateQuery(ast);
       expect(result.native).toBe('abs:"machine learning"');
     });
 
     it('should translate author field', () => {
-      const ast = createQueryAST([createBlock('author', { keywords: ['Smith'] })]);
+      const ast = createResolvedAST([createBlock('author', { keywords: ['Smith'] })]);
       const result = translateQuery(ast);
       expect(result.native).toBe('au:Smith');
     });
 
     it('should translate all field', () => {
-      const ast = createQueryAST([createBlock('all', { keywords: ['quantum'] })]);
+      const ast = createResolvedAST([createBlock('all', { keywords: ['quantum'] })]);
       const result = translateQuery(ast);
       expect(result.native).toBe('all:quantum');
     });
@@ -110,13 +110,13 @@ describe('translateQuery', () => {
 
   describe('title_abstract expansion', () => {
     it('should expand title_abstract to (ti: OR abs:)', () => {
-      const ast = createQueryAST([createBlock('title_abstract', { keywords: ['diabetes'] })]);
+      const ast = createResolvedAST([createBlock('title_abstract', { keywords: ['diabetes'] })]);
       const result = translateQuery(ast);
       expect(result.native).toBe('(ti:diabetes OR abs:diabetes)');
     });
 
     it('should expand title_abstract with multiple terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title_abstract', { keywords: ['diabetes', 'insulin'] }),
       ]);
       const result = translateQuery(ast);
@@ -127,7 +127,7 @@ describe('translateQuery', () => {
     });
 
     it('should expand title_abstract with AND operator', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title_abstract', { keywords: ['diabetes', 'insulin'] }, 'AND'),
       ]);
       const result = translateQuery(ast);
@@ -139,9 +139,9 @@ describe('translateQuery', () => {
 
   describe('boolean operators', () => {
     it('should combine multiple blocks with AND', () => {
-      const ast = createQueryAST([
-        createBlock('title', { keywords: ['diabetes'] }),
-        createBlock('title', { keywords: ['AI'] }),
+      const ast = createResolvedAST([
+        createBlock('title', { keywords: ['diabetes'] }, 'OR', 'population'),
+        createBlock('title', { keywords: ['AI'] }, 'OR', 'intervention'),
       ]);
       const result = translateQuery(ast);
       expect(result.native).toBe('(ti:diabetes) AND (ti:AI)');
@@ -149,7 +149,7 @@ describe('translateQuery', () => {
 
     it('should use ANDNOT for negation (when implemented via filters)', () => {
       // Note: ANDNOT is arXiv-specific, used instead of NOT
-      const ast = createQueryAST([createBlock('title', { keywords: ['diabetes'] })]);
+      const ast = createResolvedAST([createBlock('title', { keywords: ['diabetes'] })]);
       const result = translateQuery(ast);
       expect(result.native).not.toContain(' NOT ');
     });
@@ -157,7 +157,7 @@ describe('translateQuery', () => {
 
   describe('phrase handling', () => {
     it('should quote multi-word terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title', { keywords: ['machine learning', 'deep learning'] }),
       ]);
       const result = translateQuery(ast);
@@ -165,38 +165,35 @@ describe('translateQuery', () => {
     });
 
     it('should not quote single-word terms', () => {
-      const ast = createQueryAST([createBlock('title', { keywords: ['diabetes'] })]);
+      const ast = createResolvedAST([createBlock('title', { keywords: ['diabetes'] })]);
       const result = translateQuery(ast);
       expect(result.native).toBe('ti:diabetes');
     });
   });
 
   describe('category filter', () => {
-    it('should translate arxiv categories from overrides', () => {
-      const ast = createQueryAST(
+    it('should translate arxiv categories from resolved filters', () => {
+      const ast = createResolvedAST(
         [createBlock('title', { keywords: ['quantum'] })],
-        {},
-        { arxiv: { categories: ['cs.AI'] } }
+        { categories: ['cs.AI'] }
       );
       const result = translateQuery(ast);
       expect(result.native).toContain('cat:cs.AI');
     });
 
     it('should combine multiple categories with OR', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [createBlock('title', { keywords: ['quantum'] })],
-        {},
-        { arxiv: { categories: ['cs.AI', 'cs.LG'] } }
+        { categories: ['cs.AI', 'cs.LG'] }
       );
       const result = translateQuery(ast);
       expect(result.native).toContain('(cat:cs.AI OR cat:cs.LG)');
     });
 
     it('should AND categories with main query', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [createBlock('title', { keywords: ['quantum'] })],
-        {},
-        { arxiv: { categories: ['cs.AI'] } }
+        { categories: ['cs.AI'] }
       );
       const result = translateQuery(ast);
       expect(result.native).toBe('ti:quantum AND (cat:cs.AI)');
@@ -205,7 +202,7 @@ describe('translateQuery', () => {
 
   describe('date filter', () => {
     it('should translate year range to submittedDate', () => {
-      const ast = createQueryAST([createBlock('title', { keywords: ['quantum'] })], {
+      const ast = createResolvedAST([createBlock('title', { keywords: ['quantum'] })], {
         yearFrom: 2020,
         yearTo: 2024,
       });
@@ -214,7 +211,7 @@ describe('translateQuery', () => {
     });
 
     it('should handle yearFrom only', () => {
-      const ast = createQueryAST([createBlock('title', { keywords: ['quantum'] })], {
+      const ast = createResolvedAST([createBlock('title', { keywords: ['quantum'] })], {
         yearFrom: 2020,
       });
       const result = translateQuery(ast);
@@ -224,7 +221,7 @@ describe('translateQuery', () => {
     });
 
     it('should handle yearTo only', () => {
-      const ast = createQueryAST([createBlock('title', { keywords: ['quantum'] })], {
+      const ast = createResolvedAST([createBlock('title', { keywords: ['quantum'] })], {
         yearTo: 2024,
       });
       const result = translateQuery(ast);
@@ -233,7 +230,7 @@ describe('translateQuery', () => {
     });
 
     it('should AND date filter with main query', () => {
-      const ast = createQueryAST([createBlock('title', { keywords: ['quantum'] })], {
+      const ast = createResolvedAST([createBlock('title', { keywords: ['quantum'] })], {
         yearFrom: 2020,
         yearTo: 2024,
       });
@@ -246,7 +243,7 @@ describe('translateQuery', () => {
 
   describe('keywords-undefined blocks', () => {
     it('should produce empty query for mesh-only block (arXiv ignores mesh)', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title_abstract', { mesh: ['Artificial Intelligence'] }),
       ]);
       const result = translateQuery(ast);
@@ -254,7 +251,7 @@ describe('translateQuery', () => {
     });
 
     it('should still work when keywords is undefined but has no arXiv-relevant terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title', { mesh: ['Diabetes Mellitus'] }),
       ]);
       const result = translateQuery(ast);
@@ -264,7 +261,7 @@ describe('translateQuery', () => {
 
   describe('keyword field (unsupported)', () => {
     it('should skip keyword field (not supported by arXiv)', () => {
-      const ast = createQueryAST([createBlock('keyword', { keywords: ['diabetes'] })]);
+      const ast = createResolvedAST([createBlock('keyword', { keywords: ['diabetes'] })]);
       const result = translateQuery(ast);
       expect(result.native).toBe('');
     });
@@ -272,7 +269,7 @@ describe('translateQuery', () => {
 
   describe('MeSH and Emtree terms (unsupported)', () => {
     it('should ignore mesh terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title', { keywords: ['diabetes'], mesh: ['Diabetes Mellitus'] }),
       ]);
       const result = translateQuery(ast);
@@ -281,7 +278,7 @@ describe('translateQuery', () => {
     });
 
     it('should ignore emtree terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title', {
           keywords: ['diabetes'],
           emtree: ['non insulin dependent diabetes mellitus'],
@@ -292,17 +289,9 @@ describe('translateQuery', () => {
     });
   });
 
-  describe('originalAst reference', () => {
-    it('should include original AST in result', () => {
-      const ast = createQueryAST([createBlock('title', { keywords: ['test'] })]);
-      const result = translateQuery(ast);
-      expect(result.originalAst).toBe(ast);
-    });
-  });
-
   describe('exclude term translation', () => {
     it('should translate single exclude term with ANDNOT', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title', {
           keywords: ['EPA', 'entrustable professional activities'],
           exclude: ['environmental protection'],
@@ -314,7 +303,7 @@ describe('translateQuery', () => {
     });
 
     it('should translate multiple exclude terms with OR in ANDNOT clause', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title', {
           keywords: ['EPA'],
           exclude: ['pollution', 'agency'],
@@ -325,7 +314,7 @@ describe('translateQuery', () => {
     });
 
     it('should translate exclude terms with title_abstract field', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         createBlock('title_abstract', {
           keywords: ['diabetes'],
           exclude: ['animal'],
@@ -338,7 +327,7 @@ describe('translateQuery', () => {
     });
 
     it('should combine exclude with date filters', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           createBlock('title', {
             keywords: ['quantum'],
@@ -354,15 +343,14 @@ describe('translateQuery', () => {
     });
 
     it('should combine exclude with category filters', () => {
-      const ast = createQueryAST(
+      const ast = createResolvedAST(
         [
           createBlock('title', {
             keywords: ['machine learning'],
             exclude: ['survey'],
           }),
         ],
-        {},
-        { arxiv: { categories: ['cs.AI'] } }
+        { categories: ['cs.AI'] }
       );
       const result = translateQuery(ast);
       expect(result.native).toContain('ti:"machine learning"');
@@ -373,8 +361,9 @@ describe('translateQuery', () => {
 
   describe('Unsupported Vocabulary Warnings', () => {
     it('should warn (skipped) when block contains only mesh terms', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { mesh: ['Artificial Intelligence'] },
           operator: 'OR',
@@ -388,8 +377,9 @@ describe('translateQuery', () => {
     });
 
     it('should warn (ignored) when block contains keywords + mesh', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { keywords: ['diabetes'], mesh: ['Diabetes Mellitus'] },
           operator: 'OR',
@@ -403,8 +393,9 @@ describe('translateQuery', () => {
     });
 
     it('should not include warnings for keywords-only blocks', () => {
-      const ast = createQueryAST([
+      const ast = createResolvedAST([
         {
+          id: 'block1',
           field: 'title_abstract',
           terms: { keywords: ['diabetes'] },
           operator: 'OR',

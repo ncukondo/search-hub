@@ -8,7 +8,7 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
-  QueryAST,
+  ResolvedAST,
   SearchState,
   SearchResumeResult,
   ConnectionTestResult,
@@ -78,10 +78,10 @@ export class ERICProvider extends BaseProvider {
   }
 
   /**
-   * Translate a QueryAST to ERIC-native query syntax.
+   * Translate a ResolvedAST to ERIC-native query syntax.
    */
-  translateQuery(ast: QueryAST): TranslatedQuery {
-    return translateQuery(ast);
+  translateQuery(resolved: ResolvedAST): TranslatedQuery {
+    return translateQuery(resolved);
   }
 
   /**

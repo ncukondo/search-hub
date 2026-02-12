@@ -1,9 +1,9 @@
 /**
  * ERIC query translator.
- * Converts QueryAST to ERIC-native query syntax.
+ * Converts ResolvedAST to ERIC-native query syntax.
  */
 
-import type { QueryAST, QueryBlock, Filters } from '../../query/types';
+import type { QueryBlock, Filters, ResolvedAST } from '../../query/types';
 import type { TranslatedQuery } from '../base/types';
 import { collectUnsupportedVocabWarnings } from '../base/warnings';
 
@@ -147,14 +147,14 @@ function translateDateFilters(filters: Filters): string | null {
 }
 
 /**
- * Translate a QueryAST to ERIC-native query syntax.
+ * Translate a ResolvedAST to ERIC-native query syntax.
  */
-export function translateQueryAST(ast: QueryAST): TranslatedQuery {
+export function translateQueryAST(resolved: ResolvedAST): TranslatedQuery {
   const blockQueries: string[] = [];
   const notClauses: string[] = [];
 
   // Translate each block
-  for (const block of ast.blocks) {
+  for (const block of resolved.blocks) {
     const { query, notClause } = translateBlock(block);
     if (query) {
       blockQueries.push(query);
@@ -177,7 +177,7 @@ export function translateQueryAST(ast: QueryAST): TranslatedQuery {
   }
 
   // Apply date filters
-  const dateFilter = translateDateFilters(ast.filters);
+  const dateFilter = translateDateFilters(resolved.filters);
   if (dateFilter) {
     if (native) {
       native = `${native} AND ${dateFilter}`;
@@ -188,20 +188,19 @@ export function translateQueryAST(ast: QueryAST): TranslatedQuery {
 
   // Collect warnings for unsupported controlled vocabulary
   // ERIC supports eric descriptors but not mesh or emtree
-  const warnings = collectUnsupportedVocabWarnings(ast.blocks, 'ERIC', new Set(['eric']));
+  const warnings = collectUnsupportedVocabWarnings(resolved.blocks, 'ERIC', new Set(['eric']));
 
   return {
     native,
-    originalAst: ast,
     provider: 'eric',
     ...(warnings.length > 0 ? { warnings } : {}),
   };
 }
 
 /**
- * Translate a QueryAST to ERIC query.
+ * Translate a ResolvedAST to ERIC query.
  * This is the Provider interface method signature.
  */
-export function translateQuery(ast: QueryAST): TranslatedQuery {
-  return translateQueryAST(ast);
+export function translateQuery(resolved: ResolvedAST): TranslatedQuery {
+  return translateQueryAST(resolved);
 }

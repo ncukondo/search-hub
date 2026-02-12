@@ -1,10 +1,10 @@
 /**
  * Scopus Query Translator
  *
- * Translates QueryAST to Scopus search syntax.
+ * Translates ResolvedAST to Scopus search syntax.
  */
 
-import type { QueryAST, FieldType, QueryBlock, Filters, OverrideBlock } from '../../query/types';
+import type { FieldType, QueryBlock, Filters, ResolvedAST } from '../../query/types';
 import type { TranslatedQuery } from '../base/types';
 import { collectUnsupportedVocabWarnings } from '../base/warnings';
 
@@ -114,8 +114,9 @@ function translateBlock(block: QueryBlock): { query: string; notClause: string |
 
 /**
  * Translate filters to Scopus syntax.
+ * sourceTypes now comes from resolved filters (was in overrides).
  */
-function translateFilters(filters: Filters, scopusOverrides?: OverrideBlock): string[] {
+function translateFilters(filters: Filters): string[] {
   const parts: string[] = [];
 
   // Year filters
@@ -134,9 +135,9 @@ function translateFilters(filters: Filters, scopusOverrides?: OverrideBlock): st
     parts.push(`LANGUAGE(${languages})`);
   }
 
-  // Source type filter from overrides
-  if (scopusOverrides?.sourceTypes && scopusOverrides.sourceTypes.length > 0) {
-    const sourceTypes = scopusOverrides.sourceTypes
+  // Source type filter (now from resolved filters)
+  if (filters.sourceTypes && filters.sourceTypes.length > 0) {
+    const sourceTypes = filters.sourceTypes
       .map(type => SOURCE_TYPE_MAP[type] || type)
       .join(' OR ');
     parts.push(`SRCTYPE(${sourceTypes})`);
@@ -146,11 +147,11 @@ function translateFilters(filters: Filters, scopusOverrides?: OverrideBlock): st
 }
 
 /**
- * Translate a QueryAST to Scopus search syntax.
+ * Translate a ResolvedAST to Scopus search syntax.
  */
-export function translateQuery(ast: QueryAST): TranslatedQuery {
+export function translateQuery(resolved: ResolvedAST): TranslatedQuery {
   // Translate query blocks
-  const blockResults = ast.blocks.map(translateBlock);
+  const blockResults = resolved.blocks.map(translateBlock);
 
   // Collect query parts (filter empty blocks) and NOT clauses
   const blockParts = blockResults
@@ -160,9 +161,8 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
     .map((r) => r.notClause)
     .filter((s): s is string => s !== null);
 
-  // Translate filters
-  const scopusOverrides = ast.overrides.scopus;
-  const filterParts = translateFilters(ast.filters, scopusOverrides);
+  // Translate filters (sourceTypes now in resolved.filters)
+  const filterParts = translateFilters(resolved.filters);
 
   // Build native query: blocks AND NOT(excludes) AND filters
   const allParts: string[] = [...blockParts, ...notClauses, ...filterParts];
@@ -170,11 +170,10 @@ export function translateQuery(ast: QueryAST): TranslatedQuery {
 
   // Collect warnings for unsupported controlled vocabulary
   // Scopus supports emtree but not mesh or eric
-  const warnings = collectUnsupportedVocabWarnings(ast.blocks, 'Scopus', new Set(['emtree']));
+  const warnings = collectUnsupportedVocabWarnings(resolved.blocks, 'Scopus', new Set(['emtree']));
 
   return {
     native,
-    originalAst: ast,
     provider: 'scopus',
     ...(warnings.length > 0 ? { warnings } : {}),
   };

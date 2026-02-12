@@ -9,7 +9,7 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
-  QueryAST,
+  ResolvedAST,
   SearchState,
   SearchResumeResult,
   ConnectionTestResult,
@@ -58,10 +58,10 @@ export class ScopusProvider extends BaseProvider {
   }
 
   /**
-   * Translate QueryAST to Scopus search syntax.
+   * Translate ResolvedAST to Scopus search syntax.
    */
-  translateQuery(ast: QueryAST): TranslatedQuery {
-    return translateQuery(ast);
+  translateQuery(resolved: ResolvedAST): TranslatedQuery {
+    return translateQuery(resolved);
   }
 
   /**
