@@ -30,13 +30,13 @@ Update all documentation to reflect the new `-q` / `--query` filter on `results`
 
 ### Step 2: Update `docs/commands.md`
 
-- [ ] Add `-q` / `--query` to `results` section with examples
-- [ ] Add query syntax reference (field names, matching rules, AND/OR behavior)
-- [ ] Mark `--filter-year`, `--filter-title`, `--filter-abstract` as deprecated
-- [ ] Add `-q` to `export` section
-- [ ] Add new `## check` section with full documentation
-- [ ] Add `check` to Overview command list at top
-- [ ] Acceptance: user docs cover all new functionality with clear examples
+- [x] Add `-q` / `--query` to `results` section with examples
+- [x] Add query syntax reference (field names, matching rules, AND/OR behavior)
+- [x] Mark `--filter-year`, `--filter-title`, `--filter-abstract` as deprecated
+- [x] Add `-q` to `export` section
+- [x] Add new `## check` section with full documentation
+- [x] Add `check` to Overview command list at top
+- [x] Acceptance: user docs cover all new functionality with clear examples
 
 ### Step 3: Update `README.md`
 
