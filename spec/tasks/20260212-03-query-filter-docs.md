@@ -19,41 +19,41 @@ Update all documentation to reflect the new `-q` / `--query` filter on `results`
 
 ### Step 1: Update `spec/cli/commands.md`
 
-- [ ] Add `-q, --query <expr>` to `results` command options table
-- [ ] Add query expression syntax section under `results`
-- [ ] Add deprecation note to `--filter-year`, `--filter-title`, `--filter-abstract` in `results`
-- [ ] Add `-q, --query <expr>` to `export` command options table
-- [ ] Add deprecation note to `--filter-*` in `export`
-- [ ] Add new `## check` section with full syntax, options, examples
-- [ ] Add `check` to Command Overview list at top
-- [ ] Acceptance: spec accurately reflects implementation
+- [x] Add `-q, --query <expr>` to `results` command options table
+- [x] Add query expression syntax section under `results`
+- [x] Add deprecation note to `--filter-year`, `--filter-title`, `--filter-abstract` in `results`
+- [x] Add `-q, --query <expr>` to `export` command options table
+- [x] Add deprecation note to `--filter-*` in `export`
+- [x] Add new `## check` section with full syntax, options, examples
+- [x] Add `check` to Command Overview list at top
+- [x] Acceptance: spec accurately reflects implementation
 
 ### Step 2: Update `docs/commands.md`
 
-- [ ] Add `-q` / `--query` to `results` section with examples
-- [ ] Add query syntax reference (field names, matching rules, AND/OR behavior)
-- [ ] Mark `--filter-year`, `--filter-title`, `--filter-abstract` as deprecated
-- [ ] Add `-q` to `export` section
-- [ ] Add new `## check` section with full documentation
-- [ ] Add `check` to Overview command list at top
-- [ ] Acceptance: user docs cover all new functionality with clear examples
+- [x] Add `-q` / `--query` to `results` section with examples
+- [x] Add query syntax reference (field names, matching rules, AND/OR behavior)
+- [x] Mark `--filter-year`, `--filter-title`, `--filter-abstract` as deprecated
+- [x] Add `-q` to `export` section
+- [x] Add new `## check` section with full documentation
+- [x] Add `check` to Overview command list at top
+- [x] Acceptance: user docs cover all new functionality with clear examples
 
 ### Step 3: Update `README.md`
 
-- [ ] Add "Result filtering" or "Query quality verification" to Features list
-- [ ] Update "Query Development → Workflow" section:
+- [x] Add "Result filtering" or "Query quality verification" to Features list
+- [x] Update "Query Development → Workflow" section:
   - Step 2 "Review initial results": add `-q` example
   - Add new step for coverage checking with `check`
-- [ ] Add `check` to workflow example sequence
-- [ ] Acceptance: README reflects the complete query refinement workflow
+- [x] Add `check` to workflow example sequence
+- [x] Acceptance: README reflects the complete query refinement workflow
 
 ### Step 4: Verify cross-references and consistency
 
-- [ ] Verify `spec/README.md` Reading Order table includes `check` command context
-- [ ] Verify all `-q` examples are consistent across README, docs, and spec
-- [ ] Verify `check` input format documentation is consistent
-- [ ] Run any link checkers or verify manual navigation
-- [ ] Acceptance: no inconsistencies between documentation files
+- [x] Verify `spec/README.md` Reading Order table includes `check` command context
+- [x] Verify all `-q` examples are consistent across README, docs, and spec
+- [x] Verify `check` input format documentation is consistent
+- [x] Run any link checkers or verify manual navigation
+- [x] Acceptance: no inconsistencies between documentation files
 
 ## Notes
 
