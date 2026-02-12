@@ -18,6 +18,7 @@ import type {
 import { isProviderError } from '../../providers/base/types.js';
 import type { QueryAST } from '../../query/types.js';
 import { parseQueryString } from '../../query/index.js';
+import { resolveForProvider } from '../../query/resolver.js';
 import {
   createSession,
   updateDatabaseStatus,
@@ -141,20 +142,22 @@ export function createProviderInstance(
 
 /**
  * Translate a query AST for a specific provider.
+ * Resolves provider-specific blocks/filters before translation.
  */
 function translateQueryForProvider(
   ast: QueryAST,
   provider: ProviderName
 ): TranslatedQuery {
+  const resolved = resolveForProvider(ast, provider);
   switch (provider) {
     case 'pubmed':
-      return translatePubmed(ast);
+      return translatePubmed(resolved);
     case 'eric':
-      return translateEric(ast);
+      return translateEric(resolved);
     case 'arxiv':
-      return translateArxiv(ast);
+      return translateArxiv(resolved);
     case 'scopus':
-      return translateScopus(ast);
+      return translateScopus(resolved);
     default:
       throw new Error(`No translator for provider '${provider}'`);
   }
@@ -200,13 +203,13 @@ export async function executeSearch(
       name: options.sessionName ?? 'direct-query',
       blocks: [
         {
+          id: 'direct',
           field: 'all',
           terms: { keywords: [options.directQuery] },
           operator: 'AND',
         },
       ],
       filters: {},
-      overrides: {},
     };
 
     // Generate YAML safely using yaml library to handle special characters
@@ -547,13 +550,13 @@ export async function executeCountOnly(
       name: options.sessionName ?? 'direct-query',
       blocks: [
         {
+          id: 'direct',
           field: 'all',
           terms: { keywords: [options.directQuery] },
           operator: 'AND',
         },
       ],
       filters: {},
-      overrides: {},
     };
   } else if (options.queryFile) {
     const queryContent = await readFile(options.queryFile, 'utf-8');
@@ -628,13 +631,13 @@ export async function executePreview(
       name: options.sessionName ?? 'direct-query',
       blocks: [
         {
+          id: 'direct',
           field: 'all',
           terms: { keywords: [options.directQuery] },
           operator: 'AND',
         },
       ],
       filters: {},
-      overrides: {},
     };
   } else if (options.queryFile) {
     const queryContent = await readFile(options.queryFile, 'utf-8');

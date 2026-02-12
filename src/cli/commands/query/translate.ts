@@ -10,6 +10,7 @@ import { translateQuery as translatePubmed } from '../../../providers/pubmed/tra
 import { translateQuery as translateEric } from '../../../providers/eric/translator.js';
 import { translateQuery as translateArxiv } from '../../../providers/arxiv/translator.js';
 import { translateQuery as translateScopus } from '../../../providers/scopus/translator.js';
+import { resolveForProvider } from '../../../query/resolver.js';
 
 /**
  * Available translators by provider name.
@@ -96,7 +97,8 @@ export async function translateQueryCommand(
     const translator = translators[provider];
     if (translator) {
       try {
-        translations[provider] = translator(ast);
+        const resolved = resolveForProvider(ast, provider as ProviderName);
+        translations[provider] = translator(resolved);
       } catch (error) {
         const message =
           error instanceof Error
