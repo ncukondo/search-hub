@@ -11,6 +11,8 @@ A CLI tool for systematic literature searching across multiple academic database
 - **Unified query syntax**: YAML-based DSL with automatic translation and JSON Schema support
 - **Controlled vocabulary validation**: Validates MeSH, ERIC descriptors, and Emtree terms with typo suggestions
 - **Reproducible searches**: Full session logging for PRISMA reporting
+- **Result filtering**: Flexible query expressions (`-q`) to search and filter results by title, abstract, author, year, and more
+- **Coverage verification**: Check whether known articles appear in search results for query quality validation
 - **Session comparison**: Diff results between query iterations to track refinements
 - **Resume support**: Continue interrupted searches at DB or page level
 - **Review workflow**: Multi-reviewer screening with agreement tracking and finalization
@@ -97,20 +99,26 @@ Developing an effective search query is iterative. Start broad, then refine base
 2. **Review initial results** - Check titles to assess quality:
    ```bash
    search-hub results <session-v1> --limit 50
+   search-hub results <session-v1> -q "title:diabetes year:2023-2025"
    ```
 
-3. **Refine the query** - Copy and modify your query file:
+3. **Check coverage** - Verify known relevant articles are captured:
+   ```bash
+   search-hub check <session-v1> --file known-articles.txt
+   ```
+
+4. **Refine the query** - Copy and modify your query file:
    ```bash
    cp query-v1.yaml query-v2.yaml
    # Edit query-v2.yaml to add/remove terms, adjust filters
    ```
 
-4. **Run the refined search**:
+5. **Run the refined search**:
    ```bash
    search-hub search query-v2.yaml --max-results 100
    ```
 
-5. **Compare results with diff** - See what changed:
+6. **Compare results with diff** - See what changed:
    ```bash
    search-hub diff <session-v1> <session-v2> --show removed
    ```

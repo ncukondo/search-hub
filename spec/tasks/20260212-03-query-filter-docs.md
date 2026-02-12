@@ -40,12 +40,12 @@ Update all documentation to reflect the new `-q` / `--query` filter on `results`
 
 ### Step 3: Update `README.md`
 
-- [ ] Add "Result filtering" or "Query quality verification" to Features list
-- [ ] Update "Query Development → Workflow" section:
+- [x] Add "Result filtering" or "Query quality verification" to Features list
+- [x] Update "Query Development → Workflow" section:
   - Step 2 "Review initial results": add `-q` example
   - Add new step for coverage checking with `check`
-- [ ] Add `check` to workflow example sequence
-- [ ] Acceptance: README reflects the complete query refinement workflow
+- [x] Add `check` to workflow example sequence
+- [x] Acceptance: README reflects the complete query refinement workflow
 
 ### Step 4: Verify cross-references and consistency
 
