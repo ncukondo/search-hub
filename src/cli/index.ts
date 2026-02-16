@@ -813,6 +813,17 @@ Query features (use "query init" to see full template):
               return;
             }
 
+            // Auto-log preview results when using a query file
+            if (searchOpts.queryFile) {
+              try {
+                const qContent = await readFile(searchOpts.queryFile, 'utf-8');
+                const qHash = computeQueryHash(qContent);
+                await appendLogEntry(searchOpts.queryFile, buildPreviewLogEntry(qHash, previews));
+              } catch {
+                // Logging failure should not break the command
+              }
+            }
+
             if (!globalOpts.quiet) {
               console.log(formatPreviewOutput(previews, searchOpts.queryFile));
             }
