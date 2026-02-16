@@ -167,7 +167,14 @@ export async function readLogEntries(queryFilePath: string): Promise<LogEntry[]>
     return [];
   }
 
-  return parsed as LogEntry[];
+  // Filter out malformed entries that lack a valid type field
+  return parsed.filter(
+    (entry): entry is LogEntry =>
+      entry !== null &&
+      typeof entry === 'object' &&
+      typeof entry.type === 'string' &&
+      ['count', 'preview', 'assessment'].includes(entry.type),
+  );
 }
 
 /**
