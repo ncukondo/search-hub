@@ -234,6 +234,68 @@ describe('ERIC Provider', () => {
 
       expect(articles).toHaveLength(0);
     });
+
+    it('should emit warning when sort option is specified', async () => {
+      const mockResult: ERICSearchResult = {
+        totalResults: 1,
+        start: 0,
+        documents: [
+          {
+            ericId: 'ED123456',
+            title: 'Test Education Article',
+            authors: [{ family: 'Smith' }],
+            source: 'eric',
+            retrievedAt: expect.any(String) as unknown as string,
+          },
+        ],
+      };
+      mockSearch.mockResolvedValueOnce(mockResult);
+
+      const query: TranslatedQuery = {
+        native: 'title:education',
+        provider: 'eric',
+      };
+
+      const articles: unknown[] = [];
+      for await (const article of provider.search(query, { sort: 'relevance' })) {
+        articles.push(article);
+      }
+
+      expect(articles).toHaveLength(1);
+      const warnings = provider.getWarnings();
+      expect(warnings).toContainEqual(expect.stringContaining('sort'));
+    });
+
+    it('should not emit warning when sort is not specified', async () => {
+      const mockResult: ERICSearchResult = {
+        totalResults: 1,
+        start: 0,
+        documents: [
+          {
+            ericId: 'ED123456',
+            title: 'Test Education Article',
+            authors: [{ family: 'Smith' }],
+            source: 'eric',
+            retrievedAt: expect.any(String) as unknown as string,
+          },
+        ],
+      };
+      mockSearch.mockResolvedValueOnce(mockResult);
+
+      const query: TranslatedQuery = {
+        native: 'title:education',
+        provider: 'eric',
+      };
+
+      const articles: unknown[] = [];
+      for await (const article of provider.search(query)) {
+        articles.push(article);
+      }
+
+      expect(articles).toHaveLength(1);
+      const warnings = provider.getWarnings();
+      expect(warnings).toHaveLength(0);
+    });
   });
 
   describe('testConnection', () => {

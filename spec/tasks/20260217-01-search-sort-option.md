@@ -93,11 +93,11 @@ search-hub search <query.yaml> --sort <relevance|date>
 
 ### Step 5: ERIC unsupported sort warning
 
-- [ ] Write test: `src/providers/eric/provider.test.ts` — verify warning emitted
-- [ ] Update `EricProvider.search()` to emit warning when `sort` is specified
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Warning logged when ERIC receives sort option
+- [x] Write test: `src/providers/eric/provider.test.ts` — verify warning emitted
+- [x] Update `EricProvider.search()` to emit warning when `sort` is specified
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Warning logged when ERIC receives sort option
 
 ### Step 6: CLI `--sort` option
 
