@@ -1,94 +1,28 @@
 /**
- * Review workflow types for article assessment tracking
+ * Review workflow types for article assessment tracking.
+ *
+ * Core data types (ReviewDecision, ReviewBasis, Review, MergedSource,
+ * ArticleEntry, ReviewerRecord, ReviewFile) are derived from Zod schemas
+ * in schema.ts — single source of truth for types and JSON Schema.
  */
+import * as z from 'zod';
+import {
+  reviewDecisionSchema,
+  reviewBasisSchema,
+  reviewSchema,
+  mergedSourceSchema,
+  articleEntrySchema,
+  reviewerRecordSchema,
+  reviewFileSchema,
+} from './schema.js';
 
-import type { ArticleFulltextRef } from '@ncukondo/academic-fulltext';
-
-export type ReviewDecision = 'include' | 'exclude' | 'uncertain';
-
-/**
- * Basis of the review decision (what information was used)
- */
-export type ReviewBasis = 'title' | 'abstract' | 'fulltext';
-
-/**
- * Individual assessment of an article by a reviewer
- */
-export interface Review {
-  /** Reviewer identifier: "human:name" or "ai:name" */
-  reviewer: string;
-  /** Assessment decision */
-  decision?: ReviewDecision;
-  /** Basis of the decision (what information was used) */
-  basis?: ReviewBasis;
-  /** Optional comment or reason */
-  comment?: string;
-  /** ISO 8601 timestamp (optional - auto-assigned on merge if not provided) */
-  timestamp?: string;
-}
-
-/**
- * Source information for merged duplicates
- */
-export interface MergedSource {
-  source: string;
-  pmid?: string;
-  doi?: string;
-  scopusId?: string;
-  arxivId?: string;
-  ericId?: string;
-}
-
-/**
- * Article entry with identifiers, bibliographic info, and reviews
- */
-export interface ArticleEntry {
-  // Identifiers (at least one required for matching)
-  doi?: string;
-  pmid?: string;
-  scopusId?: string;
-  arxivId?: string;
-  ericId?: string;
-
-  // Bibliographic info (for reviewer reference)
-  title: string;
-  authors?: string;
-  year?: string;
-  abstract?: string;
-
-  // Deduplication tracking
-  mergedFrom?: MergedSource[];
-
-  // Review data
-  reviews: Review[];
-  /** Historical reviews (only in extracted ReviewFiles, never in master file) */
-  reviewHistory?: Review[];
-  finalDecision?: 'include' | 'exclude' | null;
-
-  // Fulltext reference (set by fulltext init/sync)
-  fulltext?: ArticleFulltextRef;
-}
-
-/**
- * Top-level structure of the reviews.yaml file
- */
-export interface ReviewerRecord {
-  name: string;
-  basis: ReviewBasis;
-}
-
-export interface ReviewFile {
-  sessionId: string;
-  /** Path to inclusion criteria file */
-  criteria?: string;
-  /** Reviewer identifier (only in extracted ReviewFiles) */
-  reviewer?: string;
-  /** Basis level for screening (only in extracted ReviewFiles) */
-  basis?: ReviewBasis;
-  articles: ArticleEntry[];
-  /** Registry of reviewers who participated at each basis level */
-  reviewers?: ReviewerRecord[];
-}
+export type ReviewDecision = z.infer<typeof reviewDecisionSchema>;
+export type ReviewBasis = z.infer<typeof reviewBasisSchema>;
+export type Review = z.infer<typeof reviewSchema>;
+export type MergedSource = z.infer<typeof mergedSourceSchema>;
+export type ArticleEntry = z.infer<typeof articleEntrySchema>;
+export type ReviewerRecord = z.infer<typeof reviewerRecordSchema>;
+export type ReviewFile = z.infer<typeof reviewFileSchema>;
 
 /**
  * Work file article entry for AI agent workflow
