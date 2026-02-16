@@ -129,10 +129,10 @@ export function formatFinalizeOutput(
   }
 
   // Show filtered-out agreed counts when --decision is active
-  if (result.skippedByStatus['agreed-include'] > 0) {
+  if (options?.decision && result.skippedByStatus['agreed-include'] > 0) {
     skippedParts.push(`${result.skippedByStatus['agreed-include']} agreed-include (filtered)`);
   }
-  if (result.skippedByStatus['agreed-exclude'] > 0) {
+  if (options?.decision && result.skippedByStatus['agreed-exclude'] > 0) {
     skippedParts.push(`${result.skippedByStatus['agreed-exclude']} agreed-exclude (filtered)`);
   }
 
