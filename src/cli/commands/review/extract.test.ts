@@ -622,6 +622,19 @@ describe('executeReviewExtract', () => {
       expect(content).toContain('# include / exclude / uncertain');
     });
 
+    it('adds comment field inline guidance', async () => {
+      await writeReviewFile(articlesWithAbstracts);
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'title', reviewer: 'ai:claude', name: 'comment-guide' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('comment: ""');
+      expect(content).toMatch(/comment: ""\s+# reason for decision/);
+    });
+
     it('includes schema reference and guidance comments', async () => {
       await writeReviewFile(articlesWithAbstracts);
 
@@ -735,6 +748,18 @@ describe('executeReviewExtract', () => {
       expect(content).toContain('yaml-language-server');
       expect(content).toContain('finalDecision');
       expect(content).toContain('# include / exclude');
+    });
+
+    it('--finalize includes reviews array inline guidance', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-reviews-guide', reviewer: 'human:admin', finalize: true },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toMatch(/reviews: \[\]\s+# add new reviews here/);
     });
 
     it('--finalize --basis title scopes content to title only', async () => {
