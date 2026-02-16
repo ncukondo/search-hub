@@ -9,7 +9,7 @@
 import { RateLimiter, createProviderError } from '../base/index.js';
 import type { ProviderError, ProviderErrorCode } from '../base/types.js';
 import { parseESearchResponse, parseEFetchResponse, parseELinkResponse } from './parser.js';
-import type { ELinkOptions, ELinkResponse, ESearchResponse, PubMedArticle, PubMedConfig } from './types.js';
+import type { ELinkOptions, ELinkResponse, RelatedArticle, ESearchResponse, PubMedArticle, PubMedConfig } from './types.js';
 
 const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 
@@ -216,6 +216,40 @@ export class PubMedClient {
     }
 
     return results;
+  }
+
+  /**
+   * Find related articles with deduplication across multiple seeds.
+   *
+   * Merges related articles from all seeds, keeps highest score for duplicates,
+   * excludes seed PMIDs from results, sorts by score descending, and truncates
+   * to maxResults.
+   */
+  async findRelatedMerged(options: ELinkOptions): Promise<RelatedArticle[]> {
+    const responses = await this.findRelated(options);
+
+    const seedSet = new Set(options.ids);
+    const scoreMap = new Map<string, number>();
+
+    for (const response of responses) {
+      for (const related of response.relatedIds) {
+        if (seedSet.has(related.id)) continue;
+        const existing = scoreMap.get(related.id);
+        if (existing === undefined || related.score > existing) {
+          scoreMap.set(related.id, related.score);
+        }
+      }
+    }
+
+    const merged: RelatedArticle[] = Array.from(scoreMap.entries())
+      .map(([id, score]) => ({ id, score }))
+      .sort((a, b) => b.score - a.score);
+
+    if (options.maxResults !== undefined) {
+      return merged.slice(0, options.maxResults);
+    }
+
+    return merged;
   }
 
   /**

@@ -524,6 +524,146 @@ describe('PubMedClient', () => {
     });
   });
 
+  describe('findRelated deduplication', () => {
+    it('deduplicates related IDs across multiple seeds, keeping highest score', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>11111111</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>99999999</Id><Score>90000000</Score></Link>
+      <Link><Id>88888888</Id><Score>70000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>22222222</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>99999999</Id><Score>85000000</Score></Link>
+      <Link><Id>77777777</Id><Score>60000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelatedMerged({ ids: ['11111111', '22222222'] });
+
+      // 99999999 appears in both seeds; keep highest score (90000000)
+      expect(result).toHaveLength(3);
+      const ids = result.map((r) => r.id);
+      expect(ids).toContain('99999999');
+      expect(ids).toContain('88888888');
+      expect(ids).toContain('77777777');
+
+      const deduped = result.find((r) => r.id === '99999999');
+      expect(deduped!.score).toBe(90000000);
+    });
+
+    it('excludes seed PMIDs from results', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>11111111</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>11111111</Id><Score>2147483647</Score></Link>
+      <Link><Id>22222222</Id><Score>95000000</Score></Link>
+      <Link><Id>99999999</Id><Score>80000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelatedMerged({ ids: ['11111111', '22222222'] });
+
+      // Seeds 11111111 and 22222222 should be excluded
+      const ids = result.map((r) => r.id);
+      expect(ids).not.toContain('11111111');
+      expect(ids).not.toContain('22222222');
+      expect(ids).toContain('99999999');
+    });
+
+    it('respects maxResults after dedup', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>11111111</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>99999999</Id><Score>90000000</Score></Link>
+      <Link><Id>88888888</Id><Score>80000000</Score></Link>
+      <Link><Id>77777777</Id><Score>70000000</Score></Link>
+      <Link><Id>66666666</Id><Score>60000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelatedMerged({ ids: ['11111111'], maxResults: 2 });
+
+      expect(result).toHaveLength(2);
+      expect(result[0]!.id).toBe('99999999');
+      expect(result[1]!.id).toBe('88888888');
+    });
+
+    it('returns sorted by score descending', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>11111111</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>44444444</Id><Score>40000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>22222222</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>55555555</Id><Score>95000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelatedMerged({ ids: ['11111111', '22222222'] });
+
+      expect(result[0]!.id).toBe('55555555');
+      expect(result[0]!.score).toBe(95000000);
+      expect(result[1]!.id).toBe('44444444');
+      expect(result[1]!.score).toBe(40000000);
+    });
+  });
+
   describe('rate limiting integration', () => {
     it('respects rate limiter for sequential requests', async () => {
       // Mock successful responses
