@@ -107,11 +107,11 @@ class PubMedClient {
 
 ### Final Step: API Integration Test
 
-- [ ] Write API test: `src/providers/pubmed/pubmed.api.test.ts` — real ELink call
-- [ ] Test with known PMID (e.g., a well-cited article)
-- [ ] Verify response structure and score ordering
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: Real API returns valid related articles with scores
+- [x] Write API test: `src/providers/pubmed/pubmed.api.test.ts` — real ELink call
+- [x] Test with known PMID (e.g., a well-cited article)
+- [x] Verify response structure and score ordering
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: Real API returns valid related articles with scores
 
 ## Notes
 
