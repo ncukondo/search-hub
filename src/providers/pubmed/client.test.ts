@@ -128,6 +128,66 @@ describe('PubMedClient', () => {
       expect(url).toContain('usehistory=y');
     });
 
+    it('includes sort=relevance parameter when specified', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eSearchResult>
+  <Count>0</Count>
+  <RetMax>20</RetMax>
+  <RetStart>0</RetStart>
+  <IdList></IdList>
+</eSearchResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      await client.search('test', { sort: 'relevance' });
+
+      const [url] = mockFetch.mock.calls[0] as [string];
+      expect(url).toContain('sort=relevance');
+    });
+
+    it('includes sort=pub_date parameter when sort is date', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eSearchResult>
+  <Count>0</Count>
+  <RetMax>20</RetMax>
+  <RetStart>0</RetStart>
+  <IdList></IdList>
+</eSearchResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      await client.search('test', { sort: 'pub_date' });
+
+      const [url] = mockFetch.mock.calls[0] as [string];
+      expect(url).toContain('sort=pub_date');
+    });
+
+    it('does not include sort parameter when not specified', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eSearchResult>
+  <Count>0</Count>
+  <RetMax>20</RetMax>
+  <RetStart>0</RetStart>
+  <IdList></IdList>
+</eSearchResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      await client.search('test');
+
+      const [url] = mockFetch.mock.calls[0] as [string];
+      expect(url).not.toContain('sort=');
+    });
+
     it('parses esearch response correctly', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

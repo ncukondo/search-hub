@@ -65,13 +65,13 @@ search-hub search <query.yaml> --sort <relevance|date>
 
 ### Step 2: PubMed sort support
 
-- [ ] Write test: `src/providers/pubmed/client.test.ts` — verify `sort` param in esearch URL
-- [ ] Write test: `src/providers/pubmed/provider.test.ts` — verify sort option forwarded
-- [ ] Update `PubMedClient.search()` to accept and pass `sort` parameter
-- [ ] Update `PubMedProvider.search()` to forward `sort` from `SearchOptions`
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: PubMed esearch URL includes `&sort=relevance` or `&sort=pub_date`
+- [x] Write test: `src/providers/pubmed/client.test.ts` — verify `sort` param in esearch URL
+- [x] Write test: `src/providers/pubmed/provider.test.ts` — verify sort option forwarded
+- [x] Update `PubMedClient.search()` to accept and pass `sort` parameter
+- [x] Update `PubMedProvider.search()` to forward `sort` from `SearchOptions`
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: PubMed esearch URL includes `&sort=relevance` or `&sort=pub_date`
 
 ### Step 3: Scopus sort support
 
