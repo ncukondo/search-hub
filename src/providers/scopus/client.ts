@@ -36,6 +36,8 @@ export interface ScopusSearchOptions {
   view?: 'STANDARD' | 'COMPLETE';
   /** Fields to return */
   fields?: string;
+  /** Sort parameter (e.g. '-relevancy' for relevance sort) */
+  sort?: string;
 }
 
 /**
@@ -138,6 +140,9 @@ export class ScopusClient {
     }
     if (options.fields !== undefined) {
       url.searchParams.set('field', options.fields);
+    }
+    if (options.sort !== undefined) {
+      url.searchParams.set('sort', options.sort);
     }
 
     return url;

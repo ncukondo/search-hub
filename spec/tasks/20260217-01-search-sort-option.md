@@ -75,13 +75,13 @@ search-hub search <query.yaml> --sort <relevance|date>
 
 ### Step 3: Scopus sort support
 
-- [ ] Write test: `src/providers/scopus/client.test.ts` — verify `sort` param in search URL
-- [ ] Write test: `src/providers/scopus/provider.test.ts` — verify sort option forwarded
-- [ ] Update `ScopusClient.buildSearchUrl()` to accept and pass `sort` parameter
-- [ ] Update `ScopusProvider.search()` to forward `sort` from `SearchOptions`
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Scopus URL includes `&sort=-relevancy` when sort=relevance
+- [x] Write test: `src/providers/scopus/client.test.ts` — verify `sort` param in search URL
+- [x] Write test: `src/providers/scopus/provider.test.ts` — verify sort option forwarded
+- [x] Update `ScopusClient.buildSearchUrl()` to accept and pass `sort` parameter
+- [x] Update `ScopusProvider.search()` to forward `sort` from `SearchOptions`
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Scopus URL includes `&sort=-relevancy` when sort=relevance
 
 ### Step 4: arXiv sort wiring
 
