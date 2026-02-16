@@ -23,29 +23,29 @@ to write in the `comment` field and `reviews` array. Currently:
 
 ### Step 1: Add comment field inline guidance in screening mode
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - Verify `comment: ""` has inline hint `# reason for decision` in screening output
-- [ ] Verify test fails (Red)
-- [ ] Add regex replacement in screening branch to inject comment inline hint
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Screening extracted files show `comment: ""                   # reason for decision`
+- [x] Verify test fails (Red)
+- [x] Add regex replacement in screening branch to inject comment inline hint
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Screening extracted files show `comment: ""                   # reason for decision`
 
 ### Step 2: Add reviews array guidance in finalize mode
 
-- [ ] Write test: `src/cli/commands/review/extract.test.ts`
+- [x] Write test: `src/cli/commands/review/extract.test.ts`
   - Verify finalize output contains `reviews: [] # add new reviews here` comment
-- [ ] Verify test fails (Red)
-- [ ] Add regex replacement in finalize branch to inject reviews array hint
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Finalize extracted files show `reviews: [] # add new reviews here`
+- [x] Verify test fails (Red)
+- [x] Add regex replacement in finalize branch to inject reviews array hint
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Finalize extracted files show `reviews: [] # add new reviews here`
 
 ### Final Step: Run full test suite
 
-- [ ] Run full test suite: `npm run test:all`
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: All tests pass, no regressions
+- [x] Run full test suite: `npm run test:all`
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: All tests pass, no regressions
 
 ## Notes
 
