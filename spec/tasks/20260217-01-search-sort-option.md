@@ -110,11 +110,11 @@ search-hub search <query.yaml> --sort <relevance|date>
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/search.e2e.test.ts` — sort option forwarding
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Write E2E test: `src/cli/commands/search.e2e.test.ts` — sort option forwarding
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Test with `--sort relevance` against PubMed
-- [ ] Acceptance: All tests pass, sort works in real usage
+- [x] Acceptance: All tests pass, sort works in real usage
 
 ## Notes
 
