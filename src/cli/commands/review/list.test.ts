@@ -46,7 +46,7 @@ describe('executeReviewList', () => {
       pmid: '3',
       reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
     },
-    // conflicting (reviewers disagree)
+    // divided (reviewers disagree)
     {
       title: 'Conflicting Article',
       pmid: '4',
@@ -89,14 +89,14 @@ describe('executeReviewList', () => {
       expect(result.articles.map((a) => a.title)).toEqual(['Pending Article 1', 'Pending Article 2']);
     });
 
-    it('filters conflicting articles correctly', async () => {
+    it('filters divided articles correctly', async () => {
       await writeReviewFile(sampleArticles);
 
-      const result = await executeReviewList({ sessionId, filter: 'conflicting' }, sessionsDir);
+      const result = await executeReviewList({ sessionId, filter: 'divided' }, sessionsDir);
 
       expect(result.articles).toHaveLength(1);
       expect(result.articles[0]!.title).toBe('Conflicting Article');
-      expect(result.articles[0]!.status).toBe('conflicting');
+      expect(result.articles[0]!.status).toBe('divided');
     });
 
     it('filters agreed-include articles correctly', async () => {
@@ -118,7 +118,7 @@ describe('executeReviewList', () => {
       expect(result.articles.every((a) => a.status === 'finalized')).toBe(true);
     });
 
-    it('filters uncertain articles correctly', async () => {
+    it('filters all-uncertain articles correctly', async () => {
       const articles: ArticleEntry[] = [
         {
           title: 'Uncertain Article',
@@ -129,10 +129,10 @@ describe('executeReviewList', () => {
       ];
       await writeReviewFile(articles);
 
-      const result = await executeReviewList({ sessionId, filter: 'uncertain' }, sessionsDir);
+      const result = await executeReviewList({ sessionId, filter: 'all-uncertain' }, sessionsDir);
 
       expect(result.articles).toHaveLength(1);
-      expect(result.articles[0]!.status).toBe('uncertain');
+      expect(result.articles[0]!.status).toBe('all-uncertain');
     });
 
     it('filters incomplete articles when reviewer registry exists', async () => {
@@ -173,7 +173,7 @@ describe('executeReviewList', () => {
 
       expect(result.articles[0]!.status).toBe('pending');
       expect(result.articles[2]!.status).toBe('agreed-include');
-      expect(result.articles[3]!.status).toBe('conflicting');
+      expect(result.articles[3]!.status).toBe('divided');
       expect(result.articles[4]!.status).toBe('finalized');
     });
 

@@ -24,10 +24,10 @@ function createEmptySkippedByStatus(): Record<ReviewStatus, number> {
   return {
     pending: 0,
     incomplete: 0,
-    uncertain: 0,
+    'all-uncertain': 0,
     'agreed-include': 0,
     'agreed-exclude': 0,
-    conflicting: 0,
+    divided: 0,
     finalized: 0,
   };
 }
@@ -121,11 +121,11 @@ export function formatFinalizeOutput(
   if (result.skippedByStatus.incomplete > 0) {
     skippedParts.push(`${result.skippedByStatus.incomplete} incomplete`);
   }
-  if (result.skippedByStatus.uncertain > 0) {
-    skippedParts.push(`${result.skippedByStatus.uncertain} uncertain`);
+  if (result.skippedByStatus['all-uncertain'] > 0) {
+    skippedParts.push(`${result.skippedByStatus['all-uncertain']} all-uncertain`);
   }
-  if (result.skippedByStatus.conflicting > 0) {
-    skippedParts.push(`${result.skippedByStatus.conflicting} conflicting`);
+  if (result.skippedByStatus.divided > 0) {
+    skippedParts.push(`${result.skippedByStatus.divided} divided`);
   }
 
   // Show filtered-out agreed counts when --decision is active

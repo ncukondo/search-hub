@@ -69,10 +69,10 @@ export function basisRank(basis: ReviewBasis | undefined): number {
 export type ReviewStatus =
   | 'pending'
   | 'incomplete'
-  | 'uncertain'
+  | 'all-uncertain'
   | 'agreed-include'
   | 'agreed-exclude'
-  | 'conflicting'
+  | 'divided'
   | 'finalized';
 
 /**
@@ -82,10 +82,10 @@ export type ReviewStatus =
  * 1. finalDecision set?           → finalized
  * 2. No reviews?                  → pending
  * 3. Registered reviewer missing? → incomplete
- * 4. include AND exclude present? → conflicting
- * 5. Any uncertain?               → uncertain
- * 6. All include?                 → agreed-include
- * 7. All exclude?                 → agreed-exclude
+ * 4. All uncertain?               → all-uncertain
+ * 5. All include?                 → agreed-include
+ * 6. All exclude?                 → agreed-exclude
+ * 7. Any mix of decisions?        → divided
  */
 export function classifyStatus(
   entry: ArticleEntry,
@@ -188,24 +188,21 @@ export function classifyStatus(
     return 'pending';
   }
 
-  // 4. Check for conflicts: both include and exclude present among effective decisions
-  const hasInclude = effectiveDecisions.includes('include');
-  const hasExclude = effectiveDecisions.includes('exclude');
-  if (hasInclude && hasExclude) {
-    return 'conflicting';
+  // 4. Check all-uncertain: every effective decision is uncertain
+  if (effectiveDecisions.every((d) => d === 'uncertain')) {
+    return 'all-uncertain';
   }
 
-  // 5. Any effective uncertain?
-  const hasUncertain = effectiveDecisions.includes('uncertain');
-  if (hasUncertain) {
-    return 'uncertain';
-  }
-
-  // 6. All include?
+  // 5. All include?
   if (effectiveDecisions.every((d) => d === 'include')) {
     return 'agreed-include';
   }
 
-  // 7. All exclude (only remaining possibility after ruling out conflicts and uncertain)
-  return 'agreed-exclude';
+  // 6. All exclude?
+  if (effectiveDecisions.every((d) => d === 'exclude')) {
+    return 'agreed-exclude';
+  }
+
+  // 7. Any mix of different decisions → divided
+  return 'divided';
 }

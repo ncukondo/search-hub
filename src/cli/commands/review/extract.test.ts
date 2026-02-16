@@ -40,7 +40,7 @@ describe('executeReviewExtract', () => {
     { title: 'Pending Article A', pmid: '1', year: '2022', reviews: [] },
     { title: 'Pending Article B', pmid: '2', year: '2021', reviews: [] },
     { title: 'Pending Article C', pmid: '3', year: '2023', reviews: [] },
-    // conflicting
+    // divided
     {
       title: 'Conflicting Article',
       pmid: '4',
@@ -136,11 +136,11 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending', 'conflicting'], name: 'batch', reviewer: 'human:admin' },
+        { sessionId, filter: ['pending', 'divided'], name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
-      expect(result.extractedCount).toBe(4); // 3 pending + 1 conflicting
+      expect(result.extractedCount).toBe(4); // 3 pending + 1 divided
     });
 
     it('extracts all when no filter specified', async () => {

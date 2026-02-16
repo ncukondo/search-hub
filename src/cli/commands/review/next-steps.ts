@@ -64,7 +64,7 @@ function detectNextBasis(reviewers: ReviewStatusResult['reviewers']): ReviewBasi
  * Evaluation order (top-to-bottom, first match wins for primary suggestion):
  * 1. pending > 0 → extract for title screening
  * 2. agreed > 0 → finalize consensus articles
- * 3. (conflicting + uncertain + incomplete) > 0 → extract for next basis level
+ * 3. (divided + allUncertain + incomplete) > 0 → extract for next basis level
  * 4. all finalized → register accepted articles
  *
  * Batch continuation is appended to seeAlso when applicable.
@@ -92,12 +92,12 @@ export function generateReviewNextSteps(ctx: ReviewNextStepsContext): Suggestion
         description: `Finalize ${agreed} articles with consensus`,
       });
     }
-    // 3. conflicting, uncertain, or incomplete > 0: suggest further review
-    else if (rs.conflicting > 0 || rs.uncertain > 0 || rs.incomplete > 0) {
-      const unresolved = rs.conflicting + rs.uncertain + rs.incomplete;
+    // 3. divided, all-uncertain, or incomplete > 0: suggest further review
+    else if (rs.divided > 0 || rs.allUncertain > 0 || rs.incomplete > 0) {
+      const unresolved = rs.divided + rs.allUncertain + rs.incomplete;
       const nextBasis = detectNextBasis(rs.reviewers);
       result.next.push({
-        command: `search-hub review extract --session ${sessionId} --filter conflicting,uncertain,incomplete --basis ${nextBasis} --reviewer "<name>" --name ${nextBasis}-screening`,
+        command: `search-hub review extract --session ${sessionId} --filter divided,all-uncertain,incomplete --basis ${nextBasis} --reviewer "<name>" --name ${nextBasis}-screening`,
         description: `${unresolved} articles need ${nextBasis}-level review`,
       });
     }

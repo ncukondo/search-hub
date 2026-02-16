@@ -478,10 +478,10 @@ describe('getSuggestion', () => {
             total: 100,
             pending: 50,
             incomplete: 0,
-            uncertain: 0,
+            allUncertain: 0,
             agreedInclude: 0,
             agreedExclude: 0,
-            conflicting: 0,
+            divided: 0,
             finalized: 0,
             included: 0,
             excluded: 0,
@@ -504,10 +504,10 @@ describe('getSuggestion', () => {
             total: 100,
             pending: 0,
             incomplete: 0,
-            uncertain: 0,
+            allUncertain: 0,
             agreedInclude: 60,
             agreedExclude: 40,
-            conflicting: 0,
+            divided: 0,
             finalized: 0,
             included: 0,
             excluded: 0,
@@ -519,7 +519,7 @@ describe('getSuggestion', () => {
         expect(result!.next[0]!.command).toContain('review finalize');
       });
 
-      it('should suggest abstract screening when conflicting > 0', () => {
+      it('should suggest abstract screening when divided > 0', () => {
         const ctx: SuggestionContext = {
           command: 'review status',
           sessionId: 'my-session',
@@ -528,10 +528,10 @@ describe('getSuggestion', () => {
             total: 100,
             pending: 0,
             incomplete: 0,
-            uncertain: 0,
+            allUncertain: 0,
             agreedInclude: 0,
             agreedExclude: 0,
-            conflicting: 5,
+            divided: 5,
             finalized: 85,
             included: 50,
             excluded: 35,
@@ -541,11 +541,11 @@ describe('getSuggestion', () => {
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
         expect(result!.next[0]!.command).toContain('--basis abstract');
-        expect(result!.next[0]!.command).toContain('--filter conflicting,uncertain,incomplete');
+        expect(result!.next[0]!.command).toContain('--filter divided,all-uncertain,incomplete');
         expect(result!.next[0]!.command).toContain('--reviewer "<name>"');
       });
 
-      it('should suggest abstract screening when uncertain or incomplete > 0', () => {
+      it('should suggest abstract screening when all-uncertain or incomplete > 0', () => {
         const ctx: SuggestionContext = {
           command: 'review status',
           sessionId: 'my-session',
@@ -554,10 +554,10 @@ describe('getSuggestion', () => {
             total: 100,
             pending: 0,
             incomplete: 5,
-            uncertain: 10,
+            allUncertain: 10,
             agreedInclude: 0,
             agreedExclude: 0,
-            conflicting: 0,
+            divided: 0,
             finalized: 85,
             included: 50,
             excluded: 35,
@@ -567,7 +567,7 @@ describe('getSuggestion', () => {
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
         expect(result!.next[0]!.command).toContain('--basis abstract');
-        expect(result!.next[0]!.command).toContain('--filter conflicting,uncertain,incomplete');
+        expect(result!.next[0]!.command).toContain('--filter divided,all-uncertain,incomplete');
         expect(result!.next[0]!.command).toContain('--reviewer "<name>"');
       });
 
@@ -580,10 +580,10 @@ describe('getSuggestion', () => {
             total: 100,
             pending: 0,
             incomplete: 0,
-            uncertain: 0,
+            allUncertain: 0,
             agreedInclude: 0,
             agreedExclude: 0,
-            conflicting: 0,
+            divided: 0,
             finalized: 100,
             included: 60,
             excluded: 40,
@@ -682,10 +682,10 @@ describe('getSuggestion', () => {
             total: 100,
             pending: 0,
             incomplete: 0,
-            uncertain: 0,
+            allUncertain: 0,
             agreedInclude: 60,
             agreedExclude: 30,
-            conflicting: 0,
+            divided: 0,
             finalized: 10,
             included: 5,
             excluded: 5,
@@ -708,10 +708,10 @@ describe('getSuggestion', () => {
             total: 100,
             pending: 0,
             incomplete: 0,
-            uncertain: 10,
+            allUncertain: 10,
             agreedInclude: 0,
             agreedExclude: 0,
-            conflicting: 5,
+            divided: 5,
             finalized: 85,
             included: 50,
             excluded: 35,
@@ -734,10 +734,10 @@ describe('getSuggestion', () => {
             total: 100,
             pending: 0,
             incomplete: 0,
-            uncertain: 0,
+            allUncertain: 0,
             agreedInclude: 0,
             agreedExclude: 0,
-            conflicting: 0,
+            divided: 0,
             finalized: 100,
             included: 60,
             excluded: 40,
