@@ -174,6 +174,15 @@ import {
 } from './commands/register.js';
 import { formatSuggestion } from './suggestions/index.js';
 import { getSuggestion } from './suggestions/rules.js';
+import {
+  appendLogEntry,
+  readLogEntries,
+  computeQueryHash,
+  buildCountLogEntry,
+  buildPreviewLogEntry,
+} from './commands/query/iteration-log.js';
+import { executeQueryAssess } from './commands/query/assess.js';
+import { formatLogOutput } from './commands/query/log.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
 import { loadSession, sessionExists, listSessions } from '../session/manager.js';
@@ -585,6 +594,70 @@ Examples:
       }
     });
 
+  queryCommand
+    .command('assess')
+    .description('Record an assessment of the current query iteration')
+    .argument('<file>', 'path to query YAML file')
+    .option('--verdict <verdict>', 'assessment verdict (e.g., reject, good, refine)')
+    .option('--precision <precision>', 'estimated precision (e.g., ~60%)')
+    .option('--comment <comment>', 'free-text comment')
+    .addHelpText('after', `
+Examples:
+  $ search-hub query assess query.yaml --verdict reject --comment "Too broad"
+  $ search-hub query assess query.yaml --verdict good --precision "~60%"`)
+    .action(async (file: string, options: { verdict?: string; precision?: string; comment?: string }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const result = await executeQueryAssess(file, options);
+        if (result.success) {
+          if (!globalOpts.quiet) {
+            console.log('Assessment recorded.');
+            const suggestion = formatSuggestion(getSuggestion({
+              command: 'query assess',
+              queryFile: file,
+            }));
+            if (suggestion) console.log(suggestion);
+          }
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } else {
+          if (!globalOpts.quiet) {
+            console.error(`Error: ${result.error}`);
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+        }
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.GENERAL_ERROR;
+      }
+    });
+
+  queryCommand
+    .command('log')
+    .description('View the query iteration history')
+    .argument('<file>', 'path to query YAML file')
+    .option('--json', 'output as JSON')
+    .addHelpText('after', `
+Examples:
+  $ search-hub query log query.yaml
+  $ search-hub query log query.yaml --json`)
+    .action(async (file: string, options: { json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const entries = await readLogEntries(file);
+        if (!globalOpts.quiet) {
+          console.log(formatLogOutput(entries, { json: options?.json }));
+        }
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.GENERAL_ERROR;
+      }
+    });
+
   // Register status command
   program
     .command('status')
@@ -807,8 +880,24 @@ Query features (use "query init" to see full template):
               return;
             }
 
+            // Auto-log preview results when using a query file
+            if (searchOpts.queryFile) {
+              try {
+                const qContent = await readFile(searchOpts.queryFile, 'utf-8');
+                const qHash = computeQueryHash(qContent);
+                await appendLogEntry(searchOpts.queryFile, buildPreviewLogEntry(qHash, previews));
+              } catch {
+                // Logging failure should not break the command
+              }
+            }
+
             if (!globalOpts.quiet) {
               console.log(formatPreviewOutput(previews, searchOpts.queryFile));
+              const suggestion = formatSuggestion(getSuggestion({
+                command: 'search --preview',
+                queryFile: searchOpts.queryFile,
+              }));
+              if (suggestion) console.log(suggestion);
             }
 
             const previewHasErrors = previews.some((p) => p.error);
@@ -844,6 +933,17 @@ Query features (use "query init" to see full template):
               }
               process.exitCode = EXIT_CODES.GENERAL_ERROR;
               return;
+            }
+
+            // Auto-log count results when using a query file
+            if (searchOpts.queryFile) {
+              try {
+                const qContent = await readFile(searchOpts.queryFile, 'utf-8');
+                const qHash = computeQueryHash(qContent);
+                await appendLogEntry(searchOpts.queryFile, buildCountLogEntry(qHash, counts));
+              } catch {
+                // Logging failure should not break the command
+              }
             }
 
             if (!globalOpts.quiet) {

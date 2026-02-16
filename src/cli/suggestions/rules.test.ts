@@ -160,28 +160,30 @@ describe('getSuggestion', () => {
     });
 
     describe('search --preview', () => {
-      it('should suggest full search', () => {
+      it('should suggest query assess and full search', () => {
         const ctx: SuggestionContext = {
           command: 'search --preview',
           queryFile: 'query.yaml',
         };
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
-        expect(result!.next).toHaveLength(1);
-        expect(result!.next[0]!.command).toBe('search-hub search query.yaml');
+        expect(result!.next).toHaveLength(2);
+        expect(result!.next[0]!.command).toContain('query assess');
+        expect(result!.next[1]!.command).toBe('search-hub search query.yaml');
       });
     });
 
     describe('search --count-only', () => {
-      it('should suggest full search', () => {
+      it('should suggest query assess and full search', () => {
         const ctx: SuggestionContext = {
           command: 'search --count-only',
           queryFile: 'query.yaml',
         };
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
-        expect(result!.next).toHaveLength(1);
-        expect(result!.next[0]!.command).toBe('search-hub search query.yaml');
+        expect(result!.next).toHaveLength(2);
+        expect(result!.next[0]!.command).toContain('query assess');
+        expect(result!.next[1]!.command).toBe('search-hub search query.yaml');
       });
     });
 
@@ -838,6 +840,23 @@ describe('getSuggestion', () => {
         expect(result).not.toBeNull();
         expect(result!.seeAlso).toHaveLength(1);
         expect(result!.seeAlso[0]!.command).toContain('notes list');
+      });
+    });
+  });
+
+  describe('Query Iteration', () => {
+    describe('query assess', () => {
+      it('should suggest query log and editing the query', () => {
+        const ctx: SuggestionContext = {
+          command: 'query assess',
+          queryFile: 'query.yaml',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next).toHaveLength(1);
+        expect(result!.next[0]!.command).toContain('query log');
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toContain('$EDITOR');
       });
     });
   });

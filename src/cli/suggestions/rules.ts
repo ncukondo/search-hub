@@ -119,7 +119,10 @@ const searchPreviewRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'search --preview') return null;
   const file = ctx.queryFile ?? '<query-file>';
   return {
-    next: [{ command: `search-hub search ${file}`, description: 'Execute full search' }],
+    next: [
+      { command: `search-hub query assess ${file} --verdict <verdict>`, description: 'Record assessment' },
+      { command: `search-hub search ${file}`, description: 'Execute full search' },
+    ],
     seeAlso: [],
   };
 };
@@ -128,7 +131,10 @@ const searchCountOnlyRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'search --count-only') return null;
   const file = ctx.queryFile ?? '<query-file>';
   return {
-    next: [{ command: `search-hub search ${file}`, description: 'Execute full search' }],
+    next: [
+      { command: `search-hub query assess ${file} --verdict <verdict>`, description: 'Record assessment' },
+      { command: `search-hub search ${file}`, description: 'Execute full search' },
+    ],
     seeAlso: [],
   };
 };
@@ -402,6 +408,19 @@ const registerRule: SuggestionRule = (ctx) => {
   return null;
 };
 
+const queryAssessRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'query assess') return null;
+  const file = ctx.queryFile ?? '<query-file>';
+  return {
+    next: [
+      { command: `search-hub query log ${file}`, description: 'View iteration history' },
+    ],
+    seeAlso: [
+      { command: `$EDITOR ${file}`, description: 'Edit query and re-run count' },
+    ],
+  };
+};
+
 const notesRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'notes add' && ctx.command !== 'notes assess') return null;
   const sid = ctx.sessionId ?? '<session-id>';
@@ -440,6 +459,8 @@ const rules: SuggestionRule[] = [
   reviewMergeRule,
   reviewFinalizeRule,
   reviewExportRule,
+  // Query iteration
+  queryAssessRule,
   // Phase 5
   exportRule,
   registerRule,
