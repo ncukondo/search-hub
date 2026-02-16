@@ -89,67 +89,67 @@ interface SessionFile {
 
 ### Step 1: Extend `SessionFile` type
 
-- [ ] Write test: `src/session/types.test.ts` — validate `type: 'related'` and `seeds` field
-- [ ] Add `'related'` to session type union
-- [ ] Add `seeds` field to `SessionFile`
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `SessionFile` accepts `type: 'related'` with `seeds`
+- [x] Write test: `src/session/types.test.ts` — validate `type: 'related'` and `seeds` field
+- [x] Add `'related'` to session type union
+- [x] Add `seeds` field to `SessionFile`
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `SessionFile` accepts `type: 'related'` with `seeds`
 
 ### Step 2: Related command — argument parsing
 
-- [ ] Write test: `src/cli/commands/related.test.ts` — parse options
-- [ ] Create `src/cli/commands/related.ts` with Commander.js command
-- [ ] Parse positional PMIDs and all options
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Command parses `related 12345678 23456789 --name my-related -m 50`
+- [x] Write test: `src/cli/commands/related.test.ts` — parse options
+- [x] Create `src/cli/commands/related.ts` with Commander.js command
+- [x] Parse positional PMIDs and all options
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Command parses `related 12345678 23456789 --name my-related -m 50`
 
 ### Step 3: Seed resolution from session
 
-- [ ] Write test: `src/cli/commands/related.test.ts` — load PMIDs from session
-- [ ] Implement `--from-session` logic: load session, extract PMIDs from results
-- [ ] Validate that specified `--pmid` values exist in the session
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: PMIDs correctly resolved from existing session
+- [x] Write test: `src/cli/commands/related.test.ts` — load PMIDs from session
+- [x] Implement `--from-session` logic: load session, extract PMIDs from results
+- [x] Validate that specified `--pmid` values exist in the session
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: PMIDs correctly resolved from existing session
 
 ### Step 4: Related search execution
 
-- [ ] Write test: `src/cli/commands/related.test.ts` — mock findRelated + fetch flow
-- [ ] Implement: call `findRelated()` → get related PMIDs → `fetch()` full records
-- [ ] Create session directory with `type: related` and `seeds` metadata
-- [ ] Save results in JSONL format
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Related articles fetched and saved as standard session
+- [x] Write test: `src/cli/commands/related.test.ts` — mock findRelated + fetch flow
+- [x] Implement: call `findRelated()` → get related PMIDs → `fetch()` full records
+- [x] Create session directory with `type: related` and `seeds` metadata
+- [x] Save results in JSONL format
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Related articles fetched and saved as standard session
 
 ### Step 5: Output and summary
 
-- [ ] Write test: `src/cli/commands/related.test.ts` — summary output
-- [ ] Display: seed count, total related found, articles retrieved
-- [ ] Show top results with titles
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: User sees clear summary after command completes
+- [x] Write test: `src/cli/commands/related.test.ts` — summary output
+- [x] Display: seed count, total related found, articles retrieved
+- [x] Show top results with titles
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: User sees clear summary after command completes
 
 ### Step 6: Register command in CLI
 
-- [ ] Add `related` command to CLI registration (`src/cli/commands/register.ts`)
-- [ ] Verify `search-hub related --help` works
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Command appears in help and is executable
+- [x] Add `related` command to CLI registration (`src/cli/index.ts`)
+- [x] Verify `search-hub related --help` works
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Command appears in help and is executable
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/related.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/related.e2e.test.ts`
   - Test with mock/fixture data: PMIDs → related session created
   - Test `--from-session` flow
   - Test compatibility with `export`, `summary`, `results` commands
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
 - [ ] **Manual verification**: Test with real PMIDs against PubMed
-- [ ] Acceptance: All tests pass, full workflow works
+- [x] Acceptance: All tests pass, full workflow works
 
 ## Notes
 
