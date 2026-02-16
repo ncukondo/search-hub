@@ -120,7 +120,7 @@ summary:
     expect(firstLine).toBe('# yaml-language-server: $schema=./review.schema.json');
   });
 
-  it('copies schema file to .internal/ alongside reviews.yaml', async () => {
+  it('generates schema file to .internal/ alongside reviews.yaml', async () => {
     await setupSession('pubmed', [
       JSON.stringify({ title: 'Article', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
     ]);
@@ -128,12 +128,13 @@ summary:
     const options: ReviewInitOptions = { sessionId };
     await executeReviewInit(options, sessionsDir);
 
-    // Check schema file was copied alongside reviews.yaml in .internal/
+    // Check schema file was generated alongside reviews.yaml in .internal/
     const schemaPath = join(sessionsDir, sessionId, '.internal', 'review.schema.json');
     const schemaContent = await readFile(schemaPath, 'utf-8');
     const schema = JSON.parse(schemaContent);
     expect(schema.$schema).toContain('json-schema.org');
-    expect(schema.title).toBe('Review File');
+    expect(schema.required).toContain('sessionId');
+    expect(schema.required).toContain('articles');
   });
 
   it('fails if reviews.yaml already exists (without --force)', async () => {
