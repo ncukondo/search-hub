@@ -174,6 +174,12 @@ import {
 } from './commands/register.js';
 import { formatSuggestion } from './suggestions/index.js';
 import { getSuggestion } from './suggestions/rules.js';
+import {
+  appendLogEntry,
+  computeQueryHash,
+  buildCountLogEntry,
+  buildPreviewLogEntry,
+} from './commands/query/iteration-log.js';
 import { registerArticles, saveRegistrationRecord } from '../integration/register.js';
 import { checkRefAvailable, checkNpmAvailable, installRefManager } from '../integration/ref-cli.js';
 import { loadSession, sessionExists, listSessions } from '../session/manager.js';
@@ -844,6 +850,17 @@ Query features (use "query init" to see full template):
               }
               process.exitCode = EXIT_CODES.GENERAL_ERROR;
               return;
+            }
+
+            // Auto-log count results when using a query file
+            if (searchOpts.queryFile) {
+              try {
+                const qContent = await readFile(searchOpts.queryFile, 'utf-8');
+                const qHash = computeQueryHash(qContent);
+                await appendLogEntry(searchOpts.queryFile, buildCountLogEntry(qHash, counts));
+              } catch {
+                // Logging failure should not break the command
+              }
             }
 
             if (!globalOpts.quiet) {

@@ -5,8 +5,10 @@
  * that lives alongside the query YAML file.
  */
 import { readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { basename, dirname, join } from 'node:path';
 import { parse, stringify } from 'yaml';
+import type { CountResult, PreviewResult } from '../search.js';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -60,6 +62,69 @@ export function formatTimestamp(date: Date = new Date()): string {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+/**
+ * Compute a short hash of the query file content.
+ * Uses the same algorithm as session creation (SHA-256, first 8 hex chars).
+ */
+export function computeQueryHash(queryContent: string): string {
+  return createHash('sha256').update(queryContent).digest('hex').slice(0, 8);
+}
+
+/**
+ * Build a CountLogEntry from count-only results.
+ */
+export function buildCountLogEntry(
+  queryHash: string,
+  results: CountResult[],
+): CountLogEntry {
+  const counts: Record<string, number> = {};
+  let total = 0;
+  for (const r of results) {
+    if (!r.error) {
+      counts[r.provider] = r.count;
+      total += r.count;
+    }
+  }
+  return {
+    date: formatTimestamp(),
+    type: 'count',
+    query_hash: queryHash,
+    counts,
+    total,
+  };
+}
+
+/**
+ * Build a PreviewLogEntry from preview results.
+ * Stores at most `maxTitles` titles per provider to avoid log bloat.
+ */
+export function buildPreviewLogEntry(
+  queryHash: string,
+  results: PreviewResult[],
+  maxTitles = 5,
+): PreviewLogEntry {
+  const counts: Record<string, number> = {};
+  const titles: Record<string, string[]> = {};
+  let total = 0;
+  for (const r of results) {
+    if (!r.error) {
+      counts[r.provider] = r.count;
+      total += r.count;
+      if (r.titles.length > 0) {
+        titles[r.provider] = r.titles.slice(0, maxTitles);
+      }
+    }
+  }
+  return {
+    date: formatTimestamp(),
+    type: 'preview',
+    query_hash: queryHash,
+    counts,
+    total,
+    titles,
+  };
 }
 
 // ── Read / Write ────────────────────────────────────────────────────

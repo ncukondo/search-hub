@@ -6,10 +6,14 @@ import {
   getLogFilePath,
   appendLogEntry,
   readLogEntries,
+  computeQueryHash,
+  buildCountLogEntry,
+  buildPreviewLogEntry,
   type CountLogEntry,
   type PreviewLogEntry,
   type AssessmentLogEntry,
 } from './iteration-log.js';
+import type { CountResult, PreviewResult } from '../search.js';
 
 let testDir: string;
 
@@ -211,5 +215,95 @@ describe('readLogEntries', () => {
     expect(content).toContain('# Manual note: first iteration');
     expect(content).toContain('type: count');
     expect(content).toContain('type: assessment');
+  });
+});
+
+describe('computeQueryHash', () => {
+  it('should return an 8-char hex string', () => {
+    const hash = computeQueryHash('name: test\n');
+    expect(hash).toMatch(/^[0-9a-f]{8}$/);
+  });
+
+  it('should return the same hash for the same content', () => {
+    const h1 = computeQueryHash('name: test\n');
+    const h2 = computeQueryHash('name: test\n');
+    expect(h1).toBe(h2);
+  });
+
+  it('should return different hashes for different content', () => {
+    const h1 = computeQueryHash('name: v1\n');
+    const h2 = computeQueryHash('name: v2\n');
+    expect(h1).not.toBe(h2);
+  });
+});
+
+describe('buildCountLogEntry', () => {
+  it('should build entry from count results', () => {
+    const results: CountResult[] = [
+      { provider: 'pubmed', count: 50000 },
+      { provider: 'scopus', count: 42000 },
+    ];
+    const entry = buildCountLogEntry('abc123', results);
+
+    expect(entry.type).toBe('count');
+    expect(entry.query_hash).toBe('abc123');
+    expect(entry.counts).toEqual({ pubmed: 50000, scopus: 42000 });
+    expect(entry.total).toBe(92000);
+    expect(entry.date).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+  });
+
+  it('should exclude providers with errors from counts', () => {
+    const results: CountResult[] = [
+      { provider: 'pubmed', count: 50000 },
+      { provider: 'scopus', count: 0, error: 'API key missing' },
+    ];
+    const entry = buildCountLogEntry('abc123', results);
+
+    expect(entry.counts).toEqual({ pubmed: 50000 });
+    expect(entry.total).toBe(50000);
+  });
+});
+
+describe('buildPreviewLogEntry', () => {
+  it('should build entry from preview results', () => {
+    const results: PreviewResult[] = [
+      { provider: 'pubmed', count: 100, titles: ['Title A', 'Title B'] },
+      { provider: 'eric', count: 50, titles: ['Title C'] },
+    ];
+    const entry = buildPreviewLogEntry('def456', results);
+
+    expect(entry.type).toBe('preview');
+    expect(entry.query_hash).toBe('def456');
+    expect(entry.counts).toEqual({ pubmed: 100, eric: 50 });
+    expect(entry.total).toBe(150);
+    expect(entry.titles).toEqual({
+      pubmed: ['Title A', 'Title B'],
+      eric: ['Title C'],
+    });
+  });
+
+  it('should limit titles per provider', () => {
+    const results: PreviewResult[] = [
+      {
+        provider: 'pubmed',
+        count: 1000,
+        titles: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
+      },
+    ];
+    const entry = buildPreviewLogEntry('abc', results, 3);
+
+    expect(entry.titles['pubmed']).toEqual(['T1', 'T2', 'T3']);
+  });
+
+  it('should exclude providers with errors', () => {
+    const results: PreviewResult[] = [
+      { provider: 'pubmed', count: 100, titles: ['Title A'] },
+      { provider: 'scopus', count: 0, titles: [], error: 'Timeout' },
+    ];
+    const entry = buildPreviewLogEntry('abc', results);
+
+    expect(entry.counts).toEqual({ pubmed: 100 });
+    expect(entry.total).toBe(100);
+    expect(entry.titles).toEqual({ pubmed: ['Title A'] });
   });
 });
