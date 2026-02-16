@@ -893,6 +893,11 @@ Query features (use "query init" to see full template):
 
             if (!globalOpts.quiet) {
               console.log(formatPreviewOutput(previews, searchOpts.queryFile));
+              const suggestion = formatSuggestion(getSuggestion({
+                command: 'search --preview',
+                queryFile: searchOpts.queryFile,
+              }));
+              if (suggestion) console.log(suggestion);
             }
 
             const previewHasErrors = previews.some((p) => p.error);
