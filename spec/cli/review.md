@@ -11,9 +11,9 @@ extract → mark/edit → merge → finalize cycle.
 ```
 Phase 1: Title Screening       Screen all articles by title only
     ↓ finalize (agreed)
-Phase 2: Abstract Screening    Screen uncertain/conflicting by abstract
+Phase 2: Abstract Screening    Screen all-uncertain/divided by abstract
     ↓ finalize (agreed)
-Phase 3: Fulltext Screening    Screen uncertain/conflicting + finalized-include by fulltext
+Phase 3: Fulltext Screening    Screen all-uncertain/divided + finalized-include by fulltext
     ↓ finalize (agreed)
 Export / Register               Output final included articles
 ```
@@ -27,10 +27,10 @@ Each article is classified into one of 7 statuses, computed on-the-fly by
 |---|---|---|
 | `pending` | No reviews | Not yet reviewed |
 | `incomplete` | Some registered reviewers have not reviewed | Missing reviewer coverage |
-| `uncertain` | All registered reviewers reviewed; at least one said `uncertain` (no include/exclude conflict) | Needs more information |
-| `agreed-include` | All registered reviewers agree: `include` | Consensus: include |
-| `agreed-exclude` | All registered reviewers agree: `exclude` | Consensus: exclude |
-| `conflicting` | Both `include` and `exclude` decisions present | Reviewer disagreement |
+| `agreed-include` | All effective decisions are `include` | Consensus: include |
+| `agreed-exclude` | All effective decisions are `exclude` | Consensus: exclude |
+| `all-uncertain` | All effective decisions are `uncertain` | Everyone uncertain; escalate to next basis |
+| `divided` | Effective decisions are a mix (e.g. exclude+uncertain, include+exclude) | Reviewers disagree; needs attention |
 | `finalized` | `finalDecision` is set | Decision confirmed |
 
 ### Classification Logic
@@ -40,10 +40,10 @@ Each article is classified into one of 7 statuses, computed on-the-fly by
 2. No reviews?                           → pending
 3. Registered reviewer missing?          → incomplete (basis-aware, see below)
 4. Compute effective decisions            (basis-priority override, see below)
-5. include AND exclude in effective?     → conflicting
-6. Any effective uncertain?              → uncertain
-7. All effective include?                → agreed-include
-8. All effective exclude?                → agreed-exclude
+5. All effective include?                → agreed-include
+6. All effective exclude?                → agreed-exclude
+7. All effective uncertain?              → all-uncertain
+8. Otherwise (mixed decisions)           → divided
 ```
 
 The `incomplete` status requires the reviewer registry (Task 71). When no reviewers
@@ -58,7 +58,7 @@ finalization between stages.
 ```
 title:exclude + abstract:include → agreed-include  (abstract wins)
 title:include + abstract:exclude → agreed-exclude  (abstract wins)
-abstract:include + abstract:exclude → conflicting  (same basis)
+abstract:include + abstract:exclude → divided      (same basis)
 title:uncertain + abstract:include → agreed-include (already worked)
 ```
 
@@ -66,7 +66,7 @@ Algorithm:
 1. Find the highest basis rank among all definitive (include/exclude) reviews
 2. Drop ALL reviews at a lower basis rank than the highest definitive
 3. Among remaining reviews, compute per-reviewer effective decisions
-4. Feed effective decisions into conflict/uncertain/agreed checks
+4. Feed effective decisions into agreed/all-uncertain/divided checks
 
 #### Basis-Aware Incomplete Check (Step 3)
 
@@ -86,14 +86,12 @@ Registered title reviewer + title-only article      → incomplete (if missing)
 type ReviewStatus =
   | 'pending'
   | 'incomplete'
-  | 'uncertain'
   | 'agreed-include'
   | 'agreed-exclude'
-  | 'conflicting'
+  | 'all-uncertain'
+  | 'divided'
   | 'finalized';
 ```
-
-Replaces the previous `'pending' | 'needs-final' | 'conflicting' | 'finalized'`.
 
 ## File Formats
 
@@ -249,9 +247,9 @@ Review Progress: my-session
   Total:         100
   Pending:         0
   Incomplete:      8
-  Uncertain:      12
   Agreed:         45  (include: 30, exclude: 15)
-  Conflicting:     3
+  All Uncertain:  10
+  Divided:         5
   Finalized:      32  (include: 20, exclude: 12)
 
 Reviewers:
@@ -272,8 +270,8 @@ search-hub review list --session <id> [--filter <statuses>] [--json]
 ```
 
 `--filter` accepts comma-separated status values:
-`pending`, `incomplete`, `uncertain`, `agreed-include`, `agreed-exclude`,
-`conflicting`, `finalized`, `all` (default).
+`pending`, `incomplete`, `agreed-include`, `agreed-exclude`, `all-uncertain`,
+`divided`, `finalized`, `all` (default).
 
 ### `review extract`
 
@@ -342,11 +340,11 @@ Behavior:
 Output:
 ```
 Finalized 42 articles (30 include, 12 exclude)
-Skipped: 5 pending, 8 incomplete, 12 uncertain, 3 conflicting
+Skipped: 5 pending, 8 incomplete, 10 all-uncertain, 5 divided
 
 Next:
   20 articles need further review. Extract for abstract screening:
-  $ search-hub review extract --session S --filter uncertain,conflicting,incomplete \
+  $ search-hub review extract --session S --filter all-uncertain,divided,incomplete \
       --basis abstract --reviewer "name" --name abstract-screening
 ```
 
@@ -402,14 +400,14 @@ search-hub review merge --session S --name finalize-check
 
 # ========== Phase 2: Abstract Screening ==========
 
-search-hub review extract --session S --filter uncertain,conflicting,incomplete \
+search-hub review extract --session S --filter all-uncertain,divided,incomplete \
   --basis abstract --reviewer "ai:claude" --name abstract-claude
 search-hub review merge --session S --name abstract-claude
 search-hub review finalize --session S --decision exclude
 
 # ========== Phase 3: Fulltext Screening ==========
 
-search-hub review extract --session S --filter uncertain,conflicting,finalized \
+search-hub review extract --session S --filter all-uncertain,divided,finalized \
   --only-decision include \
   --basis fulltext --reviewer "ai:claude" --name fulltext-claude
 search-hub review merge --session S --name fulltext-claude
@@ -435,7 +433,7 @@ After any command:
   2. If agreed > 0:
        → "N articles have consensus — finalize them"
        → $ review finalize ...
-  3. Else if (uncertain + conflicting + incomplete) > 0:
+  3. Else if (all-uncertain + divided + incomplete) > 0:
        → Detect next basis from reviewer registry
        → "N articles need {next_basis}-level review"
        → $ review extract --filter ... --basis {next_basis} ...
@@ -455,7 +453,7 @@ and the hardcoded "AI Agent Workflow" section in `formatStatusOutput()` are all
 
 | Item | Before | After |
 |---|---|---|
-| `ReviewStatus` | `pending \| needs-final \| conflicting \| finalized` | 7-value enum (see Status Model) |
+| `ReviewStatus` | `pending \| needs-final \| conflicting \| finalized` | 7-value enum: pending, incomplete, agreed-include, agreed-exclude, all-uncertain, divided, finalized |
 | `classifyStatus()` | Takes only article | Takes article + registered reviewers |
 | Work file default `decision` | `null` | `uncertain` |
 | Extract `--reviewer` | Required only with `--basis` | Always required |
