@@ -7,6 +7,7 @@ import {
   type ReviewBasis,
   type ReviewFile,
   type ReviewerRecord,
+  type ReviewMode,
 } from './types.js';
 
 describe('basisRank', () => {
@@ -641,6 +642,32 @@ describe('ReviewerRecord and ReviewFile.reviewers', () => {
       articles: [],
     };
     expect(file.reviewers).toBeUndefined();
+  });
+});
+
+describe('ReviewMode type', () => {
+  it('accepts screening and picking as valid values', () => {
+    const screening: ReviewMode = 'screening';
+    const picking: ReviewMode = 'picking';
+    expect(screening).toBe('screening');
+    expect(picking).toBe('picking');
+  });
+
+  it('ReviewFile accepts mode field', () => {
+    const file: ReviewFile = {
+      sessionId: 'test-session',
+      articles: [],
+      mode: 'picking',
+    };
+    expect(file.mode).toBe('picking');
+  });
+
+  it('ReviewFile works without mode (optional, defaults to screening)', () => {
+    const file: ReviewFile = {
+      sessionId: 'test-session',
+      articles: [],
+    };
+    expect(file.mode).toBeUndefined();
   });
 });
 
