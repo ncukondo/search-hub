@@ -8,10 +8,10 @@ function makeStatusResult(overrides: Partial<ReviewStatusResult> = {}): ReviewSt
     total: 100,
     pending: 0,
     incomplete: 0,
-    uncertain: 0,
+    allUncertain: 0,
     agreedInclude: 0,
     agreedExclude: 0,
-    conflicting: 0,
+    divided: 0,
     finalized: 0,
     included: 0,
     excluded: 0,
@@ -42,13 +42,13 @@ describe('generateReviewNextSteps', () => {
     });
   });
 
-  describe('agreed = 0, uncertain + conflicting + incomplete > 0', () => {
+  describe('agreed = 0, divided + all-uncertain + incomplete > 0', () => {
     it('should suggest review extract with next basis (no reviewers → title)', () => {
       const ctx: ReviewNextStepsContext = {
         sessionId: 'my-session',
         statusResult: makeStatusResult({
-          uncertain: 10,
-          conflicting: 5,
+          allUncertain: 10,
+          divided: 5,
           finalized: 85,
           included: 50,
           excluded: 35,
@@ -60,7 +60,7 @@ describe('generateReviewNextSteps', () => {
       expect(result!.next).toHaveLength(1);
       expect(result!.next[0]!.command).toContain('review extract');
       expect(result!.next[0]!.command).toContain('--basis title');
-      expect(result!.next[0]!.command).toContain('--filter conflicting,uncertain,incomplete');
+      expect(result!.next[0]!.command).toContain('--filter divided,all-uncertain,incomplete');
       expect(result!.next[0]!.command).toContain('--session my-session');
       expect(result!.next[0]!.command).toContain('--reviewer "<name>"');
     });
@@ -69,7 +69,7 @@ describe('generateReviewNextSteps', () => {
       const ctx: ReviewNextStepsContext = {
         sessionId: 'my-session',
         statusResult: makeStatusResult({
-          uncertain: 10,
+          allUncertain: 10,
           finalized: 90,
           included: 50,
           excluded: 40,
@@ -86,7 +86,7 @@ describe('generateReviewNextSteps', () => {
       const ctx: ReviewNextStepsContext = {
         sessionId: 'my-session',
         statusResult: makeStatusResult({
-          uncertain: 5,
+          allUncertain: 5,
           finalized: 95,
           included: 50,
           excluded: 45,

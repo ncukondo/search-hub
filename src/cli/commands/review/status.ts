@@ -16,10 +16,10 @@ export interface ReviewStatusResult {
   total: number;
   pending: number;
   incomplete: number;
-  uncertain: number;
+  allUncertain: number;
   agreedInclude: number;
   agreedExclude: number;
-  conflicting: number;
+  divided: number;
   finalized: number;
   included: number;
   excluded: number;
@@ -50,10 +50,10 @@ export async function executeReviewStatus(
   const counts = {
     pending: 0,
     incomplete: 0,
-    uncertain: 0,
+    allUncertain: 0,
     agreedInclude: 0,
     agreedExclude: 0,
-    conflicting: 0,
+    divided: 0,
     finalized: 0,
     included: 0,
     excluded: 0,
@@ -69,8 +69,8 @@ export async function executeReviewStatus(
       case 'incomplete':
         counts.incomplete++;
         break;
-      case 'uncertain':
-        counts.uncertain++;
+      case 'all-uncertain':
+        counts.allUncertain++;
         break;
       case 'agreed-include':
         counts.agreedInclude++;
@@ -78,8 +78,8 @@ export async function executeReviewStatus(
       case 'agreed-exclude':
         counts.agreedExclude++;
         break;
-      case 'conflicting':
-        counts.conflicting++;
+      case 'divided':
+        counts.divided++;
         break;
       case 'finalized':
         counts.finalized++;
@@ -108,13 +108,13 @@ export function formatStatusOutput(result: ReviewStatusResult): string {
   const agreed = result.agreedInclude + result.agreedExclude;
   const lines = [
     `Review Progress: ${id}`,
-    `  Total:         ${result.total}`,
-    `  Pending:       ${result.pending}`,
-    `  Incomplete:    ${result.incomplete}`,
-    `  Uncertain:     ${result.uncertain}`,
-    `  Agreed:        ${agreed}  (include: ${result.agreedInclude}, exclude: ${result.agreedExclude})`,
-    `  Conflicting:   ${result.conflicting}`,
-    `  Finalized:     ${result.finalized}  (include: ${result.included}, exclude: ${result.excluded})`,
+    `  Total:           ${result.total}`,
+    `  Pending:         ${result.pending}`,
+    `  Incomplete:      ${result.incomplete}`,
+    `  All-uncertain:   ${result.allUncertain}`,
+    `  Agreed:          ${agreed}  (include: ${result.agreedInclude}, exclude: ${result.agreedExclude})`,
+    `  Divided:         ${result.divided}`,
+    `  Finalized:       ${result.finalized}  (include: ${result.included}, exclude: ${result.excluded})`,
   ];
 
   if (result.reviewers.length > 0) {

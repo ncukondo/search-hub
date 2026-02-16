@@ -136,11 +136,11 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending', 'conflicting'], name: 'batch', reviewer: 'human:admin' },
+        { sessionId, filter: ['pending', 'divided'], name: 'batch', reviewer: 'human:admin' },
         sessionsDir
       );
 
-      expect(result.extractedCount).toBe(4); // 3 pending + 1 conflicting
+      expect(result.extractedCount).toBe(4); // 3 pending + 1 divided
     });
 
     it('extracts all when no filter specified', async () => {

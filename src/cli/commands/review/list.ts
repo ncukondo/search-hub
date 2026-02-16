@@ -10,10 +10,10 @@ import { classifyStatus, type ReviewFile, type ReviewStatus } from './types.js';
 export type ListFilter =
   | 'pending'
   | 'incomplete'
-  | 'uncertain'
+  | 'all-uncertain'
   | 'agreed-include'
   | 'agreed-exclude'
-  | 'conflicting'
+  | 'divided'
   | 'finalized'
   | 'all';
 

@@ -46,7 +46,7 @@ describe('executeReviewStatus', () => {
         title: 'Article 3', pmid: '3',
         reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
       },
-      // conflicting (reviewers disagree)
+      // divided (reviewers disagree)
       {
         title: 'Article 4', pmid: '4',
         reviews: [
@@ -74,23 +74,23 @@ describe('executeReviewStatus', () => {
     expect(result.total).toBe(6);
     expect(result.pending).toBe(2);
     expect(result.incomplete).toBe(0);
-    expect(result.uncertain).toBe(0);
+    expect(result.allUncertain).toBe(0);
     expect(result.agreedInclude).toBe(1);
     expect(result.agreedExclude).toBe(0);
-    expect(result.conflicting).toBe(1);
+    expect(result.divided).toBe(1);
     expect(result.finalized).toBe(2);
     expect(result.included).toBe(1);
     expect(result.excluded).toBe(1);
   });
 
-  it('counts incomplete and uncertain with reviewer registry', async () => {
+  it('counts incomplete and divided with reviewer registry', async () => {
     const articles: ArticleEntry[] = [
       // incomplete: only claude reviewed, gpt-4o missing
       {
         title: 'Article 1', pmid: '1',
         reviews: [{ reviewer: 'ai:claude', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
       },
-      // uncertain: both reviewed, one uncertain
+      // divided: both reviewed, include + uncertain = mixed decisions
       {
         title: 'Article 2', pmid: '2',
         reviews: [
@@ -127,7 +127,7 @@ describe('executeReviewStatus', () => {
 
     expect(result.total).toBe(4);
     expect(result.incomplete).toBe(1);
-    expect(result.uncertain).toBe(1);
+    expect(result.divided).toBe(1);
     expect(result.agreedInclude).toBe(1);
     expect(result.agreedExclude).toBe(1);
   });
@@ -162,10 +162,10 @@ describe('executeReviewStatus', () => {
     expect(result.total).toBe(0);
     expect(result.pending).toBe(0);
     expect(result.incomplete).toBe(0);
-    expect(result.uncertain).toBe(0);
+    expect(result.allUncertain).toBe(0);
     expect(result.agreedInclude).toBe(0);
     expect(result.agreedExclude).toBe(0);
-    expect(result.conflicting).toBe(0);
+    expect(result.divided).toBe(0);
     expect(result.finalized).toBe(0);
     expect(result.included).toBe(0);
     expect(result.excluded).toBe(0);
@@ -185,10 +185,10 @@ describe('executeReviewStatus', () => {
         total: 100,
         pending: 10,
         incomplete: 8,
-        uncertain: 12,
+        allUncertain: 12,
         agreedInclude: 30,
         agreedExclude: 15,
-        conflicting: 3,
+        divided: 3,
         finalized: 22,
         included: 15,
         excluded: 7,
@@ -199,15 +199,15 @@ describe('executeReviewStatus', () => {
       });
 
       expect(output).toContain('Review Progress: my-session');
-      expect(output).toContain('Total:         100');
-      expect(output).toContain('Pending:       10');
-      expect(output).toContain('Incomplete:    8');
-      expect(output).toContain('Uncertain:     12');
-      expect(output).toContain('Agreed:        45');
+      expect(output).toContain('Total:           100');
+      expect(output).toContain('Pending:         10');
+      expect(output).toContain('Incomplete:      8');
+      expect(output).toContain('All-uncertain:   12');
+      expect(output).toContain('Agreed:          45');
       expect(output).toContain('include: 30');
       expect(output).toContain('exclude: 15');
-      expect(output).toContain('Conflicting:   3');
-      expect(output).toContain('Finalized:     22');
+      expect(output).toContain('Divided:         3');
+      expect(output).toContain('Finalized:       22');
       expect(output).toContain('Reviewers:');
       expect(output).toContain('ai:claude  (title)');
       expect(output).toContain('ai:gpt-4o  (title)');
@@ -219,10 +219,10 @@ describe('executeReviewStatus', () => {
         total: 10,
         pending: 10,
         incomplete: 0,
-        uncertain: 0,
+        allUncertain: 0,
         agreedInclude: 0,
         agreedExclude: 0,
-        conflicting: 0,
+        divided: 0,
         finalized: 0,
         included: 0,
         excluded: 0,
@@ -240,10 +240,10 @@ describe('executeReviewStatus', () => {
         total: 10,
         pending: 10,
         incomplete: 0,
-        uncertain: 0,
+        allUncertain: 0,
         agreedInclude: 0,
         agreedExclude: 0,
-        conflicting: 0,
+        divided: 0,
         finalized: 0,
         included: 0,
         excluded: 0,

@@ -106,7 +106,7 @@ summary:
     const statusResult1 = await executeReviewStatus({ sessionId }, sessionsDir);
     expect(statusResult1.total).toBe(10);
     expect(statusResult1.pending).toBe(10);
-    expect(statusResult1.conflicting).toBe(0);
+    expect(statusResult1.divided).toBe(0);
     expect(statusResult1.agreedInclude).toBe(0);
     expect(statusResult1.agreedExclude).toBe(0);
     expect(statusResult1.finalized).toBe(0);
@@ -592,13 +592,13 @@ summary:
 
       // Verify status shows uncertain (all marked as uncertain)
       const statusAfterPhase1 = await executeReviewStatus({ sessionId }, sessionsDir);
-      expect(statusAfterPhase1.uncertain).toBe(10); // All marked as uncertain
+      expect(statusAfterPhase1.allUncertain).toBe(10); // All marked as uncertain
 
       // Phase 2: Abstract screening for uncertain articles
       const phase2Extract = await executeReviewExtract(
         {
           sessionId,
-          filter: ['uncertain'], // Gets articles with uncertain reviews
+          filter: ['all-uncertain'], // Gets articles with uncertain reviews
           basis: 'abstract',
           reviewer: 'ai:claude',
           name: 'abstract-screening',
@@ -722,7 +722,7 @@ summary:
       const phase2Extract = await executeReviewExtract(
         {
           sessionId,
-          filter: ['uncertain'],
+          filter: ['all-uncertain'],
           basis: 'abstract',
           reviewer: 'ai:claude',
           name: 'phase2-reg',
@@ -1008,7 +1008,7 @@ summary:
       expect(status.agreedExclude).toBe(2); // Both reviewers said exclude
       expect(status.pending).toBe(5); // Remaining 5 have no reviews → still pending
       expect(status.incomplete).toBe(0);
-      expect(status.conflicting).toBe(0);
+      expect(status.divided).toBe(0);
     });
 
     it('classifies correctly when reviewer registry is empty (backward compatibility)', async () => {
@@ -1058,8 +1058,8 @@ summary:
       const status = await executeReviewStatus({ sessionId }, sessionsDir);
       expect(status.agreedInclude).toBe(1);
       expect(status.agreedExclude).toBe(1);
-      expect(status.conflicting).toBe(1);
-      expect(status.uncertain).toBe(1);
+      expect(status.divided).toBe(1);
+      expect(status.allUncertain).toBe(1);
       expect(status.finalized).toBe(1);
       expect(status.included).toBe(1);
       expect(status.pending).toBe(5); // Articles 5-9 still pending
@@ -1074,7 +1074,7 @@ summary:
       expect(agreedIncludeList.articles[0]!.status).toBe('agreed-include');
 
       const conflictingList = await executeReviewList(
-        { sessionId, filter: 'conflicting' },
+        { sessionId, filter: 'divided' },
         sessionsDir
       );
       expect(conflictingList.articles).toHaveLength(1);
@@ -1151,7 +1151,7 @@ summary:
       // Status: all articles now have 'uncertain' status (uncertain reviews from single reviewer)
       const status = await executeReviewStatus({ sessionId }, sessionsDir);
       // 8 uncertain + 2 agreed-exclude (since only 1 reviewer registered, exclude articles are agreed-exclude)
-      expect(status.uncertain).toBe(8);
+      expect(status.allUncertain).toBe(8);
       expect(status.agreedExclude).toBe(2);
       expect(status.pending).toBe(0);
     });
@@ -1373,7 +1373,7 @@ summary:
       const finalizeResult = await executeReviewFinalize({ sessionId }, sessionsDir);
       expect(finalizeResult.includedCount).toBe(3);
       expect(finalizeResult.excludedCount).toBe(2);
-      expect(finalizeResult.skippedByStatus.uncertain).toBe(5);
+      expect(finalizeResult.skippedByStatus['all-uncertain']).toBe(5);
 
       // Verify finalDecisions were set in reviews.yaml
       const reviewsContent = await readFile(
@@ -1444,7 +1444,7 @@ summary:
       const finalizeResult = await executeReviewFinalize({ sessionId }, sessionsDir);
       expect(finalizeResult.includedCount).toBe(3); // Both agreed on include
       expect(finalizeResult.excludedCount).toBe(0);
-      expect(finalizeResult.skippedByStatus.uncertain).toBe(2); // One reviewer uncertain
+      expect(finalizeResult.skippedByStatus.divided).toBe(2); // include + uncertain = divided
       expect(finalizeResult.skippedByStatus.pending).toBe(5); // Remaining 5
     });
 
@@ -1605,7 +1605,7 @@ summary:
       expect(result.excludedCount).toBe(4);
       expect(result.includedCount).toBe(0);
       expect(result.skippedByStatus['agreed-include']).toBe(4);
-      expect(result.skippedByStatus.uncertain).toBe(2);
+      expect(result.skippedByStatus['all-uncertain']).toBe(2);
 
       // Verify only exclude articles have finalDecision
       const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
@@ -1647,7 +1647,7 @@ summary:
       expect(result.includedCount).toBe(3);
       expect(result.excludedCount).toBe(0);
       expect(result.skippedByStatus['agreed-exclude']).toBe(5);
-      expect(result.skippedByStatus.uncertain).toBe(2);
+      expect(result.skippedByStatus['all-uncertain']).toBe(2);
 
       // Verify only include articles have finalDecision
       const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
@@ -1920,13 +1920,13 @@ summary:
       // After title screening: 3 agreed-exclude, 7 uncertain
       const statusAfterTitle = await executeReviewStatus({ sessionId }, sessionsDir);
       expect(statusAfterTitle.agreedExclude).toBe(3);
-      expect(statusAfterTitle.uncertain).toBe(7);
+      expect(statusAfterTitle.allUncertain).toBe(7);
 
       // Phase 2: Abstract screening for uncertain articles
       const abstractExtract = await executeReviewExtract(
         {
           sessionId,
-          filter: ['uncertain'],
+          filter: ['all-uncertain'],
           basis: 'abstract',
           reviewer: 'ai:claude',
           name: 'multi-stage-abstract',
@@ -1954,13 +1954,13 @@ summary:
       const statusAfterAbstract = await executeReviewStatus({ sessionId }, sessionsDir);
       expect(statusAfterAbstract.agreedInclude).toBe(4);
       expect(statusAfterAbstract.agreedExclude).toBe(6); // 3 from title + 3 from abstract
-      expect(statusAfterAbstract.uncertain).toBe(0); // No uncertain left
+      expect(statusAfterAbstract.allUncertain).toBe(0); // No uncertain left
 
       // Phase 3: Finalize - all articles should now be finalizable
       const finalizeResult = await executeReviewFinalize({ sessionId }, sessionsDir);
       expect(finalizeResult.includedCount).toBe(4);
       expect(finalizeResult.excludedCount).toBe(6);
-      expect(finalizeResult.skippedByStatus.uncertain).toBe(0);
+      expect(finalizeResult.skippedByStatus['all-uncertain']).toBe(0);
 
       // Verify all articles are finalized
       const finalStatus = await executeReviewStatus({ sessionId }, sessionsDir);
@@ -2001,7 +2001,7 @@ summary:
       const r2Extract = await executeReviewExtract(
         {
           sessionId,
-          filter: ['uncertain'],
+          filter: ['all-uncertain'],
           basis: 'abstract',
           reviewer: 'ai:claude',
           name: 'r2-abstract',
@@ -2029,7 +2029,7 @@ summary:
       expect(statusAfter.agreedInclude).toBe(5);
       expect(statusAfter.agreedExclude).toBe(5); // 2 from R1 title + 3 from R2 abstract
       expect(statusAfter.incomplete).toBe(0); // Basis-aware: abstract reviewer doesn't apply to title-only articles
-      expect(statusAfter.uncertain).toBe(0);
+      expect(statusAfter.allUncertain).toBe(0);
 
       // Finalize: all agreed articles get finalized
       const finalizeResult = await executeReviewFinalize({ sessionId }, sessionsDir);
@@ -2079,14 +2079,14 @@ summary:
       // Verify after title screening: 2 agreed-exclude, 8 uncertain
       const statusAfterTitle = await executeReviewStatus({ sessionId }, sessionsDir);
       expect(statusAfterTitle.agreedExclude).toBe(2);
-      expect(statusAfterTitle.uncertain).toBe(8);
+      expect(statusAfterTitle.allUncertain).toBe(8);
 
       // === Stage 2: Abstract screening (NO finalization between stages) ===
       // Reviewer ai:gpt-4o screens the 8 uncertain at abstract basis
       const abstractExtract = await executeReviewExtract(
         {
           sessionId,
-          filter: ['uncertain'],
+          filter: ['all-uncertain'],
           basis: 'abstract',
           reviewer: 'ai:gpt-4o',
           name: 'task92-abstract',
@@ -2120,8 +2120,8 @@ summary:
       // Fix 2: Abstract-include overrides title-uncertain → agreed-include
       // (higher basis definitive wins over lower basis decisions)
       expect(statusAfterAbstract.agreedInclude).toBe(8);
-      expect(statusAfterAbstract.uncertain).toBe(0);
-      expect(statusAfterAbstract.conflicting).toBe(0);
+      expect(statusAfterAbstract.allUncertain).toBe(0);
+      expect(statusAfterAbstract.divided).toBe(0);
 
       // All 10 articles have a definitive status, ready for finalization
       expect(statusAfterAbstract.pending).toBe(0);

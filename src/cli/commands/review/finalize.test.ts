@@ -91,7 +91,7 @@ describe('executeReviewFinalize', () => {
       expect(reviewFile.articles[0]!.finalDecision).toBe('exclude');
     });
 
-    it('skips pending, incomplete, uncertain, and conflicting articles', async () => {
+    it('skips pending, incomplete, all-uncertain, and divided articles', async () => {
       await setupReviewFile({
         sessionId,
         reviewers: [
@@ -107,7 +107,7 @@ describe('executeReviewFinalize', () => {
             title: 'Incomplete',
             reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title' }],
           },
-          // uncertain
+          // all-uncertain
           {
             doi: '10.1234/uncertain',
             title: 'Uncertain',
@@ -116,10 +116,10 @@ describe('executeReviewFinalize', () => {
               { reviewer: 'ai:gpt-4o', decision: 'uncertain', basis: 'title' },
             ],
           },
-          // conflicting
+          // divided
           {
-            doi: '10.1234/conflicting',
-            title: 'Conflicting',
+            doi: '10.1234/divided',
+            title: 'Divided',
             reviews: [
               { reviewer: 'ai:claude', decision: 'include', basis: 'title' },
               { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'title' },
@@ -133,8 +133,8 @@ describe('executeReviewFinalize', () => {
       expect(result.excludedCount).toBe(0);
       expect(result.skippedByStatus.pending).toBe(1);
       expect(result.skippedByStatus.incomplete).toBe(1);
-      expect(result.skippedByStatus.uncertain).toBe(1);
-      expect(result.skippedByStatus.conflicting).toBe(1);
+      expect(result.skippedByStatus['all-uncertain']).toBe(1);
+      expect(result.skippedByStatus.divided).toBe(1);
 
       // Verify no finalDecision was set
       const reviewFile = await readReviewFile();
@@ -230,7 +230,7 @@ describe('executeReviewFinalize', () => {
       expect(result.includedCount).toBe(2);
       expect(result.excludedCount).toBe(1);
       expect(result.skippedByStatus.pending).toBe(1);
-      expect(result.skippedByStatus.uncertain).toBe(1);
+      expect(result.skippedByStatus['all-uncertain']).toBe(1);
       expect(result.skippedByStatus.finalized).toBe(1);
     });
   });
@@ -392,7 +392,7 @@ describe('executeReviewFinalize', () => {
       expect(reviewFile.articles[0]!.finalDecision).toBe('exclude');
     });
 
-    it('article with only title uncertain → not finalized (still uncertain)', async () => {
+    it('article with only title uncertain → not finalized (still all-uncertain)', async () => {
       await setupReviewFile({
         sessionId,
         reviewers: [{ name: 'ai:claude', basis: 'title' }],
@@ -410,7 +410,7 @@ describe('executeReviewFinalize', () => {
       const result = await executeReviewFinalize({ sessionId }, sessionsDir);
       expect(result.includedCount).toBe(0);
       expect(result.excludedCount).toBe(0);
-      expect(result.skippedByStatus.uncertain).toBe(1);
+      expect(result.skippedByStatus['all-uncertain']).toBe(1);
 
       const reviewFile = await readReviewFile();
       expect(reviewFile.articles[0]!.finalDecision).toBeUndefined();
@@ -562,8 +562,8 @@ describe('formatFinalizeOutput', () => {
       skippedByStatus: {
         pending: 5,
         incomplete: 8,
-        uncertain: 12,
-        conflicting: 3,
+        'all-uncertain': 12,
+        divided: 3,
         finalized: 0,
         'agreed-include': 0,
         'agreed-exclude': 0,
@@ -571,7 +571,7 @@ describe('formatFinalizeOutput', () => {
     };
     const output = formatFinalizeOutput(result);
     expect(output).toContain('Finalized 42 articles (30 include, 12 exclude)');
-    expect(output).toContain('Skipped: 5 pending, 8 incomplete, 12 uncertain, 3 conflicting');
+    expect(output).toContain('Skipped: 5 pending, 8 incomplete, 12 all-uncertain, 3 divided');
   });
 
   it('includes dry-run header', () => {
@@ -581,8 +581,8 @@ describe('formatFinalizeOutput', () => {
       skippedByStatus: {
         pending: 0,
         incomplete: 0,
-        uncertain: 0,
-        conflicting: 0,
+        'all-uncertain': 0,
+        divided: 0,
         finalized: 0,
         'agreed-include': 0,
         'agreed-exclude': 0,
@@ -600,8 +600,8 @@ describe('formatFinalizeOutput', () => {
       skippedByStatus: {
         pending: 0,
         incomplete: 0,
-        uncertain: 0,
-        conflicting: 0,
+        'all-uncertain': 0,
+        divided: 0,
         finalized: 0,
         'agreed-include': 0,
         'agreed-exclude': 0,
@@ -618,8 +618,8 @@ describe('formatFinalizeOutput', () => {
       skippedByStatus: {
         pending: 2,
         incomplete: 0,
-        uncertain: 0,
-        conflicting: 0,
+        'all-uncertain': 0,
+        divided: 0,
         finalized: 0,
         'agreed-include': 3,
         'agreed-exclude': 0,
@@ -636,8 +636,8 @@ describe('formatFinalizeOutput', () => {
       skippedByStatus: {
         pending: 0,
         incomplete: 0,
-        uncertain: 0,
-        conflicting: 0,
+        'all-uncertain': 0,
+        divided: 0,
         finalized: 0,
         'agreed-include': 0,
         'agreed-exclude': 4,

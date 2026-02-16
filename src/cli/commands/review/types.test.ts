@@ -73,7 +73,7 @@ describe('classifyStatus', () => {
     expect(classifyStatus(entry, reviewers)).toBe('incomplete');
   });
 
-  it('returns "uncertain" when all reviewers reviewed and at least one is uncertain (no include/exclude conflict)', () => {
+  it('returns "all-uncertain" when all reviewers say uncertain', () => {
     const entry: ArticleEntry = {
       ...baseEntry,
       reviews: [
@@ -93,7 +93,7 @@ describe('classifyStatus', () => {
       { name: 'ai:claude', basis: 'title' },
       { name: 'ai:gpt-4o', basis: 'title' },
     ];
-    expect(classifyStatus(entry, reviewers)).toBe('uncertain');
+    expect(classifyStatus(entry, reviewers)).toBe('all-uncertain');
   });
 
   it('returns "agreed-include" when all reviewers agree include', () => {
@@ -142,7 +142,7 @@ describe('classifyStatus', () => {
     expect(classifyStatus(entry, reviewers)).toBe('agreed-exclude');
   });
 
-  it('returns "conflicting" when both include and exclude present', () => {
+  it('returns "divided" when both include and exclude present', () => {
     const entry: ArticleEntry = {
       ...baseEntry,
       reviews: [
@@ -158,10 +158,10 @@ describe('classifyStatus', () => {
         },
       ],
     };
-    expect(classifyStatus(entry)).toBe('conflicting');
+    expect(classifyStatus(entry)).toBe('divided');
   });
 
-  it('uncertain takes priority when both uncertain and a single include exist (not conflicting)', () => {
+  it('include + uncertain mix → divided (mixed decisions)', () => {
     const entry: ArticleEntry = {
       ...baseEntry,
       reviews: [
@@ -181,10 +181,10 @@ describe('classifyStatus', () => {
       { name: 'ai:claude', basis: 'title' },
       { name: 'ai:gpt-4o', basis: 'title' },
     ];
-    expect(classifyStatus(entry, reviewers)).toBe('uncertain');
+    expect(classifyStatus(entry, reviewers)).toBe('divided');
   });
 
-  it('uncertain takes priority when both uncertain and a single exclude exist (not conflicting)', () => {
+  it('exclude + uncertain mix → divided (mixed decisions)', () => {
     const entry: ArticleEntry = {
       ...baseEntry,
       reviews: [
@@ -204,7 +204,7 @@ describe('classifyStatus', () => {
       { name: 'ai:claude', basis: 'title' },
       { name: 'ai:gpt-4o', basis: 'title' },
     ];
-    expect(classifyStatus(entry, reviewers)).toBe('uncertain');
+    expect(classifyStatus(entry, reviewers)).toBe('divided');
   });
 
   it('empty reviewer registry → skip incomplete check (backward-compatible)', () => {
@@ -336,7 +336,7 @@ describe('classifyStatus', () => {
     expect(classifyStatus(entry)).toBe('agreed-exclude');
   });
 
-  it('single reviewer with uncertain decision and no registry → uncertain', () => {
+  it('single reviewer with uncertain decision and no registry → all-uncertain', () => {
     const entry: ArticleEntry = {
       ...baseEntry,
       reviews: [
@@ -347,7 +347,7 @@ describe('classifyStatus', () => {
         },
       ],
     };
-    expect(classifyStatus(entry)).toBe('uncertain');
+    expect(classifyStatus(entry)).toBe('all-uncertain');
   });
 
   describe('basis priority', () => {
@@ -419,7 +419,7 @@ describe('classifyStatus', () => {
       expect(classifyStatus(entry)).toBe('agreed-include');
     });
 
-    it('A abstract include + B abstract exclude → conflicting (unchanged)', () => {
+    it('A abstract include + B abstract exclude → divided', () => {
       const entry: ArticleEntry = {
         ...baseEntry,
         reviews: [
@@ -427,7 +427,7 @@ describe('classifyStatus', () => {
           { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'abstract' },
         ],
       };
-      expect(classifyStatus(entry)).toBe('conflicting');
+      expect(classifyStatus(entry)).toBe('divided');
     });
 
     it('A title include + B abstract exclude → agreed-exclude (higher basis overrides all lower)', () => {
@@ -441,7 +441,7 @@ describe('classifyStatus', () => {
       expect(classifyStatus(entry)).toBe('agreed-exclude');
     });
 
-    it('all reviews uncertain (no higher-basis definitive) → uncertain (unchanged)', () => {
+    it('all reviews uncertain (no higher-basis definitive) → all-uncertain', () => {
       const entry: ArticleEntry = {
         ...baseEntry,
         reviews: [
@@ -449,7 +449,7 @@ describe('classifyStatus', () => {
           { reviewer: 'ai:gpt-4o', decision: 'uncertain', basis: 'title' },
         ],
       };
-      expect(classifyStatus(entry)).toBe('uncertain');
+      expect(classifyStatus(entry)).toBe('all-uncertain');
     });
 
     it('only title reviews, no uncertain conflict → existing behavior unchanged', () => {
@@ -476,7 +476,7 @@ describe('classifyStatus', () => {
       expect(classifyStatus(entry)).toBe('agreed-include');
     });
 
-    it('A: title uncertain, B: abstract include, C: abstract exclude → conflicting', () => {
+    it('A: title uncertain, B: abstract include, C: abstract exclude → divided', () => {
       const entry: ArticleEntry = {
         ...baseEntry,
         reviews: [
@@ -485,7 +485,7 @@ describe('classifyStatus', () => {
           { reviewer: 'ai:gemini', decision: 'exclude', basis: 'abstract' },
         ],
       };
-      expect(classifyStatus(entry)).toBe('conflicting');
+      expect(classifyStatus(entry)).toBe('divided');
     });
 
     it('A: title exclude, B: abstract include → agreed-include (higher basis overrides all lower)', () => {
@@ -533,7 +533,7 @@ describe('classifyStatus', () => {
       expect(classifyStatus(entry)).toBe('agreed-include');
     });
 
-    it('A title:include + B title:exclude → conflicting (same basis still conflicts)', () => {
+    it('A title:include + B title:exclude → divided (same basis still divides)', () => {
       const entry: ArticleEntry = {
         ...baseEntry,
         reviews: [
@@ -541,7 +541,7 @@ describe('classifyStatus', () => {
           { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'title' },
         ],
       };
-      expect(classifyStatus(entry)).toBe('conflicting');
+      expect(classifyStatus(entry)).toBe('divided');
     });
   });
 
