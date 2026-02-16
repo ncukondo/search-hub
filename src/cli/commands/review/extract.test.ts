@@ -40,7 +40,7 @@ describe('executeReviewExtract', () => {
     { title: 'Pending Article A', pmid: '1', year: '2022', reviews: [] },
     { title: 'Pending Article B', pmid: '2', year: '2021', reviews: [] },
     { title: 'Pending Article C', pmid: '3', year: '2023', reviews: [] },
-    // conflicting
+    // divided
     {
       title: 'Conflicting Article',
       pmid: '4',

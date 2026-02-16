@@ -208,7 +208,7 @@ export interface ReviewSummary {
   included: number;
   /** Articles with finalDecision='exclude' */
   excluded: number;
-  /** Articles without finalDecision (pending, incomplete, uncertain, agreed, conflicting) */
+  /** Articles without finalDecision (pending, incomplete, all-uncertain, agreed, divided) */
   pending: number;
 }
 
@@ -259,7 +259,7 @@ export async function getReviewSummary(sessionId: string, sessionsDir: string): 
         summary.excluded++;
       }
     } else {
-      // pending, incomplete, uncertain, agreed, conflicting all count as pending for registration
+      // pending, incomplete, all-uncertain, agreed, divided all count as pending for registration
       summary.pending++;
     }
   }

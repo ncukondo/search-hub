@@ -64,7 +64,7 @@ function detectNextBasis(reviewers: ReviewStatusResult['reviewers']): ReviewBasi
  * Evaluation order (top-to-bottom, first match wins for primary suggestion):
  * 1. pending > 0 → extract for title screening
  * 2. agreed > 0 → finalize consensus articles
- * 3. (conflicting + uncertain + incomplete) > 0 → extract for next basis level
+ * 3. (divided + allUncertain + incomplete) > 0 → extract for next basis level
  * 4. all finalized → register accepted articles
  *
  * Batch continuation is appended to seeAlso when applicable.

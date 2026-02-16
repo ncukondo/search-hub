@@ -82,10 +82,10 @@ export type ReviewStatus =
  * 1. finalDecision set?           → finalized
  * 2. No reviews?                  → pending
  * 3. Registered reviewer missing? → incomplete
- * 4. include AND exclude present? → conflicting
- * 5. Any uncertain?               → uncertain
- * 6. All include?                 → agreed-include
- * 7. All exclude?                 → agreed-exclude
+ * 4. All uncertain?               → all-uncertain
+ * 5. All include?                 → agreed-include
+ * 6. All exclude?                 → agreed-exclude
+ * 7. Any mix of decisions?        → divided
  */
 export function classifyStatus(
   entry: ArticleEntry,

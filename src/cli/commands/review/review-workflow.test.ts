@@ -161,7 +161,7 @@ summary:
       decision: 'exclude',
       timestamp: '2024-01-02T01:00:00Z',
     });
-    // Leave as conflicting (no finalDecision)
+    // Leave as divided (no finalDecision)
 
     extractedFile.articles[3]!.reviews = extractedFile.articles[3]!.reviews ?? [];
     extractedFile.articles[3]!.reviews.push({
@@ -1036,7 +1036,7 @@ summary:
         { reviewer: 'manual-reviewer', decision: 'exclude', timestamp: '2024-01-01T00:00:00Z' },
       ];
 
-      // Article 2: conflicting decisions
+      // Article 2: divided decisions
       reviewFile.articles[2]!.reviews = [
         { reviewer: 'reviewer-a', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
         { reviewer: 'reviewer-b', decision: 'exclude', timestamp: '2024-01-01T01:00:00Z' },
@@ -1073,11 +1073,11 @@ summary:
       expect(agreedIncludeList.articles).toHaveLength(1);
       expect(agreedIncludeList.articles[0]!.status).toBe('agreed-include');
 
-      const conflictingList = await executeReviewList(
+      const dividedList = await executeReviewList(
         { sessionId, filter: 'divided' },
         sessionsDir
       );
-      expect(conflictingList.articles).toHaveLength(1);
+      expect(dividedList.articles).toHaveLength(1);
     });
   });
 
