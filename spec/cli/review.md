@@ -319,23 +319,25 @@ Merge reviewed file back into master.
 search-hub review merge --session <id> --name <name> [--dry-run]
 ```
 
-### `review finalize` (NEW)
+### `review finalize`
 
 Auto-set `finalDecision` for articles with reviewer consensus.
 
 ```bash
-search-hub review finalize --session <id> [--dry-run] [--min-reviewers <n>]
+search-hub review finalize --session <id> [--dry-run] [--min-reviewers <n>] [--decision <type>]
 ```
 
 | Option | Description | Default |
 |---|---|---|
 | `--dry-run` | Preview without changes | false |
 | `--min-reviewers <n>` | Minimum agreeing reviewers needed | 1 |
+| `--decision <type>` | Filter by decision type: `include` or `exclude` | all (both) |
 
 Behavior:
 - `agreed-include` → `finalDecision: include`
 - `agreed-exclude` → `finalDecision: exclude`
 - All other statuses → skipped
+- When `--decision` is specified, only consensus articles matching that decision type are finalized
 
 Output:
 ```
@@ -346,6 +348,23 @@ Next:
   20 articles need further review. Extract for abstract screening:
   $ search-hub review extract --session S --filter uncertain,conflicting,incomplete \
       --basis abstract --reviewer "name" --name abstract-screening
+```
+
+#### `--decision` Filter Use Case
+
+In multi-stage screening (title → abstract → fulltext), title/abstract screening
+should only finalize `exclude` decisions. `include` decisions remain provisional
+until confirmed by fulltext screening.
+
+```bash
+# Title screening: only finalize excludes (includes are still candidates)
+search-hub review finalize --session S --decision exclude
+
+# After fulltext screening: finalize includes
+search-hub review finalize --session S --decision include
+
+# Finalize all (default, unchanged behavior)
+search-hub review finalize --session S
 ```
 
 ### `review export`
@@ -368,9 +387,9 @@ search-hub review extract --session S --filter pending \
 search-hub review merge --session S --name title-claude
 # Repeat for additional reviewers if needed
 
-# Auto-finalize where all reviewers agree
-search-hub review finalize --session S --dry-run   # Preview
-search-hub review finalize --session S             # Execute
+# Auto-finalize excludes only (includes remain candidates for abstract screening)
+search-hub review finalize --session S --decision exclude --dry-run   # Preview
+search-hub review finalize --session S --decision exclude             # Execute
 
 # ========== Responsible Person Check (optional) ==========
 
@@ -386,7 +405,7 @@ search-hub review merge --session S --name finalize-check
 search-hub review extract --session S --filter uncertain,conflicting,incomplete \
   --basis abstract --reviewer "ai:claude" --name abstract-claude
 search-hub review merge --session S --name abstract-claude
-search-hub review finalize --session S
+search-hub review finalize --session S --decision exclude
 
 # ========== Phase 3: Fulltext Screening ==========
 
@@ -394,7 +413,7 @@ search-hub review extract --session S --filter uncertain,conflicting,finalized \
   --only-decision include \
   --basis fulltext --reviewer "ai:claude" --name fulltext-claude
 search-hub review merge --session S --name fulltext-claude
-search-hub review finalize --session S
+search-hub review finalize --session S  # Finalize all (includes confirmed by fulltext)
 
 # ========== Output ==========
 

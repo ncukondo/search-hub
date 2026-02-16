@@ -819,6 +819,7 @@ search-hub review finalize --session <session-id> [options]
 | `--session <id>` | Session ID (required) |
 | `--dry-run` | Preview without changes |
 | `--min-reviewers <n>` | Minimum agreeing reviewers needed (default: 1) |
+| `--decision <type>` | Filter by decision type: `include` or `exclude` (default: all) |
 
 Examples:
 ```bash
@@ -828,6 +829,13 @@ search-hub review extract --session SESSION_ID --name title-screening --reviewer
 # (edit for-review/title-screening/review.yaml)
 search-hub review merge --session SESSION_ID --name title-screening
 search-hub review finalize --session SESSION_ID
+
+# Finalize only exclude decisions (for multi-stage screening)
+search-hub review finalize --session SESSION_ID --decision exclude
+
+# Finalize only include decisions (after fulltext confirmation)
+search-hub review finalize --session SESSION_ID --decision include
+
 search-hub review export --session SESSION_ID --only included -o included.yaml
 ```
 
