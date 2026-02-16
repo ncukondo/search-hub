@@ -113,6 +113,13 @@ import {
   formatMergeOutput as formatSessionMergeOutput,
   formatMergeJson as formatSessionMergeJson,
 } from './commands/merge.js';
+import {
+  parseRelatedOptions,
+  validateRelatedInput,
+  resolveSeeds,
+  createRelatedSession,
+  formatRelatedOutput,
+} from './commands/related.js';
 
 import {
   executeReviewInit,
@@ -195,6 +202,8 @@ import { getSessionsDir } from './utils/sessions-dir.js';
 import { expandPath } from '../utils/path.js';
 import { loadSessionArticles, loadSessionQuery } from './commands/session-utils.js';
 import { parseIdentifierFile, checkCoverage, formatCheckResult, formatCheckResultJson } from './commands/check.js';
+import { PubMedClient } from '../providers/pubmed/client.js';
+import type { PubMedConfig } from '../providers/pubmed/types.js';
 
 /**
  * Global CLI options available to all commands.
@@ -1810,6 +1819,172 @@ Input file format (one identifier per line):
             );
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
+        }
+      }
+    );
+
+  // Register related command
+  program
+    .command('related')
+    .description('Find related articles from seed PMIDs using PubMed ELink')
+    .argument('[pmids...]', 'seed PMIDs')
+    .option('-n, --name <string>', 'session name')
+    .option('-m, --max-results <number>', 'max related articles to retrieve', '20')
+    .option('-s, --from-session <id>', 'load seed PMIDs from existing session')
+    .option('--pmid <pmids...>', 'seed PMIDs (alternative to positional args)')
+    .option('-t, --term <filter>', 'additional PubMed filter (e.g., "review[filter]")')
+    .addHelpText('after', `
+Examples:
+  $ search-hub related 12345678 23456789              # Find related articles
+  $ search-hub related 12345678 --name my-related     # Custom session name
+  $ search-hub related 12345678 -m 50                 # Get more results
+  $ search-hub related --from-session SESSION -s SESSION --pmid 12345678
+  $ search-hub related 12345678 -t "review[filter]"   # Filter by review type`)
+    .action(
+      async (
+        pmidArgs: string[],
+        options?: {
+          name?: string;
+          maxResults?: string;
+          fromSession?: string;
+          pmid?: string[];
+          term?: string;
+        }
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          const parsedOptions = parseRelatedOptions(pmidArgs, options ?? {});
+
+          // Validate input
+          const validation = validateRelatedInput(parsedOptions);
+          if (!validation.valid) {
+            if (!globalOpts.quiet) {
+              console.error(`Error: ${validation.error}`);
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          }
+
+          const sessionsDir = await getSessionsDir(globalOpts);
+
+          // Resolve seed PMIDs
+          let seedPmids: string[];
+          try {
+            seedPmids = await resolveSeeds(parsedOptions, sessionsDir);
+          } catch (error) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error: ${error instanceof Error ? error.message : 'Failed to resolve seeds'}`
+              );
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          if (seedPmids.length === 0) {
+            if (!globalOpts.quiet) {
+              console.error('Error: No PMIDs found to use as seeds.');
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          }
+
+          // Load config and create PubMed client
+          const config = await loadConfig(
+            globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
+          );
+          const providerConfig = config.providers.pubmed;
+          const pubmedConfig: PubMedConfig = {
+            email: providerConfig.email ?? 'search-hub@example.com',
+            rateLimit: providerConfig.rate_limit,
+            timeout: providerConfig.timeout,
+            retries: providerConfig.retries,
+          };
+          if (providerConfig.api_key) {
+            pubmedConfig.apiKey = providerConfig.api_key;
+          }
+          const rateLimiter = new RateLimiter({
+            tokensPerSecond: pubmedConfig.rateLimit ?? (pubmedConfig.apiKey ? 10 : 3),
+          });
+          const client = new PubMedClient(pubmedConfig, rateLimiter);
+
+          if (!globalOpts.quiet) {
+            console.log(`Finding related articles for ${seedPmids.length} seed PMIDs...`);
+          }
+
+          // Call ELink to find related PMIDs
+          const elinkResult = await client.findRelated(
+            seedPmids,
+            parsedOptions.term ? { term: parsedOptions.term } : undefined
+          );
+
+          const totalRelated = elinkResult.links.length;
+
+          if (totalRelated === 0) {
+            if (!globalOpts.quiet) {
+              console.log('No related articles found.');
+            }
+            process.exitCode = EXIT_CODES.SUCCESS;
+            return;
+          }
+
+          // Take top N results
+          const topLinks = elinkResult.links.slice(0, parsedOptions.maxResults);
+
+          // Filter out seed PMIDs from results
+          const seedSet = new Set(seedPmids);
+          const relatedPmids = topLinks
+            .map(link => link.id)
+            .filter(id => !seedSet.has(id));
+
+          // Fetch full article records
+          const articles = await client.fetch(relatedPmids);
+
+          // Generate session name
+          const sessionName = parsedOptions.name
+            ?? `related-${new Date().toISOString().slice(0, 10)}`;
+
+          // Create session
+          const sessionFile = await createRelatedSession({
+            name: sessionName,
+            seeds: {
+              ids: seedPmids,
+              ...(parsedOptions.fromSession && { sourceSession: parsedOptions.fromSession }),
+            },
+            articles,
+            sessionsDir,
+          });
+
+          // Display output
+          if (!globalOpts.quiet) {
+            console.log(formatRelatedOutput({
+              sessionId: sessionFile.id,
+              seedCount: seedPmids.length,
+              totalRelated,
+              retrievedCount: articles.length,
+              articles,
+            }));
+
+            // Show suggestions
+            const suggestion = getSuggestion({
+              command: 'related',
+              sessionId: sessionFile.id,
+            });
+            const suggestionText = formatSuggestion(suggestion);
+            if (suggestionText) {
+              console.log(suggestionText);
+            }
+          }
+
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error(
+              'Error:',
+              error instanceof Error ? error.message : error
+            );
+          }
+          process.exitCode = EXIT_CODES.NETWORK_ERROR;
         }
       }
     );
