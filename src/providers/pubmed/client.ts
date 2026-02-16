@@ -8,8 +8,8 @@
 
 import { RateLimiter, createProviderError } from '../base/index.js';
 import type { ProviderError, ProviderErrorCode } from '../base/types.js';
-import { parseESearchResponse, parseEFetchResponse } from './parser.js';
-import type { ESearchResponse, PubMedArticle, PubMedConfig } from './types.js';
+import { parseESearchResponse, parseEFetchResponse, parseELinkResponse } from './parser.js';
+import type { ELinkOptions, ELinkResponse, ESearchResponse, PubMedArticle, PubMedConfig } from './types.js';
 
 const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 
@@ -173,6 +173,49 @@ export class PubMedClient {
 
     this.rateLimiter.resetBackoff();
     return parseEFetchResponse(xml).articles;
+  }
+
+  /**
+   * Find related articles using ELink API with neighbor_score.
+   */
+  async findRelated(options: ELinkOptions): Promise<ELinkResponse[]> {
+    await this.rateLimiter.acquire();
+
+    const params = new URLSearchParams({
+      dbfrom: 'pubmed',
+      db: 'pubmed',
+      cmd: 'neighbor_score',
+      retmode: 'xml',
+      email: this.config.email,
+    });
+
+    for (const id of options.ids) {
+      params.append('id', id);
+    }
+
+    if (this.config.apiKey) {
+      params.set('api_key', this.config.apiKey);
+    }
+
+    if (options.term) {
+      params.set('term', options.term);
+    }
+
+    const url = `${BASE_URL}/elink.fcgi?${params.toString()}`;
+    const response = await this.fetchWithErrorHandling(url);
+    const xml = await response.text();
+
+    this.rateLimiter.resetBackoff();
+    const results = parseELinkResponse(xml);
+
+    // Apply maxResults truncation per seed
+    if (options.maxResults !== undefined) {
+      for (const result of results) {
+        result.relatedIds = result.relatedIds.slice(0, options.maxResults);
+      }
+    }
+
+    return results;
   }
 
   /**
