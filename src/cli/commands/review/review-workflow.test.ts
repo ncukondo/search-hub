@@ -1579,6 +1579,211 @@ summary:
     });
   });
 
+  describe('review finalize --decision E2E', () => {
+    it('--decision exclude: only exclude consensus finalized, include consensus untouched', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Single reviewer marks: first 4 include, next 4 exclude, last 2 uncertain
+      const extractResult = await executeReviewExtract(
+        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-exc' },
+        sessionsDir
+      );
+      const content = await readFile(extractResult.outputPath, 'utf-8');
+      const file = parseYaml(content) as ReviewFile;
+      for (let i = 0; i < file.articles.length; i++) {
+        let decision: ReviewDecision;
+        if (i < 4) decision = 'include';
+        else if (i < 8) decision = 'exclude';
+        else decision = 'uncertain';
+        await executeReviewMark({ file: extractResult.outputPath, id: getArticleId(file.articles[i]!), decision });
+      }
+      await executeReviewMerge({ sessionId, name: 'decision-exc' }, sessionsDir);
+
+      // Finalize with --decision exclude
+      const result = await executeReviewFinalize({ sessionId, decision: 'exclude' }, sessionsDir);
+      expect(result.excludedCount).toBe(4);
+      expect(result.includedCount).toBe(0);
+      expect(result.skippedByStatus['agreed-include']).toBe(4);
+      expect(result.skippedByStatus.uncertain).toBe(2);
+
+      // Verify only exclude articles have finalDecision
+      const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
+      expect(finalized).toHaveLength(4);
+      for (const a of finalized) {
+        expect(a.finalDecision).toBe('exclude');
+      }
+      // Include articles should NOT have finalDecision
+      const includeArticles = reviewFile.articles.slice(0, 4);
+      for (const a of includeArticles) {
+        expect(a.finalDecision).toBeUndefined();
+      }
+    });
+
+    it('--decision include: only include consensus finalized, exclude consensus untouched', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Single reviewer marks: first 3 include, next 5 exclude, last 2 uncertain
+      const extractResult = await executeReviewExtract(
+        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-inc' },
+        sessionsDir
+      );
+      const content = await readFile(extractResult.outputPath, 'utf-8');
+      const file = parseYaml(content) as ReviewFile;
+      for (let i = 0; i < file.articles.length; i++) {
+        let decision: ReviewDecision;
+        if (i < 3) decision = 'include';
+        else if (i < 8) decision = 'exclude';
+        else decision = 'uncertain';
+        await executeReviewMark({ file: extractResult.outputPath, id: getArticleId(file.articles[i]!), decision });
+      }
+      await executeReviewMerge({ sessionId, name: 'decision-inc' }, sessionsDir);
+
+      // Finalize with --decision include
+      const result = await executeReviewFinalize({ sessionId, decision: 'include' }, sessionsDir);
+      expect(result.includedCount).toBe(3);
+      expect(result.excludedCount).toBe(0);
+      expect(result.skippedByStatus['agreed-exclude']).toBe(5);
+      expect(result.skippedByStatus.uncertain).toBe(2);
+
+      // Verify only include articles have finalDecision
+      const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
+      expect(finalized).toHaveLength(3);
+      for (const a of finalized) {
+        expect(a.finalDecision).toBe('include');
+      }
+    });
+
+    it('sequential use: --decision exclude then --decision include finalizes all consensus', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Mark: first 4 include, next 4 exclude, last 2 uncertain
+      const extractResult = await executeReviewExtract(
+        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-seq' },
+        sessionsDir
+      );
+      const content = await readFile(extractResult.outputPath, 'utf-8');
+      const file = parseYaml(content) as ReviewFile;
+      for (let i = 0; i < file.articles.length; i++) {
+        let decision: ReviewDecision;
+        if (i < 4) decision = 'include';
+        else if (i < 8) decision = 'exclude';
+        else decision = 'uncertain';
+        await executeReviewMark({ file: extractResult.outputPath, id: getArticleId(file.articles[i]!), decision });
+      }
+      await executeReviewMerge({ sessionId, name: 'decision-seq' }, sessionsDir);
+
+      // Step 1: finalize exclude only
+      const r1 = await executeReviewFinalize({ sessionId, decision: 'exclude' }, sessionsDir);
+      expect(r1.excludedCount).toBe(4);
+      expect(r1.includedCount).toBe(0);
+
+      // Step 2: finalize include only
+      const r2 = await executeReviewFinalize({ sessionId, decision: 'include' }, sessionsDir);
+      expect(r2.includedCount).toBe(4);
+      expect(r2.excludedCount).toBe(0);
+
+      // Verify all 8 consensus articles are finalized
+      const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
+      expect(finalized).toHaveLength(8);
+    });
+
+    it('--decision combined with --dry-run: correct preview output', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      const extractResult = await executeReviewExtract(
+        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-dry' },
+        sessionsDir
+      );
+      const content = await readFile(extractResult.outputPath, 'utf-8');
+      const file = parseYaml(content) as ReviewFile;
+      for (let i = 0; i < file.articles.length; i++) {
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: getArticleId(file.articles[i]!),
+          decision: i < 5 ? 'include' : 'exclude',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'decision-dry' }, sessionsDir);
+
+      // Dry-run with --decision exclude
+      const result = await executeReviewFinalize(
+        { sessionId, decision: 'exclude', dryRun: true },
+        sessionsDir
+      );
+      expect(result.excludedCount).toBe(5);
+      expect(result.includedCount).toBe(0);
+      expect(result.skippedByStatus['agreed-include']).toBe(5);
+
+      // Verify NO changes were made
+      const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
+      const reviewFile = parseYaml(reviewsContent) as ReviewFile;
+      const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
+      expect(finalized).toHaveLength(0);
+    });
+
+    it('--decision combined with --min-reviewers: both filters applied', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId }, sessionsDir);
+
+      // Reviewer 1 (title basis): all 10 articles, first 5 include, last 5 exclude
+      const r1 = await executeReviewExtract(
+        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-minrev-r1' },
+        sessionsDir
+      );
+      const r1Content = await readFile(r1.outputPath, 'utf-8');
+      const r1File = parseYaml(r1Content) as ReviewFile;
+      for (let i = 0; i < r1File.articles.length; i++) {
+        await executeReviewMark({
+          file: r1.outputPath,
+          id: getArticleId(r1File.articles[i]!),
+          decision: i < 5 ? 'include' : 'exclude',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'decision-minrev-r1' }, sessionsDir);
+
+      // Reviewer 2 (abstract basis): only first 3 include articles at abstract level
+      // Using abstract basis means unreviewed articles at title level remain agreed (not incomplete)
+      const r2 = await executeReviewExtract(
+        { sessionId, filter: ['agreed-include'], basis: 'abstract', reviewer: 'ai:gpt-4o', limit: 3, name: 'decision-minrev-r2' },
+        sessionsDir
+      );
+      const r2Content = await readFile(r2.outputPath, 'utf-8');
+      const r2File = parseYaml(r2Content) as ReviewFile;
+      for (const article of r2File.articles) {
+        await executeReviewMark({
+          file: r2.outputPath,
+          id: getArticleId(article),
+          decision: 'include',
+        });
+      }
+      await executeReviewMerge({ sessionId, name: 'decision-minrev-r2' }, sessionsDir);
+
+      // Finalize with --decision include AND --min-reviewers 2
+      // Articles 0-2: agreed-include, 2 unique reviewers → passes both filters
+      // Articles 3-4: agreed-include, 1 unique reviewer → passes decision, fails min-reviewers
+      // Articles 5-9: agreed-exclude → skipped by decision filter
+      const result = await executeReviewFinalize(
+        { sessionId, decision: 'include', minReviewers: 2 },
+        sessionsDir
+      );
+      expect(result.includedCount).toBe(3);
+      expect(result.excludedCount).toBe(0);
+      // 2 agreed-include skipped by min-reviewers, 5 agreed-exclude skipped by decision filter
+      expect(result.skippedByStatus['agreed-include']).toBe(2);
+      expect(result.skippedByStatus['agreed-exclude']).toBe(5);
+    });
+  });
+
   describe('Dynamic Next Steps progression', () => {
     it('suggests correct next steps through entire workflow', async () => {
       await setupSessionWithResults();

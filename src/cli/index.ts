@@ -2495,13 +2495,22 @@ Examples:
     .requiredOption('--session <id>', 'session ID')
     .option('--dry-run', 'preview without changes', false)
     .option('--min-reviewers <n>', 'minimum agreeing reviewers needed', '1')
-    .action(async (options: { session: string; dryRun: boolean; minReviewers: string }) => {
+    .option('--decision <type>', 'only finalize this decision type (include or exclude)')
+    .action(async (options: { session: string; dryRun: boolean; minReviewers: string; decision?: string }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
         const sessionsDir = await getSessionsDir(globalOpts);
+        if (options.decision && options.decision !== 'include' && options.decision !== 'exclude') {
+          if (!globalOpts.quiet) {
+            console.error(`Error: --decision must be "include" or "exclude", got "${options.decision}"`);
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
+          return;
+        }
         const finalizeOptions: ReviewFinalizeOptions = {
           sessionId: options.session,
           ...(options.dryRun && { dryRun: options.dryRun }),
+          ...(options.decision && { decision: options.decision as 'include' | 'exclude' }),
         };
         const minReviewers = parseInt(options.minReviewers, 10);
         if (!Number.isNaN(minReviewers) && minReviewers > 1) {
@@ -2509,7 +2518,10 @@ Examples:
         }
         const result = await executeReviewFinalize(finalizeOptions, sessionsDir);
         if (!globalOpts.quiet) {
-          console.log(formatFinalizeOutput(result, { dryRun: options.dryRun }));
+          console.log(formatFinalizeOutput(result, {
+            dryRun: options.dryRun,
+            ...(finalizeOptions.decision && { decision: finalizeOptions.decision }),
+          }));
           if (!options.dryRun) {
             const statusResult = await executeReviewStatus({ sessionId: options.session }, sessionsDir);
             const suggestion = formatSuggestion(getSuggestion({
