@@ -57,11 +57,11 @@ search-hub search <query.yaml> --sort <relevance|date>
 
 ### Step 1: Add `SortField` type and update `SearchOptions`
 
-- [ ] Write test: `src/providers/base/types.test.ts` — validate SortField type
-- [ ] Add `SortField` type and `sort` field to `SearchOptions` in `src/providers/base/types.ts`
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `SearchOptions` has optional `sort` field typed as `SortField`
+- [x] Write test: `src/providers/base/types.test.ts` — validate SortField type
+- [x] Add `SortField` type and `sort` field to `SearchOptions` in `src/providers/base/types.ts`
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `SearchOptions` has optional `sort` field typed as `SortField`
 
 ### Step 2: PubMed sort support
 
