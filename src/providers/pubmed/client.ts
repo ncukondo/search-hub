@@ -226,7 +226,10 @@ export class PubMedClient {
    * to maxResults.
    */
   async findRelatedMerged(options: ELinkOptions): Promise<RelatedArticle[]> {
-    const responses = await this.findRelated(options);
+    // Pass options without maxResults to findRelated() to avoid double-truncation:
+    // each seed should return all results so the merge sees the full picture.
+    const { maxResults, ...findRelatedOptions } = options;
+    const responses = await this.findRelated(findRelatedOptions);
 
     const seedSet = new Set(options.ids);
     const scoreMap = new Map<string, number>();
@@ -245,8 +248,8 @@ export class PubMedClient {
       .map(([id, score]) => ({ id, score }))
       .sort((a, b) => b.score - a.score);
 
-    if (options.maxResults !== undefined) {
-      return merged.slice(0, options.maxResults);
+    if (maxResults !== undefined) {
+      return merged.slice(0, maxResults);
     }
 
     return merged;
