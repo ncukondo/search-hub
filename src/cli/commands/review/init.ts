@@ -10,10 +10,11 @@ import { loadSession } from '../../../session/manager.js';
 import { loadResults } from '../../../session/results-io.js';
 import { deduplicateForReview } from './dedup.js';
 import { generateReviewJSONSchema } from './schema.js';
-import type { ArticleEntry, ReviewFile, MergedSource } from './types.js';
+import type { ArticleEntry, ReviewFile, ReviewMode, MergedSource } from './types.js';
 
 export interface ReviewInitOptions {
   sessionId: string;
+  mode?: ReviewMode;
   force?: boolean;
 }
 
@@ -127,6 +128,7 @@ export async function executeReviewInit(
   // Build review file
   const reviewFile: ReviewFile = {
     sessionId: options.sessionId,
+    ...(options.mode && { mode: options.mode }),
     articles: articleEntries,
   };
 
