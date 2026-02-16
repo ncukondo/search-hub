@@ -304,9 +304,15 @@ export async function executeReviewExtract(
     const yamlContent = stringifyYaml(outputFile, { lineWidth: 0 });
 
     // Replace finalDecision: null with a commented placeholder for user guidance
-    const yamlWithComments = yamlContent.replace(
+    let yamlWithComments = yamlContent.replace(
       /^(\s*)finalDecision: null$/gm,
       '$1finalDecision: # include / exclude'
+    );
+
+    // Add reviews array inline guidance
+    yamlWithComments = yamlWithComments.replace(
+      /^(\s*)reviews: \[\]$/gm,
+      '$1reviews: []                  # add new reviews here'
     );
 
     const guidanceComment = getFinalDecisionGuidanceComment();

@@ -750,6 +750,18 @@ describe('executeReviewExtract', () => {
       expect(content).toContain('# include / exclude');
     });
 
+    it('--finalize includes reviews array inline guidance', async () => {
+      await writeReviewFile(articlesWithReviews);
+
+      const result = await executeReviewExtract(
+        { sessionId, name: 'finalize-reviews-guide', reviewer: 'human:admin', finalize: true },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toMatch(/reviews: \[\]\s+# add new reviews here/);
+    });
+
     it('--finalize --basis title scopes content to title only', async () => {
       await writeReviewFile(articlesWithReviews);
 
