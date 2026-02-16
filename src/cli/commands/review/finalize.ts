@@ -101,7 +101,7 @@ export async function executeReviewFinalize(
  */
 export function formatFinalizeOutput(
   result: ReviewFinalizeResult,
-  options?: { dryRun?: boolean }
+  options?: { dryRun?: boolean; decision?: 'include' | 'exclude' }
 ): string {
   const lines: string[] = [];
 
@@ -126,6 +126,14 @@ export function formatFinalizeOutput(
   }
   if (result.skippedByStatus.conflicting > 0) {
     skippedParts.push(`${result.skippedByStatus.conflicting} conflicting`);
+  }
+
+  // Show filtered-out agreed counts when --decision is active
+  if (result.skippedByStatus['agreed-include'] > 0) {
+    skippedParts.push(`${result.skippedByStatus['agreed-include']} agreed-include (filtered)`);
+  }
+  if (result.skippedByStatus['agreed-exclude'] > 0) {
+    skippedParts.push(`${result.skippedByStatus['agreed-exclude']} agreed-exclude (filtered)`);
   }
 
   if (skippedParts.length > 0) {

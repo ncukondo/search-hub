@@ -610,4 +610,40 @@ describe('formatFinalizeOutput', () => {
     const output = formatFinalizeOutput(result);
     expect(output).not.toContain('Skipped');
   });
+
+  it('shows filtered-out agreed-include count when --decision exclude is active', () => {
+    const result: ReviewFinalizeResult = {
+      includedCount: 0,
+      excludedCount: 5,
+      skippedByStatus: {
+        pending: 2,
+        incomplete: 0,
+        uncertain: 0,
+        conflicting: 0,
+        finalized: 0,
+        'agreed-include': 3,
+        'agreed-exclude': 0,
+      },
+    };
+    const output = formatFinalizeOutput(result, { decision: 'exclude' });
+    expect(output).toContain('Skipped: 2 pending, 3 agreed-include (filtered)');
+  });
+
+  it('shows filtered-out agreed-exclude count when --decision include is active', () => {
+    const result: ReviewFinalizeResult = {
+      includedCount: 5,
+      excludedCount: 0,
+      skippedByStatus: {
+        pending: 0,
+        incomplete: 0,
+        uncertain: 0,
+        conflicting: 0,
+        finalized: 0,
+        'agreed-include': 0,
+        'agreed-exclude': 4,
+      },
+    };
+    const output = formatFinalizeOutput(result, { decision: 'include' });
+    expect(output).toContain('Skipped: 4 agreed-exclude (filtered)');
+  });
 });
