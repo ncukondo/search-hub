@@ -416,6 +416,142 @@ describe('executeReviewFinalize', () => {
       expect(reviewFile.articles[0]!.finalDecision).toBeUndefined();
     });
   });
+
+  describe('Step 5: --decision filter', () => {
+    it('decision: exclude only finalizes agreed-exclude; agreed-include skipped', async () => {
+      await setupReviewFile({
+        sessionId,
+        reviewers: [{ name: 'ai:claude', basis: 'title' }],
+        articles: [
+          {
+            doi: '10.1234/inc',
+            title: 'Include Article',
+            reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title' }],
+          },
+          {
+            doi: '10.1234/exc',
+            title: 'Exclude Article',
+            reviews: [{ reviewer: 'ai:claude', decision: 'exclude', basis: 'title' }],
+          },
+        ],
+      });
+
+      const result = await executeReviewFinalize(
+        { sessionId, decision: 'exclude' },
+        sessionsDir
+      );
+      expect(result.excludedCount).toBe(1);
+      expect(result.includedCount).toBe(0);
+      expect(result.skippedByStatus['agreed-include']).toBe(1);
+
+      const reviewFile = await readReviewFile();
+      expect(reviewFile.articles[0]!.finalDecision).toBeUndefined();
+      expect(reviewFile.articles[1]!.finalDecision).toBe('exclude');
+    });
+
+    it('decision: include only finalizes agreed-include; agreed-exclude skipped', async () => {
+      await setupReviewFile({
+        sessionId,
+        reviewers: [{ name: 'ai:claude', basis: 'title' }],
+        articles: [
+          {
+            doi: '10.1234/inc',
+            title: 'Include Article',
+            reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title' }],
+          },
+          {
+            doi: '10.1234/exc',
+            title: 'Exclude Article',
+            reviews: [{ reviewer: 'ai:claude', decision: 'exclude', basis: 'title' }],
+          },
+        ],
+      });
+
+      const result = await executeReviewFinalize(
+        { sessionId, decision: 'include' },
+        sessionsDir
+      );
+      expect(result.includedCount).toBe(1);
+      expect(result.excludedCount).toBe(0);
+      expect(result.skippedByStatus['agreed-exclude']).toBe(1);
+
+      const reviewFile = await readReviewFile();
+      expect(reviewFile.articles[0]!.finalDecision).toBe('include');
+      expect(reviewFile.articles[1]!.finalDecision).toBeUndefined();
+    });
+
+    it('decision: undefined (default) finalizes both — existing behavior preserved', async () => {
+      await setupReviewFile({
+        sessionId,
+        reviewers: [{ name: 'ai:claude', basis: 'title' }],
+        articles: [
+          {
+            doi: '10.1234/inc',
+            title: 'Include Article',
+            reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title' }],
+          },
+          {
+            doi: '10.1234/exc',
+            title: 'Exclude Article',
+            reviews: [{ reviewer: 'ai:claude', decision: 'exclude', basis: 'title' }],
+          },
+        ],
+      });
+
+      const result = await executeReviewFinalize({ sessionId }, sessionsDir);
+      expect(result.includedCount).toBe(1);
+      expect(result.excludedCount).toBe(1);
+      expect(result.skippedByStatus['agreed-include']).toBe(0);
+      expect(result.skippedByStatus['agreed-exclude']).toBe(0);
+    });
+
+    it('skipped-by-filter articles counted in skippedByStatus under their agreed status', async () => {
+      await setupReviewFile({
+        sessionId,
+        reviewers: [
+          { name: 'ai:claude', basis: 'title' },
+          { name: 'ai:gpt-4o', basis: 'title' },
+        ],
+        articles: [
+          {
+            doi: '10.1234/inc1',
+            title: 'Include 1',
+            reviews: [
+              { reviewer: 'ai:claude', decision: 'include', basis: 'title' },
+              { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'title' },
+            ],
+          },
+          {
+            doi: '10.1234/inc2',
+            title: 'Include 2',
+            reviews: [
+              { reviewer: 'ai:claude', decision: 'include', basis: 'title' },
+              { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'title' },
+            ],
+          },
+          {
+            doi: '10.1234/exc1',
+            title: 'Exclude 1',
+            reviews: [
+              { reviewer: 'ai:claude', decision: 'exclude', basis: 'title' },
+              { reviewer: 'ai:gpt-4o', decision: 'exclude', basis: 'title' },
+            ],
+          },
+          // pending - not affected by decision filter
+          { doi: '10.1234/pend', title: 'Pending', reviews: [] },
+        ],
+      });
+
+      const result = await executeReviewFinalize(
+        { sessionId, decision: 'exclude' },
+        sessionsDir
+      );
+      expect(result.excludedCount).toBe(1);
+      expect(result.includedCount).toBe(0);
+      expect(result.skippedByStatus['agreed-include']).toBe(2);
+      expect(result.skippedByStatus.pending).toBe(1);
+    });
+  });
 });
 
 describe('formatFinalizeOutput', () => {

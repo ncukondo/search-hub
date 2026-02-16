@@ -11,6 +11,7 @@ export interface ReviewFinalizeOptions {
   sessionId: string;
   dryRun?: boolean;
   minReviewers?: number;
+  decision?: 'include' | 'exclude';
 }
 
 export interface ReviewFinalizeResult {
@@ -56,6 +57,13 @@ export async function executeReviewFinalize(
     const status = classifyStatus(article, reviewers);
 
     if (status === 'agreed-include' || status === 'agreed-exclude') {
+      // Check decision filter
+      const consensusDecision = status === 'agreed-include' ? 'include' : 'exclude';
+      if (options.decision && options.decision !== consensusDecision) {
+        result.skippedByStatus[status]++;
+        continue;
+      }
+
       // Check minimum reviewer count
       const reviews = article.reviews ?? [];
       const uniqueReviewers = new Set(reviews.map((r) => r.reviewer));
@@ -65,7 +73,7 @@ export async function executeReviewFinalize(
       }
 
       if (!options.dryRun) {
-        article.finalDecision = status === 'agreed-include' ? 'include' : 'exclude';
+        article.finalDecision = consensusDecision;
       }
 
       if (status === 'agreed-include') {
