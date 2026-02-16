@@ -88,6 +88,7 @@ spec/
 | New provider | `providers/_interface.md` → `providers/{example}.md` |
 | Query DSL changes | `models/query-dsl.md` |
 | CLI changes | `cli/commands.md` |
+| Related articles | `cli/commands.md` (related section) → `providers/pubmed.md` (ELink) |
 | Review workflow | `cli/review.md` |
 | Config changes | `models/config.md` |
 | ref integration | `integration/reference-manager.md` |

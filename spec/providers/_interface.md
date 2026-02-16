@@ -16,6 +16,27 @@ Verify API access and credentials.
 ### 4. Rate Limiting
 Respect per-provider rate limits.
 
+### 5. Sort Support
+
+The `SearchOptions` interface includes an optional `sort` field:
+
+```typescript
+type SortField = 'relevance' | 'date';
+
+interface SearchOptions {
+  sort?: SortField;  // default: undefined (provider default)
+}
+```
+
+Each provider maps `SortField` to its native sort parameter:
+
+| SortField   | PubMed           | Scopus            | arXiv                  | ERIC        |
+|-------------|------------------|-------------------|------------------------|-------------|
+| `relevance` | `sort=relevance` | `sort=-relevancy` | `sortBy=relevance`     | unsupported |
+| `date`      | `sort=pub_date`  | (default)         | `sortBy=submittedDate` | unsupported |
+
+Providers that do not support sorting emit a warning and use their default order.
+
 ## Provider Contract
 
 Each provider must:

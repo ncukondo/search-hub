@@ -13,6 +13,7 @@
 |----------|---------|
 | `esearch.fcgi` | Search and get PMIDs |
 | `efetch.fcgi` | Fetch full records by PMID |
+| `elink.fcgi` | Find related/similar articles by PMID |
 
 ## Search Flow
 
@@ -72,6 +73,7 @@ PubMed:
 | `retmax` | Page size (max 10000) |
 | `retstart` | Offset for pagination |
 | `usehistory` | `y` (for large result sets) |
+| `sort` | `relevance` or `pub_date` (optional) |
 | `api_key` | From config |
 
 ### efetch
@@ -83,6 +85,21 @@ PubMed:
 | `rettype` | `xml` |
 | `retmode` | `xml` |
 | `api_key` | From config |
+
+### elink (Related Articles)
+
+| Parameter | Value |
+|-----------|-------|
+| `dbfrom` | `pubmed` |
+| `db` | `pubmed` |
+| `id` | One or more PMIDs |
+| `cmd` | `neighbor_score` (returns similarity scores) |
+| `term` | Optional filter (e.g., `review[filter]+AND+2024[pdat]`) |
+| `retmode` | `xml` |
+| `api_key` | From config |
+
+Returns `<LinkSetDb>` containing `<Link>` elements with `<Id>` and `<Score>`.
+Scores are relative (not normalized) and useful only for ranking within a result set.
 
 ## Response Parsing
 
@@ -132,4 +149,6 @@ max_results = 10000
 ## References
 
 - [E-utilities Documentation](https://www.ncbi.nlm.nih.gov/books/NBK25500/)
+- [E-utilities In-Depth (Parameters)](https://www.ncbi.nlm.nih.gov/books/NBK25499/)
 - [PubMed Search Field Tags](https://pubmed.ncbi.nlm.nih.gov/help/#search-tags)
+- [PubMed Relevance Sort](https://www.nlm.nih.gov/pubs/techbull/so13/so13_pm_relevance.html)

@@ -91,6 +91,62 @@ summary:
 - `resume` は不可（セッションエラーとして報告）
 - `sources/` には結果ファイル（JSONL）はコピーしない（クエリと出自情報のみ）
 
+## Related Session
+
+`search-hub related` により作成されるセッション。seed論文から関連論文を探索する。
+
+### Directory Structure
+
+```
+<data-dir>/sessions/
+└── {session-id}/
+    ├── session.yaml              # type: related, seeds
+    ├── results_pubmed.jsonl      # Related articles (standard Article format)
+    ├── results_pubmed.yaml
+    └── log.jsonl
+```
+
+### session.yaml Schema (type: related)
+
+通常セッションとの差異:
+- `type: related` フィールドが追加される
+- `query` フィールドは存在しない
+- `seeds` フィールドでseed論文のIDとソースセッションを記録
+- `resume` 不可
+
+```yaml
+version: 1
+id: "20260216_diabetes-related_abc123"
+name: "diabetes-related"
+type: related
+createdAt: "2026-02-16T..."
+updatedAt: "2026-02-16T..."
+seeds:
+  ids:
+    - "12345678"
+    - "23456789"
+  sourceSession: "20260215_diabetes-search_ff6c52"  # optional
+databases:
+  pubmed:
+    status: completed
+    files:
+      results: results_pubmed.jsonl
+      resultsYaml: results_pubmed.yaml
+    retrievedCount: 20
+summary:
+  totalRetrieved: 20
+  status: completed
+```
+
+### 互換性
+
+- `export`, `register`, `summary`, `results` — 通常セッションと同じ形式のため変更なしで動作
+- `review init` — 関連論文のスクリーニングにそのまま使用可能
+- `merge` — 検索セッションとの統合が可能
+- `resume` — 不可（エラーとして報告）
+
+---
+
 ## Session ID Format
 
 `{date}_{name}_{hash}`

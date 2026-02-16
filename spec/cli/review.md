@@ -6,16 +6,47 @@ The review workflow implements systematic screening through progressive phases:
 title screening, abstract screening, and fulltext screening. Each phase uses the
 extract → mark/edit → merge → finalize cycle.
 
-## Workflow Phases
+## Review Modes
+
+The review workflow supports two modes, set at `review init`:
+
+| Mode | Direction | Use Case |
+|------|-----------|----------|
+| `screening` (default) | Exclusion-based: remove what's not relevant | Systematic review, scoping review |
+| `picking` | Inclusion-based: pick up what looks promising | Narrative review, quick literature review |
+
+### Screening Mode Phases
 
 ```
-Phase 1: Title Screening       Screen all articles by title only
+Phase 1: Title Screening       Exclude clearly irrelevant articles
     ↓ finalize (agreed)
 Phase 2: Abstract Screening    Screen all-uncertain/divided by abstract
     ↓ finalize (agreed)
 Phase 3: Fulltext Screening    Screen all-uncertain/divided + finalized-include by fulltext
     ↓ finalize (agreed)
 Export / Register               Output final included articles
+```
+
+### Picking Mode Phases
+
+```
+Phase 1: Title Review          Pick up (include) relevant-looking articles
+    ↓ finalize (agreed)
+Phase 2: Abstract Confirmation Confirm picked articles by abstract
+    ↓ finalize (agreed)
+Phase 3: Fulltext Confirmation Final confirmation by fulltext
+    ↓ finalize (agreed)
+(Optional) Re-search & Add     Search again, merge, repeat
+Export / Register               Output final included articles
+```
+
+The mode is stored in the master file:
+
+```yaml
+sessionId: my-session
+mode: picking                # 'screening' | 'picking'
+reviewers: [...]
+articles: [...]
 ```
 
 ## Status Model
@@ -165,11 +196,15 @@ articles:
 
 ##### Decision Inline Comments
 
-| `--basis` | Comment on decision line |
-|---|---|
-| `title` | `# exclude / uncertain` |
-| `abstract` | `# include / exclude / uncertain` |
-| `fulltext` | `# include / exclude / uncertain` |
+Mode-dependent at title level:
+
+| `--basis` | `screening` mode | `picking` mode |
+|---|---|---|
+| `title` | `# exclude / uncertain` | `# include / uncertain` |
+| `abstract` | `# include / exclude / uncertain` | `# include / exclude / uncertain` |
+| `fulltext` | `# include / exclude / uncertain` | `# include / exclude / uncertain` |
+
+Note: In picking mode, `exclude` is still a valid decision at title level — it is simply not suggested in the inline comment.
 
 #### Final Decision Mode (`--finalize`)
 
@@ -230,8 +265,13 @@ Extract without `--basis` and without `--finalize` behaves the same as `--finali
 Initialize review file from search results.
 
 ```bash
-search-hub review init --session <id>
+search-hub review init --session <id> [--mode <screening|picking>] [--force]
 ```
+
+| Option | Description | Default |
+|---|---|---|
+| `--mode` | Review mode: `screening` (exclusion-based) or `picking` (inclusion-based) | `screening` |
+| `--force` | Overwrite existing review file | false |
 
 ### `review status`
 
@@ -419,6 +459,45 @@ search-hub review export --session S --only included -o final.yaml
 search-hub register S --reviewed
 ```
 
+## Example Workflow (Picking Mode)
+
+```bash
+# ========== Setup: Find related articles ==========
+
+search-hub related 12345678 23456789 --name diabetes-related -m 50
+
+# ========== Initialize review in picking mode ==========
+
+search-hub review init --session diabetes-related --mode picking
+
+# ========== Phase 1: Title Review (pick up) ==========
+
+search-hub review extract --session S --filter pending \
+  --basis title --reviewer "human:me" --name title-pick
+# Reviewer marks interesting articles as "include", leaves rest as "uncertain"
+search-hub review merge --session S --name title-pick
+search-hub review finalize --session S
+
+# ========== Phase 2: Abstract Confirmation ==========
+
+search-hub review extract --session S --filter agreed-include,all-uncertain \
+  --basis abstract --reviewer "human:me" --name abstract-check
+# Reviewer confirms include or changes to exclude
+search-hub review merge --session S --name abstract-check
+search-hub review finalize --session S
+
+# ========== (Optional) Add more articles ==========
+
+search-hub related 34567890 --name diabetes-extra -m 30
+search-hub merge diabetes-related diabetes-extra --name diabetes-combined
+search-hub review init --session diabetes-combined --mode picking
+# Repeat phases 1-2
+
+# ========== Output ==========
+
+search-hub review export --session S --only included -o final.yaml
+```
+
 ## Dynamic Next Steps
 
 Each mutating review command outputs context-aware next steps based on the current
@@ -426,6 +505,8 @@ article status distribution. See `spec/cli/suggestions.md` Phase 4 for the compl
 suggestion rules.
 
 ### Next Steps Logic (simplified)
+
+#### Screening Mode
 
 ```
 After any command:
@@ -436,13 +517,33 @@ After any command:
   3. Else if (all-uncertain + divided + incomplete) > 0:
        → Detect next basis from reviewer registry
        → "N articles need {next_basis}-level review"
-       → $ review extract --filter ... --basis {next_basis} ...
+       → $ review extract --filter all-uncertain,divided,incomplete --basis {next_basis} ...
   4. Else if all finalized:
        → "All articles finalized"
        → $ review export ...
   5. If --limit was used and remaining > 0:
        → "N articles remaining. Extract next batch:"
        → $ review extract ... --offset X --limit Y --name next-batch
+```
+
+#### Picking Mode
+
+```
+After any command:
+  1. If pending > 0:
+       → "Extract N pending articles for title review"
+       → $ review extract --basis title --filter pending ...
+  2. Else if agreed-include > 0 (+ all-uncertain):
+       → Detect next basis from reviewer registry
+       → "N articles picked — confirm at {next_basis} level"
+       → $ review extract --filter agreed-include,all-uncertain --basis {next_basis} ...
+  3. Else if agreed > 0:
+       → $ review finalize ...
+  4. Else if all finalized:
+       → "N articles ready for export"
+       → $ review export --only included ...
+  5. If --limit was used and remaining > 0:
+       → same as screening mode
 ```
 
 The static `WorkflowGuidance` / `WorkflowPhase` types, `generateWorkflow()` function,

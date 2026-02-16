@@ -7,6 +7,7 @@ search-hub <command> [options]
 
 Commands:
   search      Execute search across databases
+  related     Find related articles from seed PMIDs
   resume      Resume interrupted session
   status      Show session status
   export      Export session results
@@ -57,6 +58,7 @@ search-hub search --db <provider> --query <query-string> [options]
 | `--query <string>` | Direct query string (requires --db) |
 | `--name <string>` | Session name (default: from query file) |
 | `--max-results <n>` | Limit results per database |
+| `--sort <field>` | Sort results: `relevance` or `date` |
 | `--dry-run` | Show translated queries, provider readiness, and diagnostics without executing |
 | `--no-resume` | Start fresh even if session exists |
 
@@ -75,6 +77,9 @@ search-hub search --db pubmed --query "diabetes[tiab] AND AI[tiab]"
 # Dry run - show translated queries
 search-hub search ./query.yaml --dry-run
 
+# Sort by relevance
+search-hub search ./query.yaml --sort relevance
+
 # Limit results
 search-hub search ./query.yaml --max-results 100
 ```
@@ -90,6 +95,70 @@ Query features (use "query init" to see full template):
   mesh/eric:  controlled vocabulary (terms.mesh, terms.eric)
   overrides:  per-database settings (pubmed, scopus, eric, arxiv)
 ```
+
+---
+
+## related
+
+Find related articles from seed PMIDs using PubMed ELink API.
+
+### Syntax
+
+```bash
+# Direct PMID input
+search-hub related <pmids...> [options]
+
+# From existing session
+search-hub related --from-session <session-id> --pmid <pmid>... [options]
+```
+
+### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `pmids...` | One or more seed PMIDs |
+
+### Options
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--name` | `-n` | Session name | `related-{date}` |
+| `--max-results` | `-m` | Max related articles to retrieve | 20 |
+| `--db` | | Database to use | `pubmed` |
+| `--from-session` | `-s` | Load context from existing session | - |
+| `--pmid` | | Seed PMIDs (alternative to positional, required with --from-session) | - |
+| `--term` | `-t` | Additional PubMed filter (e.g., `"review[filter]"`) | - |
+
+### Examples
+
+```bash
+# Find articles related to a single PMID
+search-hub related 12345678
+
+# Multiple seed PMIDs with custom session name
+search-hub related 12345678 23456789 --name diabetes-related -m 50
+
+# From existing session, specifying which articles to use as seeds
+search-hub related --from-session my-search --pmid 12345678 --pmid 23456789
+
+# With additional filter
+search-hub related 12345678 --term "review[filter]+AND+2024[pdat]"
+```
+
+### Behavior
+
+1. Resolve seed PMIDs (positional args or `--from-session` + `--pmid`)
+2. Call PubMed ELink API (`cmd=neighbor_score`) to find related articles
+3. Fetch full article records for top results (ranked by similarity score)
+4. Create session with `type: related` and `seeds` metadata
+5. Save results in standard format (compatible with review, export, register)
+
+### Session Output
+
+Creates a standard session with:
+- `type: related` in session.yaml
+- `seeds` field recording seed PMIDs and source session
+- Results in standard JSONL format (works with all existing commands)
 
 ---
 

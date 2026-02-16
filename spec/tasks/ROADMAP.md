@@ -128,6 +128,10 @@ This file tracks high-level progress. For implementation details, see individual
 | 119 | Replace Static JSON Schema with Zod-Generated Schema | 44 | ✅ Completed | [20260216-03](completed/20260216-03-review-schema-zod-generation.md) |
 | 120 | Query Iteration Log | 39, 41 | ✅ Completed | [20260216-04](completed/20260216-04-query-iteration-log.md) |
 | 121 | Redesign ReviewStatus (`uncertain`→`all-uncertain`, `conflicting`→`divided`) | 72, 88 | ✅ Completed | [20260216-05](completed/20260216-05-review-status-model-redesign.md) |
+| 122 | Search Sort Option | 5, 6-9, 10 | 📋 Planned | [20260217-01](20260217-01-search-sort-option.md) |
+| 123 | PubMed ELink Related Articles Client | 6 | 📋 Planned | [20260217-02](20260217-02-pubmed-related-articles.md) |
+| 124 | `related` Command | 123 | 📋 Planned | [20260217-03](20260217-03-related-command.md) |
+| 125 | Review Picking Mode | 44, 121 | 📋 Planned | [20260217-04](20260217-04-review-picking-mode.md) |
 
 ## Development Flow
 
