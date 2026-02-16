@@ -272,6 +272,7 @@ const reviewStatusRule: SuggestionRule = (ctx) => {
   return generateReviewNextSteps({
     sessionId: ctx.sessionId ?? '<session-id>',
     statusResult: rs,
+    ...(rs.mode && { mode: rs.mode }),
   });
 };
 
@@ -343,6 +344,7 @@ const reviewMergeRule: SuggestionRule = (ctx) => {
   return generateReviewNextSteps({
     sessionId: ctx.sessionId ?? '<session-id>',
     statusResult: rs,
+    ...(rs.mode && { mode: rs.mode }),
   });
 };
 
@@ -354,6 +356,7 @@ const reviewFinalizeRule: SuggestionRule = (ctx) => {
   return generateReviewNextSteps({
     sessionId: ctx.sessionId ?? '<session-id>',
     statusResult: rs,
+    ...(rs.mode && { mode: rs.mode }),
   });
 };
 
