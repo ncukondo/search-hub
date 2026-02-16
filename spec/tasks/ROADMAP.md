@@ -127,7 +127,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 118 | Add Comment Inline Guidance to Review Extract | 73 | ✅ Completed | [20260216-02](completed/20260216-02-review-extract-comment-guidance.md) |
 | 119 | Replace Static JSON Schema with Zod-Generated Schema | 44 | ✅ Completed | [20260216-03](completed/20260216-03-review-schema-zod-generation.md) |
 | 120 | Query Iteration Log | 39, 41 | ✅ Completed | [20260216-04](completed/20260216-04-query-iteration-log.md) |
-| 121 | Redesign ReviewStatus (`uncertain`→`all-uncertain`, `conflicting`→`divided`) | 72, 88 | 🔧 In Progress | [20260216-05](20260216-05-review-status-model-redesign.md) |
+| 121 | Redesign ReviewStatus (`uncertain`→`all-uncertain`, `conflicting`→`divided`) | 72, 88 | ✅ Completed | [20260216-05](completed/20260216-05-review-status-model-redesign.md) |
 
 ## Development Flow
 
