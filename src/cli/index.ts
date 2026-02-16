@@ -728,6 +728,7 @@ Examples:
     .option('--query <string>', 'direct query in database-native syntax (advanced; requires --db; prefer YAML files)')
     .option('--name <string>', 'session name')
     .option('--max-results <n>', 'limit results per database')
+    .option('--sort <relevance|date>', 'sort results by relevance or date')
     .option('--dry-run', 'show translated queries without executing')
     .option('--count-only', 'get hit counts without downloading results')
     .option('--preview', 'get hit counts and first 5 titles without creating session')

@@ -369,6 +369,7 @@ export async function executeSearch(
 
       const searchOptions = {
         maxResults: options.maxResults ?? config.providers[providerName].max_results,
+        ...(options.sort && { sort: options.sort }),
       };
 
       for await (const article of provider.search(translatedQuery, searchOptions)) {

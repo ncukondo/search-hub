@@ -101,12 +101,12 @@ search-hub search <query.yaml> --sort <relevance|date>
 
 ### Step 6: CLI `--sort` option
 
-- [ ] Write test: `src/cli/commands/search.test.ts` — verify `--sort` option parsed
-- [ ] Add `--sort <relevance|date>` option to search command
-- [ ] Forward sort option through search executor to providers
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub search query.yaml --sort relevance` passes sort to providers
+- [x] Write test: `src/cli/commands/search.test.ts` — verify `--sort` option parsed
+- [x] Add `--sort <relevance|date>` option to search command
+- [x] Forward sort option through search executor to providers
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub search query.yaml --sort relevance` passes sort to providers
 
 ### Final Step: E2E Integration Tests
 
