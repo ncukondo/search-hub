@@ -5,7 +5,7 @@
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { parse as parseYaml } from 'yaml';
-import { classifyStatus, type ReviewFile, type ReviewerRecord } from './types.js';
+import { classifyStatus, type ReviewFile, type ReviewerRecord, type ReviewMode } from './types.js';
 
 export interface ReviewStatusOptions {
   sessionId: string;
@@ -25,6 +25,8 @@ export interface ReviewStatusResult {
   excluded: number;
   /** Registered reviewers from the review file */
   reviewers: ReviewerRecord[];
+  /** Review mode from the review file */
+  mode?: ReviewMode;
 }
 
 /**
@@ -96,6 +98,7 @@ export async function executeReviewStatus(
     sessionId: options.sessionId,
     total: reviewFile.articles.length,
     reviewers,
+    ...(reviewFile.mode && { mode: reviewFile.mode }),
     ...counts,
   };
 }
@@ -106,8 +109,9 @@ export async function executeReviewStatus(
 export function formatStatusOutput(result: ReviewStatusResult): string {
   const id = result.sessionId;
   const agreed = result.agreedInclude + result.agreedExclude;
+  const header = result.mode ? `Review Progress: ${id} (${result.mode} mode)` : `Review Progress: ${id}`;
   const lines = [
-    `Review Progress: ${id}`,
+    header,
     `  Total:           ${result.total}`,
     `  Pending:         ${result.pending}`,
     `  Incomplete:      ${result.incomplete}`,

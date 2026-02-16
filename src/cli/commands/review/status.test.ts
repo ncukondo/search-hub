@@ -171,6 +171,20 @@ describe('executeReviewStatus', () => {
     expect(result.excluded).toBe(0);
   });
 
+  it('includes mode in result when present in review file', async () => {
+    await writeReviewFile([], { mode: 'picking' });
+
+    const result = await executeReviewStatus({ sessionId }, sessionsDir);
+    expect(result.mode).toBe('picking');
+  });
+
+  it('returns undefined mode when not present in review file', async () => {
+    await writeReviewFile([]);
+
+    const result = await executeReviewStatus({ sessionId }, sessionsDir);
+    expect(result.mode).toBeUndefined();
+  });
+
   it('throws error if reviews.yaml does not exist', async () => {
     const sessionDir = join(sessionsDir, sessionId);
     await mkdir(sessionDir, { recursive: true });
@@ -211,6 +225,66 @@ describe('executeReviewStatus', () => {
       expect(output).toContain('Reviewers:');
       expect(output).toContain('ai:claude  (title)');
       expect(output).toContain('ai:gpt-4o  (title)');
+    });
+
+    it('shows picking mode in header when mode is picking', () => {
+      const output = formatStatusOutput({
+        sessionId: 'my-session',
+        total: 10,
+        pending: 10,
+        incomplete: 0,
+        allUncertain: 0,
+        agreedInclude: 0,
+        agreedExclude: 0,
+        divided: 0,
+        finalized: 0,
+        included: 0,
+        excluded: 0,
+        reviewers: [],
+        mode: 'picking',
+      });
+
+      expect(output).toContain('Review Progress: my-session (picking mode)');
+    });
+
+    it('shows screening mode in header when mode is screening', () => {
+      const output = formatStatusOutput({
+        sessionId: 'my-session',
+        total: 10,
+        pending: 10,
+        incomplete: 0,
+        allUncertain: 0,
+        agreedInclude: 0,
+        agreedExclude: 0,
+        divided: 0,
+        finalized: 0,
+        included: 0,
+        excluded: 0,
+        reviewers: [],
+        mode: 'screening',
+      });
+
+      expect(output).toContain('Review Progress: my-session (screening mode)');
+    });
+
+    it('does not show mode when mode is undefined', () => {
+      const output = formatStatusOutput({
+        sessionId: 'my-session',
+        total: 10,
+        pending: 10,
+        incomplete: 0,
+        allUncertain: 0,
+        agreedInclude: 0,
+        agreedExclude: 0,
+        divided: 0,
+        finalized: 0,
+        included: 0,
+        excluded: 0,
+        reviewers: [],
+      });
+
+      expect(output).toContain('Review Progress: my-session');
+      expect(output).not.toContain('mode)');
     });
 
     it('does not include static AI Agent Workflow section', () => {
