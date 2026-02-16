@@ -75,94 +75,94 @@ search-hub query log <query.yaml> --json
 
 ### Step 1: Log file I/O module
 
-- [ ] Write test: `src/cli/commands/query/iteration-log.test.ts`
+- [x] Write test: `src/cli/commands/query/iteration-log.test.ts`
   - Test `getLogFilePath(queryFilePath)` returns correct `.search-log.yaml` path
   - Test `appendLogEntry(queryFilePath, entry)` creates file with header comment if not exists
   - Test `appendLogEntry(queryFilePath, entry)` appends to existing file
   - Test `readLogEntries(queryFilePath)` parses existing log entries
   - Test `readLogEntries(queryFilePath)` returns empty array when no log file exists
   - Test preserving manual comments in log file
-- [ ] Create stub: `src/cli/commands/query/iteration-log.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement:
+- [x] Create stub: `src/cli/commands/query/iteration-log.ts`
+- [x] Verify test fails (Red)
+- [x] Implement:
   - `getLogFilePath(queryFilePath: string): string`
   - `appendLogEntry(queryFilePath: string, entry: LogEntry): Promise<void>`
   - `readLogEntries(queryFilePath: string): Promise<LogEntry[]>`
   - Types: `CountLogEntry`, `PreviewLogEntry`, `AssessmentLogEntry`, `LogEntry` (union)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Acceptance: Log file I/O works correctly with create, append, read
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Acceptance: Log file I/O works correctly with create, append, read
 
 ### Step 2: Auto-log count-only results
 
-- [ ] Write test: `src/cli/commands/search.test.ts` (add cases)
+- [x] Write test: `src/cli/commands/search.test.ts` (add cases)
   - Test that `--count-only` with a query file triggers log append
   - Test that `--count-only` without a query file (direct `--query`) does NOT log
   - Test logged entry contains `type: count`, `query_hash`, `counts`, `total`
-- [ ] Modify count-only flow in `src/cli/index.ts` to call `appendLogEntry` after successful count
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Running `search query.yaml --count-only` appends a count entry to the log file
+- [x] Modify count-only flow in `src/cli/index.ts` to call `appendLogEntry` after successful count
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Running `search query.yaml --count-only` appends a count entry to the log file
 
 ### Step 3: Auto-log preview results
 
-- [ ] Write test: add cases for preview logging
+- [x] Write test: add cases for preview logging
   - Test that `--preview` with a query file triggers log append
   - Test logged entry contains `type: preview`, `query_hash`, `counts`, `total`, `titles`
-- [ ] Modify preview flow in `src/cli/index.ts` to call `appendLogEntry` after successful preview
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Running `search query.yaml --preview` appends a preview entry to the log file
+- [x] Modify preview flow in `src/cli/index.ts` to call `appendLogEntry` after successful preview
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Running `search query.yaml --preview` appends a preview entry to the log file
 
 ### Step 4: `query assess` command
 
-- [ ] Write test: `src/cli/commands/query/assess.test.ts`
+- [x] Write test: `src/cli/commands/query/assess.test.ts`
   - Test appending assessment with `--verdict`
   - Test appending assessment with `--precision` and `--comment`
   - Test error when no options provided
   - Test error when query file does not exist
-- [ ] Create: `src/cli/commands/query/assess.ts`
-- [ ] Register `assess` subcommand in `src/cli/index.ts` under query command
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `query assess query.yaml --verdict reject --comment "..."` appends assessment entry
+- [x] Create: `src/cli/commands/query/assess.ts`
+- [x] Register `assess` subcommand in `src/cli/index.ts` under query command
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `query assess query.yaml --verdict reject --comment "..."` appends assessment entry
 
 ### Step 5: `query log` command
 
-- [ ] Write test: `src/cli/commands/query/log.test.ts`
+- [x] Write test: `src/cli/commands/query/log.test.ts`
   - Test displaying log entries in chronological order
   - Test `--json` output format
   - Test display when no log file exists
   - Test display of mixed entry types (count, preview, assessment)
-- [ ] Create: `src/cli/commands/query/log.ts`
-- [ ] Register `log` subcommand in `src/cli/index.ts` under query command
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `query log query.yaml` displays formatted iteration history
+- [x] Create: `src/cli/commands/query/log.ts`
+- [x] Register `log` subcommand in `src/cli/index.ts` under query command
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `query log query.yaml` displays formatted iteration history
 
 ### Step 6: Update suggestions
 
-- [ ] Write test: suggestion after `query assess` and after `--count-only` mentions `query assess`
-- [ ] Update suggestion rules to include `query assess` as a next step after `--count-only` / `--preview`
-- [ ] Update suggestion rules for `query assess` (suggest `query log`, or editing and re-running count-only)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Appropriate next steps shown after relevant commands
+- [x] Write test: suggestion after `query assess` and after `--count-only` mentions `query assess`
+- [x] Update suggestion rules to include `query assess` as a next step after `--count-only` / `--preview`
+- [x] Update suggestion rules for `query assess` (suggest `query log`, or editing and re-running count-only)
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Appropriate next steps shown after relevant commands
 
 ### Final Step: E2E Integration Tests
 
-- [ ] Write E2E test: `src/cli/commands/query/iteration-log.e2e.test.ts`
+- [x] Write E2E test: `src/cli/commands/query/iteration-log.e2e.test.ts`
   - Create a temp directory with a query file
   - Run `search --count-only` (mocking providers), verify log file created
   - Run `query assess`, verify entry appended
   - Run `query log`, verify output contains both entries
   - Run `search --preview` (mocking providers), verify preview entry appended
   - Verify `query_hash` changes when query file is modified
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test with real query files
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test with real query files
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
