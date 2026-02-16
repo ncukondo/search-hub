@@ -125,6 +125,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 116 | Query Inspect Command | 115 | ✅ Completed | [20260212-05](completed/20260212-05-query-inspect-command.md) |
 | 117 | Add `--decision` Filter to Review Finalize | 74 | ✅ Completed | [20260216-01](completed/20260216-01-review-finalize-decision-filter.md) |
 | 118 | Add Comment Inline Guidance to Review Extract | 73 | ✅ Completed | [20260216-02](completed/20260216-02-review-extract-comment-guidance.md) |
+| 119 | Replace Static JSON Schema with Zod-Generated Schema | 44 | 🔧 In Progress | [20260216-03](20260216-03-review-schema-zod-generation.md) |
+| 120 | Query Iteration Log | 39, 41 | 📋 Ready | [20260216-04](20260216-04-query-iteration-log.md) |
 
 ## Development Flow
 
