@@ -280,9 +280,15 @@ export async function executeReviewExtract(
 
     // Add decision inline comments
     const decisionComment = getDecisionInlineComment(options.basis);
-    const yamlWithComments = yamlContent.replace(
+    let yamlWithComments = yamlContent.replace(
       /^(\s*-?\s*)decision: uncertain$/gm,
       `$1decision: uncertain          ${decisionComment}`
+    );
+
+    // Add comment field inline guidance
+    yamlWithComments = yamlWithComments.replace(
+      /^(\s*)comment: ""$/gm,
+      '$1comment: ""                  # reason for decision'
     );
 
     const guidanceComment = getBasisGuidanceComment(options.basis);

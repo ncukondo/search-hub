@@ -622,6 +622,19 @@ describe('executeReviewExtract', () => {
       expect(content).toContain('# include / exclude / uncertain');
     });
 
+    it('adds comment field inline guidance', async () => {
+      await writeReviewFile(articlesWithAbstracts);
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'title', reviewer: 'ai:claude', name: 'comment-guide' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('comment: ""');
+      expect(content).toMatch(/comment: ""\s+# reason for decision/);
+    });
+
     it('includes schema reference and guidance comments', async () => {
       await writeReviewFile(articlesWithAbstracts);
 
