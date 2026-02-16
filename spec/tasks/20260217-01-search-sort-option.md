@@ -85,11 +85,11 @@ search-hub search <query.yaml> --sort <relevance|date>
 
 ### Step 4: arXiv sort wiring
 
-- [ ] Write test: `src/providers/arxiv/provider.test.ts` — verify sort option mapped to `sortBy`
-- [ ] Update `ArxivProvider.search()` to map `SearchOptions.sort` to `ArxivSearchOptions.sortBy`
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: arXiv uses `sortBy=relevance` when base sort=relevance
+- [x] Write test: `src/providers/arxiv/provider.test.ts` — verify sort option mapped to `sortBy`
+- [x] Update `ArxivProvider.search()` to map `SearchOptions.sort` to `ArxivSearchOptions.sortBy`
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: arXiv uses `sortBy=relevance` when base sort=relevance
 
 ### Step 5: ERIC unsupported sort warning
 
