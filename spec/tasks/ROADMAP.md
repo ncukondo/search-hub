@@ -123,7 +123,8 @@ This file tracks high-level progress. For implementation details, see individual
 | 114 | Documentation Update (Query Filter & Check) | 112, 113 | ✅ Completed | [20260212-03](completed/20260212-03-query-filter-docs.md) |
 | 115 | Query DSL Provider-Aware Redesign | 3 | ✅ Completed | [20260212-04](completed/20260212-04-query-dsl-provider-aware-redesign.md) |
 | 116 | Query Inspect Command | 115 | ✅ Completed | [20260212-05](completed/20260212-05-query-inspect-command.md) |
-| 117 | Add `--decision` Filter to Review Finalize | 74 | 🔲 Pending | [20260216-01](20260216-01-review-finalize-decision-filter.md) |
+| 117 | Add `--decision` Filter to Review Finalize | 74 | ✅ Completed | [20260216-01](completed/20260216-01-review-finalize-decision-filter.md) |
+| 118 | Add Comment Inline Guidance to Review Extract | 73 | ✅ Completed | [20260216-02](completed/20260216-02-review-extract-comment-guidance.md) |
 
 ## Development Flow
 
