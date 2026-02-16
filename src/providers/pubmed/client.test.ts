@@ -378,4 +378,104 @@ describe('PubMedClient', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('findRelated', () => {
+    it('calls elink with correct parameters', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>12345678</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>11111111</Id><Score>99999</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelated(['12345678']);
+
+      expect(result.links).toHaveLength(1);
+      expect(result.links[0]).toEqual({ id: '11111111', score: 99999 });
+
+      const url = new URL(mockFetch.mock.calls[0]![0]);
+      expect(url.pathname).toContain('elink.fcgi');
+      expect(url.searchParams.get('dbfrom')).toBe('pubmed');
+      expect(url.searchParams.get('db')).toBe('pubmed');
+      expect(url.searchParams.get('id')).toBe('12345678');
+      expect(url.searchParams.get('cmd')).toBe('neighbor_score');
+    });
+
+    it('includes API key when configured', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>12345678</Id></IdList>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient({ ...baseConfig, apiKey: 'my-key' }, testRateLimiter);
+      await client.findRelated(['12345678']);
+
+      const url = new URL(mockFetch.mock.calls[0]![0]);
+      expect(url.searchParams.get('api_key')).toBe('my-key');
+    });
+
+    it('includes term filter when provided', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>12345678</Id></IdList>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      await client.findRelated(['12345678'], { term: 'review[filter]' });
+
+      const url = new URL(mockFetch.mock.calls[0]![0]);
+      expect(url.searchParams.get('term')).toBe('review[filter]');
+    });
+
+    it('sends multiple PMIDs', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>12345678</Id><Id>23456789</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>44444444</Id><Score>50000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelated(['12345678', '23456789']);
+
+      expect(result.links).toHaveLength(1);
+      const url = new URL(mockFetch.mock.calls[0]![0]);
+      expect(url.searchParams.getAll('id')).toEqual(['12345678', '23456789']);
+    });
+  });
 });

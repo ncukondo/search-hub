@@ -6,7 +6,7 @@
 
 import { XMLParser } from 'fast-xml-parser';
 import type { Author } from '../base/types.js';
-import type { ESearchResponse, PubMedArticle } from './types.js';
+import type { ESearchResponse, ELinkResponse, PubMedArticle } from './types.js';
 
 /**
  * Response structure for efetch parsing.
@@ -68,6 +68,7 @@ const parser = new XMLParser({
       'AffiliationInfo',
       'OutputMessage',
       'QuotedPhraseNotFound',
+      'Link',
     ];
     return arrayElements.includes(name);
   },
@@ -378,4 +379,28 @@ export function parseEFetchResponse(xml: string): EFetchResult {
     );
 
   return { articles };
+}
+
+/**
+ * Parse elink XML response from PubMed.
+ *
+ * @param xml - Raw XML string from elink endpoint
+ * @returns Parsed ELinkResponse with related PMIDs and scores
+ */
+export function parseELinkResponse(xml: string): ELinkResponse {
+  const parsed = parser.parse(xml);
+  const linkSet = parsed.eLinkResult?.LinkSet;
+
+  if (!linkSet?.LinkSetDb) {
+    return { links: [] };
+  }
+
+  const linkList = linkSet.LinkSetDb.Link ?? [];
+
+  const links = linkList.map((link: { Id?: string | number; Score?: string | number }) => ({
+    id: String(link.Id ?? ''),
+    score: Number(link.Score) || 0,
+  }));
+
+  return { links };
 }

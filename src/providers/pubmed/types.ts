@@ -54,6 +54,21 @@ export interface EFetchResponse {
 }
 
 /**
+ * A related article link from ELink with a relevancy score.
+ */
+export interface ELinkItem {
+  id: string;
+  score: number;
+}
+
+/**
+ * Response from the elink API.
+ */
+export interface ELinkResponse {
+  links: ELinkItem[];
+}
+
+/**
  * Configuration options for PubMed provider.
  */
 export interface PubMedConfig extends BaseProviderConfig {
