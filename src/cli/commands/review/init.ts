@@ -2,13 +2,14 @@
  * review init command - Generate reviews.yaml from session results
  */
 
-import { join, dirname } from 'node:path';
-import { writeFile, mkdir, access, copyFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { writeFile, mkdir, access } from 'node:fs/promises';
 import { stringify as stringifyYaml } from 'yaml';
 import type { Article, Author, ProviderName } from '../../../providers/base/types.js';
 import { loadSession } from '../../../session/manager.js';
 import { loadResults } from '../../../session/results-io.js';
 import { deduplicateForReview } from './dedup.js';
+import { generateReviewJSONSchema } from './schema.js';
 import type { ArticleEntry, ReviewFile, MergedSource } from './types.js';
 
 export interface ReviewInitOptions {
@@ -75,28 +76,6 @@ function articleToEntry(article: Article & { mergedFrom?: MergedSource[] }): Art
   }
 
   return entry;
-}
-
-/**
- * Find the schema file location (in the package)
- */
-async function findSchemaSource(): Promise<string> {
-  // Try relative to this file (src/cli/commands/review -> schemas)
-  const possiblePaths = [
-    join(dirname(import.meta.url.replace('file://', '')), '../../../../schemas/review.schema.json'),
-    join(process.cwd(), 'schemas/review.schema.json'),
-  ];
-
-  for (const path of possiblePaths) {
-    try {
-      await access(path);
-      return path;
-    } catch {
-      // Try next path
-    }
-  }
-
-  throw new Error('Could not find review.schema.json');
 }
 
 /**
@@ -172,16 +151,10 @@ export async function executeReviewInit(
   // Write reviews.yaml
   await writeFile(reviewsPath, finalContent, 'utf-8');
 
-  // Copy schema file to .internal/ alongside reviews.yaml
+  // Generate and write schema file to .internal/ alongside reviews.yaml
   const schemaDestPath = join(internalDir, 'review.schema.json');
-
-  try {
-    const schemaSourcePath = await findSchemaSource();
-    await copyFile(schemaSourcePath, schemaDestPath);
-  } catch {
-    // If we can't find the schema file, skip copying
-    // This might happen in test environments
-  }
+  const jsonSchema = generateReviewJSONSchema();
+  await writeFile(schemaDestPath, JSON.stringify(jsonSchema, null, 2) + '\n', 'utf-8');
 
   return {
     reviewsPath,
