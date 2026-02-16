@@ -83,17 +83,20 @@ export function generateReviewNextSteps(ctx: ReviewNextStepsContext): Suggestion
     // 1. pending > 0: extract for title review
     if (rs.pending > 0) {
       result.next.push({
-        command: `search-hub review extract --session ${sessionId} --basis title --filter pending --reviewer "<name>" --name title-screening`,
+        command: `search-hub review extract --session ${sessionId} --basis title --filter pending --reviewer "<name>" --name title-picking`,
         description: `Extract ${rs.pending} pending articles for title review`,
       });
     }
     // 2. agreed-include > 0 (or all-uncertain): confirm at next basis level
     else if (rs.agreedInclude > 0 || rs.allUncertain > 0) {
-      const count = rs.agreedInclude + rs.allUncertain;
       const nextBasis = detectNextBasis(rs.reviewers);
+      const parts: string[] = [];
+      if (rs.agreedInclude > 0) parts.push(`${rs.agreedInclude} picked`);
+      if (rs.allUncertain > 0) parts.push(`${rs.allUncertain} uncertain`);
+      const description = `${parts.join(' + ')} — confirm at ${nextBasis} level`;
       result.next.push({
         command: `search-hub review extract --session ${sessionId} --filter agreed-include,all-uncertain --basis ${nextBasis} --reviewer "<name>" --name ${nextBasis}-screening`,
-        description: `${count} articles picked — confirm at ${nextBasis} level`,
+        description,
       });
     }
     // 3. agreed > 0: finalize
