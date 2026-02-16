@@ -136,6 +136,12 @@ export interface Provider {
    * Does not throw.
    */
   testConnection(): Promise<ConnectionTestResult>;
+
+  /**
+   * Get warnings from the most recent search (e.g. unsupported sort options).
+   * Optional — providers that don't produce warnings need not implement this.
+   */
+  getWarnings?(): string[];
 }
 
 /**

@@ -141,6 +141,7 @@ export class PubMedProvider extends BaseProvider {
         const result = await this.withRetry(() => this.client.search(query.native, {
           retstart,
           retmax: remainingToFetch,
+          ...(pubmedSort && { sort: pubmedSort }),
         }));
         articles = await this.withRetry(() => this.client.fetch(result.idlist));
       }

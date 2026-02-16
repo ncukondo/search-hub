@@ -419,9 +419,7 @@ export async function executeSearch(
       );
 
       // Collect warnings if provider supports them
-      const providerWarnings = 'getWarnings' in provider && typeof (provider as any).getWarnings === 'function'
-        ? (provider as any).getWarnings() as string[]
-        : undefined;
+      const providerWarnings = provider.getWarnings?.();
       results[providerName] = { hits: totalHits, retrieved: retrievedCount, ...(providerWarnings && providerWarnings.length > 0 && { warnings: providerWarnings }) };
     } catch (error) {
       const errorMessage = error instanceof Error

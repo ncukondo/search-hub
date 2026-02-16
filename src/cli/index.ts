@@ -6,7 +6,7 @@ import { config as loadDotenv } from 'dotenv';
 
 // Load .env file as early as possible, before any config loading
 loadDotenv({ quiet: true });
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { VERSION } from '../version.js';
 import { init } from './commands/init.js';
 import { EXIT_CODES } from './exit-codes.js';
@@ -728,7 +728,7 @@ Examples:
     .option('--query <string>', 'direct query in database-native syntax (advanced; requires --db; prefer YAML files)')
     .option('--name <string>', 'session name')
     .option('--max-results <n>', 'limit results per database')
-    .option('--sort <relevance|date>', 'sort results by relevance or date')
+    .addOption(new Option('--sort <method>', 'sort results by relevance or date').choices(['relevance', 'date']))
     .option('--dry-run', 'show translated queries without executing')
     .option('--count-only', 'get hit counts without downloading results')
     .option('--preview', 'get hit counts and first 5 titles without creating session')
@@ -760,6 +760,7 @@ Query features (use "query init" to see full template):
           query?: string;
           name?: string;
           maxResults?: string;
+          sort?: string;
           dryRun?: boolean;
           countOnly?: boolean;
           preview?: boolean;
@@ -776,6 +777,7 @@ Query features (use "query init" to see full template):
             query: options?.query,
             name: options?.name,
             maxResults: options?.maxResults,
+            sort: options?.sort,
             dryRun: options?.dryRun,
             countOnly: options?.countOnly,
             preview: options?.preview,
@@ -1000,6 +1002,11 @@ Query features (use "query init" to see full template):
                     console.log(`  ${provider}: FAILED - ${stats.error}`);
                   } else {
                     console.log(`  ${provider}: ${stats.retrieved} results`);
+                  }
+                  if (stats.warnings && stats.warnings.length > 0) {
+                    for (const w of stats.warnings) {
+                      console.warn(`  ⚠ ${provider}: ${w}`);
+                    }
                   }
                 }
               }
