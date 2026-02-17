@@ -10,6 +10,7 @@ export interface SearchCommandOptions {
   providers?: ProviderName[];
   sessionName?: string;
   maxResults?: number;
+  sort?: 'relevance' | 'date';
   dryRun?: boolean;
   countOnly?: boolean;
   preview?: boolean;
@@ -22,6 +23,7 @@ export interface CommandLineOptions {
   query?: string | undefined;
   name?: string | undefined;
   maxResults?: string | undefined;
+  sort?: string | undefined;
   dryRun?: boolean | undefined;
   countOnly?: boolean | undefined;
   preview?: boolean | undefined;
@@ -92,6 +94,10 @@ export function parseSearchOptions(
 
   if (options.strict) {
     result.strict = true;
+  }
+
+  if (options.sort === 'relevance' || options.sort === 'date') {
+    result.sort = options.sort;
   }
 
   return result;

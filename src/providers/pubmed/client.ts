@@ -23,6 +23,8 @@ export interface SearchOptions {
   retmax?: number;
   /** Use history server for large result sets */
   useHistory?: boolean;
+  /** Sort parameter for esearch (e.g. 'relevance', 'pub_date') */
+  sort?: string;
 }
 
 /**
@@ -78,6 +80,10 @@ export class PubMedClient {
 
     if (options.useHistory) {
       params.set('usehistory', 'y');
+    }
+
+    if (options.sort) {
+      params.set('sort', options.sort);
     }
 
     const url = `${BASE_URL}/esearch.fcgi?${params.toString()}`;

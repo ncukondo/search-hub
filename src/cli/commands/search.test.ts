@@ -90,6 +90,28 @@ describe('search command', () => {
 
       expect(result.sessionName).toBe('my-search');
     });
+
+    it('should parse sort option with relevance', () => {
+      const result = parseSearchOptions('query.yaml', {
+        sort: 'relevance',
+      });
+
+      expect(result.sort).toBe('relevance');
+    });
+
+    it('should parse sort option with date', () => {
+      const result = parseSearchOptions('query.yaml', {
+        sort: 'date',
+      });
+
+      expect(result.sort).toBe('date');
+    });
+
+    it('should not set sort when not specified', () => {
+      const result = parseSearchOptions('query.yaml', {});
+
+      expect(result.sort).toBeUndefined();
+    });
   });
 
   describe('validateSearchInput', () => {

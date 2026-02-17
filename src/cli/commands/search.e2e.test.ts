@@ -2105,3 +2105,94 @@ describe('search-hub search: partial success exit code E2E', () => {
     });
   });
 });
+
+describe('search-hub search --sort E2E', () => {
+  let ctx: E2EContext;
+
+  beforeEach(async () => {
+    ctx = await setupE2EContext();
+    vi.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await ctx.cleanup();
+  });
+
+  describe('sort option forwarding', () => {
+    it('should forward sort=relevance to provider search', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const result = await executeSearch(
+        { queryFile: queryPath, sort: 'relevance' },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      expect(result.success).toBe(true);
+
+      // Verify the mock provider's search was called with sort option
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const mockInstance = vi.mocked(PubMedProvider).mock.results[0]!.value;
+      expect(mockInstance.search).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ sort: 'relevance' }),
+      );
+    });
+
+    it('should forward sort=date to provider search', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const result = await executeSearch(
+        { queryFile: queryPath, sort: 'date' },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      expect(result.success).toBe(true);
+
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const mockInstance = vi.mocked(PubMedProvider).mock.results[0]!.value;
+      expect(mockInstance.search).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ sort: 'date' }),
+      );
+    });
+
+    it('should not include sort when not specified', async () => {
+      const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
+      const config = getDefaultConfig();
+      config.providers.pubmed.enabled = true;
+      config.providers.eric.enabled = false;
+      config.providers.arxiv.enabled = false;
+      config.providers.scopus.enabled = false;
+
+      const result = await executeSearch(
+        { queryFile: queryPath },
+        ctx.sessionsDir,
+        config,
+        false
+      );
+
+      expect(result.success).toBe(true);
+
+      const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
+      const mockInstance = vi.mocked(PubMedProvider).mock.results[0]!.value;
+      expect(mockInstance.search).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.not.objectContaining({ sort: expect.anything() }),
+      );
+    });
+  });
+});

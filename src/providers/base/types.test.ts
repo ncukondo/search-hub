@@ -5,6 +5,7 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
+  SortField,
   Provider,
   ProviderError,
   RateLimitError,
@@ -144,6 +145,27 @@ describe('Provider Types', () => {
     it('accepts empty options', () => {
       const options: SearchOptions = {};
       expect(options).toEqual({});
+    });
+
+    it('accepts sort option with relevance', () => {
+      const options: SearchOptions = {
+        sort: 'relevance',
+      };
+      expect(options.sort).toBe('relevance');
+    });
+
+    it('accepts sort option with date', () => {
+      const options: SearchOptions = {
+        sort: 'date',
+      };
+      expect(options.sort).toBe('date');
+    });
+  });
+
+  describe('SortField', () => {
+    it('accepts relevance and date values', () => {
+      const values: SortField[] = ['relevance', 'date'];
+      expect(values).toHaveLength(2);
     });
   });
 

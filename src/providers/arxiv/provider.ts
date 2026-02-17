@@ -11,17 +11,24 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
+  SortField,
   SearchState,
   SearchResumeResult,
   ResolvedAST,
   ConnectionTestResult,
 } from '../base/types.js';
 import { ArxivClient } from './client.js';
+import type { ArxivSearchOptions } from './client.js';
 import { translateQuery } from './translator.js';
 import type { ArxivConfig, ArxivProviderState } from './types.js';
 import { DEFAULT_ARXIV_CONFIG } from './types.js';
 
 const DEFAULT_PAGE_SIZE = 100;
+
+/** Map base SortField to arXiv sortBy parameter */
+function mapSortField(sort: SortField): ArxivSearchOptions['sortBy'] {
+  return sort === 'date' ? 'submittedDate' : 'relevance';
+}
 
 /**
  * arXiv provider for searching preprints.
@@ -85,14 +92,16 @@ export class ArxivProvider extends BaseProvider {
     let retrievedCount = 0;
     let totalResults = 0;
 
+    // Map sort field to arXiv-specific parameter
+    const arxivSortBy = options?.sort ? mapSortField(options.sort) : undefined;
+
     while (retrievedCount < maxResults) {
-      const searchOptions: { start: number; maxResults: number; signal?: AbortSignal } = {
+      const searchOptions: ArxivSearchOptions = {
         start: offset,
         maxResults: Math.min(pageSize, maxResults - retrievedCount),
+        ...(options?.signal && { signal: options.signal }),
+        ...(arxivSortBy && { sortBy: arxivSortBy }),
       };
-      if (options?.signal) {
-        searchOptions.signal = options.signal;
-      }
 
       const response = await this.withRetry(() =>
         this.client.search(query.native, searchOptions)

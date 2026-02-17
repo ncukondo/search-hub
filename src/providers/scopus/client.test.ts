@@ -239,6 +239,48 @@ describe('ScopusClient', () => {
       expect(result.entries).toHaveLength(1);
       expect(result.entries[0]!['dc:identifier']).toBe('SCOPUS_ID:12345');
     });
+
+    it('should include sort=-relevancy when sort option is relevance', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '0',
+            'opensearch:startIndex': '0',
+            'opensearch:itemsPerPage': '25',
+            entry: [],
+          },
+        }),
+      });
+
+      const client = new ScopusClient(config);
+      await client.search('TITLE(test)', { sort: '-relevancy' });
+
+      const calledUrl = mockFetch.mock.calls[0]![0] as URL;
+      expect(calledUrl.searchParams.get('sort')).toBe('-relevancy');
+    });
+
+    it('should not include sort parameter when not specified', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '0',
+            'opensearch:startIndex': '0',
+            'opensearch:itemsPerPage': '25',
+            entry: [],
+          },
+        }),
+      });
+
+      const client = new ScopusClient(config);
+      await client.search('TITLE(test)');
+
+      const calledUrl = mockFetch.mock.calls[0]![0] as URL;
+      expect(calledUrl.searchParams.has('sort')).toBe(false);
+    });
   });
 
   describe('error handling', () => {

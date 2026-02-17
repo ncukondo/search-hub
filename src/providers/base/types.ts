@@ -76,6 +76,8 @@ export interface TranslatedQuery {
 /**
  * Search options for controlling query execution.
  */
+export type SortField = 'relevance' | 'date';
+
 export interface SearchOptions {
   /** Maximum number of results to retrieve */
   maxResults?: number;
@@ -88,6 +90,8 @@ export interface SearchOptions {
   };
   /** AbortSignal for cancellation */
   signal?: AbortSignal;
+  /** Sort order for results */
+  sort?: SortField;
 }
 
 /**
@@ -132,6 +136,12 @@ export interface Provider {
    * Does not throw.
    */
   testConnection(): Promise<ConnectionTestResult>;
+
+  /**
+   * Get warnings from the most recent search (e.g. unsupported sort options).
+   * Optional — providers that don't produce warnings need not implement this.
+   */
+  getWarnings?(): string[];
 }
 
 /**
