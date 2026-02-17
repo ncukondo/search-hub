@@ -13,6 +13,8 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import { PubMedProvider } from './provider';
+import { PubMedClient } from './client';
+import { RateLimiter } from '../base/rate-limiter';
 import { translateQuery } from './translator';
 import type { PubMedConfig } from './types';
 import type { QueryAST, Article } from '../base/types';
@@ -168,6 +170,67 @@ describe.skipIf(skip)('PubMed Provider E2E', () => {
       // Authors should be parsed
       expect(article.authors).toBeDefined();
       expect(article.authors.length).toBeGreaterThan(0);
+    }, 30000);
+  });
+
+  describe('ELink related articles', () => {
+    it('should find related articles for a known PMID', async () => {
+      const config = createConfig();
+      const rateLimiter = new RateLimiter({
+        tokensPerSecond: config.apiKey ? 10 : 3,
+        burstSize: 1,
+      });
+      const client = new PubMedClient(config, rateLimiter);
+
+      // PMID 25418537 = a well-cited systematic review
+      const result = await client.findRelated({ ids: ['25418537'], maxResults: 10 });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]!.seedId).toBe('25418537');
+      expect(result[0]!.relatedIds.length).toBeGreaterThan(0);
+      expect(result[0]!.relatedIds.length).toBeLessThanOrEqual(10);
+
+      // Scores should be sorted descending
+      for (let i = 1; i < result[0]!.relatedIds.length; i++) {
+        expect(result[0]!.relatedIds[i]!.score).toBeLessThanOrEqual(
+          result[0]!.relatedIds[i - 1]!.score
+        );
+      }
+
+      // Each related article should have valid id and score
+      for (const related of result[0]!.relatedIds) {
+        expect(related.id).toMatch(/^\d+$/);
+        expect(related.score).toBeGreaterThan(0);
+      }
+    }, 30000);
+
+    it('should merge and deduplicate across multiple seeds', async () => {
+      const config = createConfig();
+      const rateLimiter = new RateLimiter({
+        tokensPerSecond: config.apiKey ? 10 : 3,
+        burstSize: 1,
+      });
+      const client = new PubMedClient(config, rateLimiter);
+
+      const seeds = ['25418537', '26978785'];
+      const result = await client.findRelatedMerged({ ids: seeds, maxResults: 20 });
+
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.length).toBeLessThanOrEqual(20);
+
+      // Seeds should be excluded
+      const ids = result.map((r) => r.id);
+      expect(ids).not.toContain('25418537');
+      expect(ids).not.toContain('26978785');
+
+      // No duplicates
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(ids.length);
+
+      // Sorted by score descending
+      for (let i = 1; i < result.length; i++) {
+        expect(result[i]!.score).toBeLessThanOrEqual(result[i - 1]!.score);
+      }
     }, 30000);
   });
 

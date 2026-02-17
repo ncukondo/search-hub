@@ -10,6 +10,9 @@ import type {
   EFetchResponse,
   PubMedConfig,
   PubMedProviderState,
+  ELinkOptions,
+  RelatedArticle,
+  ELinkResponse,
 } from './types';
 
 describe('PubMed Types', () => {
@@ -170,6 +173,67 @@ describe('PubMed Types', () => {
       expect(state.webenv).toBeUndefined();
       expect(state.querykey).toBeUndefined();
       expect(state.useHistory).toBe(false);
+    });
+  });
+
+  describe('ELinkOptions', () => {
+    it('should define options for ELink API call', () => {
+      const options: ELinkOptions = {
+        ids: ['12345678', '23456789'],
+        term: 'review[filter]+AND+2024[pdat]',
+        maxResults: 50,
+      };
+
+      expect(options.ids).toEqual(['12345678', '23456789']);
+      expect(options.term).toBe('review[filter]+AND+2024[pdat]');
+      expect(options.maxResults).toBe(50);
+    });
+
+    it('should allow optional fields', () => {
+      const options: ELinkOptions = {
+        ids: ['12345678'],
+      };
+
+      expect(options.ids).toEqual(['12345678']);
+      expect(options.term).toBeUndefined();
+      expect(options.maxResults).toBeUndefined();
+    });
+  });
+
+  describe('RelatedArticle', () => {
+    it('should represent a related article with score', () => {
+      const related: RelatedArticle = {
+        id: '98765432',
+        score: 85432100,
+      };
+
+      expect(related.id).toBe('98765432');
+      expect(related.score).toBe(85432100);
+    });
+  });
+
+  describe('ELinkResponse', () => {
+    it('should represent ELink response for a seed ID', () => {
+      const response: ELinkResponse = {
+        seedId: '12345678',
+        relatedIds: [
+          { id: '98765432', score: 85432100 },
+          { id: '87654321', score: 72100000 },
+        ],
+      };
+
+      expect(response.seedId).toBe('12345678');
+      expect(response.relatedIds).toHaveLength(2);
+      expect(response.relatedIds[0]!.score).toBeGreaterThan(response.relatedIds[1]!.score);
+    });
+
+    it('should allow empty related IDs', () => {
+      const response: ELinkResponse = {
+        seedId: '12345678',
+        relatedIds: [],
+      };
+
+      expect(response.relatedIds).toHaveLength(0);
     });
   });
 });

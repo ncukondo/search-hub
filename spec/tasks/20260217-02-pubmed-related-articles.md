@@ -72,46 +72,46 @@ class PubMedClient {
 
 ### Step 1: Add ELink types
 
-- [ ] Write test: `src/providers/pubmed/types.test.ts` — validate ELink types
-- [ ] Add `ELinkOptions`, `RelatedArticle`, `ELinkResponse` to types
-- [ ] Verify test passes
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Types compile and are exported
+- [x] Write test: `src/providers/pubmed/types.test.ts` — validate ELink types
+- [x] Add `ELinkOptions`, `RelatedArticle`, `ELinkResponse` to types
+- [x] Verify test passes
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Types compile and are exported
 
 ### Step 2: ELink XML parser
 
-- [ ] Write test: `src/providers/pubmed/parser.test.ts` — parse ELink XML response
-- [ ] Add `parseELinkResponse()` function to parser
-- [ ] Test with sample XML containing multiple seeds and scores
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Parser correctly extracts seed-to-related mappings with scores
+- [x] Write test: `src/providers/pubmed/parser.test.ts` — parse ELink XML response
+- [x] Add `parseELinkResponse()` function to parser
+- [x] Test with sample XML containing multiple seeds and scores
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Parser correctly extracts seed-to-related mappings with scores
 
 ### Step 3: `PubMedClient.findRelated()` method
 
-- [ ] Write test: `src/providers/pubmed/client.test.ts` — verify URL construction and response handling
-- [ ] Implement `findRelated()` in `PubMedClient`
-- [ ] Include rate limiting, error handling, maxResults truncation
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `findRelated({ ids: ['12345678'] })` returns parsed related articles
+- [x] Write test: `src/providers/pubmed/client.test.ts` — verify URL construction and response handling
+- [x] Implement `findRelated()` in `PubMedClient`
+- [x] Include rate limiting, error handling, maxResults truncation
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `findRelated({ ids: ['12345678'] })` returns parsed related articles
 
 ### Step 4: Deduplication across seeds
 
-- [ ] Write test: `src/providers/pubmed/client.test.ts` — multi-seed dedup
-- [ ] When multiple seeds are provided, merge related IDs and keep highest score
-- [ ] Exclude seed PMIDs from results
-- [ ] Verify tests pass
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Duplicate PMIDs across seeds are merged; seeds excluded from output
+- [x] Write test: `src/providers/pubmed/client.test.ts` — multi-seed dedup
+- [x] When multiple seeds are provided, merge related IDs and keep highest score
+- [x] Exclude seed PMIDs from results
+- [x] Verify tests pass
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Duplicate PMIDs across seeds are merged; seeds excluded from output
 
 ### Final Step: API Integration Test
 
-- [ ] Write API test: `src/providers/pubmed/pubmed.api.test.ts` — real ELink call
-- [ ] Test with known PMID (e.g., a well-cited article)
-- [ ] Verify response structure and score ordering
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: Real API returns valid related articles with scores
+- [x] Write API test: `src/providers/pubmed/pubmed.api.test.ts` — real ELink call
+- [x] Test with known PMID (e.g., a well-cited article)
+- [x] Verify response structure and score ordering
+- [x] Run full test suite: `npm test`
+- [x] Acceptance: Real API returns valid related articles with scores
 
 ## Notes
 

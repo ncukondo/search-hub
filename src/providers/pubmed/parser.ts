@@ -6,7 +6,7 @@
 
 import { XMLParser } from 'fast-xml-parser';
 import type { Author } from '../base/types.js';
-import type { ESearchResponse, PubMedArticle } from './types.js';
+import type { ELinkResponse, ESearchResponse, PubMedArticle } from './types.js';
 
 /**
  * Response structure for efetch parsing.
@@ -68,6 +68,9 @@ const parser = new XMLParser({
       'AffiliationInfo',
       'OutputMessage',
       'QuotedPhraseNotFound',
+      'Link',
+      'LinkSet',
+      'LinkSetDb',
     ];
     return arrayElements.includes(name);
   },
@@ -378,4 +381,37 @@ export function parseEFetchResponse(xml: string): EFetchResult {
     );
 
   return { articles };
+}
+
+/**
+ * Parse ELink XML response into structured ELinkResponse array.
+ *
+ * Extracts seed-to-related article mappings with similarity scores
+ * from the ELink `cmd=neighbor_score` response.
+ */
+export function parseELinkResponse(xml: string): ELinkResponse[] {
+  const parsed = parser.parse(xml);
+  const linkSets = parsed.eLinkResult?.LinkSet ?? [];
+
+  return linkSets.map((linkSet: Record<string, unknown>) => {
+    const idList = linkSet['IdList'] as { Id?: (string | number)[] } | undefined;
+    const seedId = String(idList?.Id?.[0] ?? '');
+
+    // Find the pubmed_pubmed LinkSetDb (primary related articles)
+    const linkSetDbs = (linkSet['LinkSetDb'] ?? []) as Record<string, unknown>[];
+    const pubmedLinks = linkSetDbs.find(
+      (db) => db['LinkName'] === 'pubmed_pubmed'
+    );
+
+    const links = (pubmedLinks?.['Link'] ?? []) as { Id: string | number; Score: string | number }[];
+
+    const relatedIds = links
+      .map((link) => ({
+        id: String(link.Id),
+        score: Number(link.Score),
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    return { seedId, relatedIds };
+  });
 }

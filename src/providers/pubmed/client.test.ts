@@ -347,6 +347,323 @@ describe('PubMedClient', () => {
     });
   });
 
+  describe('findRelated (elink API)', () => {
+    it('constructs correct ELink URL with required parameters', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>12345678</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>99999999</Id><Score>90000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      await client.findRelated({ ids: ['12345678'] });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [url] = mockFetch.mock.calls[0] as [string];
+      expect(url).toContain('elink.fcgi');
+      expect(url).toContain('dbfrom=pubmed');
+      expect(url).toContain('db=pubmed');
+      expect(url).toContain('id=12345678');
+      expect(url).toContain('cmd=neighbor_score');
+      expect(url).toContain('retmode=xml');
+      expect(url).toContain('email=test%40example.com');
+    });
+
+    it('includes API key when configured', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>12345678</Id></IdList>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient({ ...baseConfig, apiKey: 'elink-key' }, testRateLimiter);
+      await client.findRelated({ ids: ['12345678'] });
+
+      const [url] = mockFetch.mock.calls[0] as [string];
+      expect(url).toContain('api_key=elink-key');
+    });
+
+    it('includes multiple IDs as separate id params', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>11111111</Id></IdList>
+  </LinkSet>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>22222222</Id></IdList>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      await client.findRelated({ ids: ['11111111', '22222222'] });
+
+      const [url] = mockFetch.mock.calls[0] as [string];
+      // ELink uses separate id params for each PMID
+      expect(url).toContain('id=11111111');
+      expect(url).toContain('id=22222222');
+    });
+
+    it('includes term filter when provided', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>12345678</Id></IdList>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      await client.findRelated({ ids: ['12345678'], term: 'review[filter]' });
+
+      const [url] = mockFetch.mock.calls[0] as [string];
+      expect(url).toContain('term=review');
+    });
+
+    it('truncates results to maxResults by score', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>12345678</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>11111111</Id><Score>90000000</Score></Link>
+      <Link><Id>22222222</Id><Score>80000000</Score></Link>
+      <Link><Id>33333333</Id><Score>70000000</Score></Link>
+      <Link><Id>44444444</Id><Score>60000000</Score></Link>
+      <Link><Id>55555555</Id><Score>50000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelated({ ids: ['12345678'], maxResults: 3 });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]!.relatedIds).toHaveLength(3);
+      expect(result[0]!.relatedIds[0]!.id).toBe('11111111');
+      expect(result[0]!.relatedIds[2]!.id).toBe('33333333');
+    });
+
+    it('parses response correctly', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>12345678</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>99999999</Id><Score>85432100</Score></Link>
+      <Link><Id>88888888</Id><Score>72100000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelated({ ids: ['12345678'] });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]!.seedId).toBe('12345678');
+      expect(result[0]!.relatedIds).toHaveLength(2);
+      expect(result[0]!.relatedIds[0]).toEqual({ id: '99999999', score: 85432100 });
+    });
+
+    it('uses error handling for HTTP errors', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests',
+        headers: {
+          get: (name: string) => (name === 'Retry-After' ? '5' : null),
+        },
+        text: () => Promise.resolve('Rate limited'),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      await expect(client.findRelated({ ids: ['12345678'] })).rejects.toMatchObject({
+        code: 'RATE_LIMIT_EXCEEDED',
+        provider: 'pubmed',
+      });
+    });
+  });
+
+  describe('findRelated deduplication', () => {
+    it('deduplicates related IDs across multiple seeds, keeping highest score', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>11111111</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>99999999</Id><Score>90000000</Score></Link>
+      <Link><Id>88888888</Id><Score>70000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>22222222</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>99999999</Id><Score>85000000</Score></Link>
+      <Link><Id>77777777</Id><Score>60000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelatedMerged({ ids: ['11111111', '22222222'] });
+
+      // 99999999 appears in both seeds; keep highest score (90000000)
+      expect(result).toHaveLength(3);
+      const ids = result.map((r) => r.id);
+      expect(ids).toContain('99999999');
+      expect(ids).toContain('88888888');
+      expect(ids).toContain('77777777');
+
+      const deduped = result.find((r) => r.id === '99999999');
+      expect(deduped!.score).toBe(90000000);
+    });
+
+    it('excludes seed PMIDs from results', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>11111111</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>11111111</Id><Score>2147483647</Score></Link>
+      <Link><Id>22222222</Id><Score>95000000</Score></Link>
+      <Link><Id>99999999</Id><Score>80000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelatedMerged({ ids: ['11111111', '22222222'] });
+
+      // Seeds 11111111 and 22222222 should be excluded
+      const ids = result.map((r) => r.id);
+      expect(ids).not.toContain('11111111');
+      expect(ids).not.toContain('22222222');
+      expect(ids).toContain('99999999');
+    });
+
+    it('respects maxResults after dedup', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>11111111</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>99999999</Id><Score>90000000</Score></Link>
+      <Link><Id>88888888</Id><Score>80000000</Score></Link>
+      <Link><Id>77777777</Id><Score>70000000</Score></Link>
+      <Link><Id>66666666</Id><Score>60000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelatedMerged({ ids: ['11111111'], maxResults: 2 });
+
+      expect(result).toHaveLength(2);
+      expect(result[0]!.id).toBe('99999999');
+      expect(result[1]!.id).toBe('88888888');
+    });
+
+    it('returns sorted by score descending', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () =>
+          Promise.resolve(`<?xml version="1.0" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>11111111</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>44444444</Id><Score>40000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>22222222</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>55555555</Id><Score>95000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`),
+      });
+
+      const client = new PubMedClient(baseConfig, testRateLimiter);
+      const result = await client.findRelatedMerged({ ids: ['11111111', '22222222'] });
+
+      expect(result[0]!.id).toBe('55555555');
+      expect(result[0]!.score).toBe(95000000);
+      expect(result[1]!.id).toBe('44444444');
+      expect(result[1]!.score).toBe(40000000);
+    });
+  });
+
   describe('rate limiting integration', () => {
     it('respects rate limiter for sequential requests', async () => {
       // Mock successful responses

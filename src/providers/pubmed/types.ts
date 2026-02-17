@@ -80,3 +80,35 @@ export interface PubMedProviderState {
   /** Whether the search uses history server */
   useHistory: boolean;
 }
+
+/**
+ * Options for PubMed ELink API call (related articles).
+ */
+export interface ELinkOptions {
+  /** Seed PMIDs to find related articles for */
+  ids: string[];
+  /** Optional term filter applied server-side (e.g., 'review[filter]+AND+2024[pdat]') */
+  term?: string;
+  /** Limit returned related IDs (post-fetch truncation by score) */
+  maxResults?: number;
+}
+
+/**
+ * A related article with similarity score.
+ */
+export interface RelatedArticle {
+  /** PubMed ID of the related article */
+  id: string;
+  /** Computed similarity score (relative, not normalized) */
+  score: number;
+}
+
+/**
+ * ELink response for a single seed ID.
+ */
+export interface ELinkResponse {
+  /** The seed PMID that was used to find related articles */
+  seedId: string;
+  /** Related articles with scores, sorted by score descending */
+  relatedIds: RelatedArticle[];
+}
