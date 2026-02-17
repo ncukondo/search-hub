@@ -69,6 +69,7 @@ const parser = new XMLParser({
       'OutputMessage',
       'QuotedPhraseNotFound',
       'Link',
+      'LinkSet',
     ];
     return arrayElements.includes(name);
   },
@@ -389,18 +390,21 @@ export function parseEFetchResponse(xml: string): EFetchResult {
  */
 export function parseELinkResponse(xml: string): ELinkResponse {
   const parsed = parser.parse(xml);
-  const linkSet = parsed.eLinkResult?.LinkSet;
+  const linkSets = parsed.eLinkResult?.LinkSet ?? [];
 
-  if (!linkSet?.LinkSetDb) {
-    return { links: [] };
+  const allLinks: Array<{ id: string; score: number }> = [];
+
+  for (const linkSet of linkSets) {
+    if (!linkSet?.LinkSetDb) continue;
+
+    const linkList = linkSet.LinkSetDb.Link ?? [];
+    for (const link of linkList) {
+      allLinks.push({
+        id: String(link.Id ?? ''),
+        score: Number(link.Score) || 0,
+      });
+    }
   }
 
-  const linkList = linkSet.LinkSetDb.Link ?? [];
-
-  const links = linkList.map((link: { Id?: string | number; Score?: string | number }) => ({
-    id: String(link.Id ?? ''),
-    score: Number(link.Score) || 0,
-  }));
-
-  return { links };
+  return { links: allLinks };
 }

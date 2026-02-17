@@ -1838,7 +1838,7 @@ Examples:
   $ search-hub related 12345678 23456789              # Find related articles
   $ search-hub related 12345678 --name my-related     # Custom session name
   $ search-hub related 12345678 -m 50                 # Get more results
-  $ search-hub related --from-session SESSION -s SESSION --pmid 12345678
+  $ search-hub related --from-session SESSION --pmid 12345678
   $ search-hub related 12345678 -t "review[filter]"   # Filter by review type`)
     .action(
       async (
@@ -1984,7 +1984,7 @@ Examples:
               error instanceof Error ? error.message : error
             );
           }
-          process.exitCode = EXIT_CODES.NETWORK_ERROR;
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
         }
       }
     );

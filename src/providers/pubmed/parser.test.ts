@@ -1074,5 +1074,87 @@ describe('PubMed Parser', () => {
       expect(result.links).toHaveLength(1);
       expect(result.links[0]!.id).toBe('44444444');
     });
+
+    it('should handle multiple LinkSet elements (one per seed PMID)', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE eLinkResult PUBLIC "-//NLM//DTD elink 20101123//EN" "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/dtd/20101123/elink.dtd">
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList>
+      <Id>12345678</Id>
+    </IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link>
+        <Id>11111111</Id>
+        <Score>98765432</Score>
+      </Link>
+      <Link>
+        <Id>22222222</Id>
+        <Score>87654321</Score>
+      </Link>
+    </LinkSetDb>
+  </LinkSet>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList>
+      <Id>23456789</Id>
+    </IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link>
+        <Id>33333333</Id>
+        <Score>76543210</Score>
+      </Link>
+      <Link>
+        <Id>44444444</Id>
+        <Score>65432109</Score>
+      </Link>
+    </LinkSetDb>
+  </LinkSet>
+</eLinkResult>`;
+
+      const result = parseELinkResponse(xml);
+
+      expect(result.links).toHaveLength(4);
+      expect(result.links[0]).toEqual({ id: '11111111', score: 98765432 });
+      expect(result.links[1]).toEqual({ id: '22222222', score: 87654321 });
+      expect(result.links[2]).toEqual({ id: '33333333', score: 76543210 });
+      expect(result.links[3]).toEqual({ id: '44444444', score: 65432109 });
+    });
+
+    it('should handle multiple LinkSet elements where some have no results', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<eLinkResult>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList>
+      <Id>12345678</Id>
+    </IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link>
+        <Id>11111111</Id>
+        <Score>98765432</Score>
+      </Link>
+    </LinkSetDb>
+  </LinkSet>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList>
+      <Id>99999999</Id>
+    </IdList>
+  </LinkSet>
+</eLinkResult>`;
+
+      const result = parseELinkResponse(xml);
+
+      expect(result.links).toHaveLength(1);
+      expect(result.links[0]).toEqual({ id: '11111111', score: 98765432 });
+    });
   });
 });
