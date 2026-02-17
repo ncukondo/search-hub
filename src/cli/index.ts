@@ -6,7 +6,7 @@ import { config as loadDotenv } from 'dotenv';
 
 // Load .env file as early as possible, before any config loading
 loadDotenv({ quiet: true });
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { VERSION } from '../version.js';
 import { init } from './commands/init.js';
 import { EXIT_CODES } from './exit-codes.js';
@@ -737,6 +737,7 @@ Examples:
     .option('--query <string>', 'direct query in database-native syntax (advanced; requires --db; prefer YAML files)')
     .option('--name <string>', 'session name')
     .option('--max-results <n>', 'limit results per database')
+    .addOption(new Option('--sort <method>', 'sort results by relevance or date').choices(['relevance', 'date']))
     .option('--dry-run', 'show translated queries without executing')
     .option('--count-only', 'get hit counts without downloading results')
     .option('--preview', 'get hit counts and first 5 titles without creating session')
@@ -768,6 +769,7 @@ Query features (use "query init" to see full template):
           query?: string;
           name?: string;
           maxResults?: string;
+          sort?: string;
           dryRun?: boolean;
           countOnly?: boolean;
           preview?: boolean;
@@ -784,6 +786,7 @@ Query features (use "query init" to see full template):
             query: options?.query,
             name: options?.name,
             maxResults: options?.maxResults,
+            sort: options?.sort,
             dryRun: options?.dryRun,
             countOnly: options?.countOnly,
             preview: options?.preview,
@@ -1008,6 +1011,11 @@ Query features (use "query init" to see full template):
                     console.log(`  ${provider}: FAILED - ${stats.error}`);
                   } else {
                     console.log(`  ${provider}: ${stats.retrieved} results`);
+                  }
+                  if (stats.warnings && stats.warnings.length > 0) {
+                    for (const w of stats.warnings) {
+                      console.warn(`  ⚠ ${provider}: ${w}`);
+                    }
                   }
                 }
               }
@@ -1912,13 +1920,14 @@ Examples:
             console.log(`Finding related articles for ${seedPmids.length} seed PMIDs...`);
           }
 
-          // Call ELink to find related PMIDs
-          const elinkResult = await client.findRelated(
-            seedPmids,
-            parsedOptions.term ? { term: parsedOptions.term } : undefined
-          );
+          // Call ELink to find related PMIDs (merged across seeds, deduplicated)
+          const relatedArticles = await client.findRelatedMerged({
+            ids: seedPmids,
+            maxResults: parsedOptions.maxResults,
+            ...(parsedOptions.term && { term: parsedOptions.term }),
+          });
 
-          const totalRelated = elinkResult.links.length;
+          const totalRelated = relatedArticles.length;
 
           if (totalRelated === 0) {
             if (!globalOpts.quiet) {
@@ -1928,14 +1937,7 @@ Examples:
             return;
           }
 
-          // Take top N results
-          const topLinks = elinkResult.links.slice(0, parsedOptions.maxResults);
-
-          // Filter out seed PMIDs from results
-          const seedSet = new Set(seedPmids);
-          const relatedPmids = topLinks
-            .map(link => link.id)
-            .filter(id => !seedSet.has(id));
+          const relatedPmids = relatedArticles.map(a => a.id);
 
           // Fetch full article records
           const articles = await client.fetch(relatedPmids);
@@ -2405,13 +2407,18 @@ Examples:
     .command('init')
     .description('Generate reviews.yaml from deduplicated search results')
     .requiredOption('--session <id>', 'session ID')
+    .option('--mode <mode>', 'review mode: screening (exclusion-based) or picking (inclusion-based)')
     .option('-f, --force', 'overwrite existing reviews.yaml', false)
-    .action(async (options: { session: string; force: boolean }) => {
+    .action(async (options: { session: string; mode?: string; force: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
+        if (options.mode && options.mode !== 'screening' && options.mode !== 'picking') {
+          throw new Error(`Invalid mode: "${options.mode}". Must be "screening" or "picking".`);
+        }
         const sessionsDir = await getSessionsDir(globalOpts);
         const initOptions: ReviewInitOptions = {
           sessionId: options.session,
+          ...(options.mode && { mode: options.mode as 'screening' | 'picking' }),
           ...(options.force && { force: options.force }),
         };
         const result = await executeReviewInit(initOptions, sessionsDir);

@@ -997,164 +997,139 @@ describe('PubMed Parser', () => {
   });
 
   describe('parseELinkResponse', () => {
-    it('should parse elink XML with related PMIDs and scores', () => {
+    it('should parse ELink XML with single seed and related articles', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE eLinkResult PUBLIC "-//NLM//DTD elink 20101123//EN" "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/dtd/20101123/elink.dtd">
+<!DOCTYPE eLinkResult PUBLIC "-//NLM//DTD elink 20101123//EN" "https://eutils.ncbi.nlm.nih.gov/eutils/dtd/20101123/elink.dtd">
 <eLinkResult>
   <LinkSet>
     <DbFrom>pubmed</DbFrom>
-    <IdList>
-      <Id>12345678</Id>
-    </IdList>
+    <IdList><Id>12345678</Id></IdList>
     <LinkSetDb>
       <DbTo>pubmed</DbTo>
       <LinkName>pubmed_pubmed</LinkName>
-      <Link>
-        <Id>11111111</Id>
-        <Score>98765432</Score>
-      </Link>
-      <Link>
-        <Id>22222222</Id>
-        <Score>87654321</Score>
-      </Link>
-      <Link>
-        <Id>33333333</Id>
-        <Score>76543210</Score>
-      </Link>
+      <Link><Id>98765432</Id><Score>85432100</Score></Link>
+      <Link><Id>87654321</Id><Score>72100000</Score></Link>
+      <Link><Id>76543210</Id><Score>65000000</Score></Link>
     </LinkSetDb>
   </LinkSet>
 </eLinkResult>`;
 
       const result = parseELinkResponse(xml);
 
-      expect(result.links).toHaveLength(3);
-      expect(result.links[0]).toEqual({ id: '11111111', score: 98765432 });
-      expect(result.links[1]).toEqual({ id: '22222222', score: 87654321 });
-      expect(result.links[2]).toEqual({ id: '33333333', score: 76543210 });
+      expect(result).toHaveLength(1);
+      expect(result[0]!.seedId).toBe('12345678');
+      expect(result[0]!.relatedIds).toHaveLength(3);
+      expect(result[0]!.relatedIds[0]).toEqual({ id: '98765432', score: 85432100 });
+      expect(result[0]!.relatedIds[1]).toEqual({ id: '87654321', score: 72100000 });
+      expect(result[0]!.relatedIds[2]).toEqual({ id: '76543210', score: 65000000 });
     });
 
-    it('should handle empty link results', () => {
+    it('should parse ELink XML with multiple seeds', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <eLinkResult>
   <LinkSet>
     <DbFrom>pubmed</DbFrom>
-    <IdList>
-      <Id>99999999</Id>
-    </IdList>
+    <IdList><Id>11111111</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>99999999</Id><Score>90000000</Score></Link>
+    </LinkSetDb>
+  </LinkSet>
+  <LinkSet>
+    <DbFrom>pubmed</DbFrom>
+    <IdList><Id>22222222</Id></IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed</LinkName>
+      <Link><Id>88888888</Id><Score>80000000</Score></Link>
+      <Link><Id>77777777</Id><Score>70000000</Score></Link>
+    </LinkSetDb>
   </LinkSet>
 </eLinkResult>`;
 
       const result = parseELinkResponse(xml);
 
-      expect(result.links).toHaveLength(0);
+      expect(result).toHaveLength(2);
+      expect(result[0]!.seedId).toBe('11111111');
+      expect(result[0]!.relatedIds).toHaveLength(1);
+      expect(result[1]!.seedId).toBe('22222222');
+      expect(result[1]!.relatedIds).toHaveLength(2);
     });
 
-    it('should handle multiple seed PMIDs', () => {
+    it('should handle empty LinkSetDb (no related articles)', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <eLinkResult>
   <LinkSet>
     <DbFrom>pubmed</DbFrom>
-    <IdList>
-      <Id>12345678</Id>
-      <Id>23456789</Id>
-    </IdList>
-    <LinkSetDb>
-      <DbTo>pubmed</DbTo>
-      <LinkName>pubmed_pubmed</LinkName>
-      <Link>
-        <Id>44444444</Id>
-        <Score>50000000</Score>
-      </Link>
-    </LinkSetDb>
+    <IdList><Id>12345678</Id></IdList>
   </LinkSet>
 </eLinkResult>`;
 
       const result = parseELinkResponse(xml);
 
-      expect(result.links).toHaveLength(1);
-      expect(result.links[0]!.id).toBe('44444444');
+      expect(result).toHaveLength(1);
+      expect(result[0]!.seedId).toBe('12345678');
+      expect(result[0]!.relatedIds).toHaveLength(0);
     });
 
-    it('should handle multiple LinkSet elements (one per seed PMID)', () => {
+    it('should sort related articles by score descending', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE eLinkResult PUBLIC "-//NLM//DTD elink 20101123//EN" "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/dtd/20101123/elink.dtd">
 <eLinkResult>
   <LinkSet>
     <DbFrom>pubmed</DbFrom>
-    <IdList>
-      <Id>12345678</Id>
-    </IdList>
+    <IdList><Id>12345678</Id></IdList>
     <LinkSetDb>
       <DbTo>pubmed</DbTo>
       <LinkName>pubmed_pubmed</LinkName>
-      <Link>
-        <Id>11111111</Id>
-        <Score>98765432</Score>
-      </Link>
-      <Link>
-        <Id>22222222</Id>
-        <Score>87654321</Score>
-      </Link>
-    </LinkSetDb>
-  </LinkSet>
-  <LinkSet>
-    <DbFrom>pubmed</DbFrom>
-    <IdList>
-      <Id>23456789</Id>
-    </IdList>
-    <LinkSetDb>
-      <DbTo>pubmed</DbTo>
-      <LinkName>pubmed_pubmed</LinkName>
-      <Link>
-        <Id>33333333</Id>
-        <Score>76543210</Score>
-      </Link>
-      <Link>
-        <Id>44444444</Id>
-        <Score>65432109</Score>
-      </Link>
+      <Link><Id>11111111</Id><Score>50000000</Score></Link>
+      <Link><Id>22222222</Id><Score>90000000</Score></Link>
+      <Link><Id>33333333</Id><Score>70000000</Score></Link>
     </LinkSetDb>
   </LinkSet>
 </eLinkResult>`;
 
       const result = parseELinkResponse(xml);
 
-      expect(result.links).toHaveLength(4);
-      expect(result.links[0]).toEqual({ id: '11111111', score: 98765432 });
-      expect(result.links[1]).toEqual({ id: '22222222', score: 87654321 });
-      expect(result.links[2]).toEqual({ id: '33333333', score: 76543210 });
-      expect(result.links[3]).toEqual({ id: '44444444', score: 65432109 });
+      expect(result[0]!.relatedIds[0]!.id).toBe('22222222');
+      expect(result[0]!.relatedIds[1]!.id).toBe('33333333');
+      expect(result[0]!.relatedIds[2]!.id).toBe('11111111');
     });
 
-    it('should handle multiple LinkSet elements where some have no results', () => {
+    it('should handle empty eLinkResult', () => {
+      const xml = `<?xml version="1.0" encoding="UTF-8" ?>
+<eLinkResult>
+</eLinkResult>`;
+
+      const result = parseELinkResponse(xml);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should only use pubmed_pubmed links, ignoring other link names', () => {
       const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <eLinkResult>
   <LinkSet>
     <DbFrom>pubmed</DbFrom>
-    <IdList>
-      <Id>12345678</Id>
-    </IdList>
+    <IdList><Id>12345678</Id></IdList>
     <LinkSetDb>
       <DbTo>pubmed</DbTo>
       <LinkName>pubmed_pubmed</LinkName>
-      <Link>
-        <Id>11111111</Id>
-        <Score>98765432</Score>
-      </Link>
+      <Link><Id>99999999</Id><Score>90000000</Score></Link>
     </LinkSetDb>
-  </LinkSet>
-  <LinkSet>
-    <DbFrom>pubmed</DbFrom>
-    <IdList>
-      <Id>99999999</Id>
-    </IdList>
+    <LinkSetDb>
+      <DbTo>pubmed</DbTo>
+      <LinkName>pubmed_pubmed_reviews</LinkName>
+      <Link><Id>88888888</Id><Score>80000000</Score></Link>
+    </LinkSetDb>
   </LinkSet>
 </eLinkResult>`;
 
       const result = parseELinkResponse(xml);
 
-      expect(result.links).toHaveLength(1);
-      expect(result.links[0]).toEqual({ id: '11111111', score: 98765432 });
+      expect(result).toHaveLength(1);
+      expect(result[0]!.relatedIds).toHaveLength(1);
+      expect(result[0]!.relatedIds[0]!.id).toBe('99999999');
     });
   });
 });

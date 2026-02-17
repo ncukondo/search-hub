@@ -9,6 +9,7 @@ import * as z from 'zod';
 import {
   reviewDecisionSchema,
   reviewBasisSchema,
+  reviewModeSchema,
   reviewSchema,
   mergedSourceSchema,
   articleEntrySchema,
@@ -18,6 +19,7 @@ import {
 
 export type ReviewDecision = z.infer<typeof reviewDecisionSchema>;
 export type ReviewBasis = z.infer<typeof reviewBasisSchema>;
+export type ReviewMode = z.infer<typeof reviewModeSchema>;
 export type Review = z.infer<typeof reviewSchema>;
 export type MergedSource = z.infer<typeof mergedSourceSchema>;
 export type ArticleEntry = z.infer<typeof articleEntrySchema>;

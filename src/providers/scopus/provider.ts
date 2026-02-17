@@ -9,6 +9,7 @@ import type {
   Article,
   TranslatedQuery,
   SearchOptions,
+  SortField,
   ResolvedAST,
   SearchState,
   SearchResumeResult,
@@ -21,6 +22,13 @@ import type { ScopusConfig, ScopusProviderState } from './types';
 
 /** Default page size for Scopus (max 25 for COMPLETE view) */
 const DEFAULT_PAGE_SIZE = 25;
+
+/** Map base SortField to Scopus sort parameter */
+function mapSortField(sort: SortField): string | undefined {
+  if (sort === 'relevance') return '-relevancy';
+  // 'date' is the default Scopus sort order, no parameter needed
+  return undefined;
+}
 
 /**
  * Scopus database provider.
@@ -96,6 +104,9 @@ export class ScopusProvider extends BaseProvider {
     // Initialize state
     this.currentState = this.createBaseState(query, 0, 0);
 
+    // Map sort field to Scopus-specific parameter
+    const scopusSort = options.sort ? mapSortField(options.sort) : undefined;
+
     while (retrievedCount < maxResults) {
       // Wait for rate limiter
       await this.rateLimiter.acquire();
@@ -105,6 +116,7 @@ export class ScopusProvider extends BaseProvider {
         return await this.client.search(query.native, {
           start: offset,
           count: Math.min(pageSize, maxResults - retrievedCount),
+          ...(scopusSort && { sort: scopusSort }),
         });
       });
 

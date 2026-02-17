@@ -198,6 +198,51 @@ describe('ArxivProvider', () => {
 
       expect(articles).toHaveLength(1);
     });
+
+    it('should map sort=relevance to sortBy=relevance for arXiv client', async () => {
+      mockClient.search.mockResolvedValueOnce(SAMPLE_RESPONSE);
+
+      const query = createTranslatedQuery();
+      const articles = [];
+      for await (const article of provider.search(query, { sort: 'relevance' })) {
+        articles.push(article);
+      }
+
+      expect(mockClient.search).toHaveBeenCalledWith(
+        query.native,
+        expect.objectContaining({ sortBy: 'relevance' }),
+      );
+    });
+
+    it('should map sort=date to sortBy=submittedDate for arXiv client', async () => {
+      mockClient.search.mockResolvedValueOnce(SAMPLE_RESPONSE);
+
+      const query = createTranslatedQuery();
+      const articles = [];
+      for await (const article of provider.search(query, { sort: 'date' })) {
+        articles.push(article);
+      }
+
+      expect(mockClient.search).toHaveBeenCalledWith(
+        query.native,
+        expect.objectContaining({ sortBy: 'submittedDate' }),
+      );
+    });
+
+    it('should not set sortBy when sort is not specified', async () => {
+      mockClient.search.mockResolvedValueOnce(SAMPLE_RESPONSE);
+
+      const query = createTranslatedQuery();
+      const articles = [];
+      for await (const article of provider.search(query)) {
+        articles.push(article);
+      }
+
+      expect(mockClient.search).toHaveBeenCalledWith(
+        query.native,
+        expect.not.objectContaining({ sortBy: expect.anything() }),
+      );
+    });
   });
 
   describe('testConnection', () => {

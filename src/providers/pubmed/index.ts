@@ -25,6 +25,9 @@ export type {
   PubMedConfig,
   ESearchResponse,
   EFetchResponse,
+  ELinkOptions,
+  ELinkResponse,
+  RelatedArticle,
   PubMedProviderState,
 } from './types.js';
 
@@ -32,7 +35,7 @@ export type {
 export { translateQuery } from './translator.js';
 
 // Parser functions
-export { parseESearchResponse, parseEFetchResponse } from './parser.js';
+export { parseESearchResponse, parseEFetchResponse, parseELinkResponse } from './parser.js';
 export type { EFetchResult } from './parser.js';
 
 // HTTP client

@@ -5,7 +5,7 @@
 import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir, copyFile, access } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { classifyStatus, type ReviewFile, type ArticleEntry, type ReviewStatus, type ReviewBasis } from './types.js';
+import { classifyStatus, type ReviewFile, type ArticleEntry, type ReviewStatus, type ReviewBasis, type ReviewMode } from './types.js';
 
 export type SortOption = 'year' | 'title' | 'random' | 'none';
 
@@ -76,10 +76,19 @@ function getArticleId(article: ArticleEntry): string {
   return article.title;
 }
 
-function getBasisGuidanceComment(basis: ReviewBasis): string {
+function getBasisGuidanceComment(basis: ReviewBasis, mode: ReviewMode = 'screening'): string {
   const schemaLine = '# yaml-language-server: $schema=./review.schema.json';
   switch (basis) {
     case 'title':
+      if (mode === 'picking') {
+        return [
+          schemaLine,
+          '# Review by title only.',
+          '# Mark relevant items as "include" with a comment explaining the reason.',
+          '# Leave everything else as "uncertain".',
+          '',
+        ].join('\n');
+      }
       return [
         schemaLine,
         '# Screening by title only.',
@@ -106,10 +115,10 @@ function getBasisGuidanceComment(basis: ReviewBasis): string {
   }
 }
 
-function getDecisionInlineComment(basis: ReviewBasis): string {
+function getDecisionInlineComment(basis: ReviewBasis, mode: ReviewMode = 'screening'): string {
   switch (basis) {
     case 'title':
-      return '# exclude / uncertain';
+      return mode === 'picking' ? '# include / uncertain' : '# exclude / uncertain';
     case 'abstract':
     case 'fulltext':
       return '# include / exclude / uncertain';
@@ -235,6 +244,9 @@ export async function executeReviewExtract(
   const outputPath = join(sessionDir, 'for-review', options.name, 'review.yaml');
   const reviewFile = await loadReviewFile(sessionDir);
 
+  // Load mode from master file (default: screening)
+  const mode: ReviewMode = reviewFile.mode ?? 'screening';
+
   // Filter articles by status
   const reviewers = reviewFile.reviewers;
   let filtered: ArticleEntry[];
@@ -279,7 +291,7 @@ export async function executeReviewExtract(
     const yamlContent = stringifyYaml(outputFile, { lineWidth: 0 });
 
     // Add decision inline comments
-    const decisionComment = getDecisionInlineComment(options.basis);
+    const decisionComment = getDecisionInlineComment(options.basis, mode);
     let yamlWithComments = yamlContent.replace(
       /^(\s*-?\s*)decision: uncertain$/gm,
       `$1decision: uncertain          ${decisionComment}`
@@ -291,7 +303,7 @@ export async function executeReviewExtract(
       '$1comment: ""                  # reason for decision'
     );
 
-    const guidanceComment = getBasisGuidanceComment(options.basis);
+    const guidanceComment = getBasisGuidanceComment(options.basis, mode);
     finalContent = guidanceComment + yamlWithComments;
   } else {
     // Final decision mode: --finalize, or no --basis (backward compat)

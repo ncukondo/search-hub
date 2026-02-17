@@ -9,7 +9,7 @@
 import { RateLimiter, createProviderError } from '../base/index.js';
 import type { ProviderError, ProviderErrorCode } from '../base/types.js';
 import { parseESearchResponse, parseEFetchResponse, parseELinkResponse } from './parser.js';
-import type { ESearchResponse, ELinkResponse, PubMedArticle, PubMedConfig } from './types.js';
+import type { ELinkOptions, ELinkResponse, RelatedArticle, ESearchResponse, PubMedArticle, PubMedConfig } from './types.js';
 
 const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 
@@ -23,6 +23,8 @@ export interface SearchOptions {
   retmax?: number;
   /** Use history server for large result sets */
   useHistory?: boolean;
+  /** Sort parameter for esearch (e.g. 'relevance', 'pub_date') */
+  sort?: string;
 }
 
 /**
@@ -37,14 +39,6 @@ export interface HistoryFetchOptions {
   retstart: number;
   /** Maximum number of results */
   retmax: number;
-}
-
-/**
- * Options for findRelated API call.
- */
-export interface FindRelatedOptions {
-  /** Additional PubMed filter term */
-  term?: string;
 }
 
 /**
@@ -86,6 +80,10 @@ export class PubMedClient {
 
     if (options.useHistory) {
       params.set('usehistory', 'y');
+    }
+
+    if (options.sort) {
+      params.set('sort', options.sort);
     }
 
     const url = `${BASE_URL}/esearch.fcgi?${params.toString()}`;
@@ -184,9 +182,9 @@ export class PubMedClient {
   }
 
   /**
-   * Find related articles using the ELink API.
+   * Find related articles using ELink API with neighbor_score.
    */
-  async findRelated(pmids: string[], options: FindRelatedOptions = {}): Promise<ELinkResponse> {
+  async findRelated(options: ELinkOptions): Promise<ELinkResponse[]> {
     await this.rateLimiter.acquire();
 
     const params = new URLSearchParams({
@@ -197,8 +195,8 @@ export class PubMedClient {
       email: this.config.email,
     });
 
-    for (const pmid of pmids) {
-      params.append('id', pmid);
+    for (const id of options.ids) {
+      params.append('id', id);
     }
 
     if (this.config.apiKey) {
@@ -214,7 +212,53 @@ export class PubMedClient {
     const xml = await response.text();
 
     this.rateLimiter.resetBackoff();
-    return parseELinkResponse(xml);
+    const results = parseELinkResponse(xml);
+
+    // Apply maxResults truncation per seed
+    if (options.maxResults !== undefined) {
+      for (const result of results) {
+        result.relatedIds = result.relatedIds.slice(0, options.maxResults);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Find related articles with deduplication across multiple seeds.
+   *
+   * Merges related articles from all seeds, keeps highest score for duplicates,
+   * excludes seed PMIDs from results, sorts by score descending, and truncates
+   * to maxResults.
+   */
+  async findRelatedMerged(options: ELinkOptions): Promise<RelatedArticle[]> {
+    // Pass options without maxResults to findRelated() to avoid double-truncation:
+    // each seed should return all results so the merge sees the full picture.
+    const { maxResults, ...findRelatedOptions } = options;
+    const responses = await this.findRelated(findRelatedOptions);
+
+    const seedSet = new Set(options.ids);
+    const scoreMap = new Map<string, number>();
+
+    for (const response of responses) {
+      for (const related of response.relatedIds) {
+        if (seedSet.has(related.id)) continue;
+        const existing = scoreMap.get(related.id);
+        if (existing === undefined || related.score > existing) {
+          scoreMap.set(related.id, related.score);
+        }
+      }
+    }
+
+    const merged: RelatedArticle[] = Array.from(scoreMap.entries())
+      .map(([id, score]) => ({ id, score }))
+      .sort((a, b) => b.score - a.score);
+
+    if (maxResults !== undefined) {
+      return merged.slice(0, maxResults);
+    }
+
+    return merged;
   }
 
   /**

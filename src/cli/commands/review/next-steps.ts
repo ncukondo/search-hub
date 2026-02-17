@@ -4,12 +4,14 @@
  */
 
 import type { ReviewStatusResult } from './status.js';
-import type { ReviewBasis } from './types.js';
+import type { ReviewBasis, ReviewMode } from './types.js';
 import type { Suggestion, SuggestionResult } from '../../suggestions/types.js';
 
 export interface ReviewNextStepsContext {
   sessionId: string;
   statusResult: ReviewStatusResult;
+  /** Review mode: screening (default) or picking */
+  mode?: ReviewMode;
   /** Extract name for batch continuation */
   extractName?: string;
   /** Number of articles extracted in current batch */
@@ -70,47 +72,92 @@ function detectNextBasis(reviewers: ReviewStatusResult['reviewers']): ReviewBasi
  * Batch continuation is appended to seeAlso when applicable.
  */
 export function generateReviewNextSteps(ctx: ReviewNextStepsContext): SuggestionResult | null {
-  const { sessionId, statusResult: rs } = ctx;
+  const { sessionId, statusResult: rs, mode = 'screening' } = ctx;
 
   if (rs.total === 0) return null;
 
   const result: SuggestionResult = { next: [], seeAlso: [] };
 
-  // 1. pending > 0: title screening incomplete
-  if (rs.pending > 0) {
-    result.next.push({
-      command: `search-hub review extract --session ${sessionId} --basis title --filter pending --reviewer "<name>" --name title-screening`,
-      description: `Extract ${rs.pending} pending articles for title screening`,
-    });
-  }
-  // 2. agreed > 0: suggest finalization
-  else {
-    const agreed = rs.agreedInclude + rs.agreedExclude;
-    if (agreed > 0) {
+  if (mode === 'picking') {
+    // Picking mode logic
+    // 1. pending > 0: extract for title review
+    if (rs.pending > 0) {
       result.next.push({
-        command: `search-hub review finalize --session ${sessionId}`,
-        description: `Finalize ${agreed} articles with consensus`,
+        command: `search-hub review extract --session ${sessionId} --basis title --filter pending --reviewer "<name>" --name title-picking`,
+        description: `Extract ${rs.pending} pending articles for title review`,
       });
     }
-    // 3. divided, all-uncertain, or incomplete > 0: suggest further review
-    else if (rs.divided > 0 || rs.allUncertain > 0 || rs.incomplete > 0) {
-      const unresolved = rs.divided + rs.allUncertain + rs.incomplete;
+    // 2. agreed-include > 0 (or all-uncertain): confirm at next basis level
+    else if (rs.agreedInclude > 0 || rs.allUncertain > 0) {
       const nextBasis = detectNextBasis(rs.reviewers);
+      const parts: string[] = [];
+      if (rs.agreedInclude > 0) parts.push(`${rs.agreedInclude} picked`);
+      if (rs.allUncertain > 0) parts.push(`${rs.allUncertain} uncertain`);
+      const description = `${parts.join(' + ')} — confirm at ${nextBasis} level`;
       result.next.push({
-        command: `search-hub review extract --session ${sessionId} --filter divided,all-uncertain,incomplete --basis ${nextBasis} --reviewer "<name>" --name ${nextBasis}-screening`,
-        description: `${unresolved} articles need ${nextBasis}-level review`,
+        command: `search-hub review extract --session ${sessionId} --filter agreed-include,all-uncertain --basis ${nextBasis} --reviewer "<name>" --name ${nextBasis}-screening`,
+        description,
       });
     }
-    // 4. All finalized
-    else if (rs.finalized > 0 && rs.finalized === rs.total) {
-      result.next.push({
-        command: `search-hub register ${sessionId} --reviewed`,
-        description: 'Register accepted articles',
-      });
-    }
-    // No actionable state
+    // 3. agreed > 0: finalize
     else {
-      return null;
+      const agreed = rs.agreedInclude + rs.agreedExclude;
+      if (agreed > 0) {
+        result.next.push({
+          command: `search-hub review finalize --session ${sessionId}`,
+          description: `Finalize ${agreed} articles with consensus`,
+        });
+      }
+      // 4. all finalized: export included
+      else if (rs.finalized > 0 && rs.finalized === rs.total) {
+        result.next.push({
+          command: `search-hub review export --session ${sessionId} --only included`,
+          description: `${rs.included} articles ready for export`,
+        });
+      }
+      // No actionable state
+      else {
+        return null;
+      }
+    }
+  } else {
+    // Screening mode logic (default)
+    // 1. pending > 0: title screening incomplete
+    if (rs.pending > 0) {
+      result.next.push({
+        command: `search-hub review extract --session ${sessionId} --basis title --filter pending --reviewer "<name>" --name title-screening`,
+        description: `Extract ${rs.pending} pending articles for title screening`,
+      });
+    }
+    // 2. agreed > 0: suggest finalization
+    else {
+      const agreed = rs.agreedInclude + rs.agreedExclude;
+      if (agreed > 0) {
+        result.next.push({
+          command: `search-hub review finalize --session ${sessionId}`,
+          description: `Finalize ${agreed} articles with consensus`,
+        });
+      }
+      // 3. divided, all-uncertain, or incomplete > 0: suggest further review
+      else if (rs.divided > 0 || rs.allUncertain > 0 || rs.incomplete > 0) {
+        const unresolved = rs.divided + rs.allUncertain + rs.incomplete;
+        const nextBasis = detectNextBasis(rs.reviewers);
+        result.next.push({
+          command: `search-hub review extract --session ${sessionId} --filter divided,all-uncertain,incomplete --basis ${nextBasis} --reviewer "<name>" --name ${nextBasis}-screening`,
+          description: `${unresolved} articles need ${nextBasis}-level review`,
+        });
+      }
+      // 4. All finalized
+      else if (rs.finalized > 0 && rs.finalized === rs.total) {
+        result.next.push({
+          command: `search-hub register ${sessionId} --reviewed`,
+          description: 'Register accepted articles',
+        });
+      }
+      // No actionable state
+      else {
+        return null;
+      }
     }
   }
 

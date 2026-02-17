@@ -55,6 +55,9 @@ export class ERICProvider extends BaseProvider {
   private currentTotalResults = 0;
   private currentRetrievedCount = 0;
 
+  /** Warnings from the most recent search */
+  private searchWarnings: string[] = [];
+
   constructor(config: ERICProviderOptions = {}) {
     // Set default rate limit for ERIC (5 req/s recommended)
     const baseConfig: BaseProviderConfig = {
@@ -105,6 +108,14 @@ export class ERICProvider extends BaseProvider {
   ): AsyncIterable<Article> {
     const maxResults = options.maxResults ?? Number.MAX_SAFE_INTEGER;
     const pageSize = options.pageSize ?? this.pageSize;
+
+    // ERIC does not support sort — emit warning if specified
+    this.searchWarnings = [];
+    if (options.sort) {
+      this.searchWarnings.push(
+        `ERIC does not support sort option '${options.sort}'; using default order`
+      );
+    }
 
     // Initialize search state
     this.currentQuery = query;
@@ -158,6 +169,10 @@ export class ERICProvider extends BaseProvider {
         break;
       }
     }
+  }
+
+  getWarnings(): string[] {
+    return this.searchWarnings;
   }
 
   /**

@@ -203,6 +203,62 @@ describe('PubMedProvider', () => {
       expect(mockClientInstance.fetch).not.toHaveBeenCalled();
     });
 
+    it('forwards sort=relevance to client as sort=relevance', async () => {
+      mockClientInstance.search.mockResolvedValueOnce({
+        count: 1,
+        retmax: 20,
+        retstart: 0,
+        idlist: ['12345678'],
+      });
+      mockClientInstance.fetch.mockResolvedValueOnce([
+        createMockArticle('12345678'),
+      ]);
+
+      const provider = new PubMedProvider(baseConfig);
+      const query: TranslatedQuery = {
+        native: 'diabetes[tiab]',
+        provider: 'pubmed',
+      };
+
+      const articles: Article[] = [];
+      for await (const article of provider.search(query, { sort: 'relevance' })) {
+        articles.push(article);
+      }
+
+      expect(mockClientInstance.search).toHaveBeenCalledWith(
+        'diabetes[tiab]',
+        expect.objectContaining({ sort: 'relevance' }),
+      );
+    });
+
+    it('forwards sort=date to client as sort=pub_date', async () => {
+      mockClientInstance.search.mockResolvedValueOnce({
+        count: 1,
+        retmax: 20,
+        retstart: 0,
+        idlist: ['12345678'],
+      });
+      mockClientInstance.fetch.mockResolvedValueOnce([
+        createMockArticle('12345678'),
+      ]);
+
+      const provider = new PubMedProvider(baseConfig);
+      const query: TranslatedQuery = {
+        native: 'diabetes[tiab]',
+        provider: 'pubmed',
+      };
+
+      const articles: Article[] = [];
+      for await (const article of provider.search(query, { sort: 'date' })) {
+        articles.push(article);
+      }
+
+      expect(mockClientInstance.search).toHaveBeenCalledWith(
+        'diabetes[tiab]',
+        expect.objectContaining({ sort: 'pub_date' }),
+      );
+    });
+
     it('paginates through large result sets', async () => {
       // First page
       mockClientInstance.search.mockResolvedValueOnce({

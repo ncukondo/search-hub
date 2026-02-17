@@ -9,6 +9,7 @@ import type {
   Article,
   ResolvedAST,
   SearchOptions,
+  SortField,
   SearchState,
   TranslatedQuery,
   SearchResumeResult,
@@ -20,6 +21,11 @@ import type { PubMedConfig, PubMedProviderState } from './types.js';
 
 /** Default page size for fetching results */
 const DEFAULT_PAGE_SIZE = 20;
+
+/** Map base SortField to PubMed esearch sort parameter */
+function mapSortField(sort: SortField): string {
+  return sort === 'date' ? 'pub_date' : sort;
+}
 
 /**
  * PubMed provider for searching biomedical literature.
@@ -58,11 +64,15 @@ export class PubMedProvider extends BaseProvider {
     let retstart = 0;
     let totalRetrieved = 0;
 
+    // Map sort field to PubMed-specific parameter
+    const pubmedSort = options?.sort ? mapSortField(options.sort) : undefined;
+
     // Initial search with history server enabled
     const initialResult = await this.withRetry(() => this.client.search(query.native, {
       retstart: 0,
       retmax: pageSize,
       useHistory: true,
+      ...(pubmedSort && { sort: pubmedSort }),
     }));
 
     const totalCount = initialResult.count;
@@ -131,6 +141,7 @@ export class PubMedProvider extends BaseProvider {
         const result = await this.withRetry(() => this.client.search(query.native, {
           retstart,
           retmax: remainingToFetch,
+          ...(pubmedSort && { sort: pubmedSort }),
         }));
         articles = await this.withRetry(() => this.client.fetch(result.idlist));
       }

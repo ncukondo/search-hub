@@ -190,6 +190,76 @@ describe('ScopusProvider', () => {
 
       expect(articles).toHaveLength(10);
     });
+
+    it('should pass sort=-relevancy to client when sort is relevance', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '1',
+            'opensearch:startIndex': '0',
+            'opensearch:itemsPerPage': '25',
+            entry: [
+              {
+                'dc:identifier': 'SCOPUS_ID:1',
+                'dc:title': 'Article 1',
+                'dc:creator': 'Smith J.',
+              },
+            ],
+          },
+        }),
+      });
+
+      const provider = new ScopusProvider(config);
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        filters: {},
+        providers: {},
+      };
+      const query = provider.translateQuery(ast);
+
+      const articles: unknown[] = [];
+      for await (const article of provider.search(query, { sort: 'relevance' })) {
+        articles.push(article);
+      }
+
+      const calledUrl = mockFetch.mock.calls[0]![0] as URL;
+      expect(calledUrl.searchParams.get('sort')).toBe('-relevancy');
+    });
+
+    it('should not pass sort parameter when sort is not specified', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          'search-results': {
+            'opensearch:totalResults': '0',
+            'opensearch:startIndex': '0',
+            'opensearch:itemsPerPage': '25',
+            entry: [],
+          },
+        }),
+      });
+
+      const provider = new ScopusProvider(config);
+      const ast: QueryAST = {
+        name: 'test',
+        blocks: [{ id: 'block-1', field: 'title', terms: { keywords: ['test'] }, operator: 'OR' }],
+        filters: {},
+        providers: {},
+      };
+      const query = provider.translateQuery(ast);
+
+      const articles: unknown[] = [];
+      for await (const article of provider.search(query)) {
+        articles.push(article);
+      }
+
+      const calledUrl = mockFetch.mock.calls[0]![0] as URL;
+      expect(calledUrl.searchParams.has('sort')).toBe(false);
+    });
   });
 
   describe('testConnection', () => {
