@@ -248,6 +248,19 @@ const mergeRule: SuggestionRule = (ctx) => {
   };
 };
 
+const relatedRule: SuggestionRule = (ctx) => {
+  if (ctx.command !== 'related') return null;
+  const sid = ctx.sessionId ?? '<session-id>';
+  return {
+    next: [
+      { command: `search-hub results ${sid}`, description: 'View related articles' },
+      { command: `search-hub review init ${sid}`, description: 'Screen related articles' },
+      { command: `search-hub export ${sid}`, description: 'Export results' },
+    ],
+    seeAlso: [],
+  };
+};
+
 // Phase 4: Review Workflow rules
 
 const reviewInitRule: SuggestionRule = (ctx) => {
@@ -454,6 +467,7 @@ const rules: SuggestionRule[] = [
   summaryRule,
   diffRule,
   mergeRule,
+  relatedRule,
   // Phase 4
   reviewInitRule,
   reviewStatusRule,

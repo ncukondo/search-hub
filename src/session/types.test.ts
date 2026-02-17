@@ -9,7 +9,8 @@ import type {
   ProviderName,
   SessionSource,
 } from './types';
-import { isMergedSession } from './types';
+import { isMergedSession, isRelatedSession } from './types';
+import type { SessionSeeds } from './types';
 
 describe('Session Types', () => {
   describe('SessionStatus', () => {
@@ -324,6 +325,100 @@ describe('Session Types', () => {
         summary: { totalHits: 0, totalRetrieved: 0, status: 'created' },
       };
       expect(isMergedSession(session)).toBe(false);
+    });
+  });
+
+  describe('Related SessionFile', () => {
+    it('should allow related session with type and seeds', () => {
+      const session: SessionFile = {
+        version: 1,
+        id: '20260216_related-test_abc123',
+        name: 'related-test',
+        type: 'related',
+        createdAt: '2026-02-16T10:00:00Z',
+        updatedAt: '2026-02-16T10:00:00Z',
+        seeds: {
+          ids: ['12345678', '23456789'],
+        },
+        databases: {
+          pubmed: {
+            status: 'completed',
+            retrievedCount: 20,
+            files: {
+              query: '',
+              results: 'results_pubmed.jsonl',
+              resultsYaml: 'results_pubmed.yaml',
+            },
+          },
+        },
+        summary: {
+          totalHits: 0,
+          totalRetrieved: 20,
+          status: 'completed',
+        },
+      };
+      expect(session.type).toBe('related');
+      expect(session.seeds).toBeDefined();
+      expect(session.seeds!.ids).toEqual(['12345678', '23456789']);
+    });
+
+    it('should allow seeds with sourceSession', () => {
+      const seeds: SessionSeeds = {
+        ids: ['12345678'],
+        sourceSession: 'session-abc',
+      };
+      expect(seeds.sourceSession).toBe('session-abc');
+    });
+
+    it('should allow seeds without sourceSession', () => {
+      const seeds: SessionSeeds = {
+        ids: ['12345678', '23456789'],
+      };
+      expect(seeds.sourceSession).toBeUndefined();
+    });
+  });
+
+  describe('isRelatedSession', () => {
+    it('should return true for related sessions', () => {
+      const session: SessionFile = {
+        version: 1,
+        id: '20260216_related_abc123',
+        name: 'related',
+        type: 'related',
+        createdAt: '2026-02-16T10:00:00Z',
+        updatedAt: '2026-02-16T10:00:00Z',
+        seeds: { ids: ['12345678'] },
+        databases: {},
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'completed' },
+      };
+      expect(isRelatedSession(session)).toBe(true);
+    });
+
+    it('should return false for search sessions', () => {
+      const session: SessionFile = {
+        version: 1,
+        id: '20240115_test_abc123',
+        name: 'test',
+        createdAt: '2024-01-15T10:00:00Z',
+        updatedAt: '2024-01-15T10:00:00Z',
+        databases: {},
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'created' },
+      };
+      expect(isRelatedSession(session)).toBe(false);
+    });
+
+    it('should return false for merged sessions', () => {
+      const session: SessionFile = {
+        version: 1,
+        id: '20260208_merged_abc123',
+        name: 'merged',
+        type: 'merge',
+        createdAt: '2026-02-08T10:00:00Z',
+        updatedAt: '2026-02-08T10:00:00Z',
+        databases: {},
+        summary: { totalHits: 0, totalRetrieved: 0, status: 'completed' },
+      };
+      expect(isRelatedSession(session)).toBe(false);
     });
   });
 

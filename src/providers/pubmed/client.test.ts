@@ -755,4 +755,5 @@ describe('PubMedClient', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
+
 });

@@ -84,7 +84,7 @@ export interface SessionFile {
   id: string;
   name: string;
   description?: string;
-  type?: 'search' | 'merge';
+  type?: 'search' | 'merge' | 'related';
   createdAt: string;
   updatedAt: string;
   query?: {
@@ -93,6 +93,7 @@ export interface SessionFile {
     targets: ProviderName[];
   };
   sources?: SessionSource[];
+  seeds?: SessionSeeds;
   databases: Partial<Record<ProviderName, DatabaseStatus>>;
   summary: {
     totalHits: number;
@@ -102,10 +103,25 @@ export interface SessionFile {
 }
 
 /**
+ * Seed PMIDs for related article sessions.
+ */
+export interface SessionSeeds {
+  ids: string[];
+  sourceSession?: string;
+}
+
+/**
  * Check if a session is a merged session.
  */
 export function isMergedSession(session: SessionFile): boolean {
   return session.type === 'merge';
+}
+
+/**
+ * Check if a session is a related articles session.
+ */
+export function isRelatedSession(session: SessionFile): boolean {
+  return session.type === 'related';
 }
 
 /**
