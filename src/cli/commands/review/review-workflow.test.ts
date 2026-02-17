@@ -2127,4 +2127,95 @@ summary:
       expect(statusAfterAbstract.pending).toBe(0);
     });
   });
+
+  describe('Picking mode workflow', () => {
+    it('full picking mode: init → extract (title) → merge → status → next steps', async () => {
+      await setupSessionWithResults();
+
+      // Init in picking mode
+      await executeReviewInit({ sessionId, mode: 'picking' }, sessionsDir);
+
+      // Verify status shows picking mode
+      const statusInit = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(statusInit.mode).toBe('picking');
+      expect(statusInit.total).toBe(10);
+      expect(statusInit.pending).toBe(10);
+
+      // Extract for title review
+      const titleExtract = await executeReviewExtract(
+        {
+          sessionId,
+          basis: 'title',
+          filter: ['pending'],
+          reviewer: 'human:me',
+          name: 'title-pick',
+        },
+        sessionsDir
+      );
+
+      // Verify title extract shows picking-mode comments
+      const extractContent = await readFile(titleExtract.outputPath, 'utf-8');
+      expect(extractContent).toContain('# include / uncertain');
+      expect(extractContent).not.toContain('# exclude / uncertain');
+      expect(extractContent).toContain('Mark relevant items as "include"');
+
+      // Simulate reviewer picking 3 articles as include, leaving rest as uncertain
+      const extractedFile = parseYaml(extractContent) as ReviewFile;
+      for (let i = 0; i < 3; i++) {
+        extractedFile.articles[i]!.reviews[0]!.decision = 'include';
+        extractedFile.articles[i]!.reviews[0]!.comment = 'looks relevant';
+      }
+      // Rest remain as uncertain (default)
+      await writeFile(titleExtract.outputPath, stringifyYaml(extractedFile));
+
+      // Merge title reviews
+      await executeReviewMerge({ sessionId, name: 'title-pick' }, sessionsDir);
+
+      // Check status after title review
+      const statusAfterTitle = await executeReviewStatus({ sessionId }, sessionsDir);
+      expect(statusAfterTitle.agreedInclude).toBe(3); // 3 picked
+      expect(statusAfterTitle.allUncertain).toBe(7); // 7 left uncertain
+
+      // Verify picking-mode next steps
+      const nextSteps = generateReviewNextSteps({
+        sessionId,
+        statusResult: statusAfterTitle,
+        mode: 'picking',
+      });
+      expect(nextSteps).not.toBeNull();
+      // Should suggest confirming picked articles at abstract level
+      expect(nextSteps!.next[0]!.command).toContain('--filter agreed-include,all-uncertain');
+      expect(nextSteps!.next[0]!.description).toContain('picked');
+    });
+
+    it('picking mode: pending articles are not auto-excluded', async () => {
+      await setupSessionWithResults();
+      await executeReviewInit({ sessionId, mode: 'picking' }, sessionsDir);
+
+      // Extract and review only title, picking some
+      const titleExtract = await executeReviewExtract(
+        { sessionId, basis: 'title', filter: ['pending'], reviewer: 'human:me', name: 'title-pick-2' },
+        sessionsDir
+      );
+
+      const extractedFile = parseYaml(await readFile(titleExtract.outputPath, 'utf-8')) as ReviewFile;
+      // Only pick first 2
+      extractedFile.articles[0]!.reviews[0]!.decision = 'include';
+      extractedFile.articles[1]!.reviews[0]!.decision = 'include';
+      await writeFile(titleExtract.outputPath, stringifyYaml(extractedFile));
+
+      await executeReviewMerge({ sessionId, name: 'title-pick-2' }, sessionsDir);
+
+      // Finalize
+      await executeReviewFinalize({ sessionId }, sessionsDir);
+
+      // Check: uncertain articles should NOT be auto-excluded
+      const statusAfterFinalize = await executeReviewStatus({ sessionId }, sessionsDir);
+      // 2 finalized as include, 8 remain as all-uncertain (not excluded)
+      expect(statusAfterFinalize.finalized).toBe(2);
+      expect(statusAfterFinalize.included).toBe(2);
+      expect(statusAfterFinalize.excluded).toBe(0);
+      expect(statusAfterFinalize.allUncertain).toBe(8);
+    });
+  });
 });

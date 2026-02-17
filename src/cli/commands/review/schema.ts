@@ -86,9 +86,12 @@ export const reviewerRecordSchema = z
   .strict()
   .describe('Record of a reviewer\'s participation at a specific basis level');
 
+export const reviewModeSchema = z.enum(['screening', 'picking']);
+
 export const reviewFileSchema = z
   .object({
     sessionId: z.string().describe('Session identifier'),
+    mode: reviewModeSchema.describe('Review mode: screening (exclusion-based) or picking (inclusion-based)').optional(),
     criteria: z.string().describe('Path to inclusion criteria file').optional(),
     reviewer: z.string().describe('Reviewer identifier (only in extracted ReviewFiles)').optional(),
     basis: reviewBasisSchema.describe('Basis level for screening (only in extracted ReviewFiles)').optional(),

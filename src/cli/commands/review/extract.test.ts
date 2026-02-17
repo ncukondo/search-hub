@@ -21,7 +21,7 @@ describe('executeReviewExtract', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  async function writeReviewFile(articles: ArticleEntry[]): Promise<void> {
+  async function writeReviewFile(articles: ArticleEntry[], reviewFileOverrides?: Partial<ReviewFile>): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
     const internalDir = join(sessionDir, '.internal');
     await mkdir(internalDir, { recursive: true });
@@ -29,6 +29,7 @@ describe('executeReviewExtract', () => {
     const reviewFile: ReviewFile = {
       sessionId,
       articles,
+      ...reviewFileOverrides,
     };
 
     const content = stringifyYaml(reviewFile);
@@ -823,6 +824,79 @@ describe('executeReviewExtract', () => {
 
       // Should have finalDecision
       expect(extracted.articles[0]!.finalDecision).toBeNull();
+    });
+  });
+
+  describe('picking mode extract comments', () => {
+    const articlesForPicking: ArticleEntry[] = [
+      {
+        title: 'Article for Picking',
+        pmid: '100',
+        reviews: [],
+      },
+    ];
+
+    it('shows "# include / uncertain" for title basis in picking mode', async () => {
+      await writeReviewFile(articlesForPicking, { mode: 'picking' });
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'title', reviewer: 'human:me', name: 'pick-title' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('# include / uncertain');
+      expect(content).not.toContain('# exclude / uncertain');
+    });
+
+    it('shows "# exclude / uncertain" for title basis in screening mode (default)', async () => {
+      await writeReviewFile(articlesForPicking);
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'title', reviewer: 'human:me', name: 'screen-title' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('# exclude / uncertain');
+    });
+
+    it('shows same comments for abstract basis regardless of mode', async () => {
+      await writeReviewFile(articlesForPicking, { mode: 'picking' });
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'abstract', reviewer: 'human:me', name: 'pick-abstract' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('# include / exclude / uncertain');
+    });
+
+    it('shows picking-mode guidance comment for title basis', async () => {
+      await writeReviewFile(articlesForPicking, { mode: 'picking' });
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'title', reviewer: 'human:me', name: 'pick-guidance' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('Mark relevant items as "include"');
+      expect(content).not.toContain('Mark clearly irrelevant');
+    });
+
+    it('shows screening-mode guidance comment for title basis (default)', async () => {
+      await writeReviewFile(articlesForPicking);
+
+      const result = await executeReviewExtract(
+        { sessionId, basis: 'title', reviewer: 'human:me', name: 'screen-guidance' },
+        sessionsDir
+      );
+
+      const content = await readFile(result.outputPath, 'utf-8');
+      expect(content).toContain('Mark clearly irrelevant');
+      expect(content).not.toContain('Mark relevant items as "include"');
     });
   });
 });

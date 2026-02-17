@@ -2230,13 +2230,18 @@ Examples:
     .command('init')
     .description('Generate reviews.yaml from deduplicated search results')
     .requiredOption('--session <id>', 'session ID')
+    .option('--mode <mode>', 'review mode: screening (exclusion-based) or picking (inclusion-based)')
     .option('-f, --force', 'overwrite existing reviews.yaml', false)
-    .action(async (options: { session: string; force: boolean }) => {
+    .action(async (options: { session: string; mode?: string; force: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
+        if (options.mode && options.mode !== 'screening' && options.mode !== 'picking') {
+          throw new Error(`Invalid mode: "${options.mode}". Must be "screening" or "picking".`);
+        }
         const sessionsDir = await getSessionsDir(globalOpts);
         const initOptions: ReviewInitOptions = {
           sessionId: options.session,
+          ...(options.mode && { mode: options.mode as 'screening' | 'picking' }),
           ...(options.force && { force: options.force }),
         };
         const result = await executeReviewInit(initOptions, sessionsDir);

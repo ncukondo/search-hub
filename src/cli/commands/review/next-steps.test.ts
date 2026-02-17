@@ -211,6 +211,110 @@ describe('generateReviewNextSteps', () => {
   });
 });
 
+describe('generateReviewNextSteps (picking mode)', () => {
+  describe('pending > 0 in picking mode', () => {
+    it('should suggest extract for title review (same as screening)', () => {
+      const ctx: ReviewNextStepsContext = {
+        sessionId: 'my-session',
+        statusResult: makeStatusResult({ pending: 50 }),
+        mode: 'picking',
+      };
+      const result = generateReviewNextSteps(ctx);
+      expect(result).not.toBeNull();
+      expect(result!.next[0]!.command).toContain('--basis title');
+      expect(result!.next[0]!.command).toContain('--filter pending');
+    });
+  });
+
+  describe('agreed-include > 0 in picking mode (post-title)', () => {
+    it('should suggest confirm at next basis level', () => {
+      const ctx: ReviewNextStepsContext = {
+        sessionId: 'my-session',
+        statusResult: makeStatusResult({
+          agreedInclude: 10,
+          allUncertain: 30,
+          finalized: 60,
+          included: 30,
+          excluded: 30,
+          reviewers: [{ name: 'ai:claude', basis: 'title' }],
+        }),
+        mode: 'picking',
+      };
+      const result = generateReviewNextSteps(ctx);
+      expect(result).not.toBeNull();
+      expect(result!.next[0]!.command).toContain('--filter agreed-include,all-uncertain');
+      expect(result!.next[0]!.command).toContain('--basis abstract');
+      expect(result!.next[0]!.description).toContain('10 picked');
+      expect(result!.next[0]!.description).toContain('30 uncertain');
+    });
+
+    it('should describe uncertain articles accurately when agreedInclude is 0', () => {
+      const ctx: ReviewNextStepsContext = {
+        sessionId: 'my-session',
+        statusResult: makeStatusResult({
+          agreedInclude: 0,
+          allUncertain: 20,
+          finalized: 80,
+          reviewers: [{ name: 'ai:claude', basis: 'title' }],
+        }),
+        mode: 'picking',
+      };
+      const result = generateReviewNextSteps(ctx);
+      expect(result).not.toBeNull();
+      expect(result!.next[0]!.description).toContain('20 uncertain');
+      expect(result!.next[0]!.description).not.toContain('picked');
+    });
+  });
+
+  describe('pending > 0 uses title-picking name', () => {
+    it('should use --name title-picking in picking mode', () => {
+      const ctx: ReviewNextStepsContext = {
+        sessionId: 'my-session',
+        statusResult: makeStatusResult({ pending: 50 }),
+        mode: 'picking',
+      };
+      const result = generateReviewNextSteps(ctx);
+      expect(result).not.toBeNull();
+      expect(result!.next[0]!.command).toContain('--name title-picking');
+    });
+  });
+
+  describe('only agreed-exclude in picking mode (no agreed-include)', () => {
+    it('should suggest finalize', () => {
+      const ctx: ReviewNextStepsContext = {
+        sessionId: 'my-session',
+        statusResult: makeStatusResult({
+          agreedExclude: 10,
+          finalized: 90,
+        }),
+        mode: 'picking',
+      };
+      const result = generateReviewNextSteps(ctx);
+      expect(result).not.toBeNull();
+      expect(result!.next[0]!.command).toContain('review finalize');
+    });
+  });
+
+  describe('all finalized in picking mode', () => {
+    it('should suggest export with --only included', () => {
+      const ctx: ReviewNextStepsContext = {
+        sessionId: 'my-session',
+        statusResult: makeStatusResult({
+          total: 100,
+          finalized: 100,
+          included: 40,
+          excluded: 60,
+        }),
+        mode: 'picking',
+      };
+      const result = generateReviewNextSteps(ctx);
+      expect(result).not.toBeNull();
+      expect(result!.next[0]!.command).toContain('review export');
+      expect(result!.next[0]!.command).toContain('--only included');
+    });
+  });
+});
+
 describe('computeBatchContinuation', () => {
   it('should return suggestion with correct offset and limit', () => {
     const result = computeBatchContinuation({

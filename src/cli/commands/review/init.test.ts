@@ -242,6 +242,52 @@ summary:
     expect(reviewFile.articles[0]!.year).toBe('2023');
   });
 
+  it('saves mode: picking to reviews.yaml when --mode picking is specified', async () => {
+    await setupSession('pubmed', [
+      JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+    ]);
+
+    const options: ReviewInitOptions = { sessionId, mode: 'picking' };
+    await executeReviewInit(options, sessionsDir);
+
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
+    const content = await readFile(reviewsPath, 'utf-8');
+    const reviewFile = parseYaml(content) as ReviewFile;
+
+    expect(reviewFile.mode).toBe('picking');
+  });
+
+  it('saves mode: screening to reviews.yaml when --mode screening is specified', async () => {
+    await setupSession('pubmed', [
+      JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+    ]);
+
+    const options: ReviewInitOptions = { sessionId, mode: 'screening' };
+    await executeReviewInit(options, sessionsDir);
+
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
+    const content = await readFile(reviewsPath, 'utf-8');
+    const reviewFile = parseYaml(content) as ReviewFile;
+
+    expect(reviewFile.mode).toBe('screening');
+  });
+
+  it('defaults to screening mode when --mode is not specified', async () => {
+    await setupSession('pubmed', [
+      JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+    ]);
+
+    const options: ReviewInitOptions = { sessionId };
+    await executeReviewInit(options, sessionsDir);
+
+    const reviewsPath = join(sessionsDir, sessionId, '.internal', 'reviews.yaml');
+    const content = await readFile(reviewsPath, 'utf-8');
+    const reviewFile = parseYaml(content) as ReviewFile;
+
+    // No mode field when default (backward compatible)
+    expect(reviewFile.mode).toBeUndefined();
+  });
+
   it('formats authors as string', async () => {
     await setupSession('pubmed', [
       JSON.stringify({
