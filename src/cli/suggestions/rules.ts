@@ -5,9 +5,13 @@ import { computeBatchContinuation, generateReviewNextSteps } from '../commands/r
 
 const queryInitRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'query init') return null;
-  const file = ctx.outputFile ?? 'query.yaml';
+  const file = ctx.outputFile ?? 'queries/query.yaml';
   return {
-    next: [{ command: `$EDITOR ${file}`, description: 'Edit your query' }],
+    next: [
+      { command: `$EDITOR ${file}`, description: 'Edit your query' },
+      { command: `search-hub query validate ${file}`, description: 'Validate query' },
+      { command: `search-hub search ${file} --count-only`, description: 'Check hit counts' },
+    ],
     seeAlso: [],
   };
 };
@@ -24,7 +28,7 @@ const queryValidateRule: SuggestionRule = (ctx) => {
         next,
         or: {
           label: 'Or create a new query from the template',
-          items: [{ command: 'search-hub query init -o query.yaml', description: '' }],
+          items: [{ command: 'search-hub query init "<title>"', description: '' }],
         },
         seeAlso: [],
       };
@@ -41,7 +45,7 @@ const queryValidateRule: SuggestionRule = (ctx) => {
   if (ctx.hasSchemaLink === false) {
     return {
       tip: 'Tip: Start from a template to get $schema support and usage examples:\n'
-         + '     search-hub query init -o query.yaml',
+         + '     search-hub query init "<title>"',
       next,
       seeAlso: [],
     };
@@ -147,7 +151,7 @@ const searchDirectQueryRule: SuggestionRule = (ctx) => {
     next: base.next,
     seeAlso: [
       ...base.seeAlso,
-      { command: 'search-hub query init -o my-search.yaml', description: 'Save as YAML for reproducibility' },
+      { command: 'search-hub query init "<title>"', description: 'Save as YAML for reproducibility' },
     ],
   };
 };
