@@ -215,7 +215,11 @@ Registration complete:
     - pmid:87654321 → existing 'lee2024'
   ✗ 1 failed (not found)
 
+Library: sessions/20240115_diabetes-ai_a3f2c1/references.json
 Results saved to: sessions/20240115_diabetes-ai_a3f2c1/registration.json
+
+To also add to your default ref library:
+  ref add -i json "sessions/20240115_diabetes-ai_a3f2c1/references.json"
 ```
 
 #### Implementation
