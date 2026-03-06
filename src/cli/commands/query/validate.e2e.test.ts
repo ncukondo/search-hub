@@ -1167,7 +1167,7 @@ query:
   describe('$schema link detection', () => {
     it('should detect $schema in query init output', async () => {
       const outputPath = join(ctx.tempDir, 'init-schema.yaml');
-      await writeQueryTemplate({ output: outputPath });
+      await writeQueryTemplate({ title: 'test', output: outputPath });
 
       const hasSchema = await detectSchemaLink(outputPath);
       expect(hasSchema).toBe(true);
@@ -1194,7 +1194,7 @@ query:
 
     it('should not show query init guidance for file with $schema', async () => {
       const outputPath = join(ctx.tempDir, 'with-schema.yaml');
-      await writeQueryTemplate({ output: outputPath });
+      await writeQueryTemplate({ title: 'test', output: outputPath });
 
       const result = await validateQueryCommand(outputPath);
       expect(result.success).toBe(true);
@@ -1313,7 +1313,7 @@ query:
 
     it('should not show query init in CLI stdout for file with $schema', async () => {
       const outputPath = join(ctx.tempDir, 'cli-with-schema.yaml');
-      await writeQueryTemplate({ output: outputPath });
+      await writeQueryTemplate({ title: 'test', output: outputPath });
 
       const result = await execCli(
         ['query', 'validate', outputPath, '--no-vocab', '--config', ctx.configPath],

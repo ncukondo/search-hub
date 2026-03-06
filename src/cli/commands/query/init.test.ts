@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateQueryTemplate, writeQueryTemplate, sanitizeForFilename } from './init.js';
@@ -95,58 +95,78 @@ describe('query init', () => {
   });
 
   describe('writeQueryTemplate', () => {
-    it('should output template to stdout (no output option)', async () => {
-      const result = await writeQueryTemplate({});
+    it('should write to queries/<sanitized-title>.yaml by default', async () => {
+      const result = await writeQueryTemplate({ title: 'WBA pain', cwd: tempDir });
       expect(result.success).toBe(true);
-      expect(result.message).toContain('name: my_search');
+      const content = await readFile(join(tempDir, 'queries', 'wba-pain.yaml'), 'utf-8');
+      expect(content).toContain('name: WBA pain');
     });
 
-    it('should write template to file with -o option', async () => {
-      const outputPath = join(tempDir, 'output.yaml');
-      const result = await writeQueryTemplate({ output: outputPath });
-      expect(result.success).toBe(true);
-      const content = await readFile(outputPath, 'utf-8');
-      expect(content).toContain('name: my_search');
+    it('should auto-create queries/ directory', async () => {
+      await writeQueryTemplate({ title: 'test search', cwd: tempDir });
+      const stats = await stat(join(tempDir, 'queries'));
+      expect(stats.isDirectory()).toBe(true);
     });
 
-    it('should refuse to overwrite existing file without --force', async () => {
-      const outputPath = join(tempDir, 'existing.yaml');
-      await writeFile(outputPath, 'existing content', 'utf-8');
-      const result = await writeQueryTemplate({ output: outputPath });
-      expect(result.success).toBe(false);
-      expect(result.message).toContain('exists');
-    });
-
-    it('should overwrite existing file with --force', async () => {
-      const outputPath = join(tempDir, 'existing.yaml');
-      await writeFile(outputPath, 'existing content', 'utf-8');
-      const result = await writeQueryTemplate({ output: outputPath, force: true });
-      expect(result.success).toBe(true);
-      const content = await readFile(outputPath, 'utf-8');
-      expect(content).toContain('name: my_search');
-    });
-
-    it('should create query.schema.json alongside output file with -o', async () => {
-      const outputPath = join(tempDir, 'search.yaml');
-      await writeQueryTemplate({ output: outputPath });
-      const schemaPath = join(tempDir, 'query.schema.json');
+    it('should create query.schema.json in queries/', async () => {
+      await writeQueryTemplate({ title: 'test search', cwd: tempDir });
+      const schemaPath = join(tempDir, 'queries', 'query.schema.json');
       const schemaContent = await readFile(schemaPath, 'utf-8');
       const schema = JSON.parse(schemaContent);
       expect(schema.$schema).toContain('json-schema.org');
     });
 
-    it('should not create schema file when outputting to stdout', async () => {
-      const result = await writeQueryTemplate({});
+    it('should refuse to overwrite existing file without --force', async () => {
+      await mkdir(join(tempDir, 'queries'), { recursive: true });
+      await writeFile(join(tempDir, 'queries', 'test.yaml'), 'existing', 'utf-8');
+      const result = await writeQueryTemplate({ title: 'test', cwd: tempDir });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('exists');
+    });
+
+    it('should overwrite existing file with --force', async () => {
+      await mkdir(join(tempDir, 'queries'), { recursive: true });
+      await writeFile(join(tempDir, 'queries', 'test.yaml'), 'existing', 'utf-8');
+      const result = await writeQueryTemplate({ title: 'test', cwd: tempDir, force: true });
       expect(result.success).toBe(true);
-      expect(result.message).toContain('yaml-language-server');
-      // No file should be created anywhere - just verify stdout contains schema comment
+      const content = await readFile(join(tempDir, 'queries', 'test.yaml'), 'utf-8');
+      expect(content).toContain('name: test');
+    });
+
+    it('should use -o path when provided', async () => {
+      const outputPath = join(tempDir, 'custom.yaml');
+      const result = await writeQueryTemplate({ title: 'my search', output: outputPath });
+      expect(result.success).toBe(true);
+      const content = await readFile(outputPath, 'utf-8');
+      expect(content).toContain('name: my search');
+    });
+
+    it('should output to stdout with --stdout', async () => {
+      const result = await writeQueryTemplate({ title: 'my search', stdout: true });
+      expect(result.success).toBe(true);
+      expect(result.message).toContain('name: my search');
+    });
+
+    it('should not create files when --stdout is used', async () => {
+      await writeQueryTemplate({ title: 'my search', stdout: true, cwd: tempDir });
+      // queries/ directory should NOT be created
+      await expect(stat(join(tempDir, 'queries'))).rejects.toThrow();
     });
 
     it('should include $schema comment in stdout output', async () => {
-      const result = await writeQueryTemplate({});
+      const result = await writeQueryTemplate({ title: 'test', stdout: true });
       expect(result.success).toBe(true);
       const firstLine = result.message.split('\n')[0];
       expect(firstLine).toBe('# yaml-language-server: $schema=./query.schema.json');
+    });
+
+    it('should create query.schema.json alongside -o output file', async () => {
+      const outputPath = join(tempDir, 'search.yaml');
+      await writeQueryTemplate({ title: 'search', output: outputPath });
+      const schemaPath = join(tempDir, 'query.schema.json');
+      const schemaContent = await readFile(schemaPath, 'utf-8');
+      const schema = JSON.parse(schemaContent);
+      expect(schema.$schema).toContain('json-schema.org');
     });
   });
 });

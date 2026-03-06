@@ -61,24 +61,24 @@ describe('search-hub query init E2E', () => {
   describe('writeQueryTemplate creates a file', () => {
     it('should write template to specified output path', async () => {
       const outputPath = join(ctx.tempDir, 'template.yaml');
-      const result = await writeQueryTemplate({ output: outputPath });
+      const result = await writeQueryTemplate({ title: 'my search', output: outputPath });
       expect(result.success).toBe(true);
       const content = await readFile(outputPath, 'utf-8');
-      expect(content).toContain('name: my_search');
+      expect(content).toContain('name: my search');
     });
 
     it('should produce a file that passes validateQueryCommand', async () => {
       const outputPath = join(ctx.tempDir, 'validate-test.yaml');
-      await writeQueryTemplate({ output: outputPath });
+      await writeQueryTemplate({ title: 'my search', output: outputPath });
       const result = await validateQueryCommand(outputPath);
       expect(result.success).toBe(true);
-      expect(result.queryName).toBe('my_search');
+      expect(result.queryName).toBe('my search');
       expect(result.blockCount).toBe(1);
     });
 
     it('should not overwrite without --force', async () => {
       const outputPath = await createRawQueryFile(ctx.tempDir, 'existing', 'existing.yaml');
-      const result = await writeQueryTemplate({ output: outputPath });
+      const result = await writeQueryTemplate({ title: 'test', output: outputPath });
       expect(result.success).toBe(false);
       expect(result.message).toContain('exists');
       // Verify original content is unchanged
@@ -88,10 +88,10 @@ describe('search-hub query init E2E', () => {
 
     it('should overwrite with --force', async () => {
       const outputPath = await createRawQueryFile(ctx.tempDir, 'existing', 'force-test.yaml');
-      const result = await writeQueryTemplate({ output: outputPath, force: true });
+      const result = await writeQueryTemplate({ title: 'my search', output: outputPath, force: true });
       expect(result.success).toBe(true);
       const content = await readFile(outputPath, 'utf-8');
-      expect(content).toContain('name: my_search');
+      expect(content).toContain('name: my search');
     });
   });
 
@@ -116,7 +116,7 @@ describe('search-hub query init E2E', () => {
 
     it('should generate query.schema.json alongside output file', async () => {
       const outputPath = join(ctx.tempDir, 'search.yaml');
-      await writeQueryTemplate({ output: outputPath });
+      await writeQueryTemplate({ title: 'search', output: outputPath });
 
       // query.schema.json should exist in the same directory
       const schemaPath = join(ctx.tempDir, 'query.schema.json');
@@ -132,12 +132,12 @@ describe('search-hub query init E2E', () => {
 
     it('should generate template that passes validateQueryCommand with $schema comment', async () => {
       const outputPath = join(ctx.tempDir, 'with-schema.yaml');
-      await writeQueryTemplate({ output: outputPath });
+      await writeQueryTemplate({ title: 'test', output: outputPath });
 
       // The file should pass validation despite having $schema comment
       const result = await validateQueryCommand(outputPath);
       expect(result.success).toBe(true);
-      expect(result.queryName).toBe('my_search');
+      expect(result.queryName).toBe('test');
     });
   });
 });
