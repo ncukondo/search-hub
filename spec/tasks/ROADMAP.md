@@ -132,7 +132,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 123 | PubMed ELink Related Articles Client | 6 | ✅ Completed | [20260217-02](completed/20260217-02-pubmed-related-articles.md) |
 | 124 | `related` Command | 123 | ✅ Completed | [20260217-03](completed/20260217-03-related-command.md) |
 | 125 | Review Picking Mode | 44, 121 | ✅ Completed | [20260217-04](completed/20260217-04-review-picking-mode.md) |
-| 126 | Register Library Path & Default Library Hint | 11 | 🔧 In Progress | [20260306-01](20260306-01-register-library-path-hint.md) |
+| 126 | Register Library Path & Default Library Hint | 11 | ✅ Completed | [20260306-01](completed/20260306-01-register-library-path-hint.md) |
 
 ## Development Flow
 
