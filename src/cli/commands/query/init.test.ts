@@ -58,6 +58,18 @@ describe('query init', () => {
       expect(ast.name).toBe('my_search');
     });
 
+    it('should set name field from title parameter', () => {
+      const template = generateQueryTemplate('WBA pain');
+      const ast = parseQueryString(template);
+      expect(ast.name).toBe('WBA pain');
+    });
+
+    it('should default name to my_search when title is not provided', () => {
+      const template = generateQueryTemplate();
+      const ast = parseQueryString(template);
+      expect(ast.name).toBe('my_search');
+    });
+
     it('should include commented exclude example', () => {
       const template = generateQueryTemplate();
       expect(template).toContain('# exclude:');

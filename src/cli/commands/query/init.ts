@@ -90,10 +90,12 @@ const QUERY_TEMPLATE =
 /**
  * Generate the query template YAML string.
  *
+ * @param title - Optional title to set as the query name
  * @returns The YAML template string with comments
  */
-export function generateQueryTemplate(): string {
-  return QUERY_TEMPLATE;
+export function generateQueryTemplate(title?: string): string {
+  if (!title) return QUERY_TEMPLATE;
+  return QUERY_TEMPLATE.replace('name: my_search', `name: ${title}`);
 }
 
 /**
