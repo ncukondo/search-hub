@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { init } from './init.js';
-import { mkdir, rm, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, rm, readFile, stat, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { parse as parseToml } from '@iarna/toml';
@@ -47,6 +47,20 @@ describe('init command', () => {
     const sessionsDir = join(dataDir, 'sessions');
     const stats = await stat(sessionsDir);
     expect(stats.isDirectory()).toBe(true);
+  });
+
+  it('creates queries/ directory in data dir', async () => {
+    await init({ configDir, dataDir });
+
+    const queriesDir = join(dataDir, 'queries');
+    const stats = await stat(queriesDir);
+    expect(stats.isDirectory()).toBe(true);
+  });
+
+  it('does not error if queries/ already exists', async () => {
+    await mkdir(join(dataDir, 'queries'), { recursive: true });
+    const result = await init({ configDir, dataDir });
+    expect(result.success).toBe(true);
   });
 
   it('returns created paths in result', async () => {
