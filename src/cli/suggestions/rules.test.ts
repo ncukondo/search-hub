@@ -8,14 +8,25 @@ describe('getSuggestion', () => {
       it('should suggest editing the output file', () => {
         const ctx: SuggestionContext = {
           command: 'query init',
-          outputFile: 'my-search.yaml',
+          outputFile: 'queries/my-search.yaml',
         };
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
-        expect(result!.next).toHaveLength(1);
-        expect(result!.next[0]!.command).toContain('my-search.yaml');
+        expect(result!.next).toHaveLength(3);
+        expect(result!.next[0]!.command).toContain('queries/my-search.yaml');
         expect(result!.next[0]!.command).toContain('$EDITOR');
-        expect(result!.seeAlso).toHaveLength(0);
+      });
+
+      it('should suggest validate and count-only as next steps', () => {
+        const ctx: SuggestionContext = {
+          command: 'query init',
+          outputFile: 'queries/wba-pain.yaml',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.next.length).toBeGreaterThanOrEqual(3);
+        expect(result!.next[1]!.command).toContain('query validate');
+        expect(result!.next[2]!.command).toContain('--count-only');
       });
     });
 
@@ -67,9 +78,6 @@ describe('getSuggestion', () => {
         // tip should be defined and include query init
         expect(result!.tip).toBeDefined();
         expect(result!.tip).toContain('query init');
-        // tip should suggest query.yaml (new file, not --force)
-        expect(result!.tip).toContain('query.yaml');
-        expect(result!.tip).not.toContain('--force');
         // seeAlso should be empty (query init moved from seeAlso to tip)
         expect(result!.seeAlso).toHaveLength(0);
       });

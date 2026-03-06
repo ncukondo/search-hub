@@ -158,6 +158,7 @@ export async function init(options: InitOptions = {}): Promise<InitResult> {
 
   const configPath = join(configDir, 'config.toml');
   const sessionsDir = join(dataDir, 'sessions');
+  const queriesDir = join(dataDir, 'queries');
 
   const result: InitResult = {
     success: false,
@@ -182,6 +183,7 @@ export async function init(options: InitOptions = {}): Promise<InitResult> {
   // Create directories
   await mkdir(configDir, { recursive: true });
   await mkdir(sessionsDir, { recursive: true });
+  await mkdir(queriesDir, { recursive: true });
 
   // Generate and write config file
   // Use the default sessions directory for the saved config

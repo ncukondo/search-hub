@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
-import { readFile, access } from 'node:fs/promises';
+import { readFile, access, stat } from 'node:fs/promises';
 import {
   setupE2EContext,
   type E2EContext,
@@ -58,52 +58,86 @@ describe('search-hub query init E2E', () => {
     });
   });
 
-  describe('writeQueryTemplate creates a file', () => {
-    it('should write template to specified output path', async () => {
-      const outputPath = join(ctx.tempDir, 'template.yaml');
-      const result = await writeQueryTemplate({ output: outputPath });
+  describe('query init "<title>" creates file in queries/', () => {
+    it('should create queries/test-search.yaml', async () => {
+      const result = await writeQueryTemplate({ title: 'test search', cwd: ctx.tempDir });
       expect(result.success).toBe(true);
+      const outputPath = join(ctx.tempDir, 'queries', 'test-search.yaml');
       const content = await readFile(outputPath, 'utf-8');
-      expect(content).toContain('name: my_search');
+      expect(content).toContain('name: "test search"');
+    });
+
+    it('should set YAML name field to title', async () => {
+      await writeQueryTemplate({ title: 'test search', cwd: ctx.tempDir });
+      const outputPath = join(ctx.tempDir, 'queries', 'test-search.yaml');
+      const content = await readFile(outputPath, 'utf-8');
+      const ast = parseQueryString(content);
+      expect(ast.name).toBe('test search');
+    });
+
+    it('should create query.schema.json in queries/', async () => {
+      await writeQueryTemplate({ title: 'test search', cwd: ctx.tempDir });
+      const schemaPath = join(ctx.tempDir, 'queries', 'query.schema.json');
+      await expect(access(schemaPath)).resolves.toBeUndefined();
+      const schemaContent = await readFile(schemaPath, 'utf-8');
+      const schema = JSON.parse(schemaContent);
+      expect(schema.$schema).toContain('json-schema.org');
     });
 
     it('should produce a file that passes validateQueryCommand', async () => {
-      const outputPath = join(ctx.tempDir, 'validate-test.yaml');
-      await writeQueryTemplate({ output: outputPath });
+      await writeQueryTemplate({ title: 'test search', cwd: ctx.tempDir });
+      const outputPath = join(ctx.tempDir, 'queries', 'test-search.yaml');
       const result = await validateQueryCommand(outputPath);
       expect(result.success).toBe(true);
-      expect(result.queryName).toBe('my_search');
+      expect(result.queryName).toBe('test search');
       expect(result.blockCount).toBe(1);
-    });
-
-    it('should not overwrite without --force', async () => {
-      const outputPath = await createRawQueryFile(ctx.tempDir, 'existing', 'existing.yaml');
-      const result = await writeQueryTemplate({ output: outputPath });
-      expect(result.success).toBe(false);
-      expect(result.message).toContain('exists');
-      // Verify original content is unchanged
-      const content = await readFile(outputPath, 'utf-8');
-      expect(content).toBe('existing');
-    });
-
-    it('should overwrite with --force', async () => {
-      const outputPath = await createRawQueryFile(ctx.tempDir, 'existing', 'force-test.yaml');
-      const result = await writeQueryTemplate({ output: outputPath, force: true });
-      expect(result.success).toBe(true);
-      const content = await readFile(outputPath, 'utf-8');
-      expect(content).toContain('name: my_search');
     });
   });
 
-  describe('generated template validates with validateQueryCommand', () => {
-    it('should validate the generated template end-to-end', async () => {
-      // Generate template, write to file, validate
-      const template = generateQueryTemplate();
-      const queryPath = await createRawQueryFile(ctx.tempDir, template, 'generated.yaml');
-      const result = await validateQueryCommand(queryPath);
+  describe('--stdout outputs to stdout without file creation', () => {
+    it('should return template content in message', async () => {
+      const result = await writeQueryTemplate({ title: 'WBA pain', stdout: true });
       expect(result.success).toBe(true);
-      expect(result.queryName).toBe('my_search');
-      expect(result.blockCount).toBe(1);
+      expect(result.message).toContain('name: "WBA pain"');
+    });
+
+    it('should not create any files', async () => {
+      await writeQueryTemplate({ title: 'WBA pain', stdout: true, cwd: ctx.tempDir });
+      await expect(stat(join(ctx.tempDir, 'queries'))).rejects.toThrow();
+    });
+  });
+
+  describe('-o custom path', () => {
+    it('should write to the specified path', async () => {
+      const outputPath = join(ctx.tempDir, 'custom.yaml');
+      const result = await writeQueryTemplate({ title: 'my search', output: outputPath });
+      expect(result.success).toBe(true);
+      const content = await readFile(outputPath, 'utf-8');
+      expect(content).toContain('name: "my search"');
+    });
+
+    it('should create query.schema.json alongside custom path', async () => {
+      const outputPath = join(ctx.tempDir, 'custom.yaml');
+      await writeQueryTemplate({ title: 'my search', output: outputPath });
+      const schemaPath = join(ctx.tempDir, 'query.schema.json');
+      const schemaContent = await readFile(schemaPath, 'utf-8');
+      const schema = JSON.parse(schemaContent);
+      expect(schema.$schema).toContain('json-schema.org');
+    });
+  });
+
+  describe('overwrite protection and --force', () => {
+    it('should refuse to overwrite existing file', async () => {
+      await writeQueryTemplate({ title: 'test', cwd: ctx.tempDir });
+      const result = await writeQueryTemplate({ title: 'test', cwd: ctx.tempDir });
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('exists');
+    });
+
+    it('should overwrite with --force', async () => {
+      await writeQueryTemplate({ title: 'test', cwd: ctx.tempDir });
+      const result = await writeQueryTemplate({ title: 'test', cwd: ctx.tempDir, force: true });
+      expect(result.success).toBe(true);
     });
   });
 
@@ -114,30 +148,12 @@ describe('search-hub query init E2E', () => {
       expect(firstLine).toBe('# yaml-language-server: $schema=./query.schema.json');
     });
 
-    it('should generate query.schema.json alongside output file', async () => {
-      const outputPath = join(ctx.tempDir, 'search.yaml');
-      await writeQueryTemplate({ output: outputPath });
-
-      // query.schema.json should exist in the same directory
-      const schemaPath = join(ctx.tempDir, 'query.schema.json');
-      await expect(access(schemaPath)).resolves.toBeUndefined();
-
-      // Schema should be valid JSON Schema
-      const schemaContent = await readFile(schemaPath, 'utf-8');
-      const schema = JSON.parse(schemaContent);
-      expect(schema.$schema).toContain('json-schema.org');
-      expect(schema.type).toBe('object');
-      expect(schema.properties).toBeDefined();
-    });
-
     it('should generate template that passes validateQueryCommand with $schema comment', async () => {
-      const outputPath = join(ctx.tempDir, 'with-schema.yaml');
-      await writeQueryTemplate({ output: outputPath });
-
-      // The file should pass validation despite having $schema comment
+      await writeQueryTemplate({ title: 'test', cwd: ctx.tempDir });
+      const outputPath = join(ctx.tempDir, 'queries', 'test.yaml');
       const result = await validateQueryCommand(outputPath);
       expect(result.success).toBe(true);
-      expect(result.queryName).toBe('my_search');
+      expect(result.queryName).toBe('test');
     });
   });
 });

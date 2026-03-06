@@ -67,15 +67,15 @@ Each step follows the TDD cycle:
 
 タイトル文字列をファイル名に安全な形式に変換する関数を作成する。
 
-- [ ] Write test: `src/cli/commands/query/init.test.ts`
+- [x] Write test: `src/cli/commands/query/init.test.ts`
   - `"WBA pain mechanisms"` → `"wba-pain-mechanisms"`
   - `"My Search"` → `"my-search"`
   - `"test_query"` → `"test_query"` (アンダースコア保持)
   - `"日本語 test"` → `"test"` (非ASCII文字除去)
   - `"  spaces  "` → `"spaces"` (前後トリム)
   - 空文字列の場合はエラー
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/cli/commands/query/init.ts` に `sanitizeForFilename()` を追加
+- [x] Verify test fails (Red)
+- [x] Implement: `src/cli/commands/query/init.ts` に `sanitizeForFilename()` を追加
   ```typescript
   export function sanitizeForFilename(title: string): string {
     return title
@@ -87,38 +87,38 @@ Each step follows the TDD cycle:
       .replace(/^-|-$/g, '');
   }
   ```
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: サニタイズが全パターンで正しく動作する
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: サニタイズが全パターンで正しく動作する
 
 ### Step 2: `writeQueryTemplate()` に `title` パラメータを追加
 
 テンプレート生成時に `name` フィールドを `<title>` に設定するよう変更する。
 
-- [ ] Write test: `src/cli/commands/query/init.test.ts`
+- [x] Write test: `src/cli/commands/query/init.test.ts`
   - `title: "WBA pain"` → YAML 内の `name: WBA pain` が設定されること
   - `title` 未指定時は従来通り `name: my_search`
-- [ ] Verify test fails (Red)
-- [ ] Implement:
+- [x] Verify test fails (Red)
+- [x] Implement:
   - `generateQueryTemplate(title?: string)` に引数追加
   - テンプレート内の `name: my_search` を `name: <title>` で置換
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: title 指定時にテンプレートの name フィールドが設定される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: title 指定時にテンプレートの name フィールドが設定される
 
 ### Step 3: デフォルト出力先を `queries/` に変更
 
 `-o` 未指定かつ `--stdout` 未指定の場合、`queries/<sanitized-title>.yaml` に出力する。
 
-- [ ] Write test: `src/cli/commands/query/init.test.ts`
+- [x] Write test: `src/cli/commands/query/init.test.ts`
   - title のみ指定 → `queries/<sanitized>.yaml` に書き込まれること
   - `queries/` ディレクトリが自動作成されること
   - `query.schema.json` が `queries/` 内に作成されること
   - 既存ファイルがある場合はエラー（`--force` で上書き）
   - `-o` 指定時はそちらが優先されること
   - `--stdout` 指定時はファイル出力せず stdout に出力すること
-- [ ] Verify test fails (Red)
-- [ ] Implement:
+- [x] Verify test fails (Red)
+- [x] Implement:
   - `writeQueryTemplate()` のシグネチャ変更:
     ```typescript
     interface WriteQueryTemplateOptions {
@@ -133,55 +133,55 @@ Each step follows the TDD cycle:
     2. `-o <path>` → そのパスに出力
     3. それ以外 → `queries/<sanitized-title>.yaml`
   - `queries/` ディレクトリの自動作成 (`mkdir -p` 相当)
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: デフォルトで `queries/` に正しく出力される
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: デフォルトで `queries/` に正しく出力される
 
 ### Step 4: CLI コマンド定義の更新
 
 `src/cli/index.ts` の `query init` コマンドを新しいシグネチャに更新する。
 
-- [ ] Write test: (CLI integration で検証)
-- [ ] Implement:
+- [x] Write test: (CLI integration で検証)
+- [x] Implement:
   - `<title>` を必須 positional 引数に変更
   - `--stdout` オプション追加
   - `-o, --output <path>` は任意オプションとして維持
   - ヘルプテキスト更新
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub query init --help` が新しいシグネチャを表示する
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub query init --help` が新しいシグネチャを表示する
 
 ### Step 5: `search-hub init` で `queries/` ディレクトリ作成
 
 `search-hub init` 実行時に `sessions/` と並んで `queries/` も作成する。
 
-- [ ] Write test: `src/cli/commands/init.test.ts`
+- [x] Write test: `src/cli/commands/init.test.ts`
   - `init` 実行後に `queries/` ディレクトリが存在すること
   - 既に存在する場合はエラーにならないこと
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/cli/commands/init.ts` の `init()` 関数に `queries/` 作成を追加
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `search-hub init` が `queries/` を作成する
+- [x] Verify test fails (Red)
+- [x] Implement: `src/cli/commands/init.ts` の `init()` 関数に `queries/` 作成を追加
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `search-hub init` が `queries/` を作成する
 
 ### Step 6: サジェスションルールの更新
 
 `queryInitRule` を新しいコマンド形式に合わせて更新する。
 
-- [ ] Write test: `src/cli/suggestions/rules.test.ts`
+- [x] Write test: `src/cli/suggestions/rules.test.ts`
   - `query init` 後のサジェスションが `queries/<file>` を参照すること
   - 他のルールで `query init -o query.yaml` → `query init <title>` に更新
-- [ ] Verify test fails (Red)
-- [ ] Implement: `src/cli/suggestions/rules.ts` のルール更新
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: サジェスションが新しい形式を反映する
+- [x] Verify test fails (Red)
+- [x] Implement: `src/cli/suggestions/rules.ts` のルール更新
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: サジェスションが新しい形式を反映する
 
 ### Step 7: 出力メッセージの改善
 
 ファイル作成後に次のステップとイテレーションの案内を表示する。
 
-- [ ] Write test: (E2E で検証)
-- [ ] Implement: 作成成功時のメッセージ:
+- [x] Write test: (E2E で検証)
+- [x] Implement: 作成成功時のメッセージ:
   ```
   Created: queries/wba-pain.yaml
 
@@ -192,13 +192,13 @@ Each step follows the TDD cycle:
 
   Iterate: edit the same file and re-run step 3. Counts are logged automatically.
   ```
-- [ ] Acceptance: メッセージが表示され、イテレーションの方法が案内される
+- [x] Acceptance: メッセージが表示され、イテレーションの方法が案内される
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] Write/update E2E test: `src/cli/commands/query/init.e2e.test.ts`
+- [x] Write/update E2E test: `src/cli/commands/query/init.e2e.test.ts`
   - `query init "test search"` → `queries/test-search.yaml` が作成されること
   - YAML 内の `name` が `test search` であること
   - `queries/query.schema.json` が存在すること
@@ -206,10 +206,10 @@ Each step follows the TDD cycle:
   - `--stdout` で stdout に出力され、ファイルが作成されないこと
   - `-o custom.yaml` で指定パスに出力されること
   - 既存ファイルへの上書き防止と `--force` の動作
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: `query init` → edit → `query validate` の一連フローを手動確認
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: `query init` → edit → `query validate` の一連フローを手動確認
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

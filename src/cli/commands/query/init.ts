@@ -3,9 +3,26 @@
  *
  * Generates a skeleton YAML query file with helpful comments.
  */
-import { writeFile as fsWriteFile, access } from "node:fs/promises";
+import { writeFile as fsWriteFile, access, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { generateQueryJSONSchema } from "../../../query/json-schema.js";
+
+/**
+ * Sanitize a title string into a safe filename (without extension).
+ */
+export function sanitizeForFilename(title: string): string {
+  const result = title
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9_-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  if (!result) {
+    throw new Error('Title produces an empty filename after sanitization');
+  }
+  return result;
+}
 
 /**
  * The YAML template string with comments preserved.
@@ -73,55 +90,71 @@ const QUERY_TEMPLATE =
 /**
  * Generate the query template YAML string.
  *
+ * @param title - Optional title to set as the query name
  * @returns The YAML template string with comments
  */
-export function generateQueryTemplate(): string {
-  return QUERY_TEMPLATE;
+export function generateQueryTemplate(title?: string): string {
+  if (!title) return QUERY_TEMPLATE;
+  const escaped = title.replace(/"/g, '\\"');
+  return QUERY_TEMPLATE.replace('name: my_search', `name: "${escaped}"`);
+}
+
+export const QUERIES_DIR = "queries";
+
+export interface WriteQueryTemplateOptions {
+  title: string;
+  output?: string | undefined;
+  stdout?: boolean | undefined;
+  force?: boolean | undefined;
+  cwd?: string | undefined;
 }
 
 /**
  * Write the query template to a file or return it as a message.
  *
- * @param options - Output options
- * @param options.output - File path to write to (if omitted, returns template in message)
- * @param options.force - Whether to overwrite existing files
- * @returns Result with success status and message
+ * Output priority:
+ * 1. --stdout → return template as message (no file)
+ * 2. -o <path> → write to that path
+ * 3. default → write to queries/<sanitized-title>.yaml
  */
-export async function writeQueryTemplate(options: {
-  output?: string;
-  force?: boolean;
-}): Promise<{ success: boolean; message: string }> {
-  const template = generateQueryTemplate();
+export async function writeQueryTemplate(options: WriteQueryTemplateOptions): Promise<{ success: boolean; message: string; outputPath?: string }> {
+  const template = generateQueryTemplate(options.title);
 
-  if (!options.output) {
-    // No output file specified, return template as message
+  if (options.stdout) {
     return { success: true, message: template };
   }
+
+  // Determine output path
+  const outputPath = options.output
+    ?? join(options.cwd ?? process.cwd(), QUERIES_DIR, `${sanitizeForFilename(options.title)}.yaml`);
 
   // Check if file exists (unless force is set)
   if (!options.force) {
     try {
-      await access(options.output);
-      // File exists and force is not set
+      await access(outputPath);
       return {
         success: false,
-        message: `File already exists: ${options.output}. Use --force to overwrite.`,
+        message: `File already exists: ${outputPath}. Use --force to overwrite.`,
       };
     } catch {
       // File does not exist, proceed
     }
   }
 
-  // Write to file
-  await fsWriteFile(options.output, template, "utf-8");
+  // Ensure parent directory exists
+  await mkdir(dirname(outputPath), { recursive: true });
+
+  // Write template
+  await fsWriteFile(outputPath, template, "utf-8");
 
   // Generate JSON Schema file alongside output
-  const schemaPath = join(dirname(options.output), QUERY_SCHEMA_FILENAME);
+  const schemaPath = join(dirname(outputPath), QUERY_SCHEMA_FILENAME);
   const jsonSchema = generateQueryJSONSchema();
   await fsWriteFile(schemaPath, JSON.stringify(jsonSchema, null, 2) + "\n", "utf-8");
 
   return {
     success: true,
-    message: `Template written to ${options.output}`,
+    message: `Created: ${outputPath}`,
+    outputPath,
   };
 }

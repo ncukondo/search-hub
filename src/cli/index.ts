@@ -42,7 +42,6 @@ import {
   formatInspectOutput,
 } from './commands/query/inspect.js';
 import {
-  generateQueryTemplate,
   writeQueryTemplate,
 } from './commands/query/init.js';
 import type { ProviderName } from '../providers/base/types.js';
@@ -251,8 +250,8 @@ Workflow:
   Iterate: search → results -q → check → diff       Query refinement
 
 Quick Start:
-  $ search-hub query init -o search.yaml        # Create query template
-  $ search-hub search search.yaml --count-only  # Check hit counts
+  $ search-hub query init "my search"            # Create query template
+  $ search-hub search queries/my-search.yaml --count-only  # Check hit counts
   $ search-hub search search.yaml               # Execute search
   $ search-hub results <session>                # Review titles`);
 
@@ -577,26 +576,40 @@ Examples:
   queryCommand
     .command('init')
     .description('Generate a template query YAML file')
-    .option('-o, --output <path>', 'write to file (default: stdout)')
+    .argument('<title>', 'query title (used for name field and filename)')
+    .option('-o, --output <path>', 'write to specific file path')
+    .option('--stdout', 'output to stdout instead of file')
     .option('--force', 'overwrite existing file', false)
-    .action(async (options: { output?: string; force?: boolean }) => {
+    .addHelpText('after', `
+Examples:
+  $ search-hub query init "WBA pain mechanisms"              # → queries/wba-pain-mechanisms.yaml
+  $ search-hub query init "WBA pain" -o ./custom-path.yaml   # Custom output path
+  $ search-hub query init "WBA pain" --stdout                # Print to stdout`)
+    .action(async (title: string, options: { output?: string; stdout?: boolean; force?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
-        if (options.output) {
-          const result = await writeQueryTemplate(options);
-          if (!globalOpts.quiet) {
-            if (result.success) {
-              console.log(result.message);
-            } else {
-              console.error(result.message);
+        const result = await writeQueryTemplate({
+          title,
+          output: options.output,
+          stdout: options.stdout,
+          force: options.force,
+        });
+        if (!globalOpts.quiet) {
+          if (result.success) {
+            console.log(result.message);
+            if (result.outputPath) {
+              const suggestion = formatSuggestion(getSuggestion({
+                command: 'query init',
+                outputFile: result.outputPath,
+              }));
+              if (suggestion) console.log('\n' + suggestion);
+              console.log('\nIterate: edit the same file and re-run step 3. Counts are logged automatically.');
             }
+          } else {
+            console.error(result.message);
           }
-          process.exitCode = result.success ? EXIT_CODES.SUCCESS : EXIT_CODES.GENERAL_ERROR;
-        } else {
-          const template = generateQueryTemplate();
-          console.log(template);
-          process.exitCode = EXIT_CODES.SUCCESS;
         }
+        process.exitCode = result.success ? EXIT_CODES.SUCCESS : EXIT_CODES.GENERAL_ERROR;
       } catch (error) {
         if (!globalOpts.quiet) {
           console.error('Error:', error instanceof Error ? error.message : error);
