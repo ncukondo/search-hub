@@ -178,6 +178,8 @@ import {
   formatPendingWarning,
   formatIgnoringReviewsNote,
   confirmPrompt,
+  formatLibraryPath,
+  formatDefaultLibraryHint,
 } from './commands/register.js';
 import { formatSuggestion } from './suggestions/index.js';
 import { getSuggestion } from './suggestions/rules.js';
@@ -2366,7 +2368,9 @@ With review workflow:
               }
             }
 
-            console.log(`\nResults saved to: ${join(sessionDir, 'registration.json')}`);
+            console.log(`\n${formatLibraryPath(sessionDir)}`);
+            console.log(`Results saved to: ${join(sessionDir, 'registration.json')}`);
+            console.log(`\n${formatDefaultLibraryHint(sessionDir)}`);
 
             // Show next step suggestions
             const suggestion = formatSuggestion(getSuggestion({

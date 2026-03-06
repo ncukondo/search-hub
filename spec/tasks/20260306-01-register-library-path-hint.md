@@ -18,22 +18,22 @@ The `register` command saves articles to a session-specific library (`<sessionDi
 
 ### Step 1: Add formatLibraryPath and formatDefaultLibraryHint functions
 
-- [ ] Write test: `src/cli/commands/register.test.ts`
+- [x] Write test: `src/cli/commands/register.test.ts`
   - Test `formatLibraryPath(sessionDir)` returns `Library: <sessionDir>/references.json`
   - Test `formatDefaultLibraryHint(sessionDir)` returns import hint with `ref add -i json` command
-- [ ] Create stubs in `src/cli/commands/register.ts`
-- [ ] Verify tests fail (Red)
-- [ ] Implement functions
-- [ ] Verify tests pass (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
+- [x] Create stubs in `src/cli/commands/register.ts`
+- [x] Verify tests fail (Red)
+- [x] Implement functions
+- [x] Verify tests pass (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
 
 ### Step 2: Integrate into register action handler
 
-- [ ] Update `src/cli/index.ts` to import and call the new functions
-- [ ] Output library path and hint after registration summary
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Run full test suite: `npm test`
+- [x] Update `src/cli/index.ts` to import and call the new functions
+- [x] Output library path and hint after registration summary
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Run full test suite: `npm test`
 
 ## Expected Output
 
