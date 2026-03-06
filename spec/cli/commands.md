@@ -43,8 +43,8 @@ Execute search across multiple databases.
 ### Syntax
 
 ```bash
-# Full search from query file
-search-hub search <query.yaml> [options]
+# Full search from query file (resolved via Query File Resolution)
+search-hub search <query> [options]
 
 # Single database direct query (for testing)
 search-hub search --db <provider> --query <query-string> [options]
@@ -65,23 +65,26 @@ search-hub search --db <provider> --query <query-string> [options]
 ### Examples
 
 ```bash
-# Search all enabled databases
+# Search all enabled databases (query name resolves to queries/diabetes-ai.yaml)
+search-hub search diabetes-ai
+
+# Explicit path also works
 search-hub search ./diabetes-ai.yaml
 
 # Search specific databases only
-search-hub search ./query.yaml --db pubmed,eric
+search-hub search diabetes-ai --db pubmed,eric
 
 # Direct query to single database (testing)
 search-hub search --db pubmed --query "diabetes[tiab] AND AI[tiab]"
 
 # Dry run - show translated queries
-search-hub search ./query.yaml --dry-run
+search-hub search diabetes-ai --dry-run
 
 # Sort by relevance
-search-hub search ./query.yaml --sort relevance
+search-hub search diabetes-ai --sort relevance
 
 # Limit results
-search-hub search ./query.yaml --max-results 100
+search-hub search diabetes-ai --max-results 100
 ```
 
 ### Help Text Enhancement
@@ -89,7 +92,7 @@ search-hub search ./query.yaml --max-results 100
 `search --help` の末尾に以下を追加:
 
 ```
-Query features (use "query init" to see full template):
+Query features (use "query init <title>" to create a template):
   filters:    year_from, year_to, language, publication_types
   exclude:    NOT terms per block (terms.exclude)
   mesh/eric:  controlled vocabulary (terms.mesh, terms.eric)
@@ -527,6 +530,7 @@ search-hub init [options]
 1. Creates config file in platform-specific config directory (see spec/models/config.md)
 2. Prompts for API keys interactively
 3. Creates session directory in platform-specific data directory
+4. Creates `queries/` directory in current working directory for query files
 
 ---
 
@@ -534,34 +538,77 @@ search-hub init [options]
 
 Query file utilities.
 
-### query init
+### Query File Resolution
 
-Generate a template query YAML file.
+All query subcommands and `search` accept a query file argument with smart resolution.
+When the argument does not point to an existing file, the following paths are tried in order:
+
+1. Exact path as given
+2. `<arg>.yaml` in CWD
+3. `queries/<arg>.yaml` in CWD
+
+This allows shorthand usage:
 
 ```bash
-search-hub query init [-o <path>] [--force]
+# All equivalent (if queries/wba-pain.yaml exists)
+search-hub query validate queries/wba-pain.yaml
+search-hub query validate wba-pain.yaml
+search-hub query validate wba-pain
 ```
+
+### query init
+
+Generate a query YAML file from a template.
+
+```bash
+search-hub query init <title> [options]
+```
+
+#### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `<title>` | Query name (required). Sets `name` in YAML and determines filename |
 
 #### Options
 
 | Option | Description |
 |--------|-------------|
-| `-o, --output <path>` | Write to file instead of stdout |
+| `-o, --output <path>` | Override output path |
+| `--stdout` | Print template to stdout instead of writing file |
 | `--force` | Overwrite existing file |
 
 #### Behavior
 
-1. Generates a well-commented YAML template with placeholder structure
-2. If `-o` is specified, writes to that file path (fails if file exists unless `--force`)
-3. If no `-o` option, prints the template to stdout
+1. Sanitizes `<title>` to a filename: lowercase, spaces to hyphens, non-alphanumeric removed
+2. Generates a YAML template with `name: <title>` and `$schema` link
+3. Default output: `queries/<sanitized-title>.yaml` (creates `queries/` if needed)
+4. Generates `query.schema.json` alongside the output file
+5. If `--stdout`, prints template to stdout without creating files
+6. If `-o`, writes to that path instead of default
+
+#### Output Message
+
+```
+Created: queries/wba-pain.yaml
+
+Next steps:
+  1. Edit query:      $EDITOR queries/wba-pain.yaml
+  2. Validate:        search-hub query validate wba-pain
+  3. Check counts:    search-hub search wba-pain --count-only
+
+Iterate: edit the same file and re-run step 3. Counts are logged automatically.
+```
 
 ### query validate
 
 Validate query YAML file (auto-checks controlled vocabulary).
 
 ```bash
-search-hub query validate [options] <query.yaml>
+search-hub query validate <query> [options]
 ```
+
+`<query>` is resolved via Query File Resolution (see above).
 
 | Option | Description |
 |--------|-------------|
@@ -573,8 +620,10 @@ search-hub query validate [options] <query.yaml>
 Show translated queries for each database.
 
 ```bash
-search-hub query translate <query.yaml> [--db <provider>]
+search-hub query translate <query> [--db <provider>]
 ```
+
+`<query>` is resolved via Query File Resolution (see above).
 
 ### query assess
 
@@ -676,33 +725,36 @@ The `query_hash` field links each count/preview entry to the specific version of
 ### Examples
 
 ```bash
-# Generate a query template to stdout
-search-hub query init
+# Create a query file (writes to queries/diabetes-ai.yaml)
+search-hub query init "diabetes ai"
 
-# Write template to file
-search-hub query init -o ./my-query.yaml
+# Create with explicit output path
+search-hub query init "diabetes ai" -o ./my-query.yaml
+
+# Print template to stdout
+search-hub query init "diabetes ai" --stdout
 
 # Overwrite existing file
-search-hub query init -o ./my-query.yaml --force
+search-hub query init "diabetes ai" --force
 
-# Validate query file
-search-hub query validate ./diabetes-ai.yaml
+# Validate query file (smart resolution: name → queries/<name>.yaml)
+search-hub query validate diabetes-ai
 
 # Show all translations
-search-hub query translate ./diabetes-ai.yaml
+search-hub query translate diabetes-ai
 
 # Show PubMed translation only
-search-hub query translate ./diabetes-ai.yaml --db pubmed
+search-hub query translate diabetes-ai --db pubmed
 
-# Check hit counts (auto-logged to diabetes-ai.search-log.yaml)
-search-hub search ./diabetes-ai.yaml --count-only
+# Check hit counts (auto-logged to queries/diabetes-ai.search-log.yaml)
+search-hub search diabetes-ai --count-only
 
 # Record assessment after reviewing counts
-search-hub query assess ./diabetes-ai.yaml --verdict reject --comment "Too broad, 50k hits"
-search-hub query assess ./diabetes-ai.yaml --verdict good --precision "~60%" --comment "Acceptable"
+search-hub query assess diabetes-ai --verdict reject --comment "Too broad, 50k hits"
+search-hub query assess diabetes-ai --verdict good --precision "~60%" --comment "Acceptable"
 
 # View iteration log
-search-hub query log ./diabetes-ai.yaml
+search-hub query log diabetes-ai
 ```
 
 ---
