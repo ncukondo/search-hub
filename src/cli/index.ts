@@ -252,9 +252,9 @@ Workflow:
 
 Quick Start:
   $ search-hub query init "my search"            # Create query template
-  $ search-hub search queries/my-search.yaml --count-only  # Check hit counts
-  $ search-hub search search.yaml               # Execute search
-  $ search-hub results <session>                # Review titles`);
+  $ search-hub search my-search --count-only     # Check hit counts
+  $ search-hub search my-search                  # Execute search
+  $ search-hub results <session>                 # Review titles`);
 
   // Register init command
   program
@@ -1056,11 +1056,19 @@ Query features (use "query init" to see full template):
               if (result.sessionId) {
                 const sessions = await listSessions(sessionsDir);
                 const suggestionCmd = searchOpts.directQuery ? 'search --query' : 'search';
+                // Find previous session with the same query name for diff suggestion
+                const currentSession = sessions.find(s => s.id === result.sessionId);
+                const previousSession = currentSession
+                  ? sessions
+                      .filter(s => s.name === currentSession.name && s.id !== result.sessionId)
+                      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+                  : undefined;
                 const suggestion = formatSuggestion(getSuggestion({
                   command: suggestionCmd,
                   sessionId: result.sessionId,
                   sessionStatus: result.sessionStatus,
                   sessionCount: sessions.length,
+                  previousSessionId: previousSession?.id,
                 }));
                 if (suggestion) console.log(suggestion);
               }

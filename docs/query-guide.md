@@ -7,10 +7,17 @@ This guide explains how to write query files for search-hub.
 The easiest way to create a query file is with `query init`:
 
 ```bash
-search-hub query init -o query.yaml
+search-hub query init "my search"
 ```
 
-This generates a YAML template and a `query.schema.json` file. The template includes a `$schema` comment that enables autocompletion and inline validation in editors with YAML language support (e.g., VS Code with the Red Hat YAML extension).
+This creates `queries/my-search.yaml` with a YAML template and a `query.schema.json` file in the `queries/` directory. The template includes a `$schema` comment that enables autocompletion and inline validation in editors with YAML language support (e.g., VS Code with the Red Hat YAML extension).
+
+All subsequent commands support smart query resolution — you can omit the path and extension:
+
+```bash
+search-hub query validate my-search     # → queries/my-search.yaml
+search-hub search my-search             # → queries/my-search.yaml
+```
 
 ## Basic Structure
 
@@ -196,17 +203,17 @@ Results are cached locally to avoid repeated API calls. Use `--no-vocab` to skip
 
 ```bash
 # Validate structure and vocabulary
-search-hub query validate query.yaml
+search-hub query validate my-search
 
 # Skip vocabulary validation
-search-hub query validate query.yaml --no-vocab
+search-hub query validate my-search --no-vocab
 ```
 
 ## Tips
 
-1. **Use `query init`**: Generate a template with JSON Schema for editor autocompletion
+1. **Use `query init`**: `search-hub query init "my search"` creates `queries/my-search.yaml` with JSON Schema
 2. **Start simple**: Begin with keywords, add controlled vocabulary as needed
-3. **Validate first**: Run `search-hub query validate` to check structure and vocabulary terms
-4. **Preview translations**: Use `search-hub query translate` to see database-native syntax and warnings
-5. **Use dry-run**: Test with `search-hub search --dry-run` before actual search
-6. **Check hit counts**: Use `search-hub search --count-only` to estimate result sizes quickly
+3. **Validate first**: Run `search-hub query validate my-search` to check structure and vocabulary terms
+4. **Preview translations**: Use `search-hub query translate my-search` to see database-native syntax and warnings
+5. **Use dry-run**: Test with `search-hub search my-search --dry-run` before actual search
+6. **Check hit counts**: Use `search-hub search my-search --count-only` to estimate result sizes quickly

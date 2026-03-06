@@ -182,16 +182,19 @@ describe('getSuggestion', () => {
     });
 
     describe('search --count-only', () => {
-      it('should suggest query assess and full search', () => {
+      it('should suggest edit, re-check, assess, and full search', () => {
         const ctx: SuggestionContext = {
           command: 'search --count-only',
           queryFile: 'query.yaml',
         };
         const result = getSuggestion(ctx);
         expect(result).not.toBeNull();
-        expect(result!.next).toHaveLength(2);
-        expect(result!.next[0]!.command).toContain('query assess');
-        expect(result!.next[1]!.command).toBe('search-hub search query.yaml');
+        expect(result!.next).toHaveLength(3);
+        expect(result!.next[0]!.command).toContain('$EDITOR');
+        expect(result!.next[1]!.command).toContain('--count-only');
+        expect(result!.next[2]!.command).toContain('query assess');
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toBe('search-hub search query.yaml');
       });
     });
 
@@ -222,6 +225,20 @@ describe('getSuggestion', () => {
         expect(result).not.toBeNull();
         expect(result!.seeAlso).toHaveLength(1);
         expect(result!.seeAlso[0]!.command).toContain('diff');
+      });
+
+      it('should suggest specific diff when previousSessionId is provided', () => {
+        const ctx: SuggestionContext = {
+          command: 'search',
+          sessionId: 'new-session',
+          sessionStatus: 'completed',
+          sessionCount: 3,
+          previousSessionId: 'old-session',
+        };
+        const result = getSuggestion(ctx);
+        expect(result).not.toBeNull();
+        expect(result!.seeAlso).toHaveLength(1);
+        expect(result!.seeAlso[0]!.command).toBe('search-hub diff old-session new-session');
       });
     });
 

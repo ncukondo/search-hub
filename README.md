@@ -44,14 +44,14 @@ This creates config and data directories in platform-specific locations:
 
 2. Create a query file:
 ```bash
-search-hub query init -o query.yaml
+search-hub query init "my review"
 ```
 
-This generates a YAML template with JSON Schema support for editor autocompletion. Edit it to define your search:
+This creates `queries/my-review.yaml` with JSON Schema support for editor autocompletion. Edit it to define your search:
 
 ```yaml
 # yaml-language-server: $schema=./query.schema.json
-name: my_review
+name: "my review"
 description: "Literature search for scoping review"
 
 query:
@@ -70,14 +70,14 @@ filters:
 
 3. Validate the query:
 ```bash
-search-hub query validate query.yaml
+search-hub query validate my-review
 ```
 
-This checks structure, validates controlled vocabulary terms (MeSH, ERIC descriptors, Emtree) against external APIs, and suggests corrections for typos.
+This checks structure, validates controlled vocabulary terms (MeSH, ERIC descriptors, Emtree) against external APIs, and suggests corrections for typos. The query name is automatically resolved to `queries/my-review.yaml`.
 
 4. Run search:
 ```bash
-search-hub search query.yaml
+search-hub search my-review
 ```
 
 5. Export results:
@@ -91,31 +91,33 @@ Developing an effective search query is iterative. Start broad, then refine base
 
 ### Workflow
 
-1. **Start with a broad query** - Get an initial set of results:
+1. **Create a query** - Start with a template:
    ```bash
-   search-hub search query-v1.yaml --max-results 100
+   search-hub query init "my review"
+   # Creates queries/my-review.yaml
    ```
 
-2. **Review initial results** - Check titles to assess quality:
+2. **Check hit counts** - Preview before downloading:
    ```bash
-   search-hub results <session-v1> --limit 50
-   search-hub results <session-v1> -q "title:diabetes year:2023-2025"
+   search-hub search my-review --count-only
    ```
 
-3. **Check coverage** - Verify known relevant articles are captured:
+3. **Run the search** - When counts look good:
    ```bash
-   search-hub check <session-v1> --file known-articles.txt
+   search-hub search my-review
    ```
 
-4. **Refine the query** - Copy and modify your query file:
+4. **Review results** - Check titles to assess quality:
    ```bash
-   cp query-v1.yaml query-v2.yaml
-   # Edit query-v2.yaml to add/remove terms, adjust filters
+   search-hub results <session-id> --limit 50
+   search-hub results <session-id> -q "title:diabetes year:2023-2025"
    ```
 
-5. **Run the refined search**:
+5. **Refine and re-run** - Edit the query file, then iterate:
    ```bash
-   search-hub search query-v2.yaml --max-results 100
+   $EDITOR queries/my-review.yaml
+   search-hub search my-review --count-only   # Re-check counts
+   search-hub search my-review                # Execute full search
    ```
 
 6. **Compare results with diff** - See what changed:
@@ -128,22 +130,22 @@ Developing an effective search query is iterative. Start broad, then refine base
 
 - **Use `--count-only` first**: Check hit counts before downloading full results.
   ```bash
-  search-hub search query.yaml --count-only
+  search-hub search my-review --count-only
   ```
 
 - **Use `--preview`** to see hit counts with sample titles:
   ```bash
-  search-hub search query.yaml --preview
+  search-hub search my-review --preview
   ```
 
 - **Use `--dry-run`** to preview translations: See exactly what query each database will receive.
   ```bash
-  search-hub search query.yaml --dry-run
+  search-hub search my-review --dry-run
   ```
 
 - **Compare removed articles carefully**: When narrowing a search, `--show removed` reveals what you're excluding. If important papers are removed, your refinement may be too aggressive.
 
-- **Keep query versions**: Save each iteration (v1, v2, v3) to track your development process and maintain reproducibility.
+- **Track iterations**: Use `query assess` and `query log` to record and review your refinement history.
 
 ## Fulltext Retrieval
 
