@@ -208,7 +208,7 @@ Each step follows the TDD cycle:
   - 既存ファイルへの上書き防止と `--force` の動作
 - [x] Verify all E2E tests pass
 - [x] Run full test suite: `npm test`
-- [ ] **Manual verification**: `query init` → edit → `query validate` の一連フローを手動確認
+- [x] **Manual verification**: `query init` → edit → `query validate` の一連フローを手動確認
 - [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
