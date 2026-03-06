@@ -78,7 +78,12 @@ function searchCompletionSuggestion(ctx: SuggestionContext): SuggestionResult | 
   switch (ctx.sessionStatus) {
     case 'completed': {
       const seeAlso: SuggestionResult['seeAlso'] = [];
-      if (ctx.sessionCount !== undefined && ctx.sessionCount > 1) {
+      if (ctx.previousSessionId) {
+        seeAlso.push({
+          command: `search-hub diff ${ctx.previousSessionId} ${sid}`,
+          description: 'Compare with previous',
+        });
+      } else if (ctx.sessionCount !== undefined && ctx.sessionCount > 1) {
         seeAlso.push({
           command: `search-hub diff <other-session> ${sid}`,
           description: 'Compare with another query version',
@@ -136,10 +141,13 @@ const searchCountOnlyRule: SuggestionRule = (ctx) => {
   const file = ctx.queryFile ?? '<query-file>';
   return {
     next: [
-      { command: `search-hub query assess ${file} --verdict <verdict>`, description: 'Record assessment' },
+      { command: `$EDITOR ${file}`, description: 'Edit query to refine' },
+      { command: `search-hub search ${file} --count-only`, description: 'Re-check counts' },
+      { command: `search-hub query assess ${file} --verdict refine`, description: 'Record assessment' },
+    ],
+    seeAlso: [
       { command: `search-hub search ${file}`, description: 'Execute full search' },
     ],
-    seeAlso: [],
   };
 };
 

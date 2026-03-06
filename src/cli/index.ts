@@ -44,6 +44,7 @@ import {
 import {
   writeQueryTemplate,
 } from './commands/query/init.js';
+import { resolveQueryFile } from './commands/query/resolve.js';
 import type { ProviderName } from '../providers/base/types.js';
 import {
   listSessionsForDisplay,
@@ -251,9 +252,9 @@ Workflow:
 
 Quick Start:
   $ search-hub query init "my search"            # Create query template
-  $ search-hub search queries/my-search.yaml --count-only  # Check hit counts
-  $ search-hub search search.yaml               # Execute search
-  $ search-hub results <session>                # Review titles`);
+  $ search-hub search my-search --count-only     # Check hit counts
+  $ search-hub search my-search                  # Execute search
+  $ search-hub results <session>                 # Review titles`);
 
   // Register init command
   program
@@ -397,9 +398,10 @@ Examples:
   $ search-hub query validate ./diabetes-ai.yaml
   $ search-hub query validate ./diabetes-ai.yaml --no-vocab   # Skip MeSH check
   $ search-hub query validate ./diabetes-ai.yaml --no-cache   # Ignore cache`)
-    .action(async (file: string, opts: { vocab?: boolean; cache?: boolean }) => {
+    .action(async (fileArg: string, opts: { vocab?: boolean; cache?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
+        const file = await resolveQueryFile(fileArg);
         const noVocab = opts.vocab === false;
         const noCache = opts.cache === false;
 
@@ -511,9 +513,10 @@ Examples:
 Examples:
   $ search-hub query translate ./diabetes-ai.yaml            # All databases
   $ search-hub query translate ./diabetes-ai.yaml --db pubmed # PubMed only`)
-    .action(async (file: string, options: { db?: string }) => {
+    .action(async (fileArg: string, options: { db?: string }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
+        const file = await resolveQueryFile(fileArg);
         const translateOptions = options.db
           ? { providers: [options.db as ProviderName] }
           : {};
@@ -544,9 +547,10 @@ Examples:
 Examples:
   $ search-hub query inspect ./diabetes-ai.yaml            # All databases
   $ search-hub query inspect ./diabetes-ai.yaml --db pubmed # PubMed only`)
-    .action(async (file: string, options: { db?: string }) => {
+    .action(async (fileArg: string, options: { db?: string }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
+        const file = await resolveQueryFile(fileArg);
         const inspectOptions = options.db
           ? { providers: [options.db as ProviderName] }
           : {};
@@ -629,9 +633,10 @@ Examples:
 Examples:
   $ search-hub query assess query.yaml --verdict reject --comment "Too broad"
   $ search-hub query assess query.yaml --verdict good --precision "~60%"`)
-    .action(async (file: string, options: { verdict?: string; precision?: string; comment?: string }) => {
+    .action(async (fileArg: string, options: { verdict?: string; precision?: string; comment?: string }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
+        const file = await resolveQueryFile(fileArg);
         const result = await executeQueryAssess(file, options);
         if (result.success) {
           if (!globalOpts.quiet) {
@@ -666,9 +671,10 @@ Examples:
 Examples:
   $ search-hub query log query.yaml
   $ search-hub query log query.yaml --json`)
-    .action(async (file: string, options: { json?: boolean }) => {
+    .action(async (fileArg: string, options: { json?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
+        const file = await resolveQueryFile(fileArg);
         const entries = await readLogEntries(file);
         if (!globalOpts.quiet) {
           console.log(formatLogOutput(entries, { json: options?.json }));
@@ -795,8 +801,11 @@ Query features (use "query init" to see full template):
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
+          // Resolve query file path if provided
+          const resolvedQueryFile = queryFile ? await resolveQueryFile(queryFile) : undefined;
+
           // Parse and validate options
-          const searchOpts = parseSearchOptions(queryFile, {
+          const searchOpts = parseSearchOptions(resolvedQueryFile, {
             db: options?.db,
             query: options?.query,
             name: options?.name,
@@ -1047,11 +1056,19 @@ Query features (use "query init" to see full template):
               if (result.sessionId) {
                 const sessions = await listSessions(sessionsDir);
                 const suggestionCmd = searchOpts.directQuery ? 'search --query' : 'search';
+                // Find previous session with the same query name for diff suggestion
+                const currentSession = sessions.find(s => s.id === result.sessionId);
+                const previousSession = currentSession
+                  ? sessions
+                      .filter(s => s.name === currentSession.name && s.id !== result.sessionId)
+                      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
+                  : undefined;
                 const suggestion = formatSuggestion(getSuggestion({
                   command: suggestionCmd,
                   sessionId: result.sessionId,
                   sessionStatus: result.sessionStatus,
                   sessionCount: sessions.length,
+                  previousSessionId: previousSession?.id,
                 }));
                 if (suggestion) console.log(suggestion);
               }

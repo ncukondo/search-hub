@@ -70,6 +70,8 @@ export interface SuggestionContext {
   diffRemovedCount?: number | undefined;
   /** Session 1 ID for diff command */
   diffSession1Id?: string | undefined;
+  /** Previous session ID for same query (for diff suggestion after search) */
+  previousSessionId?: string | undefined;
 }
 
 /**
