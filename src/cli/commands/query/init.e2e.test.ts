@@ -64,7 +64,7 @@ describe('search-hub query init E2E', () => {
       expect(result.success).toBe(true);
       const outputPath = join(ctx.tempDir, 'queries', 'test-search.yaml');
       const content = await readFile(outputPath, 'utf-8');
-      expect(content).toContain('name: test search');
+      expect(content).toContain('name: "test search"');
     });
 
     it('should set YAML name field to title', async () => {
@@ -98,7 +98,7 @@ describe('search-hub query init E2E', () => {
     it('should return template content in message', async () => {
       const result = await writeQueryTemplate({ title: 'WBA pain', stdout: true });
       expect(result.success).toBe(true);
-      expect(result.message).toContain('name: WBA pain');
+      expect(result.message).toContain('name: "WBA pain"');
     });
 
     it('should not create any files', async () => {
@@ -113,7 +113,7 @@ describe('search-hub query init E2E', () => {
       const result = await writeQueryTemplate({ title: 'my search', output: outputPath });
       expect(result.success).toBe(true);
       const content = await readFile(outputPath, 'utf-8');
-      expect(content).toContain('name: my search');
+      expect(content).toContain('name: "my search"');
     });
 
     it('should create query.schema.json alongside custom path', async () => {

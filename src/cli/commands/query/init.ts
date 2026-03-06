@@ -95,7 +95,8 @@ const QUERY_TEMPLATE =
  */
 export function generateQueryTemplate(title?: string): string {
   if (!title) return QUERY_TEMPLATE;
-  return QUERY_TEMPLATE.replace('name: my_search', `name: ${title}`);
+  const escaped = title.replace(/"/g, '\\"');
+  return QUERY_TEMPLATE.replace('name: my_search', `name: "${escaped}"`);
 }
 
 export const QUERIES_DIR = "queries";

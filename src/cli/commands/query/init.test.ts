@@ -64,6 +64,18 @@ describe('query init', () => {
       expect(ast.name).toBe('WBA pain');
     });
 
+    it('should produce valid YAML when title contains a colon', () => {
+      const template = generateQueryTemplate('pain: mechanisms');
+      const ast = parseQueryString(template);
+      expect(ast.name).toBe('pain: mechanisms');
+    });
+
+    it('should produce valid YAML when title contains a hash', () => {
+      const template = generateQueryTemplate('test #1');
+      const ast = parseQueryString(template);
+      expect(ast.name).toBe('test #1');
+    });
+
     it('should default name to my_search when title is not provided', () => {
       const template = generateQueryTemplate();
       const ast = parseQueryString(template);
@@ -99,7 +111,7 @@ describe('query init', () => {
       const result = await writeQueryTemplate({ title: 'WBA pain', cwd: tempDir });
       expect(result.success).toBe(true);
       const content = await readFile(join(tempDir, 'queries', 'wba-pain.yaml'), 'utf-8');
-      expect(content).toContain('name: WBA pain');
+      expect(content).toContain('name: "WBA pain"');
     });
 
     it('should auto-create queries/ directory', async () => {
@@ -130,7 +142,7 @@ describe('query init', () => {
       const result = await writeQueryTemplate({ title: 'test', cwd: tempDir, force: true });
       expect(result.success).toBe(true);
       const content = await readFile(join(tempDir, 'queries', 'test.yaml'), 'utf-8');
-      expect(content).toContain('name: test');
+      expect(content).toContain('name: "test"');
     });
 
     it('should use -o path when provided', async () => {
@@ -138,13 +150,13 @@ describe('query init', () => {
       const result = await writeQueryTemplate({ title: 'my search', output: outputPath });
       expect(result.success).toBe(true);
       const content = await readFile(outputPath, 'utf-8');
-      expect(content).toContain('name: my search');
+      expect(content).toContain('name: "my search"');
     });
 
     it('should output to stdout with --stdout', async () => {
       const result = await writeQueryTemplate({ title: 'my search', stdout: true });
       expect(result.success).toBe(true);
-      expect(result.message).toContain('name: my search');
+      expect(result.message).toContain('name: "my search"');
     });
 
     it('should not create files when --stdout is used', async () => {
