@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { resolveQueryFile } from './resolve.js';
+import { resolveQueryFile, NotAFileError } from './resolve.js';
 import * as fs from 'node:fs/promises';
 
 vi.mock('node:fs/promises');
@@ -72,6 +72,24 @@ describe('resolveQueryFile', () => {
     await expect(resolveQueryFile('some-dir')).rejects.toThrow(
       'not a file'
     );
+  });
+
+  it('throws NotAFileError (not a generic Error) when path is a directory', async () => {
+    mockedFs.stat.mockResolvedValueOnce({ isFile: () => false } as any);
+    await expect(resolveQueryFile('some-dir')).rejects.toThrow(NotAFileError);
+  });
+
+  it('returns queries/<arg>.yml when .yaml does not exist but .yml does', async () => {
+    // exact path does not exist
+    mockedFs.stat.mockRejectedValueOnce(new Error('ENOENT'));
+    // arg + .yaml does not exist
+    mockedFs.stat.mockRejectedValueOnce(new Error('ENOENT'));
+    // queries/arg.yaml does not exist
+    mockedFs.stat.mockRejectedValueOnce(new Error('ENOENT'));
+    // queries/arg.yml exists
+    mockedFs.stat.mockResolvedValueOnce({ isFile: () => true } as any);
+    const result = await resolveQueryFile('my-query');
+    expect(result).toBe('queries/my-query.yml');
   });
 
   it('skips .yaml step when arg already ends with .yaml', async () => {

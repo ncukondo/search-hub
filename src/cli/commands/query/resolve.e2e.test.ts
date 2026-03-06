@@ -51,6 +51,13 @@ describe('smart query file resolution E2E', () => {
       expect(resolved).toBe('queries/wba-pain.yaml');
     });
 
+    it('resolves queries/<name>.yml when .yaml does not exist', async () => {
+      await mkdir(join(ctx.tempDir, 'queries'), { recursive: true });
+      await createRawQueryFile(join(ctx.tempDir, 'queries'), 'name: test\nquery:\n  - id: b1\n    field: title\n    terms:\n      keywords:\n        - test\n    operator: OR\n', 'wba-pain.yml');
+      const resolved = await resolveQueryFile('wba-pain');
+      expect(resolved).toBe('queries/wba-pain.yml');
+    });
+
     it('throws with helpful error for missing query', async () => {
       await expect(resolveQueryFile('nonexistent')).rejects.toThrow('Query file not found: "nonexistent"');
       await expect(resolveQueryFile('nonexistent')).rejects.toThrow('query init');

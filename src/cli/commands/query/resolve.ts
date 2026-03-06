@@ -5,19 +5,27 @@
  * 1. Exact path exists → use it
  * 2. <arg>.yaml exists → use it
  * 3. queries/<arg>.yaml exists → use it
- * 4. Error with tried paths
+ * 4. queries/<arg>.yml exists → use it
+ * 5. Error with tried paths
  */
 import { stat } from 'node:fs/promises';
+
+export class NotAFileError extends Error {
+  constructor(path: string) {
+    super(`Path is not a file: ${path}`);
+    this.name = 'NotAFileError';
+  }
+}
 
 async function isFile(path: string): Promise<boolean> {
   try {
     const s = await stat(path);
     if (!s.isFile()) {
-      throw new Error(`Path is not a file: ${path}`);
+      throw new NotAFileError(path);
     }
     return true;
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith('Path is not a file')) {
+    if (error instanceof NotAFileError) {
       throw error;
     }
     return false;
@@ -49,7 +57,16 @@ export async function resolveQueryFile(arg: string): Promise<string> {
     return inQueries;
   }
 
-  // 4. Error
+  // 4. queries/<arg>.yml (skip if arg already has extension)
+  if (!arg.endsWith('.yaml') && !arg.endsWith('.yml')) {
+    const inQueriesYml = `queries/${arg}.yml`;
+    candidates.push(inQueriesYml);
+    if (await isFile(inQueriesYml)) {
+      return inQueriesYml;
+    }
+  }
+
+  // 5. Error
   const tried = [`./${arg}`, ...candidates.map(c => `./${c}`)];
   throw new Error(
     `Query file not found: "${arg}"\n` +
