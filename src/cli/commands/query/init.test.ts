@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { generateQueryTemplate, writeQueryTemplate } from './init.js';
+import { generateQueryTemplate, writeQueryTemplate, sanitizeForFilename } from './init.js';
 import { parseQueryString } from '../../../query/parser.js';
 
 describe('query init', () => {
@@ -14,6 +14,34 @@ describe('query init', () => {
 
   afterEach(async () => {
     await rm(tempDir, { recursive: true, force: true });
+  });
+
+  describe('sanitizeForFilename', () => {
+    it('should convert spaces to hyphens and lowercase', () => {
+      expect(sanitizeForFilename('WBA pain mechanisms')).toBe('wba-pain-mechanisms');
+    });
+
+    it('should handle simple title', () => {
+      expect(sanitizeForFilename('My Search')).toBe('my-search');
+    });
+
+    it('should preserve underscores', () => {
+      expect(sanitizeForFilename('test_query')).toBe('test_query');
+    });
+
+    it('should remove non-ASCII characters', () => {
+      expect(sanitizeForFilename('日本語 test')).toBe('test');
+    });
+
+    it('should trim surrounding spaces', () => {
+      expect(sanitizeForFilename('  spaces  ')).toBe('spaces');
+    });
+
+    it('should throw on empty result', () => {
+      expect(() => sanitizeForFilename('')).toThrow();
+      expect(() => sanitizeForFilename('   ')).toThrow();
+      expect(() => sanitizeForFilename('日本語')).toThrow();
+    });
   });
 
   describe('generateQueryTemplate', () => {
