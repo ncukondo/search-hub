@@ -16,6 +16,8 @@ import {
   formatPendingWarning,
   formatIgnoringReviewsNote,
   confirmPrompt,
+  formatLibraryPath,
+  formatDefaultLibraryHint,
   type ReviewSummary,
 } from './register.js';
 
@@ -860,6 +862,26 @@ articles:
     it('returns false for arbitrary input', async () => {
       const result = await confirmPrompt(createMockInput('xyz\n'), nullOutput);
       expect(result).toBe(false);
+    });
+  });
+
+  describe('formatLibraryPath', () => {
+    it('returns Library: <sessionDir>/references.json', () => {
+      const result = formatLibraryPath('/home/user/sessions/my-session');
+      expect(result).toBe('Library: /home/user/sessions/my-session/references.json');
+    });
+  });
+
+  describe('formatDefaultLibraryHint', () => {
+    it('returns import hint with ref add -i json command', () => {
+      const result = formatDefaultLibraryHint('/home/user/sessions/my-session');
+      expect(result).toContain('ref add -i json');
+      expect(result).toContain('/home/user/sessions/my-session/references.json');
+    });
+
+    it('includes introductory text', () => {
+      const result = formatDefaultLibraryHint('/home/user/sessions/my-session');
+      expect(result).toContain('To also add to your default ref library:');
     });
   });
 });

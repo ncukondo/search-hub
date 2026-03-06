@@ -373,6 +373,20 @@ Proceed? [Y/n]`;
 
 
 /**
+ * Format library path display for CLI output.
+ */
+export function formatLibraryPath(sessionDir: string): string {
+  return `Library: ${join(sessionDir, 'references.json')}`;
+}
+
+/**
+ * Format hint for importing into default ref library.
+ */
+export function formatDefaultLibraryHint(sessionDir: string): string {
+  return `To also add to your default ref library:\n  ref add -i json "${join(sessionDir, 'references.json')}"`;
+}
+
+/**
  * Format note when --all is used with reviews.yaml present.
  */
 export function formatIgnoringReviewsNote(total: number): string {
