@@ -597,6 +597,14 @@ Examples:
         if (!globalOpts.quiet) {
           if (result.success) {
             console.log(result.message);
+            if (result.outputPath) {
+              const suggestion = formatSuggestion(getSuggestion({
+                command: 'query init',
+                outputFile: result.outputPath,
+              }));
+              if (suggestion) console.log('\n' + suggestion);
+              console.log('\nIterate: edit the same file and re-run step 3. Counts are logged automatically.');
+            }
           } else {
             console.error(result.message);
           }
