@@ -3055,10 +3055,15 @@ export async function main(): Promise<void> {
 const currentFile = fileURLToPath(import.meta.url);
 const executedFile = process.argv[1];
 if (executedFile) {
-  if (realpathSync(executedFile) === realpathSync(currentFile)) {
-    main().catch((error) => {
-      console.error('Fatal error:', error);
-      process.exit(EXIT_CODES.GENERAL_ERROR);
-    });
+  try {
+    if (realpathSync(executedFile) === realpathSync(currentFile)) {
+      main().catch((error) => {
+        console.error('Fatal error:', error);
+        process.exit(EXIT_CODES.GENERAL_ERROR);
+      });
+    }
+  } catch {
+    // realpathSync may fail in bundled environments (e.g. Bun compile)
+    // In that case, entry-bun.ts calls main() directly
   }
 }

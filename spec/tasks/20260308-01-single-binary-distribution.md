@@ -54,14 +54,14 @@ Bun ランタイムで既存の CLI が動作するか確認する。
 
 ### Step 3: ビルドスクリプトの作成
 
-- [ ] Create: `scripts/build-binary.sh`
+- [x] Create: `scripts/build-binary.sh`
   - ターゲット: `linux-x64`, `linux-arm64`, `windows-x64`
   - 各ターゲットに対して `bun build --compile --target=bun-<target>` を実行
   - 出力先: `dist/search-hub-<target>`（Windows は `.exe` 付加）
   - 引数でターゲットを指定可能、未指定時は全ターゲットをビルド
-- [ ] ローカルで現在のプラットフォーム向けにビルドが成功すること
-- [ ] 生成されたバイナリが `--help` で動作すること
-- [ ] Acceptance: ビルドスクリプトでシングルバイナリが生成できる
+- [x] ローカルで現在のプラットフォーム向けにビルドが成功すること
+- [x] 生成されたバイナリが `--help` で動作すること
+- [x] Acceptance: ビルドスクリプトでシングルバイナリが生成できる
 
 ### Step 4: GitHub Actions ワークフローの作成
 
