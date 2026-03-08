@@ -3,7 +3,7 @@
  *
  * Tests the init command in real subprocess execution.
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { readFile, stat, mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';

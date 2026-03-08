@@ -3,7 +3,33 @@ import { join } from 'node:path';
 import { stringify as stringifyToml } from '@iarna/toml';
 import { getDefaultConfig } from '../../config/index.js';
 import { getConfigDir, getProjectDir } from '../../config/paths.js';
-import type { Config } from '../../config/index.js';
+import type { Config, ProviderConfig } from '../../config/index.js';
+
+/** Provider names that carry full settings (rate_limit, timeout, etc.) in generated configs. */
+const FULL_PROVIDERS = ['pubmed', 'eric', 'arxiv', 'scopus'] as const;
+/** Provider names that only carry the enabled flag in generated configs. */
+const MINIMAL_PROVIDERS = ['wos', 'embase'] as const;
+
+/**
+ * Build the providers TOML object from a Config, excluding secrets.
+ */
+function buildProvidersToml(config: Config): Record<string, Partial<ProviderConfig>> {
+  const providers: Record<string, Partial<ProviderConfig>> = {};
+  for (const name of FULL_PROVIDERS) {
+    const p = config.providers[name];
+    providers[name] = {
+      enabled: p.enabled,
+      rate_limit: p.rate_limit,
+      timeout: p.timeout,
+      retries: p.retries,
+      max_results: p.max_results,
+    };
+  }
+  for (const name of MINIMAL_PROVIDERS) {
+    providers[name] = { enabled: config.providers[name].enabled };
+  }
+  return providers;
+}
 
 /**
  * Options for the init command.
@@ -57,42 +83,7 @@ async function exists(path: string): Promise<boolean> {
  */
 function localConfigToToml(config: Config): Record<string, unknown> {
   return {
-    providers: {
-      pubmed: {
-        enabled: config.providers.pubmed.enabled,
-        rate_limit: config.providers.pubmed.rate_limit,
-        timeout: config.providers.pubmed.timeout,
-        retries: config.providers.pubmed.retries,
-        max_results: config.providers.pubmed.max_results,
-      },
-      eric: {
-        enabled: config.providers.eric.enabled,
-        rate_limit: config.providers.eric.rate_limit,
-        timeout: config.providers.eric.timeout,
-        retries: config.providers.eric.retries,
-        max_results: config.providers.eric.max_results,
-      },
-      arxiv: {
-        enabled: config.providers.arxiv.enabled,
-        rate_limit: config.providers.arxiv.rate_limit,
-        timeout: config.providers.arxiv.timeout,
-        retries: config.providers.arxiv.retries,
-        max_results: config.providers.arxiv.max_results,
-      },
-      scopus: {
-        enabled: config.providers.scopus.enabled,
-        rate_limit: config.providers.scopus.rate_limit,
-        timeout: config.providers.scopus.timeout,
-        retries: config.providers.scopus.retries,
-        max_results: config.providers.scopus.max_results,
-      },
-      wos: {
-        enabled: config.providers.wos.enabled,
-      },
-      embase: {
-        enabled: config.providers.embase.enabled,
-      },
-    },
+    providers: buildProvidersToml(config),
     integration: {
       reference_manager: {
         enabled: config.integration.reference_manager.enabled,
@@ -108,9 +99,6 @@ function localConfigToToml(config: Config): Record<string, unknown> {
  */
 function generateGlobalConfigContent(config: Config): string {
   const tomlObj = {
-    session: {
-      directory: '',
-    },
     log: {
       level: config.log.level,
     },
@@ -118,42 +106,7 @@ function generateGlobalConfigContent(config: Config): string {
       color: config.output.color,
       progress_bar: config.output.progress_bar,
     },
-    providers: {
-      pubmed: {
-        enabled: config.providers.pubmed.enabled,
-        rate_limit: config.providers.pubmed.rate_limit,
-        timeout: config.providers.pubmed.timeout,
-        retries: config.providers.pubmed.retries,
-        max_results: config.providers.pubmed.max_results,
-      },
-      eric: {
-        enabled: config.providers.eric.enabled,
-        rate_limit: config.providers.eric.rate_limit,
-        timeout: config.providers.eric.timeout,
-        retries: config.providers.eric.retries,
-        max_results: config.providers.eric.max_results,
-      },
-      arxiv: {
-        enabled: config.providers.arxiv.enabled,
-        rate_limit: config.providers.arxiv.rate_limit,
-        timeout: config.providers.arxiv.timeout,
-        retries: config.providers.arxiv.retries,
-        max_results: config.providers.arxiv.max_results,
-      },
-      scopus: {
-        enabled: config.providers.scopus.enabled,
-        rate_limit: config.providers.scopus.rate_limit,
-        timeout: config.providers.scopus.timeout,
-        retries: config.providers.scopus.retries,
-        max_results: config.providers.scopus.max_results,
-      },
-      wos: {
-        enabled: config.providers.wos.enabled,
-      },
-      embase: {
-        enabled: config.providers.embase.enabled,
-      },
-    },
+    providers: buildProvidersToml(config),
     integration: {
       reference_manager: {
         enabled: config.integration.reference_manager.enabled,
@@ -165,6 +118,9 @@ function generateGlobalConfigContent(config: Config): string {
 
   const header = `# search-hub global configuration
 # See: https://github.com/search-hub/search-hub for documentation
+#
+# [session]
+# directory = ""  # Override default session directory (empty = platform default)
 
 `;
 
