@@ -143,6 +143,16 @@ describe('CLI Entry Point', () => {
       );
       expect(forceOption).toBeDefined();
     });
+
+    it('should have --global option on init command', () => {
+      const program = createProgram();
+      const initCommand = program.commands.find((cmd) => cmd.name() === 'init');
+      expect(initCommand).toBeDefined();
+      const globalOption = initCommand?.options.find(
+        (opt) => opt.long === '--global'
+      );
+      expect(globalOption).toBeDefined();
+    });
   });
 
   describe('main help sections', () => {
