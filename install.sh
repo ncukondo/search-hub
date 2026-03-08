@@ -69,7 +69,7 @@ download_binary() {
 configure_path() {
   local install_dir="$1"
   local path_line="export PATH=\"${install_dir}:\$PATH\""
-  if echo "$PATH" | tr ':' '\n' | grep -qx "$install_dir"; then
+  if echo "$PATH" | tr ':' '\n' | grep -qxF "$install_dir"; then
     return
   fi
   info "Adding ${install_dir} to PATH..."

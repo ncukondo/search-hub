@@ -3064,6 +3064,10 @@ if (executedFile) {
     }
   } catch (e: unknown) {
     // Bun compile uses virtual /$bunfs/ paths that realpathSync cannot resolve.
-    // This is expected and safe to ignore in compiled binary context.
+    // ENOENT and ERR_INVALID_ARG_TYPE are expected in compiled binary context.
+    const code = e instanceof Error ? (e as NodeJS.ErrnoException).code : undefined;
+    if (code !== 'ENOENT' && code !== 'ERR_INVALID_ARG_TYPE') {
+      console.error('[debug] Unexpected error resolving entry path:', e);
+    }
   }
 }

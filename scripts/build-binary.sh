@@ -6,22 +6,25 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENTRY="$PROJECT_DIR/src/cli/entry-bun.ts"
 OUT_DIR="$PROJECT_DIR/dist"
 
-declare -A BUN_TARGETS=(
-  [linux-x64]="bun-linux-x64"
-  [linux-arm64]="bun-linux-arm64"
-  [darwin-x64]="bun-darwin-x64"
-  [darwin-arm64]="bun-darwin-arm64"
-  [windows-x64]="bun-windows-x64"
-)
+get_bun_target() {
+  case "$1" in
+    linux-x64) echo "bun-linux-x64" ;;
+    linux-arm64) echo "bun-linux-arm64" ;;
+    darwin-x64) echo "bun-darwin-x64" ;;
+    darwin-arm64) echo "bun-darwin-arm64" ;;
+    windows-x64) echo "bun-windows-x64" ;;
+    *) return 1 ;;
+  esac
+}
 
 build_target() {
   local target="$1"
-  local bun_target="${BUN_TARGETS[$target]:-}"
-  if [[ -z "$bun_target" ]]; then
+  local bun_target
+  bun_target="$(get_bun_target "$target")" || {
     echo "Unknown target: $target" >&2
-    echo "Valid targets: ${!BUN_TARGETS[*]}" >&2
+    echo "Valid targets: linux-x64 linux-arm64 darwin-x64 darwin-arm64 windows-x64" >&2
     return 1
-  fi
+  }
   local outfile="$OUT_DIR/search-hub-${target}"
   if [[ "$target" == windows-* ]]; then
     outfile="${outfile}.exe"
