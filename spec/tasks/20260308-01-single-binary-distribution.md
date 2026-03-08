@@ -97,15 +97,15 @@ Bun ランタイムで既存の CLI が動作するか確認する。
 
 **This step is required before marking the task complete.** Unit tests with mocks often pass while real usage fails.
 
-- [ ] ローカルビルドしたバイナリで以下を手動検証:
+- [x] ローカルビルドしたバイナリで以下を手動検証:
   - `search-hub --help` が正しく表示される
   - `search-hub --version` が正しいバージョンを返す
   - `search-hub init` でプロジェクト初期化ができる
   - `search-hub query init "test"` でクエリテンプレートが生成される
   - `search-hub query validate` でバリデーションが動作する
 - [ ] CI ワークフローの dry-run（手動トリガー）で全ターゲットのビルドが成功すること
-- [ ] Run full test suite: `npm test`（既存テストに影響がないこと）
-- [ ] Acceptance: All tests pass, binary works in real usage
+- [x] Run full test suite: `npm test`（既存テストに影響がないこと）
+- [x] Acceptance: All tests pass, binary works in real usage
 
 ## Notes
 
