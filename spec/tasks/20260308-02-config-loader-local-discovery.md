@@ -40,33 +40,33 @@ This is the foundation for the two-tier config redesign (issue #138).
 
 ### Step 2: Update `loadConfig()` to use `.search-hub/config.toml`
 
-- [ ] Write test: `src/config/loader.test.ts`
+- [x] Write test: `src/config/loader.test.ts`
   - Loads and merges `.search-hub/config.toml` when present
   - Falls back to global-only when `.search-hub/` does not exist
   - Merge order: default → global → local → env vars → CLI flags
   - Local config overrides global config at field level (deep merge)
-- [ ] Create stub: `src/config/loader.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement feature
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: `loadConfig()` respects the full merge chain; existing behavior preserved when no `.search-hub/` exists
+- [x] Create stub: `src/config/loader.ts`
+- [x] Verify test fails (Red)
+- [x] Implement feature
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: `loadConfig()` respects the full merge chain; existing behavior preserved when no `.search-hub/` exists
 
 ### Step 3: Update session directory resolution for local projects
 
-- [ ] Write test: `src/config/loader.test.ts`
+- [x] Write test: `src/config/loader.test.ts`
   - When inside a project, default session directory is `.search-hub/sessions/`
   - When outside a project, default session directory is `<data-dir>/sessions/` (existing behavior)
   - Explicit `session.directory` in config overrides both defaults
-- [ ] Verify test fails (Red)
-- [ ] Implement feature
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: Session data goes to `.search-hub/sessions/` by default in project context
+- [x] Verify test fails (Red)
+- [x] Implement feature
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: Session data goes to `.search-hub/sessions/` by default in project context
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
