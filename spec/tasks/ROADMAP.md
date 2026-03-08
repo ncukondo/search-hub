@@ -135,6 +135,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 126 | Register Library Path & Default Library Hint | 11 | ✅ Completed | [20260306-01](completed/20260306-01-register-library-path-hint.md) |
 | 127 | `query init <title>` & Default `queries/` Directory | 18 | ✅ Completed | [20260306-02](completed/20260306-02-query-init-title-arg.md) |
 | 128 | Smart Query File Resolution & Documentation Update | 127 | ✅ Completed | [20260306-03](completed/20260306-03-smart-query-resolution-and-docs.md) |
+| 129 | Single Binary Distribution via Bun Compile | - | 🔧 In Progress | [20260308-01](20260308-01-single-binary-distribution.md) |
 
 ## Development Flow
 
