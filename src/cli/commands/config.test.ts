@@ -5,6 +5,12 @@ import {
   setConfigKey,
   getNestedValue,
   setNestedValue,
+  resolveWriteScope,
+  checkSecretKeyWarning,
+  formatShowOrigin,
+  viewConfigFiltered,
+  formatEnvVars,
+  type WriteScope,
 } from './config.js';
 import type { Config } from '../../config/index.js';
 
@@ -239,6 +245,119 @@ describe('config command helpers', () => {
       const result = setConfigKey(config, 'providers.pubmed.api_key', 'my-new-key');
       expect(result.success).toBe(true);
       expect(config.providers.pubmed.api_key).toBe('my-new-key');
+    });
+  });
+
+  describe('resolveWriteScope', () => {
+    it('should return global when --global is specified', () => {
+      const result = resolveWriteScope({ global: true, local: false, insideProject: false });
+      expect(result).toEqual({ scope: 'global' });
+    });
+
+    it('should return local when --local is specified', () => {
+      const result = resolveWriteScope({ global: false, local: true, insideProject: true });
+      expect(result).toEqual({ scope: 'local' });
+    });
+
+    it('should default to local when inside a project', () => {
+      const result = resolveWriteScope({ global: false, local: false, insideProject: true });
+      expect(result).toEqual({ scope: 'local' });
+    });
+
+    it('should default to global when outside a project', () => {
+      const result = resolveWriteScope({ global: false, local: false, insideProject: false });
+      expect(result).toEqual({ scope: 'global' });
+    });
+
+    it('should error when --local used outside a project', () => {
+      const result = resolveWriteScope({ global: false, local: true, insideProject: false });
+      expect(result).toEqual({
+        scope: 'error',
+        error: expect.stringContaining('.search-hub/'),
+      });
+    });
+
+    it('should error when --global and --local are both specified', () => {
+      const result = resolveWriteScope({ global: true, local: true, insideProject: true });
+      expect(result).toEqual({
+        scope: 'error',
+        error: expect.stringContaining('mutually exclusive'),
+      });
+    });
+  });
+
+  describe('checkSecretKeyWarning', () => {
+    it('should warn when writing api_key to local config', () => {
+      const warning = checkSecretKeyWarning('providers.pubmed.api_key', 'local');
+      expect(warning).toContain('--global');
+    });
+
+    it('should warn when writing inst_token to local config', () => {
+      const warning = checkSecretKeyWarning('providers.scopus.inst_token', 'local');
+      expect(warning).toContain('--global');
+    });
+
+    it('should warn when writing email to local config', () => {
+      const warning = checkSecretKeyWarning('providers.pubmed.email', 'local');
+      expect(warning).toContain('--global');
+    });
+
+    it('should not warn for non-secret keys', () => {
+      const warning = checkSecretKeyWarning('providers.pubmed.enabled', 'local');
+      expect(warning).toBeNull();
+    });
+
+    it('should not warn when writing secrets to global config', () => {
+      const warning = checkSecretKeyWarning('providers.pubmed.api_key', 'global');
+      expect(warning).toBeNull();
+    });
+  });
+
+  describe('formatShowOrigin', () => {
+    it('should format value with origin info', () => {
+      const result = formatShowOrigin('providers.pubmed.api_key', 'test-key', 'global', '/home/user/.config/search-hub/config.toml');
+      expect(result).toBe('global\t/home/user/.config/search-hub/config.toml\tproviders.pubmed.api_key = test-key');
+    });
+
+    it('should format env origin', () => {
+      const result = formatShowOrigin('providers.pubmed.api_key', 'env-val', 'env', 'SEARCH_HUB_PUBMED_API_KEY');
+      expect(result).toBe('env\tSEARCH_HUB_PUBMED_API_KEY\tproviders.pubmed.api_key = env-val');
+    });
+
+    it('should format default origin', () => {
+      const result = formatShowOrigin('log.level', 'info', 'default', '');
+      expect(result).toBe('default\t\tlog.level = info');
+    });
+  });
+
+  describe('viewConfigFiltered', () => {
+    it('should show only keys from the provided partial config', () => {
+      const partial: Record<string, unknown> = {
+        providers: { pubmed: { api_key: 'my-key' } },
+      };
+      const result = viewConfigFiltered(partial);
+      expect(result).toBe('providers.pubmed.api_key = my-key');
+    });
+
+    it('should return empty string for empty config', () => {
+      const result = viewConfigFiltered({});
+      expect(result).toBe('');
+    });
+  });
+
+  describe('formatEnvVars', () => {
+    it('should format env var map as table', () => {
+      const result = formatEnvVars();
+      expect(result).toContain('SEARCH_HUB_PUBMED_API_KEY');
+      expect(result).toContain('providers.pubmed.api_key');
+      expect(result).toContain('→');
+    });
+
+    it('should include all mapped environment variables', () => {
+      const result = formatEnvVars();
+      expect(result).toContain('SEARCH_HUB_SCOPUS_API_KEY');
+      expect(result).toContain('SEARCH_HUB_LOG_LEVEL');
+      expect(result).toContain('SEARCH_HUB_SESSION_DIR');
     });
   });
 });
