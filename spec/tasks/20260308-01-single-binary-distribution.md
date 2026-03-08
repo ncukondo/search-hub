@@ -33,24 +33,24 @@ Each step follows the TDD cycle:
 
 Bun ランタイムで既存の CLI が動作するか確認する。
 
-- [ ] `bun install` で依存関係がインストールできること
-- [ ] `bun src/cli/index.ts --help` で CLI が起動すること
-- [ ] 主要コマンド（`query validate`, `search --dry-run`）が動作すること
-- [ ] 非互換な依存がある場合は代替案を検討
-- [ ] Acceptance: Bun ランタイムで基本的な CLI 操作が動作する
+- [x] `bun install` で依存関係がインストールできること
+- [x] `bun src/cli/index.ts --help` で CLI が起動すること
+- [x] 主要コマンド（`query validate`, `search --dry-run`）が動作すること
+- [x] 非互換な依存がある場合は代替案を検討
+- [x] Acceptance: Bun ランタイムで基本的な CLI 操作が動作する
 
 ### Step 2: Bun 用エントリポイントの作成
 
-- [ ] Create: `src/cli/entry-bun.ts`
+- [x] Create: `src/cli/entry-bun.ts`
   ```typescript
   import { main } from "./index.js";
-  await main(process.argv);
+  await main();
   ```
-- [ ] `main()` 関数が `src/cli/index.ts` からエクスポートされていることを確認
+- [x] `main()` 関数が `src/cli/index.ts` からエクスポートされていることを確認
   - 必要であれば `src/cli/index.ts` を修正して `main()` をエクスポート
-- [ ] `bun src/cli/entry-bun.ts --help` で動作確認
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Bun 用エントリポイント経由で CLI が動作する
+- [x] `bun src/cli/entry-bun.ts --help` で動作確認
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Bun 用エントリポイント経由で CLI が動作する
 
 ### Step 3: ビルドスクリプトの作成
 
