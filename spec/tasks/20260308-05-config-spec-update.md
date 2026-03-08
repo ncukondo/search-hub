@@ -18,33 +18,33 @@ Update all specification files, ADR, and documentation to reflect the new two-ti
 
 ### Step 1: Update `spec/models/config.md`
 
-- [ ] Update "Config File Locations" table:
+- [x] Update "Config File Locations" table:
   - Global: `<config-dir>/config.toml` → API keys, credentials, user preferences
   - Local: `.search-hub/config.toml` → project-specific provider settings
-- [ ] Update "Init Command" section:
+- [x] Update "Init Command" section:
   - `search-hub init` creates `.search-hub/` in pwd
   - `search-hub init --global` creates global config
-- [ ] Update config merge order diagram
-- [ ] Update TOML schema to show which fields belong in global vs local
-- [ ] Add `search-hub config` subcommand documentation (flags, examples)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: Spec accurately reflects the new two-tier config behavior
+- [x] Update config merge order diagram
+- [x] Update TOML schema to show which fields belong in global vs local
+- [x] Add `search-hub config` subcommand documentation (flags, examples)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: Spec accurately reflects the new two-tier config behavior
 
 ### Step 2: Update `spec/decisions/003-config-priority.md`
 
-- [ ] Update local config path: `./search-hub.config.toml` → `.search-hub/config.toml`
-- [ ] Add note about `--show-origin` for debugging config sources (addresses "Negative" consequence)
-- [ ] Acceptance: ADR reflects current design decisions
+- [x] Update local config path: `./search-hub.config.toml` → `.search-hub/config.toml`
+- [x] Add note about `--show-origin` for debugging config sources (addresses "Negative" consequence)
+- [x] Acceptance: ADR reflects current design decisions
 
 ### Step 3: Update `spec/overview.md` (if applicable)
 
-- [ ] Review and update any config-related sections
-- [ ] Acceptance: Overview is consistent with new design
+- [x] Review and update any config-related sections (no changes needed — overview has no config-specific content)
+- [x] Acceptance: Overview is consistent with new design
 
 ### Step 4: Update README.md (if applicable)
 
-- [ ] Review and update any getting-started or configuration instructions
-- [ ] Acceptance: README reflects new `init` and `config` workflow
+- [x] Review and update any getting-started or configuration instructions
+- [x] Acceptance: README reflects new `init` and `config` workflow
 
 ### Final Step: Close Issue #138
 
