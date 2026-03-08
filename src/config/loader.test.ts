@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { loadTomlFile, loadConfig, saveConfig } from './loader.js';
-import { getDefaultSessionsDir } from './paths.js';
+import { getDefaultSessionsDir, getLocalConfigPath } from './paths.js';
 import { writeFile, mkdir, rm, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -256,6 +256,78 @@ rate_limit = 8
     expect(config.providers.pubmed.timeout).toBe(60000);
     // defaults still apply
     expect(config.providers.pubmed.retries).toBe(3);
+  });
+
+  it('auto-discovers .search-hub/config.toml as local config', async () => {
+    // Create .search-hub/config.toml in a temp directory
+    const projectDir = join(testDir, 'project');
+    const searchHubDir = join(projectDir, '.search-hub');
+    await mkdir(searchHubDir, { recursive: true });
+    await writeFile(
+      join(searchHubDir, 'config.toml'),
+      `
+[log]
+level = "warn"
+`
+    );
+
+    const config = await loadConfig({
+      globalConfigPath: join(testDir, 'nonexistent.toml'),
+      localConfigPath: getLocalConfigPath(projectDir),
+    });
+
+    expect(config.log.level).toBe('warn');
+  });
+
+  it('falls back to global-only when .search-hub/ does not exist', async () => {
+    const globalPath = join(globalConfigDir, 'config.toml');
+    await writeFile(
+      globalPath,
+      `
+[log]
+level = "debug"
+`
+    );
+
+    const config = await loadConfig({
+      globalConfigPath: globalPath,
+      localConfigPath: join(testDir, 'nonexistent-project', '.search-hub', 'config.toml'),
+    });
+
+    expect(config.log.level).toBe('debug');
+  });
+
+  it('deep merges local .search-hub/config.toml over global', async () => {
+    const globalPath = join(globalConfigDir, 'config.toml');
+    const projectDir = join(testDir, 'project');
+    const searchHubDir = join(projectDir, '.search-hub');
+    await mkdir(searchHubDir, { recursive: true });
+
+    await writeFile(
+      globalPath,
+      `
+[providers.pubmed]
+api_key = "global-key"
+rate_limit = 5
+`
+    );
+    await writeFile(
+      join(searchHubDir, 'config.toml'),
+      `
+[providers.pubmed]
+rate_limit = 10
+`
+    );
+
+    const config = await loadConfig({
+      globalConfigPath: globalPath,
+      localConfigPath: getLocalConfigPath(projectDir),
+    });
+
+    // Local overrides global rate_limit
+    expect(config.providers.pubmed.rate_limit).toBe(10);
+    // Global api_key preserved
+    expect(config.providers.pubmed.api_key).toBe('global-key');
   });
 
   it('validates final config', async () => {
