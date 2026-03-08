@@ -7,3 +7,10 @@
 export { loadConfig, saveConfig, type LoadConfigOptions, type SaveConfigOptions } from './loader';
 export { ConfigSchema, type Config, type ProviderConfig } from './schema';
 export { getDefaultConfig, DEFAULT_CONFIG } from './defaults';
+export {
+  getProjectDir,
+  getLocalConfigPath,
+  getLocalSessionsDir,
+  getLocalQueriesDir,
+  isInsideProject,
+} from './paths';

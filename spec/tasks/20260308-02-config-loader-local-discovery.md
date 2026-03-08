@@ -23,62 +23,62 @@ This is the foundation for the two-tier config redesign (issue #138).
 
 ### Step 1: Add `.search-hub/` project directory discovery
 
-- [ ] Write test: `src/config/paths.test.ts`
+- [x] Write test: `src/config/paths.test.ts`
   - `getProjectDir()` returns `.search-hub/` path relative to cwd
   - `getLocalConfigPath()` returns `.search-hub/config.toml`
   - `getLocalSessionsDir()` returns `.search-hub/sessions/`
   - `getLocalQueriesDir()` returns `.search-hub/queries/`
   - `isInsideProject()` returns true when `.search-hub/` exists in cwd
-- [ ] Create stub: `src/config/paths.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement feature
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: `getProjectDir()` resolves `.search-hub/` from cwd; `isInsideProject()` detects existing project
+- [x] Create stub: `src/config/paths.ts`
+- [x] Verify test fails (Red)
+- [x] Implement feature
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: `getProjectDir()` resolves `.search-hub/` from cwd; `isInsideProject()` detects existing project
 
 ### Step 2: Update `loadConfig()` to use `.search-hub/config.toml`
 
-- [ ] Write test: `src/config/loader.test.ts`
+- [x] Write test: `src/config/loader.test.ts`
   - Loads and merges `.search-hub/config.toml` when present
   - Falls back to global-only when `.search-hub/` does not exist
   - Merge order: default → global → local → env vars → CLI flags
   - Local config overrides global config at field level (deep merge)
-- [ ] Create stub: `src/config/loader.ts`
-- [ ] Verify test fails (Red)
-- [ ] Implement feature
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: `loadConfig()` respects the full merge chain; existing behavior preserved when no `.search-hub/` exists
+- [x] Create stub: `src/config/loader.ts`
+- [x] Verify test fails (Red)
+- [x] Implement feature
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: `loadConfig()` respects the full merge chain; existing behavior preserved when no `.search-hub/` exists
 
 ### Step 3: Update session directory resolution for local projects
 
-- [ ] Write test: `src/config/loader.test.ts`
+- [x] Write test: `src/config/loader.test.ts`
   - When inside a project, default session directory is `.search-hub/sessions/`
   - When outside a project, default session directory is `<data-dir>/sessions/` (existing behavior)
   - Explicit `session.directory` in config overrides both defaults
-- [ ] Verify test fails (Red)
-- [ ] Implement feature
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Refactor if needed
-- [ ] Verify test still passes
-- [ ] Acceptance: Session data goes to `.search-hub/sessions/` by default in project context
+- [x] Verify test fails (Red)
+- [x] Implement feature
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Refactor if needed
+- [x] Verify test still passes
+- [x] Acceptance: Session data goes to `.search-hub/sessions/` by default in project context
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: `src/config/loader.e2e.test.ts`
+- [x] Write E2E test: `src/config/loader.e2e.test.ts`
   - Create temp directory with `.search-hub/config.toml`
   - Verify `loadConfig()` merges global + local correctly
   - Verify session directory resolution in project vs non-project context
   - Verify backward compatibility (no `.search-hub/` → existing behavior)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test config loading in a real directory with `.search-hub/`
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test config loading in a real directory with `.search-hub/`
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 

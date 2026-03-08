@@ -4,7 +4,7 @@ import { parse as parseToml, stringify as stringifyToml } from '@iarna/toml';
 import { ConfigSchema, type Config } from './schema.js';
 import { getDefaultConfig } from './defaults.js';
 import { applyEnvVars } from './env.js';
-import { getDefaultConfigPath, getDefaultSessionsDir } from './paths.js';
+import { getDefaultConfigPath, getDefaultSessionsDir, getLocalConfigPath, getLocalSessionsDir, isInsideProject } from './paths.js';
 import { deepMerge, type DeepPartial } from '../utils/deep-merge.js';
 import { expandPath } from '../utils/path.js';
 
@@ -16,8 +16,10 @@ export type RawConfig = Partial<Config>;
 export interface LoadConfigOptions {
   /** Path to global config file (default: platform-specific via getDefaultConfigPath()) */
   globalConfigPath?: string;
-  /** Path to local config file (default: ./search-hub.config.toml) */
+  /** Path to local config file (default: .search-hub/config.toml via getLocalConfigPath()) */
   localConfigPath?: string;
+  /** Project directory for .search-hub/ resolution (default: cwd) */
+  projectDir?: string;
   /**
    * Explicit config file path specified via CLI --config option.
    * Takes priority over global and local config files (applied after env vars).
@@ -60,25 +62,21 @@ export async function loadTomlFile(path: string): Promise<RawConfig> {
 }
 
 /**
- * Default local config file path.
- */
-const DEFAULT_LOCAL_CONFIG_PATH = './search-hub.config.toml';
-
-/**
  * Load configuration from all sources and merge them.
  *
  * Priority (highest to lowest):
  * 1. CLI options (cliOptions)
  * 2. Explicit --config file (explicitConfigPath)
  * 3. Environment variables
- * 4. Local config (./search-hub.config.toml)
+ * 4. Local config (.search-hub/config.toml)
  * 5. Global config (platform-specific, e.g. ~/.config/search-hub/config.toml on Linux)
  * 6. Default values
  */
 export async function loadConfig(options: LoadConfigOptions = {}): Promise<Config> {
   const {
     globalConfigPath = getDefaultConfigPath(),
-    localConfigPath = DEFAULT_LOCAL_CONFIG_PATH,
+    localConfigPath = getLocalConfigPath(),
+    projectDir,
     explicitConfigPath,
     cliOptions,
   } = options;
@@ -113,9 +111,14 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Confi
   // 7. Validate
   config = ConfigSchema.parse(config);
 
-  // 8. Resolve empty session.directory to platform default
+  // 8. Resolve empty session.directory based on project context
   if (!config.session.directory) {
-    config.session.directory = getDefaultSessionsDir();
+    const inProject = projectDir
+      ? await isInsideProject(projectDir)
+      : false;
+    config.session.directory = inProject
+      ? getLocalSessionsDir(projectDir)
+      : getDefaultSessionsDir();
   }
 
   return config;
