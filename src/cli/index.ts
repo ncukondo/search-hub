@@ -259,19 +259,27 @@ Quick Start:
   // Register init command
   program
     .command('init')
-    .description('Initialize configuration directory')
+    .description('Initialize search-hub project (local) or global config')
     .option('-f, --force', 'overwrite existing configuration', false)
+    .option('-g, --global', 'initialize global config instead of local project', false)
     .addHelpText('after', `
 Examples:
-  $ search-hub init                 # Initialize with default settings
+  $ search-hub init                 # Create .search-hub/ in current directory
+  $ search-hub init --global        # Create global config (~/.config/search-hub/)
   $ search-hub init --force         # Overwrite existing configuration`)
-    .action(async (options: { force: boolean }) => {
+    .action(async (options: { force: boolean; global: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
-        const result = await init({ force: options.force });
+        const result = await init({ force: options.force, global: options.global });
         if (!globalOpts.quiet) {
           if (result.success) {
             console.log(result.message);
+            if (result.hints) {
+              console.log('');
+              for (const hint of result.hints) {
+                console.log(`  ${hint}`);
+              }
+            }
           } else {
             console.error(result.message);
           }
