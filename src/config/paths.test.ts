@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import {
   getConfigDir,
@@ -119,6 +119,12 @@ describe('paths', () => {
     });
 
     it('returns false when .search-hub/ does not exist', async () => {
+      const result = await isInsideProject(testDir);
+      expect(result).toBe(false);
+    });
+
+    it('returns false when .search-hub is a file, not a directory', async () => {
+      await writeFile(join(testDir, '.search-hub'), '');
       const result = await isInsideProject(testDir);
       expect(result).toBe(false);
     });

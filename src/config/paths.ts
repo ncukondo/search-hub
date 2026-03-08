@@ -4,7 +4,7 @@
  */
 import envPaths from 'env-paths';
 import { join } from 'node:path';
-import { access } from 'node:fs/promises';
+import { stat } from 'node:fs/promises';
 
 // Use empty suffix to get clean 'search-hub' directory names
 const paths = envPaths('search-hub', { suffix: '' });
@@ -80,8 +80,8 @@ export function getLocalQueriesDir(baseDir?: string): string {
  */
 export async function isInsideProject(baseDir?: string): Promise<boolean> {
   try {
-    await access(getProjectDir(baseDir));
-    return true;
+    const stats = await stat(getProjectDir(baseDir));
+    return stats.isDirectory();
   } catch {
     return false;
   }
