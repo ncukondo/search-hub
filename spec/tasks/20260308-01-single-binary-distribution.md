@@ -65,14 +65,14 @@ Bun ランタイムで既存の CLI が動作するか確認する。
 
 ### Step 4: GitHub Actions ワークフローの作成
 
-- [ ] Create: `.github/workflows/release-binary.yml`
+- [x] Create: `.github/workflows/release-binary.yml`
   - トリガー: `v*` タグの push、manual dispatch
   - マトリクスビルド: linux-x64, linux-arm64, windows-x64
   - Bun セットアップ (`oven-sh/setup-bun@v2`)
   - `scripts/build-binary.sh` でバイナリビルド
   - GitHub Release にバイナリをアップロード (`softprops/action-gh-release@v2`)
-- [ ] ワークフロー YAML の構文チェック
-- [ ] Acceptance: ワークフローが正しく定義されている
+- [x] ワークフロー YAML の構文チェック
+- [x] Acceptance: ワークフローが正しく定義されている
 
 ### Step 5: インストールスクリプトの作成
 
