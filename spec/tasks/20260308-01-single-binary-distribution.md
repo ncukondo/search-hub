@@ -86,12 +86,12 @@ Bun ランタイムで既存の CLI が動作するか確認する。
 
 ### Step 6: ドキュメント更新
 
-- [ ] `README.md` の Installation セクションを更新
+- [x] `README.md` の Installation セクションを更新
   - npm インストール方法に加え、バイナリダウンロード方法を追記
   - `install.sh` によるワンライナーインストール
   - GitHub Releases へのリンク
-- [ ] `spec/cli/commands.md` にバイナリ配布に関する注記（必要に応じて）
-- [ ] Acceptance: ユーザーがバイナリでのインストール方法を理解できる
+- [x] `spec/cli/commands.md` にバイナリ配布に関する注記（必要に応じて）
+- [x] Acceptance: ユーザーがバイナリでのインストール方法を理解できる
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
