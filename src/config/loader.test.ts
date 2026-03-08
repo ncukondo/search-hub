@@ -342,6 +342,53 @@ rate_limit = 10
     expect(typeof config.providers.pubmed.rate_limit).toBe('number');
     expect(typeof config.session.directory).toBe('string');
   });
+
+  describe('session directory resolution in project context', () => {
+    it('defaults to .search-hub/sessions/ when inside a project', async () => {
+      const projectDir = join(testDir, 'project');
+      const searchHubDir = join(projectDir, '.search-hub');
+      await mkdir(searchHubDir, { recursive: true });
+      await writeFile(join(searchHubDir, 'config.toml'), '');
+
+      const config = await loadConfig({
+        globalConfigPath: join(testDir, 'nonexistent.toml'),
+        localConfigPath: getLocalConfigPath(projectDir),
+        projectDir,
+      });
+
+      expect(config.session.directory).toBe(join(projectDir, '.search-hub', 'sessions'));
+    });
+
+    it('defaults to <data-dir>/sessions/ when outside a project', async () => {
+      const config = await loadConfig({
+        globalConfigPath: join(testDir, 'nonexistent.toml'),
+        localConfigPath: join(testDir, 'nonexistent.toml'),
+      });
+
+      expect(config.session.directory).toBe(getDefaultSessionsDir());
+    });
+
+    it('explicit session.directory in config overrides project default', async () => {
+      const projectDir = join(testDir, 'project');
+      const searchHubDir = join(projectDir, '.search-hub');
+      await mkdir(searchHubDir, { recursive: true });
+      await writeFile(
+        join(searchHubDir, 'config.toml'),
+        `
+[session]
+directory = "/explicit/sessions"
+`
+      );
+
+      const config = await loadConfig({
+        globalConfigPath: join(testDir, 'nonexistent.toml'),
+        localConfigPath: getLocalConfigPath(projectDir),
+        projectDir,
+      });
+
+      expect(config.session.directory).toBe('/explicit/sessions');
+    });
+  });
 });
 
 describe('saveConfig', () => {

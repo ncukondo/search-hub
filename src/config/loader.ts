@@ -4,7 +4,7 @@ import { parse as parseToml, stringify as stringifyToml } from '@iarna/toml';
 import { ConfigSchema, type Config } from './schema.js';
 import { getDefaultConfig } from './defaults.js';
 import { applyEnvVars } from './env.js';
-import { getDefaultConfigPath, getDefaultSessionsDir, getLocalConfigPath } from './paths.js';
+import { getDefaultConfigPath, getDefaultSessionsDir, getLocalConfigPath, getLocalSessionsDir, isInsideProject } from './paths.js';
 import { deepMerge, type DeepPartial } from '../utils/deep-merge.js';
 import { expandPath } from '../utils/path.js';
 
@@ -18,6 +18,8 @@ export interface LoadConfigOptions {
   globalConfigPath?: string;
   /** Path to local config file (default: .search-hub/config.toml via getLocalConfigPath()) */
   localConfigPath?: string;
+  /** Project directory for .search-hub/ resolution (default: cwd) */
+  projectDir?: string;
   /**
    * Explicit config file path specified via CLI --config option.
    * Takes priority over global and local config files (applied after env vars).
@@ -74,6 +76,7 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Confi
   const {
     globalConfigPath = getDefaultConfigPath(),
     localConfigPath = getLocalConfigPath(),
+    projectDir,
     explicitConfigPath,
     cliOptions,
   } = options;
@@ -108,9 +111,14 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Confi
   // 7. Validate
   config = ConfigSchema.parse(config);
 
-  // 8. Resolve empty session.directory to platform default
+  // 8. Resolve empty session.directory based on project context
   if (!config.session.directory) {
-    config.session.directory = getDefaultSessionsDir();
+    const inProject = projectDir
+      ? await isInsideProject(projectDir)
+      : false;
+    config.session.directory = inProject
+      ? getLocalSessionsDir(projectDir)
+      : getDefaultSessionsDir();
   }
 
   return config;
