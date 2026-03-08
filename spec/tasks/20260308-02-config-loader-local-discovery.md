@@ -70,15 +70,15 @@ This is the foundation for the two-tier config redesign (issue #138).
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: `src/config/loader.e2e.test.ts`
+- [x] Write E2E test: `src/config/loader.e2e.test.ts`
   - Create temp directory with `.search-hub/config.toml`
   - Verify `loadConfig()` merges global + local correctly
   - Verify session directory resolution in project vs non-project context
   - Verify backward compatibility (no `.search-hub/` → existing behavior)
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: Test config loading in a real directory with `.search-hub/`
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: Test config loading in a real directory with `.search-hub/`
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
