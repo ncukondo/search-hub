@@ -4,6 +4,7 @@
  */
 import envPaths from 'env-paths';
 import { join } from 'node:path';
+import { access } from 'node:fs/promises';
 
 // Use empty suffix to get clean 'search-hub' directory names
 const paths = envPaths('search-hub', { suffix: '' });
@@ -40,4 +41,48 @@ export function getDefaultConfigPath(): string {
  */
 export function getDefaultSessionsDir(): string {
   return join(paths.data, 'sessions');
+}
+
+/** Name of the project-local directory. */
+const PROJECT_DIR_NAME = '.search-hub';
+
+/**
+ * Get the project directory path (.search-hub/) relative to a base directory.
+ * Defaults to cwd.
+ */
+export function getProjectDir(baseDir?: string): string {
+  return join(baseDir ?? process.cwd(), PROJECT_DIR_NAME);
+}
+
+/**
+ * Get the local config file path (.search-hub/config.toml).
+ */
+export function getLocalConfigPath(baseDir?: string): string {
+  return join(getProjectDir(baseDir), 'config.toml');
+}
+
+/**
+ * Get the local sessions directory (.search-hub/sessions/).
+ */
+export function getLocalSessionsDir(baseDir?: string): string {
+  return join(getProjectDir(baseDir), 'sessions');
+}
+
+/**
+ * Get the local queries directory (.search-hub/queries/).
+ */
+export function getLocalQueriesDir(baseDir?: string): string {
+  return join(getProjectDir(baseDir), 'queries');
+}
+
+/**
+ * Check if the given directory (default: cwd) contains a .search-hub/ project directory.
+ */
+export async function isInsideProject(baseDir?: string): Promise<boolean> {
+  try {
+    await access(getProjectDir(baseDir));
+    return true;
+  } catch {
+    return false;
+  }
 }
