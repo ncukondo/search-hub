@@ -76,13 +76,13 @@ Bun ランタイムで既存の CLI が動作するか確認する。
 
 ### Step 5: インストールスクリプトの作成
 
-- [ ] Create: `install.sh`
+- [x] Create: `install.sh`
   - プラットフォーム・アーキテクチャの自動検出
   - GitHub Releases から最新バイナリをダウンロード
   - `~/.local/bin/search-hub` に配置
   - PATH へのヒント表示
-- [ ] スクリプトの動作確認（dry-run 的に）
-- [ ] Acceptance: `curl ... | sh` で簡単にインストールできる想定
+- [x] スクリプトの動作確認（dry-run 的に）
+- [x] Acceptance: `curl ... | sh` で簡単にインストールできる想定
 
 ### Step 6: ドキュメント更新
 
