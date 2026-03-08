@@ -289,7 +289,10 @@ async function loadConfig(options: LoadConfigOptions): Promise<Config> {
   // 6. Apply CLI arguments
   config = applyCLIOptions(config, options);
 
-  // 7. Resolve session directory
+  // 7. Validate
+  config = ConfigSchema.parse(config);
+
+  // 8. Resolve session directory
   //    - If inside project (.search-hub/ exists): .search-hub/sessions/
   //    - Otherwise: <data-dir>/sessions/
   if (!config.session.directory) {
@@ -298,8 +301,7 @@ async function loadConfig(options: LoadConfigOptions): Promise<Config> {
       : join(paths.data, 'sessions');
   }
 
-  // 8. Validate
-  return ConfigSchema.parse(config);
+  return config;
 }
 ```
 
