@@ -21,6 +21,26 @@ A CLI tool for systematic literature searching across multiple academic database
 
 ## Installation
 
+### Binary (no Node.js required)
+
+Download the latest binary for your platform:
+
+**Linux / macOS (Intel & Apple Silicon):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ncukondo/search-hub/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/ncukondo/search-hub/main/install.ps1 | iex
+```
+
+Or download manually from [GitHub Releases](https://github.com/ncukondo/search-hub/releases).
+
+### npm
+
 ```bash
 npm install -g @ncukondo/search-hub
 ```

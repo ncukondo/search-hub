@@ -3055,10 +3055,19 @@ export async function main(): Promise<void> {
 const currentFile = fileURLToPath(import.meta.url);
 const executedFile = process.argv[1];
 if (executedFile) {
-  if (realpathSync(executedFile) === realpathSync(currentFile)) {
-    main().catch((error) => {
-      console.error('Fatal error:', error);
-      process.exit(EXIT_CODES.GENERAL_ERROR);
-    });
+  try {
+    if (realpathSync(executedFile) === realpathSync(currentFile)) {
+      main().catch((error) => {
+        console.error('Fatal error:', error);
+        process.exit(EXIT_CODES.GENERAL_ERROR);
+      });
+    }
+  } catch (e: unknown) {
+    // Bun compile uses virtual /$bunfs/ paths that realpathSync cannot resolve.
+    // ENOENT and ERR_INVALID_ARG_TYPE are expected in compiled binary context.
+    const code = e instanceof Error ? (e as NodeJS.ErrnoException).code : undefined;
+    if (code !== 'ENOENT' && code !== 'ERR_INVALID_ARG_TYPE') {
+      console.error('[debug] Unexpected error resolving entry path:', e);
+    }
   }
 }
