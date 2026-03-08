@@ -11,12 +11,21 @@ import { VERSION } from '../version.js';
 import { init } from './commands/init.js';
 import { EXIT_CODES } from './exit-codes.js';
 import { loadConfig, saveConfig, getDefaultConfig, type Config } from '../config/index.js';
-import { getDefaultConfigPath } from '../config/paths.js';
+import { loadTomlFile } from '../config/loader.js';
+import { getDefaultConfigPath, getLocalConfigPath, isInsideProject } from '../config/paths.js';
 import {
   viewConfig,
   viewConfigKey,
   setConfigKey,
+  getNestedValue,
+  setNestedValue,
+  resolveWriteScope,
+  checkSecretKeyWarning,
+  formatShowOrigin,
+  viewConfigFiltered,
+  formatEnvVars,
 } from './commands/config.js';
+import { ENV_VAR_MAP } from '../config/env.js';
 import {
   validateQueryCommand,
   formatValidateResult,
@@ -294,15 +303,88 @@ Examples:
     .description('View and edit configuration')
     .argument('[key]', 'configuration key to view or set')
     .argument('[value]', 'value to set for the key')
+    .option('--global', 'Use global config scope')
+    .option('--local', 'Use local project config scope')
+    .option('--show-origin', 'Show where each config value comes from')
+    .option('--list', 'List all config values (default when no key given)')
+    .option('--env-vars', 'Show environment variable mappings')
     .addHelpText('after', `
 Examples:
-  $ search-hub config                              # Show all config
-  $ search-hub config providers.pubmed             # Show PubMed config
-  $ search-hub config providers.pubmed.api_key KEY # Set API key`)
-    .action(async (key?: string, value?: string) => {
+  $ search-hub config                                     # Show all config
+  $ search-hub config providers.pubmed                    # Show PubMed config
+  $ search-hub config --global providers.pubmed.api_key KEY # Set API key globally
+  $ search-hub config --local output.color false          # Set in project config
+  $ search-hub config --show-origin providers.pubmed.api_key # Show value origin
+  $ search-hub config --list --global                     # Show only global values
+  $ search-hub config --env-vars                          # Show env var mappings`)
+    .action(async (key: string | undefined, value: string | undefined, cmdOpts: {
+      global?: boolean;
+      local?: boolean;
+      showOrigin?: boolean;
+      list?: boolean;
+      envVars?: boolean;
+    }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
-        // Load config - use default if no config file exists
+        // Handle --env-vars flag
+        if (cmdOpts.envVars) {
+          if (!globalOpts.quiet) {
+            console.log(formatEnvVars());
+          }
+          process.exitCode = EXIT_CODES.SUCCESS;
+          return;
+        }
+
+        const inProject = await isInsideProject();
+
+        // Handle --list with scope filter
+        if (cmdOpts.list || (!key && !value)) {
+          if (cmdOpts.global && cmdOpts.local) {
+            if (!globalOpts.quiet) {
+              console.error('Error: --global and --local are mutually exclusive');
+            }
+            process.exitCode = EXIT_CODES.CONFIG_ERROR;
+            return;
+          }
+
+          if (cmdOpts.global) {
+            const globalConfig = await loadTomlFile(expandPath(getDefaultConfigPath()));
+            if (!globalOpts.quiet) {
+              const output = viewConfigFiltered(globalConfig as Record<string, unknown>);
+              console.log(output || '(no global config values set)');
+            }
+          } else if (cmdOpts.local) {
+            if (!inProject) {
+              if (!globalOpts.quiet) {
+                console.error('Error: --local requires a project directory (.search-hub/). Run "search-hub init" first.');
+              }
+              process.exitCode = EXIT_CODES.CONFIG_ERROR;
+              return;
+            }
+            const localConfig = await loadTomlFile(getLocalConfigPath());
+            if (!globalOpts.quiet) {
+              const output = viewConfigFiltered(localConfig as Record<string, unknown>);
+              console.log(output || '(no local config values set)');
+            }
+          } else {
+            // Default: show merged config
+            let config;
+            try {
+              config = await loadConfig(
+                globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
+              );
+            } catch {
+              config = getDefaultConfig();
+            }
+            if (!globalOpts.quiet) {
+              console.log(viewConfig(config));
+            }
+          }
+          process.exitCode = EXIT_CODES.SUCCESS;
+          return;
+        }
+
+        // Load merged config
         let config;
         try {
           config = await loadConfig(
@@ -312,36 +394,123 @@ Examples:
           config = getDefaultConfig();
         }
 
-        if (!key) {
-          // View all config
-          if (!globalOpts.quiet) {
-            console.log(viewConfig(config));
-          }
-        } else if (!value) {
-          // View specific key
-          const result = viewConfigKey(config, key);
-          if (result.success) {
-            if (!globalOpts.quiet) {
-              console.log(result.value);
+        if (key && !value) {
+          // View specific key (with optional --show-origin)
+          if (cmdOpts.showOrigin) {
+            // Check env vars first
+            const envEntry = Object.entries(ENV_VAR_MAP).find(([, path]) => path === key);
+            if (envEntry && process.env[envEntry[0]] !== undefined) {
+              if (!globalOpts.quiet) {
+                console.log(formatShowOrigin(key, process.env[envEntry[0]]!, 'env', envEntry[0]));
+              }
+              process.exitCode = EXIT_CODES.SUCCESS;
+              return;
+            }
+
+            // Check local config
+            if (inProject) {
+              const localConfig = await loadTomlFile(getLocalConfigPath());
+              const localVal = getNestedValue(localConfig as Record<string, unknown>, key);
+              if (localVal !== undefined) {
+                if (!globalOpts.quiet) {
+                  console.log(formatShowOrigin(key, String(localVal), 'local', getLocalConfigPath()));
+                }
+                process.exitCode = EXIT_CODES.SUCCESS;
+                return;
+              }
+            }
+
+            // Check global config
+            const globalConfigPath = expandPath(getDefaultConfigPath());
+            const globalConfig = await loadTomlFile(globalConfigPath);
+            const globalVal = getNestedValue(globalConfig as Record<string, unknown>, key);
+            if (globalVal !== undefined) {
+              if (!globalOpts.quiet) {
+                console.log(formatShowOrigin(key, String(globalVal), 'global', globalConfigPath));
+              }
+              process.exitCode = EXIT_CODES.SUCCESS;
+              return;
+            }
+
+            // Must be default
+            const mergedVal = getNestedValue(config as unknown as Record<string, unknown>, key);
+            if (mergedVal !== undefined) {
+              if (!globalOpts.quiet) {
+                console.log(formatShowOrigin(key, String(mergedVal), 'default', ''));
+              }
+            } else {
+              if (!globalOpts.quiet) {
+                console.error(`Error: Key "${key}" not found in configuration`);
+              }
+              process.exitCode = EXIT_CODES.CONFIG_ERROR;
+              return;
             }
           } else {
+            const result = viewConfigKey(config, key);
+            if (result.success) {
+              if (!globalOpts.quiet) {
+                console.log(result.value);
+              }
+            } else {
+              if (!globalOpts.quiet) {
+                console.error(`Error: ${result.error}`);
+              }
+              process.exitCode = EXIT_CODES.CONFIG_ERROR;
+              return;
+            }
+          }
+        } else if (key && value) {
+          // Set key value — resolve scope
+          const scopeResult = resolveWriteScope({
+            global: !!cmdOpts.global,
+            local: !!cmdOpts.local,
+            insideProject: inProject,
+          });
+
+          if (scopeResult.scope === 'error') {
             if (!globalOpts.quiet) {
-              console.error(`Error: ${result.error}`);
+              console.error(`Error: ${scopeResult.error}`);
             }
             process.exitCode = EXIT_CODES.CONFIG_ERROR;
             return;
           }
-        } else {
-          // Set key value
+
+          // Check secret key warning
+          const warning = checkSecretKeyWarning(key, scopeResult.scope);
+          if (warning && !globalOpts.quiet) {
+            console.warn(warning);
+          }
+
           const result = setConfigKey(config, key, value);
           if (result.success) {
-            // Save the modified config to file
-            const configPath = globalOpts.config ? expandPath(globalOpts.config) : getDefaultConfigPath();
+            // Determine save path based on scope
+            let configPath: string;
+            if (globalOpts.config) {
+              configPath = expandPath(globalOpts.config);
+            } else if (scopeResult.scope === 'local') {
+              configPath = getLocalConfigPath();
+            } else {
+              configPath = getDefaultConfigPath();
+            }
+
+            // For scoped writes, load existing file, apply change, and save
             try {
-              await saveConfig(config, { path: configPath });
+              const existing = await loadTomlFile(expandPath(configPath));
+              // Parse value using existing config context for type coercion
+              const existingValue = getNestedValue(
+                config as unknown as Record<string, unknown>,
+                key
+              );
+              const parsedValue = typeof existingValue === 'number' && !isNaN(Number(value))
+                ? Number(value)
+                : value === 'true' ? true
+                : value === 'false' ? false
+                : value;
+              setNestedValue(existing as Record<string, unknown>, key, parsedValue);
+              await saveConfig(existing as Config, { path: expandPath(configPath) });
               if (!globalOpts.quiet) {
                 console.log(`Set ${key} = ${result.value}`);
-                console.log(`Saved to ${configPath}`);
+                console.log(`Saved to ${expandPath(configPath)}`);
               }
             } catch (saveError) {
               if (!globalOpts.quiet) {
