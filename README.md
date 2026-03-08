@@ -49,18 +49,25 @@ Requires Node.js 22+.
 
 ## Quick Start
 
-1. Initialize configuration:
+1. Initialize a project:
 ```bash
 search-hub init
 ```
 
-This creates config and data directories in platform-specific locations:
+This creates a `.search-hub/` directory in the current folder with project config, sessions, and queries.
 
-| Platform | Config | Data |
-|----------|--------|------|
-| Linux | `~/.config/search-hub/` | `~/.local/share/search-hub/` |
-| macOS | `~/Library/Preferences/search-hub/` | `~/Library/Application Support/search-hub/` |
-| Windows | `%APPDATA%/search-hub/Config/` | `%LOCALAPPDATA%/search-hub/Data/` |
+For global setup (API keys, user preferences):
+```bash
+search-hub init --global
+```
+
+This creates a config file in your platform-specific config directory:
+
+| Platform | Global Config |
+|----------|---------------|
+| Linux | `~/.config/search-hub/config.toml` |
+| macOS | `~/Library/Preferences/search-hub/config.toml` |
+| Windows | `%APPDATA%/search-hub/Config/config.toml` |
 
 2. Create a query file:
 ```bash
