@@ -3062,8 +3062,8 @@ if (executedFile) {
         process.exit(EXIT_CODES.GENERAL_ERROR);
       });
     }
-  } catch {
-    // realpathSync may fail in bundled environments (e.g. Bun compile)
-    // In that case, entry-bun.ts calls main() directly
+  } catch (e: unknown) {
+    // Bun compile uses virtual /$bunfs/ paths that realpathSync cannot resolve.
+    // This is expected and safe to ignore in compiled binary context.
   }
 }

@@ -1,51 +1,49 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build single binary using Bun compile
-# Usage: ./scripts/build-binary.sh [target...]
-# Targets: linux-x64, linux-arm64, windows-x64
-# If no target specified, builds all targets.
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-ENTRY_POINT="$PROJECT_ROOT/src/cli/entry-bun.ts"
-DIST_DIR="$PROJECT_ROOT/dist"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+ENTRY="$PROJECT_DIR/src/cli/entry-bun.ts"
+OUT_DIR="$PROJECT_DIR/dist"
 
-ALL_TARGETS=("linux-x64" "linux-arm64" "windows-x64")
+declare -A BUN_TARGETS=(
+  [linux-x64]="bun-linux-x64"
+  [linux-arm64]="bun-linux-arm64"
+  [darwin-x64]="bun-darwin-x64"
+  [darwin-arm64]="bun-darwin-arm64"
+  [windows-x64]="bun-windows-x64"
+)
 
-# Use arguments as targets, or default to all
-if [ $# -gt 0 ]; then
-  TARGETS=("$@")
-else
-  TARGETS=("${ALL_TARGETS[@]}")
+build_target() {
+  local target="$1"
+  local bun_target="${BUN_TARGETS[$target]:-}"
+  if [[ -z "$bun_target" ]]; then
+    echo "Unknown target: $target" >&2
+    echo "Valid targets: ${!BUN_TARGETS[*]}" >&2
+    return 1
+  fi
+  local outfile="$OUT_DIR/search-hub-${target}"
+  if [[ "$target" == windows-* ]]; then
+    outfile="${outfile}.exe"
+  fi
+  echo "Building for $target..."
+  bun build --compile --target="$bun_target" "$ENTRY" --outfile "$outfile"
+  echo "  -> $outfile ($(du -h "$outfile" | cut -f1))"
+}
+
+if [[ $# -eq 0 ]]; then
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64) arch="x64" ;;
+    aarch64|arm64) arch="arm64" ;;
+    *) echo "Unsupported architecture: $arch" >&2; exit 1 ;;
+  esac
+  os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  set -- "${os}-${arch}"
 fi
 
-mkdir -p "$DIST_DIR"
-
-for target in "${TARGETS[@]}"; do
-  case "$target" in
-    linux-x64)
-      bun_target="bun-linux-x64"
-      output="$DIST_DIR/search-hub-linux-x64"
-      ;;
-    linux-arm64)
-      bun_target="bun-linux-arm64"
-      output="$DIST_DIR/search-hub-linux-arm64"
-      ;;
-    windows-x64)
-      bun_target="bun-windows-x64"
-      output="$DIST_DIR/search-hub-windows-x64.exe"
-      ;;
-    *)
-      echo "Error: Unknown target '$target'" >&2
-      echo "Valid targets: ${ALL_TARGETS[*]}" >&2
-      exit 1
-      ;;
-  esac
-
-  echo "Building for $target..."
-  bun build --compile --target="$bun_target" "$ENTRY_POINT" --outfile "$output"
-  echo "  -> $output"
+mkdir -p "$OUT_DIR"
+for target in "$@"; do
+  build_target "$target"
 done
-
-echo "Build complete."
+echo "Done."
