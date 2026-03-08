@@ -4,6 +4,7 @@
  * Provides functionality to view and edit configuration values.
  */
 import type { Config } from '../../config/index.js';
+import { ENV_VAR_MAP } from '../../config/env.js';
 
 /**
  * Result of a config operation.
@@ -195,4 +196,88 @@ export function setConfigKey(
     success: true,
     value: formatValue(parsedValue),
   };
+}
+
+/**
+ * Write scope resolution result.
+ */
+export type WriteScope =
+  | { scope: 'global' }
+  | { scope: 'local' }
+  | { scope: 'error'; error: string };
+
+/**
+ * Resolve the write scope based on flags and project context.
+ */
+export function resolveWriteScope(opts: {
+  global: boolean;
+  local: boolean;
+  insideProject: boolean;
+}): WriteScope {
+  if (opts.global && opts.local) {
+    return { scope: 'error', error: '--global and --local are mutually exclusive' };
+  }
+  if (opts.local && !opts.insideProject) {
+    return {
+      scope: 'error',
+      error: '--local requires a project directory (.search-hub/). Run "search-hub init" first.',
+    };
+  }
+  if (opts.global) return { scope: 'global' };
+  if (opts.local) return { scope: 'local' };
+  // Default: local if inside project, global otherwise
+  return opts.insideProject ? { scope: 'local' } : { scope: 'global' };
+}
+
+/** Keys considered secrets that should not be stored in local config. */
+const SECRET_KEY_SUFFIXES = ['api_key', 'inst_token', 'email'];
+
+/**
+ * Check if writing a key to local config should trigger a warning.
+ * Returns warning message or null.
+ */
+export function checkSecretKeyWarning(
+  key: string,
+  scope: 'global' | 'local'
+): string | null {
+  if (scope !== 'local') return null;
+  const lastPart = key.split('.').pop() ?? '';
+  if (SECRET_KEY_SUFFIXES.includes(lastPart)) {
+    return `Warning: "${key}" contains sensitive data. Consider using --global to store it in the global config instead.`;
+  }
+  return null;
+}
+
+/**
+ * Format a config value with its origin information.
+ * Format: <origin>\t<path>\t<key> = <value>
+ */
+export function formatShowOrigin(
+  key: string,
+  value: string,
+  origin: string,
+  path: string
+): string {
+  return `${origin}\t${path}\t${key} = ${value}`;
+}
+
+/**
+ * View config values from a partial (filtered) config object.
+ */
+export function viewConfigFiltered(
+  partial: Record<string, unknown>
+): string {
+  const flattened = flattenObject(partial);
+  return flattened
+    .map(({ key, value }) => `${key} = ${formatValue(value)}`)
+    .join('\n');
+}
+
+/**
+ * Format the ENV_VAR_MAP as a human-readable table.
+ */
+export function formatEnvVars(): string {
+  return Object.entries(ENV_VAR_MAP)
+    .map(([envVar, configPath]) => `${envVar}  →  ${configPath}`)
+    .join('\n');
 }
