@@ -15,12 +15,15 @@ import {
   setConfigKey,
   getNestedValue,
   setNestedValue,
+  parseValue,
   resolveWriteScope,
   checkSecretKeyWarning,
   formatShowOrigin,
+  viewConfigAllOrigins,
   viewConfigFiltered,
   formatEnvVars,
 } from './config.js';
+import { ENV_VAR_MAP } from '../../config/env.js';
 
 describe('search-hub config E2E', () => {
   let ctx: E2EContext;
@@ -548,6 +551,114 @@ describe('search-hub config E2E', () => {
       const output = viewConfig(config);
       expect(output).toContain('log.level = warn');
       expect(output).toContain('output.color'); // defaults still shown
+    });
+  });
+
+  describe('parseValue reuse', () => {
+    it('should parse boolean values', () => {
+      expect(parseValue('true', 'string')).toBe(true);
+      expect(parseValue('false', 'string')).toBe(false);
+    });
+
+    it('should parse numeric values when existing is number', () => {
+      expect(parseValue('42', 10)).toBe(42);
+      expect(parseValue('3.14', 1)).toBe(3.14);
+    });
+
+    it('should keep string when existing is not number', () => {
+      expect(parseValue('42', 'string')).toBe('42');
+    });
+  });
+
+  describe('config list --show-origin E2E', () => {
+    it('should show origin for all keys in merged config', async () => {
+      const globalConfigPath = await createConfig(ctx.tempDir, {
+        log: { level: 'warn' },
+      }, 'origin-global.toml');
+
+      const config = await loadConfig({
+        globalConfigPath,
+        localConfigPath: '',
+      });
+
+      const globalConfig = await loadTomlFile(globalConfigPath);
+      const output = viewConfigAllOrigins(
+        config,
+        ENV_VAR_MAP,
+        {} as Record<string, unknown>,
+        '',
+        globalConfig as Record<string, unknown>,
+        globalConfigPath
+      );
+
+      // Global-overridden key should show global origin
+      expect(output).toContain('global');
+      expect(output).toContain('log.level = warn');
+      // Default keys should show default origin
+      expect(output).toContain('default');
+      expect(output).toContain('output.color = true');
+    });
+
+    it('should show local origin for locally overridden keys', async () => {
+      const config = getDefaultConfig();
+      config.output.color = false;
+
+      const localConfig = { output: { color: false } };
+      const output = viewConfigAllOrigins(
+        config,
+        ENV_VAR_MAP,
+        localConfig as Record<string, unknown>,
+        '.search-hub/config.toml',
+        {} as Record<string, unknown>,
+        ''
+      );
+
+      expect(output).toContain('local');
+      expect(output).toContain('output.color = false');
+    });
+
+    it('should show env origin for env-overridden keys', async () => {
+      const origEnv = process.env['SEARCH_HUB_LOG_LEVEL'];
+      process.env['SEARCH_HUB_LOG_LEVEL'] = 'debug';
+      try {
+        const config = getDefaultConfig();
+        config.log.level = 'debug';
+
+        const output = viewConfigAllOrigins(
+          config,
+          ENV_VAR_MAP,
+          {} as Record<string, unknown>,
+          '',
+          {} as Record<string, unknown>,
+          ''
+        );
+
+        expect(output).toContain('env');
+        expect(output).toContain('SEARCH_HUB_LOG_LEVEL');
+        expect(output).toContain('log.level = debug');
+      } finally {
+        if (origEnv === undefined) {
+          delete process.env['SEARCH_HUB_LOG_LEVEL'];
+        } else {
+          process.env['SEARCH_HUB_LOG_LEVEL'] = origEnv;
+        }
+      }
+    });
+  });
+
+  describe('config secret key blocking E2E', () => {
+    it('should return warning message for secret keys in local scope', () => {
+      const warning = checkSecretKeyWarning('providers.pubmed.api_key', 'local');
+      expect(warning).toBeTruthy();
+      expect(warning).toContain('--global');
+    });
+
+    it('should allow non-secret keys in local scope', () => {
+      expect(checkSecretKeyWarning('output.color', 'local')).toBeNull();
+    });
+
+    it('should allow secret keys in global scope', () => {
+      expect(checkSecretKeyWarning('providers.pubmed.api_key', 'global')).toBeNull();
     });
   });
 });

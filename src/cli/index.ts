@@ -19,9 +19,11 @@ import {
   setConfigKey,
   getNestedValue,
   setNestedValue,
+  parseValue,
   resolveWriteScope,
   checkSecretKeyWarning,
   formatShowOrigin,
+  viewConfigAllOrigins,
   viewConfigFiltered,
   formatEnvVars,
 } from './commands/config.js';
@@ -308,6 +310,7 @@ Examples:
     .option('--show-origin', 'Show where each config value comes from')
     .option('--list', 'List all config values (default when no key given)')
     .option('--env-vars', 'Show environment variable mappings')
+    .option('--force', 'Force write even for secret keys in local scope')
     .addHelpText('after', `
 Examples:
   $ search-hub config                                     # Show all config
@@ -323,6 +326,7 @@ Examples:
       showOrigin?: boolean;
       list?: boolean;
       envVars?: boolean;
+      force?: boolean;
     }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -347,7 +351,31 @@ Examples:
             return;
           }
 
-          if (cmdOpts.global) {
+          if (cmdOpts.showOrigin && !cmdOpts.global && !cmdOpts.local) {
+            // Show all keys with origin information
+            let config;
+            try {
+              config = await loadConfig(
+                globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
+              );
+            } catch {
+              config = getDefaultConfig();
+            }
+            const globalPath = expandPath(getDefaultConfigPath());
+            const globalCfg = await loadTomlFile(globalPath);
+            const localPath = inProject ? getLocalConfigPath() : '';
+            const localCfg = inProject ? await loadTomlFile(localPath) : {};
+            if (!globalOpts.quiet) {
+              console.log(viewConfigAllOrigins(
+                config,
+                ENV_VAR_MAP,
+                localCfg as Record<string, unknown>,
+                localPath,
+                globalCfg as Record<string, unknown>,
+                globalPath
+              ));
+            }
+          } else if (cmdOpts.global) {
             const globalConfig = await loadTomlFile(expandPath(getDefaultConfigPath()));
             if (!globalOpts.quiet) {
               const output = viewConfigFiltered(globalConfig as Record<string, unknown>);
@@ -475,10 +503,14 @@ Examples:
             return;
           }
 
-          // Check secret key warning
+          // Block secret key writes to local scope unless --force
           const warning = checkSecretKeyWarning(key, scopeResult.scope);
-          if (warning && !globalOpts.quiet) {
-            console.warn(warning);
+          if (warning && !cmdOpts.force) {
+            if (!globalOpts.quiet) {
+              console.error(`Error: ${warning} Use --force to override.`);
+            }
+            process.exitCode = EXIT_CODES.CONFIG_ERROR;
+            return;
           }
 
           const result = setConfigKey(config, key, value);
@@ -488,29 +520,24 @@ Examples:
             if (globalOpts.config) {
               configPath = expandPath(globalOpts.config);
             } else if (scopeResult.scope === 'local') {
-              configPath = getLocalConfigPath();
+              configPath = expandPath(getLocalConfigPath());
             } else {
-              configPath = getDefaultConfigPath();
+              configPath = expandPath(getDefaultConfigPath());
             }
 
             // For scoped writes, load existing file, apply change, and save
             try {
-              const existing = await loadTomlFile(expandPath(configPath));
-              // Parse value using existing config context for type coercion
+              const existing = await loadTomlFile(configPath);
               const existingValue = getNestedValue(
                 config as unknown as Record<string, unknown>,
                 key
               );
-              const parsedValue = typeof existingValue === 'number' && !isNaN(Number(value))
-                ? Number(value)
-                : value === 'true' ? true
-                : value === 'false' ? false
-                : value;
+              const parsedValue = parseValue(value, existingValue);
               setNestedValue(existing as Record<string, unknown>, key, parsedValue);
-              await saveConfig(existing as Config, { path: expandPath(configPath) });
+              await saveConfig(existing as Config, { path: configPath });
               if (!globalOpts.quiet) {
                 console.log(`Set ${key} = ${result.value}`);
-                console.log(`Saved to ${expandPath(configPath)}`);
+                console.log(`Saved to ${configPath}`);
               }
             } catch (saveError) {
               if (!globalOpts.quiet) {

@@ -70,7 +70,7 @@ export function setNestedValue(
 /**
  * Flatten a nested object into dot-notation keys.
  */
-function flattenObject(
+export function flattenObject(
   obj: Record<string, unknown>,
   prefix = ''
 ): Array<{ key: string; value: unknown }> {
@@ -140,7 +140,7 @@ export function viewConfigKey(config: Config, key: string): ConfigResult {
 /**
  * Parse a string value to its appropriate type.
  */
-function parseValue(value: string, existingValue: unknown): unknown {
+export function parseValue(value: string, existingValue: unknown): unknown {
   // Boolean
   if (value === 'true') return true;
   if (value === 'false') return false;
@@ -259,6 +259,42 @@ export function formatShowOrigin(
   path: string
 ): string {
   return `${origin}\t${path}\t${key} = ${value}`;
+}
+
+/**
+ * Build show-origin output for all keys in a merged config.
+ * Checks each key against env, local, global sources in priority order.
+ */
+export function viewConfigAllOrigins(
+  merged: Config,
+  envVarMap: Record<string, string>,
+  localConfig: Record<string, unknown>,
+  localPath: string,
+  globalConfig: Record<string, unknown>,
+  globalPath: string
+): string {
+  const flattened = flattenObject(merged as unknown as Record<string, unknown>);
+  const lines = flattened.map(({ key, value }) => {
+    const formattedValue = formatValue(value);
+    // Check env
+    const envEntry = Object.entries(envVarMap).find(([, path]) => path === key);
+    if (envEntry && process.env[envEntry[0]] !== undefined) {
+      return formatShowOrigin(key, formattedValue, 'env', envEntry[0]);
+    }
+    // Check local
+    const localVal = getNestedValue(localConfig, key);
+    if (localVal !== undefined) {
+      return formatShowOrigin(key, formattedValue, 'local', localPath);
+    }
+    // Check global
+    const globalVal = getNestedValue(globalConfig, key);
+    if (globalVal !== undefined) {
+      return formatShowOrigin(key, formattedValue, 'global', globalPath);
+    }
+    // Default
+    return formatShowOrigin(key, formattedValue, 'default', '');
+  });
+  return lines.join('\n');
 }
 
 /**
