@@ -354,8 +354,10 @@ Read and write configuration values.
 |------|-------------|
 | `--global` | Target global config file |
 | `--local` | Target local project config file |
+| `--list` | List all config values (default when no key given) |
 | `--show-origin` | Show where each config value comes from (env/local/global/default) |
 | `--env-vars` | Show environment variable mappings |
+| `--force` | Force write even for secret keys in local scope |
 
 ### Write Scope Resolution
 
@@ -366,7 +368,7 @@ When setting a value:
 
 ### Secret Key Warning
 
-Setting secret keys (`api_key`, `email`, `inst_token`) to local config triggers a warning, as secrets should be stored in global config or environment variables.
+Setting secret keys (`api_key`, `email`, `inst_token`) to local config triggers a warning, as secrets should be stored in global config or environment variables. Use `--force` to override this check.
 
 ### Examples
 

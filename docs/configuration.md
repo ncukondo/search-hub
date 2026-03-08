@@ -49,8 +49,8 @@ Running `search-hub init` creates:
 ## Config Command
 
 ```bash
-# View all config values
-search-hub config
+# View all config values (--list is default when no key given)
+search-hub config --list
 
 # View with origin info (env/local/global/default)
 search-hub config --show-origin
@@ -67,6 +67,9 @@ search-hub config providers.pubmed.max_results 5000
 # Explicitly target global or local
 search-hub config --global providers.pubmed.api_key "my-key"
 search-hub config --local providers.scopus.enabled false
+
+# Force write secret keys to local scope (overrides safety warning)
+search-hub config --local --force providers.pubmed.api_key "my-key"
 ```
 
 ## Global Config File Format
