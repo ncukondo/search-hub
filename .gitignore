@@ -44,3 +44,6 @@ sessions/
 # Serena MCP server local data
 .serena/
 searches/
+
+# Claude Code local settings
+.claude/settings.local.json

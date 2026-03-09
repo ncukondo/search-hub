@@ -136,10 +136,10 @@ This file tracks high-level progress. For implementation details, see individual
 | 127 | `query init <title>` & Default `queries/` Directory | 18 | ✅ Completed | [20260306-02](completed/20260306-02-query-init-title-arg.md) |
 | 128 | Smart Query File Resolution & Documentation Update | 127 | ✅ Completed | [20260306-03](completed/20260306-03-smart-query-resolution-and-docs.md) |
 | 129 | Single Binary Distribution via Bun Compile | - | ✅ Completed | [20260308-01](completed/20260308-01-single-binary-distribution.md) |
-| 130 | Config Loader — `.search-hub/` Local Project Discovery | 2 | | [20260308-02](20260308-02-config-loader-local-discovery.md) |
-| 131 | Refactor `init` — Local Default + `--global` Flag | 130 | | [20260308-03](20260308-03-init-local-global.md) |
-| 132 | Refactor `config` — `--global`/`--local`/`--show-origin`/`--env-vars` | 130 | | [20260308-04](20260308-04-config-command-scope.md) |
-| 133 | Update Specs, ADR, Docs + Close Issue #138 | 131, 132 | | [20260308-05](20260308-05-config-spec-update.md) |
+| 130 | Config Loader — `.search-hub/` Local Project Discovery | 2 | ✅ Completed | [20260308-02](completed/20260308-02-config-loader-local-discovery.md) |
+| 131 | Refactor `init` — Local Default + `--global` Flag | 130 | ✅ Completed | [20260308-03](completed/20260308-03-init-local-global.md) |
+| 132 | Refactor `config` — `--global`/`--local`/`--show-origin`/`--env-vars` | 130 | ✅ Completed | [20260308-04](completed/20260308-04-config-command-scope.md) |
+| 133 | Update Specs, ADR, Docs + Close Issue #138 | 131, 132 | ✅ Completed | [20260308-05](completed/20260308-05-config-spec-update.md) |
 
 ## Development Flow
 
