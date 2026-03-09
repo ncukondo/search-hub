@@ -49,17 +49,17 @@ export async function resolveQueryFile(arg: string): Promise<string> {
     }
   }
 
-  // 3. queries/<arg>.yaml
+  // 3. .search-hub/queries/<arg>.yaml
   const basename = arg.endsWith('.yaml') || arg.endsWith('.yml') ? arg : `${arg}.yaml`;
-  const inQueries = `queries/${basename}`;
+  const inQueries = `.search-hub/queries/${basename}`;
   candidates.push(inQueries);
   if (await isFile(inQueries)) {
     return inQueries;
   }
 
-  // 4. queries/<arg>.yml (skip if arg already has extension)
+  // 4. .search-hub/queries/<arg>.yml (skip if arg already has extension)
   if (!arg.endsWith('.yaml') && !arg.endsWith('.yml')) {
-    const inQueriesYml = `queries/${arg}.yml`;
+    const inQueriesYml = `.search-hub/queries/${arg}.yml`;
     candidates.push(inQueriesYml);
     if (await isFile(inQueriesYml)) {
       return inQueriesYml;
