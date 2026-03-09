@@ -4,11 +4,13 @@
  * Resolution order:
  * 1. Exact path exists → use it
  * 2. <arg>.yaml exists → use it
- * 3. queries/<arg>.yaml exists → use it
- * 4. queries/<arg>.yml exists → use it
+ * 3. .search-hub/queries/<arg>.yaml exists → use it
+ * 4. .search-hub/queries/<arg>.yml exists → use it
  * 5. Error with tried paths
  */
 import { stat } from 'node:fs/promises';
+import { relative } from 'node:path';
+import { getQueriesDir } from '../../../config/paths.js';
 
 export class NotAFileError extends Error {
   constructor(path: string) {
@@ -50,8 +52,9 @@ export async function resolveQueryFile(arg: string): Promise<string> {
   }
 
   // 3. .search-hub/queries/<arg>.yaml
+  const queriesDir = relative(process.cwd(), getQueriesDir());
   const basename = arg.endsWith('.yaml') || arg.endsWith('.yml') ? arg : `${arg}.yaml`;
-  const inQueries = `.search-hub/queries/${basename}`;
+  const inQueries = `${queriesDir}/${basename}`;
   candidates.push(inQueries);
   if (await isFile(inQueries)) {
     return inQueries;
@@ -59,7 +62,7 @@ export async function resolveQueryFile(arg: string): Promise<string> {
 
   // 4. .search-hub/queries/<arg>.yml (skip if arg already has extension)
   if (!arg.endsWith('.yaml') && !arg.endsWith('.yml')) {
-    const inQueriesYml = `.search-hub/queries/${arg}.yml`;
+    const inQueriesYml = `${queriesDir}/${arg}.yml`;
     candidates.push(inQueriesYml);
     if (await isFile(inQueriesYml)) {
       return inQueriesYml;
