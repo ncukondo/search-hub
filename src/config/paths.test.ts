@@ -10,7 +10,7 @@ import {
   getProjectDir,
   getLocalConfigPath,
   getLocalSessionsDir,
-  getLocalQueriesDir,
+  getQueriesDir,
   isInsideProject,
 } from './paths.js';
 
@@ -93,10 +93,15 @@ describe('paths', () => {
     });
   });
 
-  describe('getLocalQueriesDir', () => {
+  describe('getQueriesDir', () => {
     it('returns .search-hub/queries relative to given directory', () => {
-      const result = getLocalQueriesDir('/some/project');
+      const result = getQueriesDir('/some/project');
       expect(result).toBe(join('/some/project', '.search-hub', 'queries'));
+    });
+
+    it('defaults to cwd when no directory specified', () => {
+      const result = getQueriesDir();
+      expect(result).toBe(join(process.cwd(), '.search-hub', 'queries'));
     });
   });
 

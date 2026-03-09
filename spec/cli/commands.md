@@ -65,7 +65,7 @@ search-hub search --db <provider> --query <query-string> [options]
 ### Examples
 
 ```bash
-# Search all enabled databases (query name resolves to queries/diabetes-ai.yaml)
+# Search all enabled databases (query name resolves to .search-hub/queries/diabetes-ai.yaml)
 search-hub search diabetes-ai
 
 # Explicit path also works
@@ -530,7 +530,7 @@ search-hub init [options]
 1. Creates config file in platform-specific config directory (see spec/models/config.md)
 2. Prompts for API keys interactively
 3. Creates session directory in platform-specific data directory
-4. Creates `queries/` directory in current working directory for query files
+4. Creates `.search-hub/queries/` directory for query files
 
 ---
 
@@ -545,13 +545,13 @@ When the argument does not point to an existing file, the following paths are tr
 
 1. Exact path as given
 2. `<arg>.yaml` in CWD
-3. `queries/<arg>.yaml` in CWD
+3. `.search-hub/queries/<arg>.yaml` in CWD
 
 This allows shorthand usage:
 
 ```bash
-# All equivalent (if queries/wba-pain.yaml exists)
-search-hub query validate queries/wba-pain.yaml
+# All equivalent (if .search-hub/queries/wba-pain.yaml exists)
+search-hub query validate .search-hub/queries/wba-pain.yaml
 search-hub query validate wba-pain.yaml
 search-hub query validate wba-pain
 ```
@@ -582,7 +582,7 @@ search-hub query init <title> [options]
 
 1. Sanitizes `<title>` to a filename: lowercase, spaces to hyphens, non-alphanumeric removed
 2. Generates a YAML template with `name: <title>` and `$schema` link
-3. Default output: `queries/<sanitized-title>.yaml` (creates `queries/` if needed)
+3. Default output: `.search-hub/queries/<sanitized-title>.yaml` (creates `.search-hub/queries/` if needed)
 4. Generates `query.schema.json` alongside the output file
 5. If `--stdout`, prints template to stdout without creating files
 6. If `-o`, writes to that path instead of default
@@ -590,10 +590,10 @@ search-hub query init <title> [options]
 #### Output Message
 
 ```
-Created: queries/wba-pain.yaml
+Created: .search-hub/queries/wba-pain.yaml
 
 Next steps:
-  1. Edit query:      $EDITOR queries/wba-pain.yaml
+  1. Edit query:      $EDITOR .search-hub/queries/wba-pain.yaml
   2. Validate:        search-hub query validate wba-pain
   3. Check counts:    search-hub search wba-pain --count-only
 
@@ -679,7 +679,7 @@ For `{path}/{name}.yaml`, the log file is `{path}/{name}.search-log.yaml`.
 
 Examples:
 - `./my-search.yaml` → `./my-search.search-log.yaml`
-- `./queries/diabetes.yaml` → `./queries/diabetes.search-log.yaml`
+- `./.search-hub/queries/diabetes.yaml` → `./.search-hub/queries/diabetes.search-log.yaml`
 
 #### Log File Format
 
@@ -725,7 +725,7 @@ The `query_hash` field links each count/preview entry to the specific version of
 ### Examples
 
 ```bash
-# Create a query file (writes to queries/diabetes-ai.yaml)
+# Create a query file (writes to .search-hub/queries/diabetes-ai.yaml)
 search-hub query init "diabetes ai"
 
 # Create with explicit output path
@@ -737,7 +737,7 @@ search-hub query init "diabetes ai" --stdout
 # Overwrite existing file
 search-hub query init "diabetes ai" --force
 
-# Validate query file (smart resolution: name → queries/<name>.yaml)
+# Validate query file (smart resolution: name → .search-hub/queries/<name>.yaml)
 search-hub query validate diabetes-ai
 
 # Show all translations
@@ -746,7 +746,7 @@ search-hub query translate diabetes-ai
 # Show PubMed translation only
 search-hub query translate diabetes-ai --db pubmed
 
-# Check hit counts (auto-logged to queries/diabetes-ai.search-log.yaml)
+# Check hit counts (auto-logged to .search-hub/queries/diabetes-ai.search-log.yaml)
 search-hub search diabetes-ai --count-only
 
 # Record assessment after reviewing counts

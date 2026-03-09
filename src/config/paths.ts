@@ -71,7 +71,7 @@ export function getLocalSessionsDir(baseDir?: string): string {
 /**
  * Get the local queries directory (.search-hub/queries/).
  */
-export function getLocalQueriesDir(baseDir?: string): string {
+export function getQueriesDir(baseDir?: string): string {
   return join(getProjectDir(baseDir), 'queries');
 }
 

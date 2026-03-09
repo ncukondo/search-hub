@@ -6,6 +6,7 @@
 import { writeFile as fsWriteFile, access, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { generateQueryJSONSchema } from "../../../query/json-schema.js";
+import { getQueriesDir } from "../../../config/paths.js";
 
 /**
  * Sanitize a title string into a safe filename (without extension).
@@ -99,7 +100,6 @@ export function generateQueryTemplate(title?: string): string {
   return QUERY_TEMPLATE.replace('name: my_search', `name: "${escaped}"`);
 }
 
-export const QUERIES_DIR = "queries";
 
 export interface WriteQueryTemplateOptions {
   title: string;
@@ -126,7 +126,7 @@ export async function writeQueryTemplate(options: WriteQueryTemplateOptions): Pr
 
   // Determine output path
   const outputPath = options.output
-    ?? join(options.cwd ?? process.cwd(), QUERIES_DIR, `${sanitizeForFilename(options.title)}.yaml`);
+    ?? join(getQueriesDir(options.cwd), `${sanitizeForFilename(options.title)}.yaml`);
 
   // Check if file exists (unless force is set)
   if (!options.force) {

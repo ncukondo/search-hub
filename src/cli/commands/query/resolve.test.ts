@@ -38,7 +38,7 @@ describe('resolveQueryFile', () => {
     // queries/arg.yaml exists
     mockedFs.stat.mockResolvedValueOnce({ isFile: () => true } as any);
     const result = await resolveQueryFile('my-query');
-    expect(result).toBe('queries/my-query.yaml');
+    expect(result).toBe('.search-hub/queries/my-query.yaml');
   });
 
   it('prefers exact path over .yaml suffix', async () => {
@@ -60,7 +60,7 @@ describe('resolveQueryFile', () => {
       './wba-pain.yaml'
     );
     await expect(resolveQueryFile('wba-pain')).rejects.toThrow(
-      './queries/wba-pain.yaml'
+      '.search-hub/queries/wba-pain.yaml'
     );
     await expect(resolveQueryFile('wba-pain')).rejects.toThrow(
       'query init'
@@ -89,7 +89,7 @@ describe('resolveQueryFile', () => {
     // queries/arg.yml exists
     mockedFs.stat.mockResolvedValueOnce({ isFile: () => true } as any);
     const result = await resolveQueryFile('my-query');
-    expect(result).toBe('queries/my-query.yml');
+    expect(result).toBe('.search-hub/queries/my-query.yml');
   });
 
   it('skips .yaml step when arg already ends with .yaml', async () => {
@@ -98,6 +98,6 @@ describe('resolveQueryFile', () => {
     // queries/my-query.yaml exists (skips arg+.yaml since it already has .yaml)
     mockedFs.stat.mockResolvedValueOnce({ isFile: () => true } as any);
     const result = await resolveQueryFile('my-query.yaml');
-    expect(result).toBe('queries/my-query.yaml');
+    expect(result).toBe('.search-hub/queries/my-query.yaml');
   });
 });

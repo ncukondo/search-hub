@@ -107,41 +107,41 @@ describe('query init', () => {
   });
 
   describe('writeQueryTemplate', () => {
-    it('should write to queries/<sanitized-title>.yaml by default', async () => {
+    it('should write to .search-hub/queries/<sanitized-title>.yaml by default', async () => {
       const result = await writeQueryTemplate({ title: 'WBA pain', cwd: tempDir });
       expect(result.success).toBe(true);
-      const content = await readFile(join(tempDir, 'queries', 'wba-pain.yaml'), 'utf-8');
+      const content = await readFile(join(tempDir, '.search-hub', 'queries', 'wba-pain.yaml'), 'utf-8');
       expect(content).toContain('name: "WBA pain"');
     });
 
-    it('should auto-create queries/ directory', async () => {
+    it('should auto-create .search-hub/queries/ directory', async () => {
       await writeQueryTemplate({ title: 'test search', cwd: tempDir });
-      const stats = await stat(join(tempDir, 'queries'));
+      const stats = await stat(join(tempDir, '.search-hub', 'queries'));
       expect(stats.isDirectory()).toBe(true);
     });
 
-    it('should create query.schema.json in queries/', async () => {
+    it('should create query.schema.json in .search-hub/queries/', async () => {
       await writeQueryTemplate({ title: 'test search', cwd: tempDir });
-      const schemaPath = join(tempDir, 'queries', 'query.schema.json');
+      const schemaPath = join(tempDir, '.search-hub', 'queries', 'query.schema.json');
       const schemaContent = await readFile(schemaPath, 'utf-8');
       const schema = JSON.parse(schemaContent);
       expect(schema.$schema).toContain('json-schema.org');
     });
 
     it('should refuse to overwrite existing file without --force', async () => {
-      await mkdir(join(tempDir, 'queries'), { recursive: true });
-      await writeFile(join(tempDir, 'queries', 'test.yaml'), 'existing', 'utf-8');
+      await mkdir(join(tempDir, '.search-hub', 'queries'), { recursive: true });
+      await writeFile(join(tempDir, '.search-hub', 'queries', 'test.yaml'), 'existing', 'utf-8');
       const result = await writeQueryTemplate({ title: 'test', cwd: tempDir });
       expect(result.success).toBe(false);
       expect(result.message).toContain('exists');
     });
 
     it('should overwrite existing file with --force', async () => {
-      await mkdir(join(tempDir, 'queries'), { recursive: true });
-      await writeFile(join(tempDir, 'queries', 'test.yaml'), 'existing', 'utf-8');
+      await mkdir(join(tempDir, '.search-hub', 'queries'), { recursive: true });
+      await writeFile(join(tempDir, '.search-hub', 'queries', 'test.yaml'), 'existing', 'utf-8');
       const result = await writeQueryTemplate({ title: 'test', cwd: tempDir, force: true });
       expect(result.success).toBe(true);
-      const content = await readFile(join(tempDir, 'queries', 'test.yaml'), 'utf-8');
+      const content = await readFile(join(tempDir, '.search-hub', 'queries', 'test.yaml'), 'utf-8');
       expect(content).toContain('name: "test"');
     });
 
@@ -161,8 +161,8 @@ describe('query init', () => {
 
     it('should not create files when --stdout is used', async () => {
       await writeQueryTemplate({ title: 'my search', stdout: true, cwd: tempDir });
-      // queries/ directory should NOT be created
-      await expect(stat(join(tempDir, 'queries'))).rejects.toThrow();
+      // .search-hub/queries/ directory should NOT be created
+      await expect(stat(join(tempDir, '.search-hub', 'queries'))).rejects.toThrow();
     });
 
     it('should include $schema comment in stdout output', async () => {

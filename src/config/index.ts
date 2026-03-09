@@ -11,6 +11,6 @@ export {
   getProjectDir,
   getLocalConfigPath,
   getLocalSessionsDir,
-  getLocalQueriesDir,
+  getQueriesDir,
   isInsideProject,
 } from './paths';
