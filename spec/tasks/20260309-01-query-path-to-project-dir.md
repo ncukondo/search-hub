@@ -33,76 +33,76 @@
 
 `paths.ts` の関数名を変更し、export を更新する。呼び出し元（`init.ts` の `initLocal`）も追従。
 
-- [ ] Write test: `src/config/paths.test.ts`
+- [x] Write test: `src/config/paths.test.ts`
   - `getQueriesDir()` が `.search-hub/queries/` を返すことを確認
   - `getQueriesDir(baseDir)` がカスタムベースで動作することを確認
-- [ ] Rename: `src/config/paths.ts` の `getLocalQueriesDir` → `getQueriesDir`
-- [ ] Update: `src/config/index.ts` の re-export
-- [ ] Update: `src/cli/commands/init.ts` の呼び出し箇所
-- [ ] Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `getQueriesDir` が正しいパスを返し、既存の `init` コマンドが動作する
+- [x] Rename: `src/config/paths.ts` の `getLocalQueriesDir` → `getQueriesDir`
+- [x] Update: `src/config/index.ts` の re-export
+- [x] Update: `src/cli/commands/init.ts` の呼び出し箇所
+- [x] Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `getQueriesDir` が正しいパスを返し、既存の `init` コマンドが動作する
 
 ### Step 2: `query init` を `.search-hub/queries/` に変更
 
 `QUERIES_DIR` 定数を廃止し、`getQueriesDir()` を使用する。
 
-- [ ] Write test: `src/cli/commands/query/init.test.ts`
+- [x] Write test: `src/cli/commands/query/init.test.ts`
   - デフォルト出力先が `.search-hub/queries/<sanitized>.yaml` になることを確認
   - `query.schema.json` が `.search-hub/queries/` 内に作成されることを確認
   - `-o` オプション指定時は従来通り指定パスに出力されることを確認
-- [ ] Implement: `src/cli/commands/query/init.ts`
+- [x] Implement: `src/cli/commands/query/init.ts`
   - `QUERIES_DIR` 定数を削除
   - `writeQueryTemplate` で `getQueriesDir(options.cwd)` を使用
-- [ ] Verify test fails (Red) → Implement → Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `query init "title"` が `.search-hub/queries/title.yaml` を作成する
+- [x] Verify test fails (Red) → Implement → Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `query init "title"` が `.search-hub/queries/title.yaml` を作成する
 
 ### Step 3: `resolveQueryFile` を `.search-hub/queries/` に変更
 
 ハードコードの `queries/` パスを `getQueriesDir()` 相対に変更。
 
-- [ ] Write test: `src/cli/commands/query/resolve.test.ts`
+- [x] Write test: `src/cli/commands/query/resolve.test.ts`
   - `.search-hub/queries/<arg>.yaml` が解決されることを確認
   - `.search-hub/queries/<arg>.yml` が解決されることを確認
   - エラーメッセージに `.search-hub/queries/` パスが含まれることを確認
-- [ ] Implement: `src/cli/commands/query/resolve.ts`
+- [x] Implement: `src/cli/commands/query/resolve.ts`
   - `queries/` → `getQueriesDir()` からの相対パスに変更
-- [ ] Verify test fails (Red) → Implement → Verify test passes (Green)
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: `resolveQueryFile("name")` が `.search-hub/queries/name.yaml` を探す
+- [x] Verify test fails (Red) → Implement → Verify test passes (Green)
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: `resolveQueryFile("name")` が `.search-hub/queries/name.yaml` を探す
 
 ### Step 4: サジェスト・ヘルプテキスト更新
 
-- [ ] Update: `src/cli/suggestions/rules.ts` — `queryInitRule` のデフォルトパス
-- [ ] Update: `src/cli/suggestions/rules.test.ts` — 期待値の更新
-- [ ] Update: `src/cli/index.ts` — `query init` のヘルプテキスト例
-- [ ] Run `npm run lint && npm run typecheck`
-- [ ] Acceptance: サジェスションとヘルプが `.search-hub/queries/` パスを表示する
+- [x] Update: `src/cli/suggestions/rules.ts` — `queryInitRule` のデフォルトパス
+- [x] Update: `src/cli/suggestions/rules.test.ts` — 期待値の更新
+- [x] Update: `src/cli/index.ts` — `query init` のヘルプテキスト例
+- [x] Run `npm run lint && npm run typecheck`
+- [x] Acceptance: サジェスションとヘルプが `.search-hub/queries/` パスを表示する
 
 ### Step 5: ドキュメント更新
 
-- [ ] Update: `spec/cli/commands.md`
+- [x] Update: `spec/cli/commands.md`
   - query init のデフォルト出力先の記述
   - query resolve の検索パスの記述
   - 使用例のパス
-- [ ] Update: `spec/architecture.md`
+- [x] Update: `spec/architecture.md`
   - プロジェクトディレクトリ構造の `queries/` → `.search-hub/queries/`
   - resolve の検索パス説明
-- [ ] Update: `spec/models/config.md`
+- [x] Update: `spec/models/config.md`
   - ディレクトリ構造の確認（既に `.search-hub/queries/` になっているはず）
-- [ ] Acceptance: ドキュメントがソースコードと整合している
+- [x] Acceptance: ドキュメントがソースコードと整合している
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Update E2E test: `src/cli/commands/query/init.e2e.test.ts`
+- [x] Update E2E test: `src/cli/commands/query/init.e2e.test.ts`
   - `query init` が `.search-hub/queries/` にファイルを作成するフロー
-- [ ] Update E2E test: `src/cli/commands/query/resolve.e2e.test.ts`
+- [x] Update E2E test: `src/cli/commands/query/resolve.e2e.test.ts`
   - `.search-hub/queries/` 内のファイルが解決されるフロー
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: `search-hub init` → `query init "test"` → `query validate test` のフルフロー
-- [ ] Acceptance: All tests pass, feature works in real usage
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: `search-hub init` → `query init "test"` → `query validate test` のフルフロー
+- [x] Acceptance: All tests pass, feature works in real usage
 
 ## Notes
 
