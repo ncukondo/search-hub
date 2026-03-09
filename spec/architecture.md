@@ -103,27 +103,28 @@ Commands that accept a query file (`search`, `query validate`, `query translate`
 
 1. Exact path exists → use it
 2. `<arg>.yaml` exists → use it
-3. `queries/<arg>.yaml` exists → use it
+3. `.search-hub/queries/<arg>.yaml` exists → use it
 4. Error with tried paths listed
 
 ### Project Directory Layout
 
 ```
 my-research-project/
-├── search-hub.config.toml      # Local config
-├── queries/                    # Query files (created by query init)
-│   ├── wba-pain.yaml
-│   ├── wba-intervention.yaml
-│   ├── wba-pain.search-log.yaml  # Auto-generated iteration log
-│   └── query.schema.json      # Shared JSON Schema for editor support
-└── sessions/                   # Search results (managed by search-hub)
-    ├── 20260306_wba-pain_a1b2c3/
-    │   ├── session.yaml
-    │   ├── query_common.yaml
-    │   ├── pubmed_query.txt
-    │   ├── pubmed_results.jsonl
-    │   └── pubmed_results.yaml
-    └── ...
+└── .search-hub/                  # Project directory (created by search-hub init)
+    ├── config.toml               # Local config
+    ├── queries/                  # Query files (created by query init)
+    │   ├── wba-pain.yaml
+    │   ├── wba-intervention.yaml
+    │   ├── wba-pain.search-log.yaml  # Auto-generated iteration log
+    │   └── query.schema.json    # Shared JSON Schema for editor support
+    └── sessions/                 # Search results (managed by search-hub)
+        ├── 20260306_wba-pain_a1b2c3/
+        │   ├── session.yaml
+        │   ├── query_common.yaml
+        │   ├── pubmed_query.txt
+        │   ├── pubmed_results.jsonl
+        │   └── pubmed_results.yaml
+        └── ...
 ```
 
 ### Search Flow
