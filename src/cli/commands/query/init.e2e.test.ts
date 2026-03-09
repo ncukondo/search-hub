@@ -58,26 +58,26 @@ describe('search-hub query init E2E', () => {
     });
   });
 
-  describe('query init "<title>" creates file in queries/', () => {
-    it('should create queries/test-search.yaml', async () => {
+  describe('query init "<title>" creates file in .search-hub/queries/', () => {
+    it('should create .search-hub/queries/test-search.yaml', async () => {
       const result = await writeQueryTemplate({ title: 'test search', cwd: ctx.tempDir });
       expect(result.success).toBe(true);
-      const outputPath = join(ctx.tempDir, 'queries', 'test-search.yaml');
+      const outputPath = join(ctx.tempDir, '.search-hub', 'queries', 'test-search.yaml');
       const content = await readFile(outputPath, 'utf-8');
       expect(content).toContain('name: "test search"');
     });
 
     it('should set YAML name field to title', async () => {
       await writeQueryTemplate({ title: 'test search', cwd: ctx.tempDir });
-      const outputPath = join(ctx.tempDir, 'queries', 'test-search.yaml');
+      const outputPath = join(ctx.tempDir, '.search-hub', 'queries', 'test-search.yaml');
       const content = await readFile(outputPath, 'utf-8');
       const ast = parseQueryString(content);
       expect(ast.name).toBe('test search');
     });
 
-    it('should create query.schema.json in queries/', async () => {
+    it('should create query.schema.json in .search-hub/queries/', async () => {
       await writeQueryTemplate({ title: 'test search', cwd: ctx.tempDir });
-      const schemaPath = join(ctx.tempDir, 'queries', 'query.schema.json');
+      const schemaPath = join(ctx.tempDir, '.search-hub', 'queries', 'query.schema.json');
       await expect(access(schemaPath)).resolves.toBeUndefined();
       const schemaContent = await readFile(schemaPath, 'utf-8');
       const schema = JSON.parse(schemaContent);
@@ -86,7 +86,7 @@ describe('search-hub query init E2E', () => {
 
     it('should produce a file that passes validateQueryCommand', async () => {
       await writeQueryTemplate({ title: 'test search', cwd: ctx.tempDir });
-      const outputPath = join(ctx.tempDir, 'queries', 'test-search.yaml');
+      const outputPath = join(ctx.tempDir, '.search-hub', 'queries', 'test-search.yaml');
       const result = await validateQueryCommand(outputPath);
       expect(result.success).toBe(true);
       expect(result.queryName).toBe('test search');
@@ -103,7 +103,7 @@ describe('search-hub query init E2E', () => {
 
     it('should not create any files', async () => {
       await writeQueryTemplate({ title: 'WBA pain', stdout: true, cwd: ctx.tempDir });
-      await expect(stat(join(ctx.tempDir, 'queries'))).rejects.toThrow();
+      await expect(stat(join(ctx.tempDir, '.search-hub', 'queries'))).rejects.toThrow();
     });
   });
 
@@ -150,7 +150,7 @@ describe('search-hub query init E2E', () => {
 
     it('should generate template that passes validateQueryCommand with $schema comment', async () => {
       await writeQueryTemplate({ title: 'test', cwd: ctx.tempDir });
-      const outputPath = join(ctx.tempDir, 'queries', 'test.yaml');
+      const outputPath = join(ctx.tempDir, '.search-hub', 'queries', 'test.yaml');
       const result = await validateQueryCommand(outputPath);
       expect(result.success).toBe(true);
       expect(result.queryName).toBe('test');
