@@ -790,7 +790,7 @@ Examples:
     .option('--force', 'overwrite existing file', false)
     .addHelpText('after', `
 Examples:
-  $ search-hub query init "WBA pain mechanisms"              # → queries/wba-pain-mechanisms.yaml
+  $ search-hub query init "WBA pain mechanisms"              # → .search-hub/queries/wba-pain-mechanisms.yaml
   $ search-hub query init "WBA pain" -o ./custom-path.yaml   # Custom output path
   $ search-hub query init "WBA pain" --stdout                # Print to stdout`)
     .action(async (title: string, options: { output?: string; stdout?: boolean; force?: boolean }) => {

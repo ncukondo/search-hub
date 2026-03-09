@@ -5,7 +5,7 @@ import { computeBatchContinuation, generateReviewNextSteps } from '../commands/r
 
 const queryInitRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'query init') return null;
-  const file = ctx.outputFile ?? 'queries/query.yaml';
+  const file = ctx.outputFile ?? '.search-hub/queries/query.yaml';
   return {
     next: [
       { command: `$EDITOR ${file}`, description: 'Edit your query' },
