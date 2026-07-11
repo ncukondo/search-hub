@@ -269,14 +269,24 @@ export async function getReviewSummary(sessionId: string, sessionsDir: string): 
 
 /**
  * Parse author name string into Author object.
- * Simple heuristic: last word is family name, rest is given name.
+ *
+ * reviews.yaml stores authors as "Family GivenInitial" (see formatAuthors in
+ * review/init.ts), so a trailing run of 1-3 uppercase letters is treated as
+ * the given-name initials and everything before it as the family name.
+ * Otherwise falls back to "Given Family" (e.g. manually edited entries).
  */
 function parseAuthorName(name: string): Author {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) {
     return { family: parts[0] ?? '' };
   }
-  // Last part is family name (most common pattern in scientific citations)
+
+  const last = parts[parts.length - 1]!;
+  if (/^[A-Z]{1,3}$/.test(last)) {
+    parts.pop();
+    return { family: parts.join(' '), given: last };
+  }
+
   const family = parts.pop() ?? '';
   const given = parts.join(' ');
   return { family, given };
