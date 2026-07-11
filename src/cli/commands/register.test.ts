@@ -1000,6 +1000,124 @@ articles:
         expect(result[0]!.authors).toEqual([{ family: 'Yamada', given: 'Taro' }]);
       });
 
+      it('matches via arxivId when the article has no pmid/doi', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const resultArticles = [
+          {
+            title: 'Preprint Article',
+            authors: [{ family: 'Nakamura', given: 'Hanako' }],
+            arxivId: '2401.12345',
+            source: 'arxiv',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'arxiv_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - arxivId: "2401.12345"
+    title: "Preprint Article"
+    authors: "Nakamura H"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: arxiv
+        arxivId: "2401.12345"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Nakamura', given: 'Hanako' }]);
+      });
+
+      it('matches via ericId when the article has no pmid/doi', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const resultArticles = [
+          {
+            title: 'Education Article',
+            authors: [{ family: 'García', given: 'María' }],
+            ericId: 'EJ1234567',
+            source: 'eric',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'eric_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - ericId: "EJ1234567"
+    title: "Education Article"
+    authors: "García M"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: eric
+        ericId: "EJ1234567"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'García', given: 'María' }]);
+      });
+
+      it('matches via scopusId recorded only in mergedFrom', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        // The scopus record has only a scopusId; the merged entry surfaces no
+        // matching entry-level identifier for it
+        const resultArticles = [
+          {
+            title: 'Scopus Article',
+            authors: [{ family: 'Okafor', given: 'Chidi' }],
+            scopusId: '2-s2.0-99999',
+            source: 'scopus',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'scopus_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - title: "Scopus Article"
+    authors: "Okafor C"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: scopus
+        scopusId: "2-s2.0-99999"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Okafor', given: 'Chidi' }]);
+      });
+
       it('falls back to parsing the authors string when the article is not in the results', async () => {
         const sessionId = 'test-session';
         const sessionDir = join(sessionsDir, sessionId);

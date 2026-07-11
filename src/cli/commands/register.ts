@@ -296,19 +296,29 @@ function parseAuthorName(name: string): Author {
 }
 
 /**
- * Build pmid/doi lookup keys for matching a review entry (or one of its
+ * Build identifier lookup keys for matching a review entry (or one of its
  * mergedFrom sources) against articles in the session's result files.
+ * Covers the same identifiers as getArticleKeys in session-utils.ts.
  */
-function authorLookupKeys(ref: { pmid?: string | undefined; doi?: string | undefined }): string[] {
+function authorLookupKeys(ref: {
+  pmid?: string | undefined;
+  doi?: string | undefined;
+  arxivId?: string | undefined;
+  scopusId?: string | undefined;
+  ericId?: string | undefined;
+}): string[] {
   const keys: string[] = [];
   if (ref.pmid) keys.push(`pmid:${ref.pmid}`);
   if (ref.doi) keys.push(`doi:${ref.doi.toLowerCase()}`);
+  if (ref.arxivId) keys.push(`arxiv:${ref.arxivId}`);
+  if (ref.scopusId) keys.push(`scopus:${ref.scopusId}`);
+  if (ref.ericId) keys.push(`eric:${ref.ericId}`);
   return keys;
 }
 
 /**
  * Load structured author data from the session's search result files
- * (results.jsonl / YAML mirror), indexed by pmid/doi.
+ * (results.jsonl / YAML mirror), indexed by article identifiers.
  *
  * Only articles with non-empty author lists are indexed; the first result
  * seen for a given identifier wins.
@@ -338,9 +348,10 @@ async function buildAuthorLookup(
  * Resolve authors for a review entry.
  *
  * Prefers the structured author data from the session's search results,
- * matched by pmid/doi (both the entry's own identifiers and those recorded
- * in mergedFrom). Falls back to parsing the display string in reviews.yaml
- * for articles not found in the results (e.g. manually added entries).
+ * matched by identifier (both the entry's own identifiers and those
+ * recorded in mergedFrom). Falls back to parsing the display string in
+ * reviews.yaml for articles not found in the results (e.g. manually added
+ * entries).
  */
 function resolveAuthors(entry: ArticleEntry, lookup: Map<string, Author[]>): Author[] {
   const keys = [
@@ -361,8 +372,8 @@ function resolveAuthors(entry: ArticleEntry, lookup: Map<string, Author[]>): Aut
  * Converts from ArticleEntry format to Article format.
  *
  * Authors are taken from the session's structured search results when the
- * article can be matched by pmid/doi; the authors string in reviews.yaml is
- * only used as a fallback.
+ * article can be matched by identifier; the authors string in reviews.yaml
+ * is only used as a fallback.
  *
  * @throws Error if mergedFrom is missing or empty (indicates legacy review file)
  */
