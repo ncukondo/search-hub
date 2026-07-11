@@ -213,7 +213,7 @@ describe('register command', () => {
 
       expect(output).toContain('Would register 2 reference');
       expect(output).toContain('1 article');
-      expect(output).toContain('no DOI or PMID');
+      expect(output).toContain('no identifier');
     });
 
     it('should list articles with their identifiers', () => {
@@ -250,7 +250,7 @@ describe('register command', () => {
       expect(output).toContain('Would register 0');
     });
 
-    it('should show title, source, and alternative IDs for no-ID articles', () => {
+    it('should list arXiv/ERIC-only articles under "Would register" with prefixed ids', () => {
       const articles = [
         { title: 'Article with arXiv', authors: [], source: 'arxiv' as const, retrievedAt: '', arxivId: '2401.12345' },
         { title: 'Article with ERIC', authors: [], source: 'eric' as const, retrievedAt: '', ericId: 'ED123456' },
@@ -258,13 +258,38 @@ describe('register command', () => {
 
       const output = formatDryRunOutput(articles);
 
-      expect(output).toContain('no DOI or PMID');
-      expect(output).toContain('"Article with arXiv"');
-      expect(output).toContain('source: arxiv');
-      expect(output).toContain('has: arxiv:2401.12345');
-      expect(output).toContain('"Article with ERIC"');
-      expect(output).toContain('source: eric');
-      expect(output).toContain('has: eric:ED123456');
+      expect(output).toContain('Would register 2 reference');
+      expect(output).toContain('arxiv:2401.12345: Article with arXiv');
+      expect(output).toContain('eric:ED123456: Article with ERIC');
+      expect(output).not.toContain('skipped');
+    });
+
+    it('should prefer PMID and DOI over alternative identifiers', () => {
+      const articles = [
+        { title: 'PMID beats arXiv', authors: [], source: 'pubmed' as const, retrievedAt: '', pmid: '12345678', arxivId: '2401.12345' },
+        { title: 'DOI beats ERIC', authors: [], source: 'eric' as const, retrievedAt: '', doi: '10.1234/test', ericId: 'ED123456' },
+      ];
+
+      const output = formatDryRunOutput(articles);
+
+      expect(output).toContain('pmid:12345678');
+      expect(output).not.toContain('arxiv:2401.12345');
+      expect(output).toContain('10.1234/test');
+      expect(output).not.toContain('eric:ED123456');
+    });
+
+    it('should skip only truly identifier-less articles with "no identifier" wording', () => {
+      const articles = [
+        { title: 'Article with arXiv', authors: [], source: 'arxiv' as const, retrievedAt: '', arxivId: '2401.12345' },
+        { title: 'Plain article', authors: [], source: 'pubmed' as const, retrievedAt: '' },
+      ];
+
+      const output = formatDryRunOutput(articles);
+
+      expect(output).toContain('1 article will be skipped (no identifier):');
+      expect(output).not.toContain('no DOI or PMID');
+      expect(output).toContain('"Plain article"');
+      expect(output).not.toContain('"Article with arXiv" (source');
     });
 
     it('should truncate no-ID article titles at 50 characters', () => {
@@ -299,7 +324,7 @@ describe('register command', () => {
       expect(output).toContain('... and 5 more');
     });
 
-    it('should show only title and source for no-ID articles without alternative IDs', () => {
+    it('should show only title and source for no-ID articles', () => {
       const articles = [
         { title: 'Plain Article', authors: [], source: 'pubmed' as const, retrievedAt: '' },
       ];
@@ -308,18 +333,17 @@ describe('register command', () => {
 
       expect(output).toContain('"Plain Article"');
       expect(output).toContain('source: pubmed');
-      expect(output).not.toContain('has:');
     });
 
-    it('should show scopus alternative ID for no-ID articles', () => {
+    it('should list Scopus-only articles under "Would register" with scopus: prefix', () => {
       const articles = [
         { title: 'Scopus Article', authors: [], source: 'scopus' as const, retrievedAt: '', scopusId: '2-s2.0-12345' },
       ];
 
       const output = formatDryRunOutput(articles);
 
-      expect(output).toContain('"Scopus Article"');
-      expect(output).toContain('has: scopus:2-s2.0-12345');
+      expect(output).toContain('Would register 1 reference');
+      expect(output).toContain('scopus:2-s2.0-12345: Scopus Article');
     });
   });
 
