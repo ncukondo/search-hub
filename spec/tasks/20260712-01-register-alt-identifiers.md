@@ -60,15 +60,15 @@ Each step follows the TDD cycle: Red → Green → Refactor.
   - [x] Verify Red → Green, run `npm run lint && npm run typecheck`
   - [x] Acceptance: CSL-JSON items carry alternative identifiers in `custom`
 
-- [ ] Step 2: Relax registration gate in integration layer
-  - [ ] Write tests in `src/integration/register.test.ts`:
+- [x] Step 2: Relax registration gate in integration layer
+  - [x] Write tests in `src/integration/register.test.ts`:
     - article with only `arxivId` (or `ericId`, `scopusId`) is included in the
       bulk import, not counted as `noId`
     - article with no identifier at all is still counted as `noId` and skipped
-  - [ ] Update `hasIdentifier()` in `src/integration/register.ts` to accept
+  - [x] Update `hasIdentifier()` in `src/integration/register.ts` to accept
         `arxivId`/`scopusId`/`ericId`
-  - [ ] Verify Red → Green, lint/typecheck
-  - [ ] Acceptance: arXiv/ERIC/Scopus-only articles reach `refAddBulk`
+  - [x] Verify Red → Green, lint/typecheck
+  - [x] Acceptance: arXiv/ERIC/Scopus-only articles reach `refAddBulk`
 
 - [ ] Step 3: Update CLI dry-run display and skip messages
   - [ ] Write tests for `src/cli/commands/register.ts`:

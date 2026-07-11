@@ -64,11 +64,17 @@ export interface RegisterOptions {
 
 /**
  * Check if an article has an identifier suitable for registration.
- * Articles without DOI or PMID are included in CSL-JSON via metadata,
- * but we track them separately for the noId count.
+ * Any of DOI / PMID / arXiv ID / Scopus ID / ERIC ID qualifies;
+ * only articles with none of these are counted as noId and skipped.
  */
 function hasIdentifier(article: Article): boolean {
-  return !!(article.pmid || article.doi);
+  return !!(
+    article.pmid ||
+    article.doi ||
+    article.arxivId ||
+    article.scopusId ||
+    article.ericId
+  );
 }
 
 /**
