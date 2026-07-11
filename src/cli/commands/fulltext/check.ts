@@ -6,8 +6,9 @@
 import { readFile, readdir, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { discoverOA, loadMeta, saveMeta, type DiscoveryConfig, type DiscoveryArticle, type OAStatus } from '@ncukondo/academic-fulltext';
+import { discoverOA, loadMeta, saveMeta, type DiscoveryConfig, type DiscoveryArticle, type OAStatus, type OALocation } from '@ncukondo/academic-fulltext';
 import type { ReviewFile, ArticleEntry } from '../review/types';
+import { verifyPmcid } from './verify-pmcid';
 
 /** Default concurrency for parallel article processing */
 const DEFAULT_CONCURRENCY = 3;
@@ -21,6 +22,10 @@ export interface FulltextCheckOptions {
 export interface FulltextCheckArticleResult {
   doi?: string;
   pmid?: string;
+  /** PMCID discovered during OA check and verified against the article */
+  pmcid?: string;
+  /** PMCID discovered during OA check but rejected because its metadata did not match */
+  rejectedPmcid?: string;
   title: string;
   oaStatus: OAStatus;
   locationCount: number;
@@ -83,6 +88,54 @@ async function findArticleDir(
   return null;
 }
 
+/** Outcome of validating a discovered PMCID against the article. */
+interface ValidatedDiscovery {
+  oaStatus: OAStatus;
+  locations: OALocation[];
+  verifiedPmcid?: string;
+  rejectedPmcid?: string;
+}
+
+/**
+ * Validate a PMCID discovered during OA discovery against the article's
+ * own metadata. On mismatch, drop all PMC locations so an unrelated
+ * paper's fulltext is never fetched (issue #146).
+ */
+async function validateDiscoveredPmcid(
+  article: ArticleEntry,
+  config: DiscoveryConfig,
+  discoveredPmcid: string | undefined,
+  oaStatus: OAStatus,
+  locations: OALocation[]
+): Promise<ValidatedDiscovery> {
+  const hasPmcLocations = locations.some((loc) => loc.source === 'pmc');
+  if (!discoveredPmcid || !hasPmcLocations) {
+    return { oaStatus, locations };
+  }
+
+  const verifyArticle: { doi?: string; pmid?: string; title?: string } = {
+    title: article.title,
+  };
+  if (article.doi) verifyArticle.doi = article.doi;
+  if (article.pmid) verifyArticle.pmid = article.pmid;
+  const verifyOptions: { ncbiEmail?: string; ncbiTool?: string } = {};
+  if (config.ncbiEmail) verifyOptions.ncbiEmail = config.ncbiEmail;
+  if (config.ncbiTool) verifyOptions.ncbiTool = config.ncbiTool;
+
+  const verification = await verifyPmcid(discoveredPmcid, verifyArticle, verifyOptions);
+
+  if (verification === 'match') {
+    return { oaStatus, locations, verifiedPmcid: discoveredPmcid };
+  }
+  if (verification === 'mismatch') {
+    const filtered = locations.filter((loc) => loc.source !== 'pmc');
+    const status = filtered.length === 0 && oaStatus === 'open' ? 'unknown' : oaStatus;
+    return { oaStatus: status, locations: filtered, rejectedPmcid: discoveredPmcid };
+  }
+  // Unverified: keep locations but do not vouch for the PMCID
+  return { oaStatus, locations };
+}
+
 /**
  * Process a single article: run OA discovery and optionally update meta.json.
  */
@@ -97,13 +150,23 @@ async function processArticle(
   if (article.arxivId) discoveryArticle.arxivId = article.arxivId;
   const discoveryResult = await discoverOA(discoveryArticle, config);
 
+  const validated = await validateDiscoveredPmcid(
+    article,
+    config,
+    discoveryResult.discoveredIds.pmcid,
+    discoveryResult.oaStatus,
+    discoveryResult.locations
+  );
+
   const articleResult: FulltextCheckArticleResult = {
     title: article.title,
-    oaStatus: discoveryResult.oaStatus,
-    locationCount: discoveryResult.locations.length,
+    oaStatus: validated.oaStatus,
+    locationCount: validated.locations.length,
   };
   if (article.doi) articleResult.doi = article.doi;
   if (article.pmid) articleResult.pmid = article.pmid;
+  if (validated.verifiedPmcid) articleResult.pmcid = validated.verifiedPmcid;
+  if (validated.rejectedPmcid) articleResult.rejectedPmcid = validated.rejectedPmcid;
 
   // Try to update meta.json if a fulltext directory exists for this article
   const dirName = await findArticleDir(sessionDir, article);
@@ -111,8 +174,11 @@ async function processArticle(
     try {
       const metaPath = join(sessionDir, 'fulltext', dirName, 'meta.json');
       const meta = await loadMeta(metaPath);
-      meta.oaStatus = discoveryResult.oaStatus;
-      meta.oaLocations = discoveryResult.locations;
+      meta.oaStatus = validated.oaStatus;
+      meta.oaLocations = validated.locations;
+      if (validated.verifiedPmcid && !meta.pmcid) {
+        meta.pmcid = validated.verifiedPmcid;
+      }
       meta.checkedAt = new Date().toISOString();
       await saveMeta(metaPath, meta);
     } catch {
