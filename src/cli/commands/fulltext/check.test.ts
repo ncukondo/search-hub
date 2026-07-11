@@ -102,6 +102,8 @@ articles:
             { source: 'unpaywall' as const, url: 'https://example.com/paper.pdf', urlType: 'pdf' as const, version: 'published' as const },
           ],
           errors: [],
+          skipped: [],
+          checkedSources: [],
           discoveredIds: {},
         };
       }
@@ -109,6 +111,8 @@ articles:
         oaStatus: 'closed' as const,
         locations: [],
         errors: [],
+        skipped: [],
+        checkedSources: [],
         discoveredIds: {},
       };
     });
@@ -217,7 +221,7 @@ articles:
       // Simulate async work
       await new Promise((resolve) => setTimeout(resolve, 10));
       currentConcurrent--;
-      return { oaStatus: 'closed' as const, locations: [], errors: [], discoveredIds: {} };
+      return { oaStatus: 'closed' as const, locations: [], errors: [], skipped: [], checkedSources: [], discoveredIds: {} };
     });
 
     const result = await executeFulltextCheck({
