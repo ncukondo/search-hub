@@ -237,6 +237,15 @@ Examples:
           console.log(`  Closed Access:  ${result.summary.closed}`);
           console.log(`  Unknown:        ${result.summary.unknown}`);
           console.log(`  Total:          ${result.summary.total}`);
+          const rejected = result.articles.filter((a) => a.rejectedPmcid);
+          if (rejected.length > 0) {
+            console.log(`\nWarnings:`);
+            for (const article of rejected) {
+              console.log(
+                `  Discovered ${article.rejectedPmcid} does not match "${article.title}" — PMC locations dropped.`
+              );
+            }
+          }
           if (result.summary.open > 0) {
             console.log(`\nRun \`fulltext fetch\` to download available OA articles.`);
           }

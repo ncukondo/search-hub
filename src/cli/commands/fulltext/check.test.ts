@@ -16,6 +16,11 @@ const mockDiscoverOA = vi.mocked(academicFulltext.discoverOA);
 const mockLoadMeta = vi.mocked(academicFulltext.loadMeta);
 const mockSaveMeta = vi.mocked(academicFulltext.saveMeta);
 
+// Mock PMCID verification (network-backed)
+vi.mock('./verify-pmcid', () => ({ verifyPmcid: vi.fn() }));
+import { verifyPmcid } from './verify-pmcid';
+const mockVerifyPmcid = vi.mocked(verifyPmcid);
+
 // Mock fs operations
 vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(),
@@ -82,8 +87,9 @@ articles:
       throw new Error(`File not found: ${p}`);
     });
 
-    // Default: loadMeta returns sample meta
-    mockLoadMeta.mockResolvedValue(sampleMeta);
+    // Default: loadMeta returns a fresh copy of sample meta
+    // (check.ts mutates the loaded object before saving)
+    mockLoadMeta.mockImplementation(async () => ({ ...sampleMeta, files: {} }));
 
     // Default: fulltext directory with one entry
     mockReaddir.mockResolvedValue(
@@ -235,6 +241,119 @@ articles:
     expect(maxConcurrent).toBeLessThanOrEqual(2);
     // Verify concurrency was actually used (> 1 concurrent)
     expect(maxConcurrent).toBeGreaterThan(1);
+  });
+
+  describe('discovered PMCID verification', () => {
+    const pmcDiscoveryResult = {
+      oaStatus: 'open' as const,
+      locations: [
+        { source: 'pmc' as const, url: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12928693/pdf/', urlType: 'pdf' as const, version: 'published' as const },
+        { source: 'pmc' as const, url: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=12928693', urlType: 'xml' as const, version: 'published' as const },
+      ],
+      errors: [],
+      skipped: [],
+      checkedSources: ['pmc'],
+      discoveredIds: { pmcid: 'PMC12928693' },
+    };
+
+    it('drops PMC locations when the discovered PMCID does not match the article', async () => {
+      mockDiscoverOA.mockResolvedValue(pmcDiscoveryResult);
+      mockVerifyPmcid.mockResolvedValue('mismatch');
+
+      const result = await executeFulltextCheck({
+        sessionDir,
+        config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+      });
+
+      const article = result.articles.find((a) => a.pmid === '11111111');
+      expect(article?.rejectedPmcid).toBe('PMC12928693');
+      expect(article?.locationCount).toBe(0);
+      expect(article?.oaStatus).toBe('unknown');
+
+      // meta.json must not receive the unrelated PMC locations
+      const savedMeta = mockSaveMeta.mock.calls.find(
+        ([, meta]) => (meta as FulltextMeta).pmid === '11111111'
+      )?.[1] as FulltextMeta | undefined;
+      if (savedMeta) {
+        expect(savedMeta.oaLocations).toEqual([]);
+        expect(savedMeta.pmcid).toBeUndefined();
+      }
+    });
+
+    it('keeps non-PMC locations when the discovered PMCID mismatches', async () => {
+      mockDiscoverOA.mockResolvedValue({
+        ...pmcDiscoveryResult,
+        locations: [
+          ...pmcDiscoveryResult.locations,
+          { source: 'unpaywall' as const, url: 'https://example.com/paper.pdf', urlType: 'pdf' as const, version: 'published' as const },
+        ],
+      });
+      mockVerifyPmcid.mockResolvedValue('mismatch');
+
+      const result = await executeFulltextCheck({
+        sessionDir,
+        config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+      });
+
+      const article = result.articles.find((a) => a.pmid === '11111111');
+      expect(article?.locationCount).toBe(1);
+      expect(article?.oaStatus).toBe('open');
+    });
+
+    it('keeps PMC locations and records the PMCID when verification matches', async () => {
+      mockDiscoverOA.mockResolvedValue(pmcDiscoveryResult);
+      mockVerifyPmcid.mockResolvedValue('match');
+
+      const result = await executeFulltextCheck({
+        sessionDir,
+        config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+      });
+
+      const article = result.articles.find((a) => a.pmid === '11111111');
+      expect(article?.pmcid).toBe('PMC12928693');
+      expect(article?.rejectedPmcid).toBeUndefined();
+      expect(article?.locationCount).toBe(2);
+
+      // Verified PMCID is persisted to meta.json
+      const savedMeta = mockSaveMeta.mock.calls.find(
+        ([, meta]) => (meta as FulltextMeta).pmid === '11111111'
+      )?.[1] as FulltextMeta | undefined;
+      expect(savedMeta?.pmcid).toBe('PMC12928693');
+    });
+
+    it('keeps PMC locations but does not persist the PMCID when unverified', async () => {
+      mockDiscoverOA.mockResolvedValue(pmcDiscoveryResult);
+      mockVerifyPmcid.mockResolvedValue('unverified');
+
+      const result = await executeFulltextCheck({
+        sessionDir,
+        config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+      });
+
+      const article = result.articles.find((a) => a.pmid === '11111111');
+      expect(article?.pmcid).toBeUndefined();
+      expect(article?.rejectedPmcid).toBeUndefined();
+      expect(article?.locationCount).toBe(2);
+
+      const savedMeta = mockSaveMeta.mock.calls.find(
+        ([, meta]) => (meta as FulltextMeta).pmid === '11111111'
+      )?.[1] as FulltextMeta | undefined;
+      expect(savedMeta?.pmcid).toBeUndefined();
+    });
+
+    it('does not verify when no PMCID was discovered', async () => {
+      mockDiscoverOA.mockResolvedValue({
+        ...pmcDiscoveryResult,
+        discoveredIds: {},
+      });
+
+      await executeFulltextCheck({
+        sessionDir,
+        config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
+      });
+
+      expect(mockVerifyPmcid).not.toHaveBeenCalled();
+    });
   });
 
   it('handles missing reviews.yaml', async () => {
