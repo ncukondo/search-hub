@@ -45,8 +45,8 @@ accurately.
 
 Each step follows the TDD cycle: Red → Green → Refactor.
 
-- [ ] Step 1: Emit alternative identifiers in CSL-JSON conversion
-  - [ ] Write tests in `src/integration/csl-json.test.ts`:
+- [x] Step 1: Emit alternative identifiers in CSL-JSON conversion
+  - [x] Write tests in `src/integration/csl-json.test.ts`:
     - `articleToCslJson` emits `custom: { arxiv_id }` when `article.arxivId` set
       (key name MUST be `arxiv_id` — reference-manager's duplicate detector and
       fulltext discovery read `custom.arxiv_id`)
@@ -55,10 +55,10 @@ Each step follows the TDD cycle: Red → Green → Refactor.
     - arXiv-only article gets `URL: https://arxiv.org/abs/{arxivId}` when
       article has no existing URL-worthy identifier (DOI absent)
     - ERIC-only article gets `URL: https://eric.ed.gov/?id={ericId}`
-  - [ ] Extend `CslJsonItem` type with `custom?` and `URL?`, implement in
+  - [x] Extend `CslJsonItem` type with `custom?` and `URL?`, implement in
         `articleToCslJson`
-  - [ ] Verify Red → Green, run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: CSL-JSON items carry alternative identifiers in `custom`
+  - [x] Verify Red → Green, run `npm run lint && npm run typecheck`
+  - [x] Acceptance: CSL-JSON items carry alternative identifiers in `custom`
 
 - [ ] Step 2: Relax registration gate in integration layer
   - [ ] Write tests in `src/integration/register.test.ts`:
