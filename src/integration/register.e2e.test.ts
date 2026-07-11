@@ -131,13 +131,14 @@ describe('register command e2e', () => {
     expect(result.stdout).toContain('pmid:87654321');
     expect(result.stdout).toContain('10.1234/test');
     expect(result.stdout).toContain('1 article');
-    expect(result.stdout).toContain('no DOI or PMID');
+    expect(result.stdout).toContain('no identifier');
   });
 
-  it('should show details for no-ID articles in dry-run', async () => {
+  it('should register alternative-ID articles and skip only no-ID articles in dry-run', async () => {
     await createTestSession(tempDir, sessionId, [
       { pmid: '12345678', title: 'Article with PMID' },
       { title: 'Article from arXiv', source: 'arxiv', arxivId: '2401.12345' },
+      { title: 'Article from ERIC', source: 'eric', ericId: 'ED123456' },
       { title: 'Plain article without any IDs' },
     ]);
 
@@ -147,12 +148,12 @@ describe('register command e2e', () => {
       { cwd: path.join(__dirname, '../..') }
     );
 
-    // Should show registrable count
-    expect(result.stdout).toContain('Would register 1 reference');
-    // Should show details for no-ID articles
-    expect(result.stdout).toContain('2 articles will be skipped (no DOI or PMID)');
-    expect(result.stdout).toContain('"Article from arXiv"');
-    expect(result.stdout).toContain('has: arxiv:2401.12345');
+    // arXiv/ERIC-only articles are now registrable
+    expect(result.stdout).toContain('Would register 3 reference');
+    expect(result.stdout).toContain('arxiv:2401.12345');
+    expect(result.stdout).toContain('eric:ED123456');
+    // Only the truly identifier-less article is skipped
+    expect(result.stdout).toContain('1 article will be skipped (no identifier)');
     expect(result.stdout).toContain('"Plain article without any IDs"');
     expect(result.stdout).toContain('source: pubmed');
   });
@@ -272,6 +273,105 @@ describe('register command e2e', () => {
     expect(result.stdout).toContain('pmid:11111111');
     expect(result.stdout).toContain('pmid:22222222');
     expect(result.stdout).not.toContain('ERIC Article');
+  });
+});
+
+// Tests using a stub ref command that captures the bulk import file.
+// This exercises the real CLI register flow end-to-end without needing
+// the actual reference-manager, and lets us inspect the CSL-JSON that
+// would be imported.
+describe('register with stubbed ref command', () => {
+  let tempDir: string;
+  let sessionId: string;
+
+  beforeEach(async () => {
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'search-hub-stub-e2e-'));
+    sessionId = '20240115_stub-test_xyz789';
+  });
+
+  afterEach(async () => {
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch {
+      // Ignore cleanup errors
+    }
+  });
+
+  /**
+   * Create an executable `ref` stub that copies the bulk import file to
+   * REF_STUB_CAPTURE and emits a valid RefAddOutput JSON for its content.
+   */
+  async function createRefStub(): Promise<string> {
+    const stubDir = path.join(tempDir, 'stub-bin');
+    await fs.mkdir(stubDir, { recursive: true });
+    const stubPath = path.join(stubDir, 'ref');
+    const script = `#!/usr/bin/env node
+const fs = require('fs');
+const args = process.argv.slice(2);
+if (args.includes('--version')) {
+  console.log('0.0.0-stub');
+  process.exit(0);
+}
+const i = args.indexOf('-i');
+const file = args[i + 2];
+fs.copyFileSync(file, process.env.REF_STUB_CAPTURE);
+const items = JSON.parse(fs.readFileSync(file, 'utf8'));
+const added = items.map((it) => ({ source: it.id, id: it.id, title: it.title }));
+console.log(JSON.stringify({
+  summary: { total: items.length, added: added.length, skipped: 0, failed: 0 },
+  added,
+  skipped: [],
+  failed: [],
+}));
+`;
+    await fs.writeFile(stubPath, script, { mode: 0o755 });
+    return stubDir;
+  }
+
+  it('should bulk-import arXiv-only articles with custom.arxiv_id and count identifier-less articles as noId', async () => {
+    await createTestSession(tempDir, sessionId, [
+      { pmid: '12345678', title: 'Article with PMID' },
+      { title: 'arXiv Only Article', source: 'arxiv', arxivId: '2401.12345' },
+      { title: 'Identifier-less Article' },
+    ]);
+
+    const captureFile = path.join(tempDir, 'captured_bulk_import.json');
+    const stubDir = await createRefStub();
+
+    const cliCmd = getCliCommand();
+    const result = await execAsync(
+      `${cliCmd} register ${sessionId} --session-dir ${tempDir} --no-attach-fulltext`,
+      {
+        cwd: path.join(__dirname, '../..'),
+        env: {
+          ...process.env,
+          PATH: `${stubDir}:${process.env['PATH']}`,
+          REF_STUB_CAPTURE: captureFile,
+        },
+      }
+    );
+
+    expect(result.stdout).toContain('Registration complete');
+
+    // The arXiv-only article appears in the bulk import file with custom.arxiv_id
+    const captured = JSON.parse(await fs.readFile(captureFile, 'utf-8')) as Array<{
+      title: string;
+      URL?: string;
+      custom?: { arxiv_id?: string };
+    }>;
+    expect(captured).toHaveLength(2);
+    const arxivItem = captured.find((item) => item.custom?.arxiv_id === '2401.12345');
+    expect(arxivItem).toBeDefined();
+    expect(arxivItem!.title).toBe('arXiv Only Article');
+    expect(arxivItem!.URL).toBe('https://arxiv.org/abs/2401.12345');
+
+    // The identifier-less article is skipped with noId count
+    const registrationPath = path.join(tempDir, sessionId, 'registration.json');
+    const registration = JSON.parse(await fs.readFile(registrationPath, 'utf-8'));
+    expect(registration.summary.total).toBe(3);
+    expect(registration.summary.added).toBe(2);
+    expect(registration.summary.noId).toBe(1);
+    expect(result.stdout).toContain('1 skipped (no identifier)');
   });
 });
 

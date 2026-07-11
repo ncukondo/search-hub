@@ -84,14 +84,14 @@ Each step follows the TDD cycle: Red → Green → Refactor.
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Extend `src/integration/register.e2e.test.ts`:
+- [x] Extend `src/integration/register.e2e.test.ts`:
   - register flow with an arXiv-only article: appears in bulk import file,
     `custom.arxiv_id` present in written CSL-JSON
   - identifier-less article: skipped with `noId` count
-- [ ] Run full test suite: `npm test`
-- [ ] Manual verification: `search-hub register <session> --dry-run` output
+- [x] Run full test suite: `npm test`
+- [x] Manual verification: `search-hub register <session> --dry-run` output
       with a session containing arXiv/ERIC-only articles (if feasible)
-- [ ] Acceptance: All tests pass
+- [x] Acceptance: All tests pass
 
 ## Notes
 
