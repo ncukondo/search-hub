@@ -9,8 +9,9 @@ import { constants } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { parse as parseYaml } from 'yaml';
 import type { ProviderName, Article, Author } from '../../providers/base/types.js';
+import { loadResults } from '../../session/results-io.js';
 import { parseProviderNames } from '../utils/validation.js';
-import { classifyStatus, type ReviewFile } from './review/types.js';
+import { classifyStatus, type ArticleEntry, type ReviewFile } from './review/types.js';
 
 export interface RegisterCommandOptions {
   sessionId: string;
@@ -270,10 +271,12 @@ export async function getReviewSummary(sessionId: string, sessionsDir: string): 
 /**
  * Parse author name string into Author object.
  *
- * reviews.yaml stores authors as "Family GivenInitial" (see formatAuthors in
- * review/init.ts), so a trailing run of 1-3 uppercase letters is treated as
- * the given-name initials and everything before it as the family name.
- * Otherwise falls back to "Given Family" (e.g. manually edited entries).
+ * Fallback for articles that cannot be matched to the session's structured
+ * search results (e.g. manually added entries). reviews.yaml stores authors
+ * as "Family GivenInitial" (see formatAuthors in review/init.ts), so a
+ * trailing run of 1-3 uppercase letters is treated as the given-name initials
+ * and everything before it as the family name. Otherwise falls back to
+ * "Given Family" (e.g. manually edited entries).
  */
 function parseAuthorName(name: string): Author {
   const parts = name.trim().split(/\s+/);
@@ -293,8 +296,84 @@ function parseAuthorName(name: string): Author {
 }
 
 /**
+ * Build identifier lookup keys for matching a review entry (or one of its
+ * mergedFrom sources) against articles in the session's result files.
+ * Covers the same identifiers as getArticleKeys in session-utils.ts.
+ */
+function authorLookupKeys(ref: {
+  pmid?: string | undefined;
+  doi?: string | undefined;
+  arxivId?: string | undefined;
+  scopusId?: string | undefined;
+  ericId?: string | undefined;
+}): string[] {
+  const keys: string[] = [];
+  if (ref.pmid) keys.push(`pmid:${ref.pmid}`);
+  if (ref.doi) keys.push(`doi:${ref.doi.toLowerCase()}`);
+  if (ref.arxivId) keys.push(`arxiv:${ref.arxivId}`);
+  if (ref.scopusId) keys.push(`scopus:${ref.scopusId}`);
+  if (ref.ericId) keys.push(`eric:${ref.ericId}`);
+  return keys;
+}
+
+/**
+ * Load structured author data from the session's search result files
+ * (results.jsonl / YAML mirror), indexed by article identifiers.
+ *
+ * Only articles with non-empty author lists are indexed; the first result
+ * seen for a given identifier wins.
+ */
+async function buildAuthorLookup(
+  sessionDir: string,
+  providers: Iterable<ProviderName>
+): Promise<Map<string, Author[]>> {
+  const lookup = new Map<string, Author[]>();
+
+  for (const provider of providers) {
+    const articles = await loadResults(sessionDir, provider);
+    for (const article of articles) {
+      if (!article.authors || article.authors.length === 0) continue;
+      for (const key of authorLookupKeys(article)) {
+        if (!lookup.has(key)) {
+          lookup.set(key, article.authors);
+        }
+      }
+    }
+  }
+
+  return lookup;
+}
+
+/**
+ * Resolve authors for a review entry.
+ *
+ * Prefers the structured author data from the session's search results,
+ * matched by identifier (both the entry's own identifiers and those
+ * recorded in mergedFrom). Falls back to parsing the display string in
+ * reviews.yaml for articles not found in the results (e.g. manually added
+ * entries).
+ */
+function resolveAuthors(entry: ArticleEntry, lookup: Map<string, Author[]>): Author[] {
+  const keys = [
+    ...authorLookupKeys(entry),
+    ...(entry.mergedFrom ?? []).flatMap((source) => authorLookupKeys(source)),
+  ];
+
+  for (const key of keys) {
+    const authors = lookup.get(key);
+    if (authors) return authors;
+  }
+
+  return entry.authors ? entry.authors.split(/,\s*/).map(parseAuthorName) : [];
+}
+
+/**
  * Get articles with finalDecision='include' from review file.
  * Converts from ArticleEntry format to Article format.
+ *
+ * Authors are taken from the session's structured search results when the
+ * article can be matched by identifier; the authors string in reviews.yaml
+ * is only used as a fallback.
  *
  * @throws Error if mergedFrom is missing or empty (indicates legacy review file)
  */
@@ -302,8 +381,19 @@ export async function getIncludedArticles(sessionId: string, sessionsDir: string
   const reviewFile = await loadReviewFile(sessionId, sessionsDir);
   const articles = reviewFile.articles ?? [];
 
-  return articles
-    .filter((entry) => entry.finalDecision === 'include')
+  const included = articles.filter((entry) => entry.finalDecision === 'include');
+
+  // Collect providers referenced by the included articles and index their
+  // structured author data from the session's result files.
+  const providers = new Set<ProviderName>();
+  for (const entry of included) {
+    for (const source of entry.mergedFrom ?? []) {
+      providers.add(source.source as ProviderName);
+    }
+  }
+  const authorLookup = await buildAuthorLookup(join(sessionsDir, sessionId), providers);
+
+  return included
     .map((entry): Article => {
       // Validate mergedFrom exists
       if (!entry.mergedFrom) {
@@ -320,9 +410,7 @@ export async function getIncludedArticles(sessionId: string, sessionsDir: string
         );
       }
 
-      const authors: Author[] = entry.authors
-        ? entry.authors.split(/,\s*/).map(parseAuthorName)
-        : [];
+      const authors = resolveAuthors(entry, authorLookup);
 
       // Get source from the first entry in mergedFrom
       const source = entry.mergedFrom[0]!.source as ProviderName;

@@ -830,6 +830,423 @@ articles:
         /mergedFrom.*empty/i
       );
     });
+
+    describe('structured authors from session results (issue #149)', () => {
+      it('uses structured authors from results matched by pmid, restoring full given names', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const resultArticles = [
+          {
+            title: 'Test Article',
+            authors: [
+              { family: 'Schaye', given: 'Verity' },
+              { family: 'Jay', given: 'Stephen' },
+            ],
+            pmid: '12345',
+            source: 'pubmed',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'pubmed_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        // reviews.yaml only keeps the lossy display string
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - pmid: "12345"
+    title: "Test Article"
+    authors: "Schaye V, Jay S"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result).toHaveLength(1);
+        expect(result[0]!.authors).toEqual([
+          { family: 'Schaye', given: 'Verity' },
+          { family: 'Jay', given: 'Stephen' },
+        ]);
+      });
+
+      it('preserves non-ASCII given names that the string round-trip would corrupt', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const resultArticles = [
+          {
+            title: 'Test Article',
+            authors: [{ family: 'Dupont', given: 'Émile' }],
+            doi: '10.1000/x',
+            source: 'scopus',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'scopus_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        // "Dupont É" would be mis-parsed as {family: "É", given: "Dupont"}
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/x"
+    title: "Test Article"
+    authors: "Dupont É"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: scopus
+        doi: "10.1000/x"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Dupont', given: 'Émile' }]);
+      });
+
+      it('matches DOIs case-insensitively', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const resultArticles = [
+          {
+            title: 'Test Article',
+            authors: [{ family: 'Smith', given: 'Jane' }],
+            doi: '10.1000/ABC',
+            source: 'scopus',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'scopus_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/abc"
+    title: "Test Article"
+    authors: "Smith J"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: scopus
+        doi: "10.1000/abc"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Smith', given: 'Jane' }]);
+      });
+
+      it('matches via mergedFrom identifiers when entry-level identifiers differ', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        // The pubmed record has only a pmid; the merged entry surfaces only a doi
+        const resultArticles = [
+          {
+            title: 'Test Article',
+            authors: [{ family: 'Yamada', given: 'Taro' }],
+            pmid: '99999',
+            source: 'pubmed',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'pubmed_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - doi: "10.1000/merged"
+    title: "Test Article"
+    authors: "Yamada T"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: scopus
+        doi: "10.1000/merged"
+      - source: pubmed
+        pmid: "99999"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Yamada', given: 'Taro' }]);
+      });
+
+      it('matches via arxivId when the article has no pmid/doi', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const resultArticles = [
+          {
+            title: 'Preprint Article',
+            authors: [{ family: 'Nakamura', given: 'Hanako' }],
+            arxivId: '2401.12345',
+            source: 'arxiv',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'arxiv_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - arxivId: "2401.12345"
+    title: "Preprint Article"
+    authors: "Nakamura H"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: arxiv
+        arxivId: "2401.12345"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Nakamura', given: 'Hanako' }]);
+      });
+
+      it('matches via ericId when the article has no pmid/doi', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const resultArticles = [
+          {
+            title: 'Education Article',
+            authors: [{ family: 'García', given: 'María' }],
+            ericId: 'EJ1234567',
+            source: 'eric',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'eric_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - ericId: "EJ1234567"
+    title: "Education Article"
+    authors: "García M"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: eric
+        ericId: "EJ1234567"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'García', given: 'María' }]);
+      });
+
+      it('matches via scopusId recorded only in mergedFrom', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        // The scopus record has only a scopusId; the merged entry surfaces no
+        // matching entry-level identifier for it
+        const resultArticles = [
+          {
+            title: 'Scopus Article',
+            authors: [{ family: 'Okafor', given: 'Chidi' }],
+            scopusId: '2-s2.0-99999',
+            source: 'scopus',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'scopus_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - title: "Scopus Article"
+    authors: "Okafor C"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: scopus
+        scopusId: "2-s2.0-99999"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Okafor', given: 'Chidi' }]);
+      });
+
+      it('falls back to parsing the authors string when the article is not in the results', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const resultArticles = [
+          {
+            title: 'Some Other Article',
+            authors: [{ family: 'Other', given: 'Person' }],
+            pmid: '11111',
+            source: 'pubmed',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'pubmed_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        // Manually added article that never came from a search result
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - pmid: "22222"
+    title: "Manually Added Article"
+    authors: "Schaye V"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "22222"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Schaye', given: 'V' }]);
+      });
+
+      it('falls back to the authors string when the matched result has no authors', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const resultArticles = [
+          {
+            title: 'Test Article',
+            authors: [],
+            pmid: '12345',
+            source: 'pubmed',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'pubmed_results.jsonl'),
+          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+
+        // Authors string was filled in by hand after the fact
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - pmid: "12345"
+    title: "Test Article"
+    authors: "Schaye V"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Schaye', given: 'V' }]);
+      });
+
+      it('prefers the YAML mirror over JSONL when both exist', async () => {
+        const sessionId = 'test-session';
+        const sessionDir = join(sessionsDir, sessionId);
+        const internalDir = join(sessionDir, '.internal');
+        await mkdir(internalDir, { recursive: true });
+
+        const jsonlArticles = [
+          {
+            title: 'Test Article',
+            authors: [{ family: 'Old', given: 'Name' }],
+            pmid: '12345',
+            source: 'pubmed',
+            retrievedAt: '2026-01-01T00:00:00Z',
+          },
+        ];
+        await writeFile(
+          join(sessionDir, 'pubmed_results.jsonl'),
+          jsonlArticles.map((a) => JSON.stringify(a)).join('\n')
+        );
+        const yamlContent = `
+- title: "Test Article"
+  authors:
+    - family: "Corrected"
+      given: "Name"
+  pmid: "12345"
+  source: pubmed
+  retrievedAt: "2026-01-01T00:00:00Z"
+`;
+        await writeFile(join(sessionDir, 'pubmed_results.yaml'), yamlContent);
+
+        const reviewContent = `
+sessionId: test-session
+articles:
+  - pmid: "12345"
+    title: "Test Article"
+    authors: "Corrected N"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
+`;
+        await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+        const result = await getIncludedArticles(sessionId, sessionsDir);
+
+        expect(result[0]!.authors).toEqual([{ family: 'Corrected', given: 'Name' }]);
+      });
+    });
   });
 
   describe('formatReviewRequiredMessage', () => {
