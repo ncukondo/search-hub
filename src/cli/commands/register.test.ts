@@ -621,6 +621,116 @@ articles:
       expect(article.source).toBe('pubmed');
     });
 
+    it('parses "Family Initial" author format without swapping family/given (issue #145)', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
+
+      // reviews.yaml stores authors as "Family GivenInitial" (see review init formatAuthors)
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - pmid: "12345"
+    title: "Test Article"
+    authors: "Schaye V, Jay S"
+    year: "2026"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
+`;
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]!.authors).toEqual([
+        { family: 'Schaye', given: 'V' },
+        { family: 'Jay', given: 'S' },
+      ]);
+    });
+
+    it('parses multi-word family names with a trailing initial', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - pmid: "12345"
+    title: "Test Article"
+    authors: "van der Berg V, Smith JD"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
+`;
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result[0]!.authors).toEqual([
+        { family: 'van der Berg', given: 'V' },
+        { family: 'Smith', given: 'JD' },
+      ]);
+    });
+
+    it('parses single-word author names as family only', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
+
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - pmid: "12345"
+    title: "Test Article"
+    authors: "Smith"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
+`;
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result[0]!.authors).toEqual([{ family: 'Smith' }]);
+    });
+
+    it('falls back to "Given Family" parsing when no trailing initials', async () => {
+      const sessionId = 'test-session';
+      const sessionDir = join(sessionsDir, sessionId);
+      const internalDir = join(sessionDir, '.internal');
+      await mkdir(internalDir, { recursive: true });
+
+      // Manually edited entry with full given name
+      const reviewContent = `
+sessionId: test-session
+articles:
+  - pmid: "12345"
+    title: "Test Article"
+    authors: "Verity Schaye"
+    reviews: []
+    finalDecision: include
+    mergedFrom:
+      - source: pubmed
+        pmid: "12345"
+`;
+      await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
+
+      const result = await getIncludedArticles(sessionId, sessionsDir);
+
+      expect(result[0]!.authors).toEqual([{ family: 'Schaye', given: 'Verity' }]);
+    });
+
     it('gets source from mergedFrom when available', async () => {
       const sessionId = 'test-session';
       const sessionDir = join(sessionsDir, sessionId);
