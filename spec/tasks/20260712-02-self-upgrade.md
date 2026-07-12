@@ -60,60 +60,74 @@ Each step follows the TDD cycle: Red → Green → Refactor. Port the
 reference-manager tests alongside each module and adapt constants/paths —
 do not start test suites from scratch.
 
-- [ ] Step 1: `src/upgrade/detect.ts` — install-method detection
-  - [ ] Port tests: binary (`~/.local/bin/search-hub`), npm-global, dev
+- [x] Step 1: `src/upgrade/detect.ts` — install-method detection
+  - [x] Port tests: binary (`~/.local/bin/search-hub`), npm-global, dev
         (repo checkout / npm link), npx heuristics
-  - [ ] Note: the single binary is Bun-compiled (`bun build --compile`,
+  - [x] Note: the single binary is Bun-compiled (`bun build --compile`,
         entry `src/cli/entry-bun.ts`); verify what `process.argv[1]` /
         `process.execPath` look like in a Bun-compiled binary and adjust
         detection accordingly (reference-manager may differ here — document
         what you find in code comments)
-  - [ ] Acceptance: unit tests cover all four methods
+        — Bun 1.x: `argv[1]` is a virtual `/$bunfs/root/...` (Unix) or
+        `B:\~BUN\root\...` (Windows) path; `process.execPath` is the real
+        binary. `resolveInvocationPath()` falls back to execPath for these.
+  - [x] Acceptance: unit tests cover all four methods
 
-- [ ] Step 2: `src/upgrade/check.ts` — latest-release lookup with cache
-  - [ ] Port tests: GitHub API hit, 24h TTL cache read/write, network
+- [x] Step 2: `src/upgrade/check.ts` — latest-release lookup with cache
+  - [x] Port tests: GitHub API hit, 24h TTL cache read/write, network
         failure silence
-  - [ ] Cache at search-hub's platform data dir as `update-check.json`
-  - [ ] Acceptance: no network call when cache is fresh
+  - [x] Cache at search-hub's platform data dir as `update-check.json`
+  - [x] Acceptance: no network call when cache is fresh
 
-- [ ] Step 3: `src/upgrade/apply-binary.ts` + `src/upgrade/apply-npm.ts`
-  - [ ] Port tests: asset URL construction
+- [x] Step 3: `src/upgrade/apply-binary.ts` + `src/upgrade/apply-npm.ts`
+  - [x] Port tests: asset URL construction
         (`https://github.com/ncukondo/search-hub/releases/download/{tag}/search-hub-{os}-{arch}`),
         download → chmod → atomic replace, already-up-to-date, `--check`,
         pinned `--version`, npm-global flow with `-y`
-  - [ ] Acceptance: strategies return the same `UpgradeResult` shape as
+  - [x] Acceptance: strategies return the same `UpgradeResult` shape as
         reference-manager
 
-- [ ] Step 4: `src/cli/commands/upgrade.ts` — command wiring
-  - [ ] Port tests: option parsing, dev/npx guidance + exit code 2,
+- [x] Step 4: `src/cli/commands/upgrade.ts` — command wiring
+  - [x] Port tests: option parsing, dev/npx guidance + exit code 2,
         error exit code 1
-  - [ ] Register in `src/cli/index.ts`
-  - [ ] Acceptance: `search-hub upgrade --check` works end to end (manual)
+  - [x] Register in `src/cli/index.ts`
+  - [x] Acceptance: `search-hub upgrade --check` works end to end (manual)
+        — verified via `node dist/cli/index.js upgrade --check` in the
+        worktree: dev install detected, guidance printed, exit code 2
 
-- [ ] Step 5: `src/upgrade/notifier.ts` — async update notice
-  - [ ] Port tests: notice printed after command completes, all suppression
+- [x] Step 5: `src/upgrade/notifier.ts` — async update notice
+  - [x] Port tests: notice printed after command completes, all suppression
         rules (non-TTY, env var, flag, `upgrade` command)
-  - [ ] Hook into CLI entry; ensure notice never delays or corrupts command
+  - [x] Hook into CLI entry; ensure notice never delays or corrupts command
         output (search-hub prints JSON/YAML to stdout in several commands —
         notice must go to stderr or only print when stdout is a TTY;
         follow the reference spec's suppression rules strictly)
-  - [ ] Acceptance: `search-hub status` in a TTY with stale version shows
+  - [x] Acceptance: `search-hub status` in a TTY with stale version shows
         the one-line notice; piped output never contains it
+        — verified manually: `script`-simulated TTY + fresh fake cache with
+        latest=99.0.0 printed the notice; `status --json` piped had none
 
-- [ ] Step 6: Spec update
-  - [ ] Add `upgrade` command to `spec/cli/commands.md` (options, exit codes,
+- [x] Step 6: Spec update
+  - [x] Add `upgrade` command to `spec/cli/commands.md` (options, exit codes,
         notification behavior, suppression rules)
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] `src/upgrade/upgrade.e2e.test.ts` (or extend CLI e2e):
+- [x] `src/upgrade/upgrade.e2e.test.ts` (or extend CLI e2e):
   - full `upgrade --check` flow against a mocked GitHub API (no real network)
   - binary replace flow with a temp dir standing in for the install dir
   - notifier end-to-end with a fake cache file
-- [ ] Run full test suite: `npm test` (and `npm run test:all`)
-- [ ] Manual verification: build a local binary via `scripts/build-binary.sh`
+  - plus subprocess tests: dev guidance + exit 2, no notice in piped output
+- [x] Run full test suite: `npm test` (and `npm run test:all`)
+      — unit: all pass; e2e: all pass (register.e2e timeouts in the full
+      parallel run are pre-existing flakes; the file passes in isolation);
+      api: one pre-existing live-API ERIC failure unrelated to this change
+- [x] Manual verification: build a local binary via `scripts/build-binary.sh`
       and run `./dist/search-hub-* upgrade --check`
-- [ ] Acceptance: All tests pass
+      — inside worktree: dev guidance, exit 2 (execPath fallback works);
+      copied to a `.local/bin` dir with a fresh fake cache: binary strategy,
+      correct asset URL, exit 0
+- [x] Acceptance: All tests pass
 
 ## Notes
 

@@ -1,0 +1,375 @@
+import { PassThrough } from 'node:stream';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReleaseInfo } from './check.js';
+import type * as NotifierModule from './notifier.js';
+
+function captureStream(): { stream: NodeJS.WritableStream; output: () => string } {
+  const stream = new PassThrough();
+  let buf = '';
+  stream.on('data', (chunk) => {
+    buf += String(chunk);
+  });
+  return { stream, output: () => buf };
+}
+
+function release(latest: string): ReleaseInfo {
+  return {
+    checkedAt: '2026-07-12T12:00:00Z',
+    latest,
+    url: `https://github.com/ncukondo/search-hub/releases/tag/v${latest}`,
+  };
+}
+
+async function freshNotifier(): Promise<typeof NotifierModule> {
+  vi.resetModules();
+  return await import('./notifier.js');
+}
+
+describe('notifier', () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it('does not start a check when stdout is not a TTY', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: false,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+    });
+
+    expect(getLatest).not.toHaveBeenCalled();
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('does not start a check when SEARCH_HUB_NO_UPDATE_CHECK=1', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: { SEARCH_HUB_NO_UPDATE_CHECK: '1' },
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+    });
+
+    expect(getLatest).not.toHaveBeenCalled();
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('does not start a check when noUpdateCheck=true (e.g. --no-update-check)', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+      noUpdateCheck: true,
+    });
+
+    expect(getLatest).not.toHaveBeenCalled();
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('does not start a check when quiet=true (global --quiet flag)', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+      quiet: true,
+    });
+
+    expect(getLatest).not.toHaveBeenCalled();
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('applies a 3s timeout to the default version check', async () => {
+    vi.doMock('./check.js', () => ({
+      getLatestVersion: vi.fn(async () => null),
+    }));
+    try {
+      const notifier = await import('./notifier.js');
+      const check = await import('./check.js');
+      const { stream } = captureStream();
+
+      await notifier.maybeStartUpdateCheck('status', {
+        isTty: true,
+        env: {},
+        currentVersion: '0.23.1',
+        output: stream,
+      });
+
+      expect(check.getLatestVersion).toHaveBeenCalledWith({ timeoutMs: 3000 });
+    } finally {
+      vi.doUnmock('./check.js');
+    }
+  });
+
+  it("does not start a check for the 'upgrade' command itself", async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('upgrade', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+    });
+
+    expect(getLatest).not.toHaveBeenCalled();
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('prints an ASCII-only notice to the configured stream when a newer version is available', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+    });
+
+    expect(getLatest).toHaveBeenCalledTimes(1);
+    flushUpdateNotice();
+
+    const text = output();
+    expect(text).toContain('0.23.1');
+    expect(text).toContain('0.24.0');
+    expect(text).toContain('search-hub upgrade');
+    // The notice must use ASCII-only characters so it renders on legacy
+    // Windows terminals (cmd.exe / non-UTF-8 code pages).
+    expect(text).toMatch(/^[\x00-\x7f]*$/); // eslint-disable-line no-control-regex
+    expect(text).not.toContain('✨');
+    expect(text).not.toContain('→');
+  });
+
+  it('prints nothing when the running version equals the latest', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.23.1'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+    });
+
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('prints nothing when the local version is ahead of the latest release', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.23.1'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.24.0',
+      getLatest,
+      output: stream,
+    });
+
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('prints nothing when the latest is a prerelease of the current version', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0-rc.1'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.24.0',
+      getLatest,
+      output: stream,
+    });
+
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('notifies when running a prerelease and the final release is out', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.24.0-beta.1',
+      getLatest,
+      output: stream,
+    });
+
+    flushUpdateNotice();
+    expect(output()).toContain('0.24.0');
+    expect(output()).toContain('search-hub upgrade');
+  });
+
+  it('prints nothing when the check returns null (network failure)', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => null);
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+    });
+
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('returns synchronously without awaiting the async check', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    let resolveCheck: (v: ReleaseInfo) => void = () => {};
+    const pending = new Promise<ReleaseInfo>((r) => {
+      resolveCheck = r;
+    });
+    const getLatest = vi.fn(() => pending);
+    const { stream, output } = captureStream();
+
+    const before = Date.now();
+    const checkDone = maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+    });
+    const after = Date.now();
+
+    expect(after - before).toBeLessThan(50);
+
+    // Check has not resolved yet, so flush should print nothing.
+    flushUpdateNotice();
+    expect(output()).toBe('');
+
+    resolveCheck(release('0.24.0'));
+    await checkDone;
+  });
+
+  it('does not throw when the check rejects', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => {
+      throw new Error('boom');
+    });
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+    });
+
+    expect(() => flushUpdateNotice()).not.toThrow();
+    expect(output()).toBe('');
+  });
+
+  it("registers the process 'exit' listener only once across repeated calls", async () => {
+    const { maybeStartUpdateCheck } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream } = captureStream();
+
+    const before = process.listenerCount('exit');
+
+    for (let i = 0; i < 5; i++) {
+      await maybeStartUpdateCheck('status', {
+        isTty: true,
+        env: {},
+        currentVersion: '0.23.1',
+        getLatest,
+        output: stream,
+      });
+    }
+
+    const after = process.listenerCount('exit');
+    expect(after - before).toBe(1);
+  });
+
+  it('does not double-print when flush is called twice', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+    });
+
+    flushUpdateNotice();
+    const first = output();
+    flushUpdateNotice();
+    expect(output()).toBe(first);
+  });
+});
+
+describe('isNewerVersion', () => {
+  it.each([
+    ['0.24.0', '0.23.1', true],
+    ['0.23.1', '0.24.0', false],
+    ['0.23.1', '0.23.1', false],
+    ['1.0.0', '0.99.9', true],
+    ['0.24.1', '0.24.0', true],
+    // A release is newer than its own prerelease, not the other way around.
+    ['0.24.0', '0.24.0-beta.1', true],
+    ['0.24.0-beta.1', '0.24.0', false],
+    // Numeric prerelease identifiers compare numerically, not lexically.
+    ['0.24.0-beta.2', '0.24.0-beta.1', true],
+    ['0.24.0-beta.10', '0.24.0-beta.2', true],
+    ['0.24.0-rc.1', '0.24.0-beta.1', true],
+    // Tags may carry a leading v.
+    ['v0.24.0', '0.23.1', true],
+  ])('isNewerVersion(%s, %s) -> %s', async (candidate, current, expected) => {
+    const { isNewerVersion } = await import('./notifier.js');
+    expect(isNewerVersion(candidate, current)).toBe(expected);
+  });
+
+  it('falls back to plain inequality for non-semver strings', async () => {
+    const { isNewerVersion } = await import('./notifier.js');
+    expect(isNewerVersion('nightly-2', 'nightly-1')).toBe(true);
+    expect(isNewerVersion('nightly-1', 'nightly-1')).toBe(false);
+  });
+});
