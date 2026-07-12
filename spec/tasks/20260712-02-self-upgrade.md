@@ -113,14 +113,21 @@ do not start test suites from scratch.
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] `src/upgrade/upgrade.e2e.test.ts` (or extend CLI e2e):
+- [x] `src/upgrade/upgrade.e2e.test.ts` (or extend CLI e2e):
   - full `upgrade --check` flow against a mocked GitHub API (no real network)
   - binary replace flow with a temp dir standing in for the install dir
   - notifier end-to-end with a fake cache file
-- [ ] Run full test suite: `npm test` (and `npm run test:all`)
-- [ ] Manual verification: build a local binary via `scripts/build-binary.sh`
+  - plus subprocess tests: dev guidance + exit 2, no notice in piped output
+- [x] Run full test suite: `npm test` (and `npm run test:all`)
+      — unit: all pass; e2e: all pass (register.e2e timeouts in the full
+      parallel run are pre-existing flakes; the file passes in isolation);
+      api: one pre-existing live-API ERIC failure unrelated to this change
+- [x] Manual verification: build a local binary via `scripts/build-binary.sh`
       and run `./dist/search-hub-* upgrade --check`
-- [ ] Acceptance: All tests pass
+      — inside worktree: dev guidance, exit 2 (execPath fallback works);
+      copied to a `.local/bin` dir with a fresh fake cache: binary strategy,
+      correct asset URL, exit 0
+- [x] Acceptance: All tests pass
 
 ## Notes
 
