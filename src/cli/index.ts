@@ -180,6 +180,7 @@ import { maybeStartUpdateCheck } from '../upgrade/notifier.js';
 import {
   extractCommandName,
   hasNoUpdateCheckFlag,
+  hasQuietFlag,
   rewriteUpgradeVersionFlag,
 } from './utils/argv.js';
 
@@ -3273,6 +3274,7 @@ export async function main(): Promise<void> {
   // only) after the user's command completes.
   maybeStartUpdateCheck(extractCommandName(argv, program), {
     noUpdateCheck: hasNoUpdateCheckFlag(argv),
+    quiet: hasQuietFlag(argv),
   });
 
   await program.parseAsync(argv);

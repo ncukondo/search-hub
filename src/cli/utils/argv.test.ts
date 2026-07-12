@@ -1,6 +1,11 @@
 import { Command } from 'commander';
 import { describe, expect, it } from 'vitest';
-import { extractCommandName, hasNoUpdateCheckFlag, rewriteUpgradeVersionFlag } from './argv.js';
+import {
+  extractCommandName,
+  hasNoUpdateCheckFlag,
+  hasQuietFlag,
+  rewriteUpgradeVersionFlag,
+} from './argv.js';
 
 function makeProgram(): Command {
   const program = new Command();
@@ -51,6 +56,17 @@ describe('hasNoUpdateCheckFlag', () => {
 
   it('returns false when absent', () => {
     expect(hasNoUpdateCheckFlag(['node', 'cli.js', 'status'])).toBe(false);
+  });
+});
+
+describe('hasQuietFlag', () => {
+  it('detects --quiet anywhere after the script', () => {
+    expect(hasQuietFlag(['node', 'cli.js', 'status', '--quiet'])).toBe(true);
+    expect(hasQuietFlag(['node', 'cli.js', '--quiet', 'status'])).toBe(true);
+  });
+
+  it('returns false when absent', () => {
+    expect(hasQuietFlag(['node', 'cli.js', 'status'])).toBe(false);
   });
 });
 

@@ -61,6 +61,19 @@ export function hasNoUpdateCheckFlag(argv: string[]): boolean {
 }
 
 /**
+ * Best-effort detection of the global `--quiet` flag in argv, without relying
+ * on Commander having parsed yet (the async check starts before parseAsync).
+ * `--quiet` promises "suppress all output except errors", which includes the
+ * update notice.
+ */
+export function hasQuietFlag(argv: string[]): boolean {
+  for (let i = 2; i < argv.length; i++) {
+    if (argv[i] === '--quiet') return true;
+  }
+  return false;
+}
+
+/**
  * Rewrite `search-hub upgrade --version <tag>` to `--version=<tag>`.
  *
  * The program has `.version(VERSION)` which registers a no-arg `--version`

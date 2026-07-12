@@ -22,6 +22,13 @@ export interface GetLatestVersionOptions {
   fetch?: typeof globalThis.fetch;
   now?: () => Date;
   ttlMs?: number;
+  /**
+   * Abort the HTTP request after this many milliseconds. Unset means no
+   * timeout (the interactive `upgrade` command can afford to wait); the
+   * notifier passes a short timeout so a hung connection never keeps the
+   * process alive after the user's command has finished.
+   */
+  timeoutMs?: number;
 }
 
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
@@ -80,6 +87,7 @@ export async function getLatestVersion(
     fetch: fetchFn = globalThis.fetch,
     now = () => new Date(),
     ttlMs = DEFAULT_TTL_MS,
+    timeoutMs,
   } = options;
 
   const currentTime = now();
@@ -96,6 +104,7 @@ export async function getLatestVersion(
         accept: 'application/vnd.github+json',
         'user-agent': 'search-hub-update-check',
       },
+      ...(timeoutMs !== undefined && { signal: AbortSignal.timeout(timeoutMs) }),
     });
   } catch {
     return null;

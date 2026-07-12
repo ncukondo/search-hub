@@ -85,6 +85,47 @@ describe('notifier', () => {
     expect(output()).toBe('');
   });
 
+  it('does not start a check when quiet=true (global --quiet flag)', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.23.1',
+      getLatest,
+      output: stream,
+      quiet: true,
+    });
+
+    expect(getLatest).not.toHaveBeenCalled();
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('applies a 3s timeout to the default version check', async () => {
+    vi.doMock('./check.js', () => ({
+      getLatestVersion: vi.fn(async () => null),
+    }));
+    try {
+      const notifier = await import('./notifier.js');
+      const check = await import('./check.js');
+      const { stream } = captureStream();
+
+      await notifier.maybeStartUpdateCheck('status', {
+        isTty: true,
+        env: {},
+        currentVersion: '0.23.1',
+        output: stream,
+      });
+
+      expect(check.getLatestVersion).toHaveBeenCalledWith({ timeoutMs: 3000 });
+    } finally {
+      vi.doUnmock('./check.js');
+    }
+  });
+
   it("does not start a check for the 'upgrade' command itself", async () => {
     const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
     const getLatest = vi.fn(async () => release('0.24.0'));
@@ -145,6 +186,58 @@ describe('notifier', () => {
 
     flushUpdateNotice();
     expect(output()).toBe('');
+  });
+
+  it('prints nothing when the local version is ahead of the latest release', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.23.1'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.24.0',
+      getLatest,
+      output: stream,
+    });
+
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('prints nothing when the latest is a prerelease of the current version', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0-rc.1'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.24.0',
+      getLatest,
+      output: stream,
+    });
+
+    flushUpdateNotice();
+    expect(output()).toBe('');
+  });
+
+  it('notifies when running a prerelease and the final release is out', async () => {
+    const { maybeStartUpdateCheck, flushUpdateNotice } = await freshNotifier();
+    const getLatest = vi.fn(async () => release('0.24.0'));
+    const { stream, output } = captureStream();
+
+    await maybeStartUpdateCheck('status', {
+      isTty: true,
+      env: {},
+      currentVersion: '0.24.0-beta.1',
+      getLatest,
+      output: stream,
+    });
+
+    flushUpdateNotice();
+    expect(output()).toContain('0.24.0');
+    expect(output()).toContain('search-hub upgrade');
   });
 
   it('prints nothing when the check returns null (network failure)', async () => {
@@ -250,5 +343,33 @@ describe('notifier', () => {
     const first = output();
     flushUpdateNotice();
     expect(output()).toBe(first);
+  });
+});
+
+describe('isNewerVersion', () => {
+  it.each([
+    ['0.24.0', '0.23.1', true],
+    ['0.23.1', '0.24.0', false],
+    ['0.23.1', '0.23.1', false],
+    ['1.0.0', '0.99.9', true],
+    ['0.24.1', '0.24.0', true],
+    // A release is newer than its own prerelease, not the other way around.
+    ['0.24.0', '0.24.0-beta.1', true],
+    ['0.24.0-beta.1', '0.24.0', false],
+    // Numeric prerelease identifiers compare numerically, not lexically.
+    ['0.24.0-beta.2', '0.24.0-beta.1', true],
+    ['0.24.0-beta.10', '0.24.0-beta.2', true],
+    ['0.24.0-rc.1', '0.24.0-beta.1', true],
+    // Tags may carry a leading v.
+    ['v0.24.0', '0.23.1', true],
+  ])('isNewerVersion(%s, %s) -> %s', async (candidate, current, expected) => {
+    const { isNewerVersion } = await import('./notifier.js');
+    expect(isNewerVersion(candidate, current)).toBe(expected);
+  });
+
+  it('falls back to plain inequality for non-semver strings', async () => {
+    const { isNewerVersion } = await import('./notifier.js');
+    expect(isNewerVersion('nightly-2', 'nightly-1')).toBe(true);
+    expect(isNewerVersion('nightly-1', 'nightly-1')).toBe(false);
   });
 });

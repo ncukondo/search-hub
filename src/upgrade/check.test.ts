@@ -306,6 +306,57 @@ describe('getLatestVersion', () => {
     expect(cached).toEqual(existingCache);
   });
 
+  it('passes an AbortSignal to fetch when timeoutMs is set', async () => {
+    const now = new Date('2026-07-12T12:00:00Z');
+    const fetchFn = makeFetchOk(
+      'v0.24.0',
+      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0'
+    );
+
+    await getLatestVersion({ cachePath, fetch: fetchFn, now: () => now, timeoutMs: 3000 });
+
+    const mock = fetchFn as unknown as ReturnType<typeof vi.fn>;
+    const [, init] = mock.mock.calls[0] as [string, RequestInit];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('does not pass an AbortSignal when timeoutMs is unset', async () => {
+    const now = new Date('2026-07-12T12:00:00Z');
+    const fetchFn = makeFetchOk(
+      'v0.24.0',
+      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0'
+    );
+
+    await getLatestVersion({ cachePath, fetch: fetchFn, now: () => now });
+
+    const mock = fetchFn as unknown as ReturnType<typeof vi.fn>;
+    const [, init] = mock.mock.calls[0] as [string, RequestInit];
+    expect(init.signal).toBeUndefined();
+  });
+
+  it('returns null when the fetch hangs past timeoutMs instead of waiting forever', async () => {
+    const now = new Date('2026-07-12T12:00:00Z');
+    // A fetch that never resolves on its own; it only rejects when aborted.
+    const fetchFn = vi.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('This operation was aborted', 'AbortError'));
+          });
+        })
+    ) as unknown as typeof globalThis.fetch;
+
+    const result = await getLatestVersion({
+      cachePath,
+      fetch: fetchFn,
+      now: () => now,
+      timeoutMs: 50,
+    });
+
+    expect(result).toBeNull();
+    expect(existsSync(cachePath)).toBe(false);
+  });
+
   it('ignores corrupt cache file and re-fetches', async () => {
     const now = new Date('2026-07-12T12:00:00Z');
     writeFileSync(cachePath, '{not valid json');
