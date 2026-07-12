@@ -45,8 +45,8 @@ accurately.
 
 Each step follows the TDD cycle: Red → Green → Refactor.
 
-- [ ] Step 1: Emit alternative identifiers in CSL-JSON conversion
-  - [ ] Write tests in `src/integration/csl-json.test.ts`:
+- [x] Step 1: Emit alternative identifiers in CSL-JSON conversion
+  - [x] Write tests in `src/integration/csl-json.test.ts`:
     - `articleToCslJson` emits `custom: { arxiv_id }` when `article.arxivId` set
       (key name MUST be `arxiv_id` — reference-manager's duplicate detector and
       fulltext discovery read `custom.arxiv_id`)
@@ -55,43 +55,43 @@ Each step follows the TDD cycle: Red → Green → Refactor.
     - arXiv-only article gets `URL: https://arxiv.org/abs/{arxivId}` when
       article has no existing URL-worthy identifier (DOI absent)
     - ERIC-only article gets `URL: https://eric.ed.gov/?id={ericId}`
-  - [ ] Extend `CslJsonItem` type with `custom?` and `URL?`, implement in
+  - [x] Extend `CslJsonItem` type with `custom?` and `URL?`, implement in
         `articleToCslJson`
-  - [ ] Verify Red → Green, run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: CSL-JSON items carry alternative identifiers in `custom`
+  - [x] Verify Red → Green, run `npm run lint && npm run typecheck`
+  - [x] Acceptance: CSL-JSON items carry alternative identifiers in `custom`
 
-- [ ] Step 2: Relax registration gate in integration layer
-  - [ ] Write tests in `src/integration/register.test.ts`:
+- [x] Step 2: Relax registration gate in integration layer
+  - [x] Write tests in `src/integration/register.test.ts`:
     - article with only `arxivId` (or `ericId`, `scopusId`) is included in the
       bulk import, not counted as `noId`
     - article with no identifier at all is still counted as `noId` and skipped
-  - [ ] Update `hasIdentifier()` in `src/integration/register.ts` to accept
+  - [x] Update `hasIdentifier()` in `src/integration/register.ts` to accept
         `arxivId`/`scopusId`/`ericId`
-  - [ ] Verify Red → Green, lint/typecheck
-  - [ ] Acceptance: arXiv/ERIC/Scopus-only articles reach `refAddBulk`
+  - [x] Verify Red → Green, lint/typecheck
+  - [x] Acceptance: arXiv/ERIC/Scopus-only articles reach `refAddBulk`
 
-- [ ] Step 3: Update CLI dry-run display and skip messages
-  - [ ] Write tests for `src/cli/commands/register.ts`:
+- [x] Step 3: Update CLI dry-run display and skip messages
+  - [x] Write tests for `src/cli/commands/register.ts`:
     - `formatDryRunOutput`: arXiv-only article listed under "Would register"
       with id shown as `arxiv:{id}` (analogous for `eric:`/`scopus:`)
     - skip message no longer says "no DOI or PMID" but "no identifier"
       and only truly identifier-less articles appear there
-  - [ ] Update `getRegistrationId()` to fall back to
+  - [x] Update `getRegistrationId()` to fall back to
         `arxiv:` / `eric:` / `scopus:` prefixed ids after PMID/DOI
-  - [ ] Update skip message wording in `formatDryRunOutput`
-  - [ ] Verify Red → Green, lint/typecheck
-  - [ ] Acceptance: dry-run and summary reflect the new behavior
+  - [x] Update skip message wording in `formatDryRunOutput`
+  - [x] Verify Red → Green, lint/typecheck
+  - [x] Acceptance: dry-run and summary reflect the new behavior
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Extend `src/integration/register.e2e.test.ts`:
+- [x] Extend `src/integration/register.e2e.test.ts`:
   - register flow with an arXiv-only article: appears in bulk import file,
     `custom.arxiv_id` present in written CSL-JSON
   - identifier-less article: skipped with `noId` count
-- [ ] Run full test suite: `npm test`
-- [ ] Manual verification: `search-hub register <session> --dry-run` output
+- [x] Run full test suite: `npm test`
+- [x] Manual verification: `search-hub register <session> --dry-run` output
       with a session containing arXiv/ERIC-only articles (if feasible)
-- [ ] Acceptance: All tests pass
+- [x] Acceptance: All tests pass
 
 ## Notes
 

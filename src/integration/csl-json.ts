@@ -13,12 +13,22 @@ export interface CslJsonItem {
   author: Array<{ family: string; given?: string }>;
   DOI?: string;
   PMID?: string;
+  URL?: string;
   abstract?: string;
   issued?: { 'date-parts': number[][] };
   'container-title'?: string;
   volume?: string;
   issue?: string;
   page?: string;
+  /**
+   * Alternative identifiers. Key names match what reference-manager reads:
+   * its duplicate detector and fulltext discovery use `custom.arxiv_id`.
+   */
+  custom?: {
+    arxiv_id?: string;
+    eric_id?: string;
+    scopus_id?: string;
+  };
 }
 
 /**
@@ -87,6 +97,22 @@ export function articleToCslJson(article: Article, id: string): CslJsonItem {
 
   if (article.doi) item.DOI = article.doi;
   if (article.pmid) item.PMID = article.pmid;
+
+  const custom: NonNullable<CslJsonItem['custom']> = {};
+  if (article.arxivId) custom.arxiv_id = article.arxivId;
+  if (article.ericId) custom.eric_id = article.ericId;
+  if (article.scopusId) custom.scopus_id = article.scopusId;
+  if (Object.keys(custom).length > 0) item.custom = custom;
+
+  // Without a DOI, give resolvers a landing page for the alternative identifier
+  if (!article.doi) {
+    if (article.arxivId) {
+      item.URL = `https://arxiv.org/abs/${article.arxivId}`;
+    } else if (article.ericId) {
+      item.URL = `https://eric.ed.gov/?id=${article.ericId}`;
+    }
+  }
+
   if (article.abstract) item.abstract = article.abstract;
 
   const dateParts = parseDateParts(article.publicationDate);

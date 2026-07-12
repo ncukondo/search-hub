@@ -116,7 +116,8 @@ export function formatRegistrationSummary(summary: {
 
 /**
  * Get registration identifier for an article.
- * PMID is preferred over DOI for better metadata quality.
+ * PMID is preferred over DOI for better metadata quality; alternative
+ * identifiers (arXiv/ERIC/Scopus) are used when neither is present.
  */
 function getRegistrationId(article: Article): string | null {
   if (article.pmid) {
@@ -124,6 +125,15 @@ function getRegistrationId(article: Article): string | null {
   }
   if (article.doi) {
     return article.doi;
+  }
+  if (article.arxivId) {
+    return `arxiv:${article.arxivId}`;
+  }
+  if (article.ericId) {
+    return `eric:${article.ericId}`;
+  }
+  if (article.scopusId) {
+    return `scopus:${article.scopusId}`;
   }
   return null;
 }
@@ -159,11 +169,11 @@ export function formatDryRunOutput(articles: Article[]): string {
     lines.push(`  - ${id}: ${title}`);
   }
 
-  // Details about articles without DOI/PMID
+  // Details about articles without any identifier
   if (withoutId.length > 0) {
     lines.push('');
     lines.push(
-      `${withoutId.length} article${withoutId.length !== 1 ? 's' : ''} will be skipped (no DOI or PMID):`
+      `${withoutId.length} article${withoutId.length !== 1 ? 's' : ''} will be skipped (no identifier):`
     );
 
     const maxDisplay = 10;
@@ -174,10 +184,7 @@ export function formatDryRunOutput(articles: Article[]): string {
         ? article.title.substring(0, 50) + '...'
         : article.title;
 
-      const altIds = getAlternativeIds(article);
-      const hasAltIds = altIds.length > 0 ? `, has: ${altIds.join(', ')}` : '';
-
-      lines.push(`  - "${truncatedTitle}" (source: ${article.source}${hasAltIds})`);
+      lines.push(`  - "${truncatedTitle}" (source: ${article.source})`);
     }
 
     if (withoutId.length > maxDisplay) {
@@ -186,17 +193,6 @@ export function formatDryRunOutput(articles: Article[]): string {
   }
 
   return lines.join('\n');
-}
-
-/**
- * Get alternative (non-DOI/PMID) identifiers for an article.
- */
-function getAlternativeIds(article: Article): string[] {
-  const ids: string[] = [];
-  if (article.arxivId) ids.push(`arxiv:${article.arxivId}`);
-  if (article.ericId) ids.push(`eric:${article.ericId}`);
-  if (article.scopusId) ids.push(`scopus:${article.scopusId}`);
-  return ids;
 }
 
 /**

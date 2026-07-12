@@ -141,7 +141,7 @@ describe('registerArticles (bulk import)', () => {
   });
 
   describe('articles without identifiers', () => {
-    it('should count articles without DOI or PMID as noId and exclude from CSL-JSON', async () => {
+    it('should count articles without any identifier as noId and exclude from CSL-JSON', async () => {
       const articles = [
         createArticle({ title: 'No ID Article 1' }),
         createArticle({ title: 'No ID Article 2' }),
@@ -172,6 +172,103 @@ describe('registerArticles (bulk import)', () => {
       expect(mockRefAddBulk).not.toHaveBeenCalled();
       expect(result.summary.noId).toBe(1);
       expect(result.summary.added).toBe(0);
+    });
+  });
+
+  describe('articles with alternative identifiers', () => {
+    it('should include arXiv-only articles in the bulk import, not count as noId', async () => {
+      const articles = [
+        createArticle({
+          arxivId: '2401.12345',
+          title: 'arXiv Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+      ];
+
+      mockRefAddBulk.mockImplementation(async (filePath: string) => {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const cslJson = JSON.parse(content);
+        expect(cslJson).toHaveLength(1);
+        expect(cslJson[0].custom).toEqual({ arxiv_id: '2401.12345' });
+        return createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'arXiv Article' }]);
+      });
+
+      const result = await registerArticles(articles, createOptions());
+
+      expect(mockRefAddBulk).toHaveBeenCalled();
+      expect(result.summary.noId).toBe(0);
+      expect(result.summary.added).toBe(1);
+    });
+
+    it('should include ERIC-only articles in the bulk import, not count as noId', async () => {
+      const articles = [
+        createArticle({
+          ericId: 'ED123456',
+          title: 'ERIC Article',
+          authors: [{ family: 'Jones' }],
+          publicationDate: '2024',
+        }),
+      ];
+
+      mockRefAddBulk.mockImplementation(async (filePath: string) => {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const cslJson = JSON.parse(content);
+        expect(cslJson).toHaveLength(1);
+        expect(cslJson[0].custom).toEqual({ eric_id: 'ED123456' });
+        return createBulkOutput([{ source: 'jones-2024', id: 'jones-2024', title: 'ERIC Article' }]);
+      });
+
+      const result = await registerArticles(articles, createOptions());
+
+      expect(mockRefAddBulk).toHaveBeenCalled();
+      expect(result.summary.noId).toBe(0);
+      expect(result.summary.added).toBe(1);
+    });
+
+    it('should include Scopus-only articles in the bulk import, not count as noId', async () => {
+      const articles = [
+        createArticle({
+          scopusId: '2-s2.0-85012345678',
+          title: 'Scopus Article',
+          authors: [{ family: 'Chen' }],
+          publicationDate: '2024',
+        }),
+      ];
+
+      mockRefAddBulk.mockImplementation(async (filePath: string) => {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const cslJson = JSON.parse(content);
+        expect(cslJson).toHaveLength(1);
+        expect(cslJson[0].custom).toEqual({ scopus_id: '2-s2.0-85012345678' });
+        return createBulkOutput([{ source: 'chen-2024', id: 'chen-2024', title: 'Scopus Article' }]);
+      });
+
+      const result = await registerArticles(articles, createOptions());
+
+      expect(mockRefAddBulk).toHaveBeenCalled();
+      expect(result.summary.noId).toBe(0);
+      expect(result.summary.added).toBe(1);
+    });
+
+    it('should count only truly identifier-less articles as noId in a mixed batch', async () => {
+      const articles = [
+        createArticle({ arxivId: '2401.12345', title: 'arXiv Article', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({ title: 'No ID Article' }),
+      ];
+
+      mockRefAddBulk.mockImplementation(async (filePath: string) => {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const cslJson = JSON.parse(content);
+        expect(cslJson).toHaveLength(1);
+        return createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'arXiv Article' }]);
+      });
+
+      const result = await registerArticles(articles, createOptions());
+
+      expect(result.summary.noId).toBe(1);
+      expect(result.summary.total).toBe(2);
+      expect(result.summary.added).toBe(1);
     });
   });
 

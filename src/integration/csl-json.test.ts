@@ -174,6 +174,96 @@ describe('articleToCslJson', () => {
     expect(csl.issue).toBeUndefined();
     expect(csl.page).toBeUndefined();
   });
+
+  describe('alternative identifiers (custom field)', () => {
+    it('should emit custom.arxiv_id when arxivId is set', () => {
+      const article = createArticle({ arxivId: '2401.12345' });
+
+      const csl = articleToCslJson(article, 'smith-2024');
+
+      // Key name MUST be arxiv_id — reference-manager's duplicate detector
+      // and fulltext discovery read custom.arxiv_id
+      expect(csl.custom).toEqual({ arxiv_id: '2401.12345' });
+    });
+
+    it('should emit custom.eric_id when ericId is set', () => {
+      const article = createArticle({ ericId: 'ED123456' });
+
+      const csl = articleToCslJson(article, 'smith-2024');
+
+      expect(csl.custom).toEqual({ eric_id: 'ED123456' });
+    });
+
+    it('should emit custom.scopus_id when scopusId is set', () => {
+      const article = createArticle({ scopusId: '2-s2.0-85012345678' });
+
+      const csl = articleToCslJson(article, 'smith-2024');
+
+      expect(csl.custom).toEqual({ scopus_id: '2-s2.0-85012345678' });
+    });
+
+    it('should emit all alternative identifiers together with DOI/PMID', () => {
+      const article = createArticle({
+        doi: '10.1234/test',
+        pmid: '12345678',
+        arxivId: '2401.12345',
+        ericId: 'ED123456',
+        scopusId: '2-s2.0-85012345678',
+      });
+
+      const csl = articleToCslJson(article, 'smith-2024');
+
+      expect(csl.DOI).toBe('10.1234/test');
+      expect(csl.PMID).toBe('12345678');
+      expect(csl.custom).toEqual({
+        arxiv_id: '2401.12345',
+        eric_id: 'ED123456',
+        scopus_id: '2-s2.0-85012345678',
+      });
+    });
+
+    it('should not emit custom field when article has no alternative identifiers', () => {
+      const article = createArticle({ doi: '10.1234/test', pmid: '12345678' });
+
+      const csl = articleToCslJson(article, 'smith-2024');
+
+      expect(csl).not.toHaveProperty('custom');
+    });
+  });
+
+  describe('URL for alternative-identifier-only articles', () => {
+    it('should set arXiv abstract URL for an arXiv-only article (no DOI)', () => {
+      const article = createArticle({ arxivId: '2401.12345' });
+
+      const csl = articleToCslJson(article, 'smith-2024');
+
+      expect(csl.URL).toBe('https://arxiv.org/abs/2401.12345');
+    });
+
+    it('should set ERIC URL for an ERIC-only article (no DOI)', () => {
+      const article = createArticle({ ericId: 'ED123456' });
+
+      const csl = articleToCslJson(article, 'smith-2024');
+
+      expect(csl.URL).toBe('https://eric.ed.gov/?id=ED123456');
+    });
+
+    it('should not set URL when article has a DOI', () => {
+      const article = createArticle({ doi: '10.1234/test', arxivId: '2401.12345' });
+
+      const csl = articleToCslJson(article, 'smith-2024');
+
+      expect(csl.URL).toBeUndefined();
+    });
+
+    it('should not set URL when article has no alternative identifiers', () => {
+      const article = createArticle({ pmid: '12345678' });
+
+      const csl = articleToCslJson(article, 'smith-2024');
+
+      expect(csl.URL).toBeUndefined();
+    });
+  });
 });
 
 describe('articlesToCslJson', () => {
