@@ -176,6 +176,12 @@ import {
 import { type ReviewStatus } from './commands/review/types.js';
 import { registerFulltextCommands } from './commands/fulltext/index.js';
 import { registerUpgradeCommand } from './commands/upgrade.js';
+import { maybeStartUpdateCheck } from '../upgrade/notifier.js';
+import {
+  extractCommandName,
+  hasNoUpdateCheckFlag,
+  rewriteUpgradeVersionFlag,
+} from './utils/argv.js';
 
 import {
   parseRegisterOptions,
@@ -252,6 +258,7 @@ export function createProgram(): Command {
     .option('-v, --verbose', 'enable verbose output', false)
     .option('--quiet', 'suppress all output except errors', false)
     .option('--no-color', 'disable color output')
+    .option('--no-update-check', 'disable the update-version check')
     .addHelpText('after', `
 Workflow:
   1. query init → edit → validate / --dry-run        Query preparation
@@ -3256,7 +3263,19 @@ Examples:
  */
 export async function main(): Promise<void> {
   const program = createProgram();
-  await program.parseAsync(process.argv);
+
+  // `upgrade --version <tag>` would otherwise be consumed by the root
+  // `--version` flag; rewrite to the `=` form before parsing.
+  const argv = rewriteUpgradeVersionFlag(process.argv, program);
+
+  // Kick off the async update check before command dispatch. The notifier
+  // registers its own exit listener to print the notice (to stderr, TTY
+  // only) after the user's command completes.
+  maybeStartUpdateCheck(extractCommandName(argv, program), {
+    noUpdateCheck: hasNoUpdateCheckFlag(argv),
+  });
+
+  await program.parseAsync(argv);
 }
 
 // Run main if executed directly

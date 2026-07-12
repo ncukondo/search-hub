@@ -95,15 +95,17 @@ do not start test suites from scratch.
         — verified via `node dist/cli/index.js upgrade --check` in the
         worktree: dev install detected, guidance printed, exit code 2
 
-- [ ] Step 5: `src/upgrade/notifier.ts` — async update notice
-  - [ ] Port tests: notice printed after command completes, all suppression
+- [x] Step 5: `src/upgrade/notifier.ts` — async update notice
+  - [x] Port tests: notice printed after command completes, all suppression
         rules (non-TTY, env var, flag, `upgrade` command)
-  - [ ] Hook into CLI entry; ensure notice never delays or corrupts command
+  - [x] Hook into CLI entry; ensure notice never delays or corrupts command
         output (search-hub prints JSON/YAML to stdout in several commands —
         notice must go to stderr or only print when stdout is a TTY;
         follow the reference spec's suppression rules strictly)
-  - [ ] Acceptance: `search-hub status` in a TTY with stale version shows
+  - [x] Acceptance: `search-hub status` in a TTY with stale version shows
         the one-line notice; piped output never contains it
+        — verified manually: `script`-simulated TTY + fresh fake cache with
+        latest=99.0.0 printed the notice; `status --json` piped had none
 
 - [ ] Step 6: Spec update
   - [ ] Add `upgrade` command to `spec/cli/commands.md` (options, exit codes,
