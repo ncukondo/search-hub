@@ -79,12 +79,12 @@ do not start test suites from scratch.
   - [x] Cache at search-hub's platform data dir as `update-check.json`
   - [x] Acceptance: no network call when cache is fresh
 
-- [ ] Step 3: `src/upgrade/apply-binary.ts` + `src/upgrade/apply-npm.ts`
-  - [ ] Port tests: asset URL construction
+- [x] Step 3: `src/upgrade/apply-binary.ts` + `src/upgrade/apply-npm.ts`
+  - [x] Port tests: asset URL construction
         (`https://github.com/ncukondo/search-hub/releases/download/{tag}/search-hub-{os}-{arch}`),
         download → chmod → atomic replace, already-up-to-date, `--check`,
         pinned `--version`, npm-global flow with `-y`
-  - [ ] Acceptance: strategies return the same `UpgradeResult` shape as
+  - [x] Acceptance: strategies return the same `UpgradeResult` shape as
         reference-manager
 
 - [ ] Step 4: `src/cli/commands/upgrade.ts` — command wiring
