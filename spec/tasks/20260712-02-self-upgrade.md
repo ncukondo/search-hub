@@ -60,15 +60,18 @@ Each step follows the TDD cycle: Red → Green → Refactor. Port the
 reference-manager tests alongside each module and adapt constants/paths —
 do not start test suites from scratch.
 
-- [ ] Step 1: `src/upgrade/detect.ts` — install-method detection
-  - [ ] Port tests: binary (`~/.local/bin/search-hub`), npm-global, dev
+- [x] Step 1: `src/upgrade/detect.ts` — install-method detection
+  - [x] Port tests: binary (`~/.local/bin/search-hub`), npm-global, dev
         (repo checkout / npm link), npx heuristics
-  - [ ] Note: the single binary is Bun-compiled (`bun build --compile`,
+  - [x] Note: the single binary is Bun-compiled (`bun build --compile`,
         entry `src/cli/entry-bun.ts`); verify what `process.argv[1]` /
         `process.execPath` look like in a Bun-compiled binary and adjust
         detection accordingly (reference-manager may differ here — document
         what you find in code comments)
-  - [ ] Acceptance: unit tests cover all four methods
+        — Bun 1.x: `argv[1]` is a virtual `/$bunfs/root/...` (Unix) or
+        `B:\~BUN\root\...` (Windows) path; `process.execPath` is the real
+        binary. `resolveInvocationPath()` falls back to execPath for these.
+  - [x] Acceptance: unit tests cover all four methods
 
 - [ ] Step 2: `src/upgrade/check.ts` — latest-release lookup with cache
   - [ ] Port tests: GitHub API hit, 24h TTL cache read/write, network
