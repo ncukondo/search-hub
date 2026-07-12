@@ -73,11 +73,11 @@ do not start test suites from scratch.
         binary. `resolveInvocationPath()` falls back to execPath for these.
   - [x] Acceptance: unit tests cover all four methods
 
-- [ ] Step 2: `src/upgrade/check.ts` — latest-release lookup with cache
-  - [ ] Port tests: GitHub API hit, 24h TTL cache read/write, network
+- [x] Step 2: `src/upgrade/check.ts` — latest-release lookup with cache
+  - [x] Port tests: GitHub API hit, 24h TTL cache read/write, network
         failure silence
-  - [ ] Cache at search-hub's platform data dir as `update-check.json`
-  - [ ] Acceptance: no network call when cache is fresh
+  - [x] Cache at search-hub's platform data dir as `update-check.json`
+  - [x] Acceptance: no network call when cache is fresh
 
 - [ ] Step 3: `src/upgrade/apply-binary.ts` + `src/upgrade/apply-npm.ts`
   - [ ] Port tests: asset URL construction
