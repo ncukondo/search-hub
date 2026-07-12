@@ -20,6 +20,7 @@ Commands:
   merge       Merge results from multiple sessions
   check       Verify coverage of known articles
   query       Query utilities (init, validate, translate, assess, log)
+  upgrade     Upgrade search-hub to the latest release
 ```
 
 ## Global Options
@@ -31,6 +32,7 @@ Commands:
 | `--verbose` | `-v` | Increase verbosity |
 | `--quiet` | `-q` | Suppress output |
 | `--no-color` | | Disable colors |
+| `--no-update-check` | | Disable the async update-version check |
 | `--help` | `-h` | Show help |
 | `--version` | `-V` | Show version |
 
@@ -836,6 +838,95 @@ $ search-hub merge merged-session new-session
 Error: Session 'merged-session' is a merged session (sources: v4, v9).
   Merge the original sources directly:
   search-hub merge v4 v9 new-session
+```
+
+---
+
+## upgrade
+
+Upgrade search-hub to the latest release (or a pinned version).
+
+### Syntax
+
+```bash
+search-hub upgrade [options]
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--check` | Report current vs. latest version; perform no upgrade |
+| `--version <tag>` | Pin to a specific release tag (e.g. `v0.23.1`) |
+| `--yes`, `-y` | Skip confirmation prompts (npm-global strategy runs npm directly) |
+| `--install-dir <path>` | Override install dir for single-binary mode (default: directory of the running binary) |
+
+### Behavior
+
+Detects the install method from the resolved invocation path and applies the
+appropriate strategy:
+
+| Install method | Detection | Action |
+|---|---|---|
+| Single binary | Path outside `node_modules/`, typically `~/.local/bin/search-hub` (Bun-compiled binaries resolve via `process.execPath`) | Download `search-hub-{os}-{arch}[.exe]` from GitHub Releases, verify with `--version`, atomically replace the running binary |
+| npm global | Resolved path contains `node_modules/` | Print `npm i -g @ncukondo/search-hub@latest`; run it with `--yes` |
+| Dev / npx | Path inside a git worktree or npm cache (`_npx`) | Print guidance only |
+
+Release source: `https://github.com/ncukondo/search-hub/releases`.
+Binary replacement downloads to `{dest}.tmp.{pid}`, verifies the download by
+running `--version`, then moves it into place (on Windows the running `.exe`
+is rotated to `{dest}.old`).
+
+### Exit Codes (upgrade-specific)
+
+| Code | Meaning |
+|------|---------|
+| 0 | Already up to date, or upgrade completed successfully |
+| 1 | Upgrade failed (network, permissions, verification) |
+| 2 | Install method cannot be upgraded automatically (dev/npx) |
+
+### Update Notification
+
+After any normal command finishes, an async check compares the running
+version against the latest GitHub release. When a newer release exists, a
+one-line ASCII notice is printed to **stderr**:
+
+```
+>>> New version available: 0.23.1 -> 0.24.0
+    Run: search-hub upgrade
+```
+
+- The check result is cached for 24 hours at `{data}/update-check.json`
+  (search-hub's platform data dir); a fresh cache means no HTTP request.
+- Network failures are silent; the user's command output is never delayed.
+- GitHub rate-limit responses (403/429) fall back to the existing cache.
+
+Suppression rules — the check is skipped entirely (no network, no cache
+write) when any of:
+
+- stdout is not a TTY (machine-readable output such as `export`/`--json`
+  pipes is never contaminated)
+- `SEARCH_HUB_NO_UPDATE_CHECK=1` in env
+- `--no-update-check` flag passed
+- The running command is `upgrade` itself
+
+### Examples
+
+```bash
+# Upgrade to the latest release
+search-hub upgrade
+
+# Report current vs. latest without changing anything
+search-hub upgrade --check
+
+# Pin to a specific release
+search-hub upgrade --version v0.23.1
+
+# npm-global install: run npm without prompting
+search-hub upgrade -y
+
+# Single-binary install at a custom location
+search-hub upgrade --install-dir ~/bin
 ```
 
 ---

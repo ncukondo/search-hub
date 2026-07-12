@@ -107,8 +107,8 @@ do not start test suites from scratch.
         — verified manually: `script`-simulated TTY + fresh fake cache with
         latest=99.0.0 printed the notice; `status --json` piped had none
 
-- [ ] Step 6: Spec update
-  - [ ] Add `upgrade` command to `spec/cli/commands.md` (options, exit codes,
+- [x] Step 6: Spec update
+  - [x] Add `upgrade` command to `spec/cli/commands.md` (options, exit codes,
         notification behavior, suppression rules)
 
 ### Final Step: E2E Integration Tests (MANDATORY)
