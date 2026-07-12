@@ -142,6 +142,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 133 | Update Specs, ADR, Docs + Close Issue #138 | 131, 132 | ✅ Completed | [20260308-05](completed/20260308-05-config-spec-update.md) |
 | 134 | Query Path を .search-hub/queries/ に統一 (#143) | 130, 127, 128 | ✅ Completed | [20260309-01](completed/20260309-01-query-path-to-project-dir.md) |
 | 135 | Register Articles with Alternative Identifiers (#151) | 11 | ✅ Completed | [20260712-01](completed/20260712-01-register-alt-identifiers.md) |
+| 136 | Self-Upgrade Command + Update Notification | 129 | 🚧 In Progress | [20260712-02](20260712-02-self-upgrade.md) |
 
 ## Development Flow
 
