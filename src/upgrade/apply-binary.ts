@@ -205,9 +205,8 @@ function atomicReplace(
       }
       renameSync(tmpPath, destPath);
     } else {
-      if (existsSync(destPath)) {
-        rmSync(destPath, { force: true });
-      }
+      // POSIX rename atomically replaces an existing dest: there is never a
+      // moment with no binary on disk, unlike an unlink-then-rename sequence.
       renameSync(tmpPath, destPath);
     }
   } catch (error) {

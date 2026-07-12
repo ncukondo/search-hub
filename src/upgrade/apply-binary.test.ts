@@ -5,6 +5,13 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type UpgradeBinaryOptions, computeAssetName, upgradeBinary } from './apply-binary.js';
 
+// Wrap rmSync in a pass-through spy so tests can assert the unix replace path
+// never unlinks dest before renaming over it (the rename must be atomic).
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>();
+  return { ...actual, rmSync: vi.fn(actual.rmSync) };
+});
+
 function makeFetchBinary(bytes: Uint8Array, status = 200): typeof globalThis.fetch {
   return vi.fn(async () => {
     return new Response(bytes, {
@@ -97,6 +104,18 @@ describe('upgradeBinary', () => {
     expect(existsSync(`${destPath}.tmp.12345`)).toBe(false);
     // Verify was called against the .tmp path, not dest.
     expect(verifyCalls).toEqual([`${destPath}.tmp.12345`]);
+  });
+
+  it('replaces the unix binary with a single atomic rename (no prior unlink)', async () => {
+    vi.mocked(rmSync).mockClear();
+
+    const result = await upgradeBinary(baseOptions());
+
+    expect(result.status).toBe('success');
+    expect(readFileSync(destPath, 'utf-8')).toBe('new binary contents');
+    // renameSync overwrites atomically on POSIX; unlinking dest first would
+    // open a window with no binary on disk at all.
+    expect(rmSync).not.toHaveBeenCalled();
   });
 
   it('uses `--version <tag>` when provided, bypassing getLatest', async () => {
