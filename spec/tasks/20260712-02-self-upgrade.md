@@ -87,11 +87,13 @@ do not start test suites from scratch.
   - [x] Acceptance: strategies return the same `UpgradeResult` shape as
         reference-manager
 
-- [ ] Step 4: `src/cli/commands/upgrade.ts` — command wiring
-  - [ ] Port tests: option parsing, dev/npx guidance + exit code 2,
+- [x] Step 4: `src/cli/commands/upgrade.ts` — command wiring
+  - [x] Port tests: option parsing, dev/npx guidance + exit code 2,
         error exit code 1
-  - [ ] Register in `src/cli/index.ts`
-  - [ ] Acceptance: `search-hub upgrade --check` works end to end (manual)
+  - [x] Register in `src/cli/index.ts`
+  - [x] Acceptance: `search-hub upgrade --check` works end to end (manual)
+        — verified via `node dist/cli/index.js upgrade --check` in the
+        worktree: dev install detected, guidance printed, exit code 2
 
 - [ ] Step 5: `src/upgrade/notifier.ts` — async update notice
   - [ ] Port tests: notice printed after command completes, all suppression

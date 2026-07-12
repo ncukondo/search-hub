@@ -175,6 +175,7 @@ import {
 } from './commands/review/finalize.js';
 import { type ReviewStatus } from './commands/review/types.js';
 import { registerFulltextCommands } from './commands/fulltext/index.js';
+import { registerUpgradeCommand } from './commands/upgrade.js';
 
 import {
   parseRegisterOptions,
@@ -3243,6 +3244,9 @@ Examples:
 
   // Register fulltext command group (init, sync, convert, check)
   registerFulltextCommands(program, getSessionsDir);
+
+  // Register upgrade command
+  registerUpgradeCommand(program);
 
   return program;
 }
