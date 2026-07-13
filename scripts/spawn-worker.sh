@@ -38,6 +38,16 @@ else
   (cd "$WORKTREE_DIR" && npm install)
 fi
 
+# --- 1.5 Refuse to take over a worktree with a running agent ---
+# Must run BEFORE set-role.sh: otherwise the running agent's CLAUDE.md role
+# marker gets flipped even though the launch fails.
+EXISTING_PANE=$(find_agent_pane_for_dir "$WORKTREE_DIR")
+if [ -n "$EXISTING_PANE" ]; then
+  echo "[spawn-worker] ERROR: An agent is already running in $WORKTREE_DIR (pane $EXISTING_PANE)" >&2
+  echo "[spawn-worker] Stop it first: ./scripts/kill-agent.sh $EXISTING_PANE" >&2
+  exit 1
+fi
+
 # --- 2. Set role marker in CLAUDE.md ---
 echo "[spawn-worker] Setting role to 'implement' in CLAUDE.md..."
 "$SCRIPT_DIR/set-role.sh" "$WORKTREE_DIR" implement

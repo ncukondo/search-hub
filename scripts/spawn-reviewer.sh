@@ -123,6 +123,16 @@ else
   echo "[spawn-reviewer] Using existing worktree: $WORKTREE_DIR"
 fi
 
+# --- 1.5 Refuse to take over a worktree with a running agent ---
+# Must run BEFORE set-role.sh: otherwise the running agent's CLAUDE.md role
+# marker gets flipped even though the launch fails.
+EXISTING_PANE=$(find_agent_pane_for_dir "$WORKTREE_DIR")
+if [ -n "$EXISTING_PANE" ]; then
+  echo "[spawn-reviewer] ERROR: An agent is already running in $WORKTREE_DIR (pane $EXISTING_PANE)" >&2
+  echo "[spawn-reviewer] Stop it first: ./scripts/kill-agent.sh $EXISTING_PANE" >&2
+  exit 1
+fi
+
 # --- 2. Set role marker in CLAUDE.md ---
 echo "[spawn-reviewer] Setting role to 'review' in CLAUDE.md..."
 "$SCRIPT_DIR/set-role.sh" "$WORKTREE_DIR" review
