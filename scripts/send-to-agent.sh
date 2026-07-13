@@ -37,9 +37,10 @@ if [ "$STATE" != "idle" ] && [ "$STATE" != "done" ] && [ "$STATE" != "unknown" ]
 fi
 
 echo "[send-to-agent] Sending prompt to pane $PANE_ID..."
-RUN_OUT=$(herdr pane run "$PANE_ID" "$PROMPT" 2>/dev/null || true)
-if [ -z "$RUN_OUT" ] || echo "$RUN_OUT" | jq -e '.error' >/dev/null 2>&1; then
-  echo "[send-to-agent] ERROR: herdr pane run failed: $(echo "$RUN_OUT" | jq -r '.error.message // "no response"')" >&2
+# Success prints nothing; failures come back as {"error": ...} JSON.
+RUN_OUT=$(herdr pane run "$PANE_ID" "$PROMPT" 2>&1 || true)
+if [ -n "$RUN_OUT" ] && echo "$RUN_OUT" | jq -e '.error' >/dev/null 2>&1; then
+  echo "[send-to-agent] ERROR: herdr pane run failed: $(echo "$RUN_OUT" | jq -r '.error.message')" >&2
   exit 1
 fi
 
