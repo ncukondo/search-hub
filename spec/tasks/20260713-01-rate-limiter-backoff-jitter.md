@@ -45,19 +45,22 @@ Each step follows the TDD cycle: Red → Green → Refactor.
   - [x] Run `npm run lint && npm run typecheck`
   - [x] Acceptance: stubbed random source is observed by handleRateLimit
 
-- [ ] Step 2: Jitter applied to backoff sleep
-  - [ ] Write tests (use fake timers + stubbed random):
+- [x] Step 2: Jitter applied to backoff sleep
+  - [x] Write tests (use fake timers + stubbed random):
     - `random() = 0.5` → jitter factor 1.0 → sleeps exactly `currentBackoff`
     - `random() = 0` → factor 0.75 → sleeps `0.75 * currentBackoff`
     - `random() = 1` (or close) → factor ~1.25 → sleeps `~1.25 * currentBackoff`
     - Jittered delay never exceeds `maxBackoff`
     - `currentBackoff` still doubles deterministically after each call (unaffected by jitter)
     - `handleRateLimit(retryAfter)` sleeps exactly `retryAfter` (no jitter)
-  - [ ] Verify tests fail (Red)
-  - [ ] Implement jitter in `handleRateLimit`
-  - [ ] Verify tests pass (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: all above behaviors verified
+  - [x] Verify tests fail (Red)
+  - [x] Implement jitter in `handleRateLimit`
+  - [x] Verify tests pass (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: all above behaviors verified
+  - Note: three pre-existing backoff tests advance timers by the exact
+    nominal backoff; they now stub `random: () => 0.5` (factor 1.0) so
+    their exponential-growth assertions remain exact under default jitter.
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
