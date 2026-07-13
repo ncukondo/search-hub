@@ -77,7 +77,7 @@ After merge, update ROADMAP if needed:
 
 1. Open `spec/tasks/ROADMAP.md`
 2. Change task status to "Done"
-3. Commit: `git add -A && git commit -m "chore(tasks): complete task X"`
+3. Commit: `git add spec/tasks/ROADMAP.md && git commit -m "chore(tasks): complete task X"`
 4. Push: `git push`
 
 ## Troubleshooting
@@ -85,7 +85,7 @@ After merge, update ROADMAP if needed:
 ### "Worktree locked"
 The script handles this with `--force`, but if it still fails:
 ```bash
-rm -rf /workspaces/search-hub--worktrees/<branch-dir>
+rm -rf "$HOME/.herdr/worktrees/search-hub/<branch-dir>"
 git worktree prune
 ```
 
@@ -98,7 +98,7 @@ git branch -D <branch-name>
 ### "Cannot delete current branch"
 You're still in the worktree. Switch first:
 ```bash
-cd /workspaces/search-hub
+cd "$(git rev-parse --show-toplevel)"
 git checkout main
 ```
 

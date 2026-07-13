@@ -1,228 +1,84 @@
 # Scripts
 
-Shell scripts for managing parallel agent workflows with tmux and git worktrees.
+Scripts for parallel agent orchestration and automation. Agents run in [herdr](https://herdr.dev) panes, one workspace per worktree. Worktrees live under `~/.herdr/worktrees/search-hub/`.
 
-## Quick Start
+## Agent Lifecycle Scripts
 
+| Script | Usage | Purpose |
+|--------|-------|---------|
+| `launch-agent.sh` | `<worktree-dir> [prompt]` | Base: settings, herdr workspace, Claude launch (`--permission-mode auto`, prompt as argv) |
+| `spawn-worker.sh` | `<branch> <task-keyword> [step-scope]` | Creates worktree + sets implement role, then delegates |
+| `spawn-reviewer.sh` | `--pr <pr-number>` | Creates worktree + sets review role, then delegates |
+| `spawn-agent.sh` | `<branch-or-pr> [options] [-- <prompt>]` | Generic agent (research, PR comments, custom tasks) |
+| `start-review.sh` | `<pr-number>` | Thin wrapper around spawn-reviewer.sh |
+| `kill-agent.sh` | `<pane\|name> [--keep-pane]` | Stop an agent, close its pane |
+
+## Monitoring & Control Scripts
+
+| Script | Usage | Purpose |
+|--------|-------|---------|
+| `monitor-agents.sh` | `[--watch] [--json] [--all]` | List this repo's agent states (idle/working/blocked) |
+| `check-agent-state.sh` | `<pane\|name>` | Check single agent's state |
+| `check-task-completion.sh` | `<branch> <task-type> [pr]` | Check PR/CI/review status via GitHub API |
+| `send-to-agent.sh` | `<pane\|name> <prompt>` | Send prompt to idle agent |
+| `orchestrate.sh` | `[--background] [--stop] [--status]` | Detect worker events, write event files, notify main agent |
+| `merge-pr.sh` | `<pr-number> [options]` | Merge PR + cleanup workspace/worktree/branch |
+
+## Helper Scripts
+
+| Script | Usage | Purpose |
+|--------|-------|---------|
+| `herdr-lib.sh` | (sourced) | Shared helpers: worktree paths, agent lookup, status |
+| `set-role.sh` | `<worktree-dir> <role>` | Set role marker in CLAUDE.md |
+
+## State Tracking
+
+Agent states come from herdr's agent detection (`herdr agent list` / `herdr agent get`):
+- `working` - Agent is executing a task
+- `idle` - Agent is waiting for input
+- `done` - Agent finished a task and awaits input (reported as `idle` by check-agent-state.sh)
+- `blocked` - Agent is stuck on a prompt/dialog (reported as `permission` by check-agent-state.sh)
+- `unknown` - Agent detected but state not yet known (reported as `starting`)
+
+Caveat: startup dialogs (MCP confirmation etc.) may be reported as `idle`. Never treat `idle` alone as task completion; verify with `herdr agent read <pane>` or GitHub state (`check-task-completion.sh`).
+
+Use `monitor-agents.sh --watch` to continuously monitor, or `herdr wait agent-status <pane> --status idle --timeout <ms>` to block until a state change.
+
+## Examples
+
+### Start a worker for a task
 ```bash
-# 1. Spawn workers for parallel implementation
-./scripts/spawn-worker.sh feat/task-a 20260203-01
-./scripts/spawn-worker.sh feat/task-b 20260203-02
-./scripts/apply-layout.sh
-
-# 2. Start orchestration (auto-transitions workers → reviewers)
-./scripts/orchestrate.sh --background
-
-# 3. When PRs are approved, merge
-./scripts/merge-pr.sh 123
-./scripts/merge-pr.sh 124
+./scripts/spawn-worker.sh feature/new-feature new-feature
 ```
 
-## Agent Lifecycle
-
-### spawn-worker.sh
-Spawn a worker agent for implementing a task.
+### Start a worker with limited scope
 ```bash
-./scripts/spawn-worker.sh <branch-name> <task-keyword>
-# Example: ./scripts/spawn-worker.sh feat/results-list 20260203-01
+./scripts/spawn-worker.sh feature/large-task large-task "Steps 1 and 2 only"
 ```
 
-### spawn-reviewer.sh
-Spawn a reviewer agent for reviewing a PR.
+### Start a reviewer for a PR
 ```bash
-# With branch name and PR number
-./scripts/spawn-reviewer.sh <branch-name> <pr-number>
-
-# With PR number only (auto-detects branch, auto-creates worktree)
-./scripts/spawn-reviewer.sh --pr <pr-number>
-
-# With explicit worktree creation
-./scripts/spawn-reviewer.sh <branch-name> <pr-number> --create
+./scripts/spawn-reviewer.sh --pr 123
 ```
 
-### spawn-agent.sh
-Spawn a generic agent for research, PR comments, or custom tasks.
+### Monitor all agents
 ```bash
-# Research task
-./scripts/spawn-agent.sh feat/my-feature -- "調査プロンプト"
-
-# PR comment response
-./scripts/spawn-agent.sh --pr 123 -- "/pr-comments 123"
-
-# Create worktree + custom task
-./scripts/spawn-agent.sh feat/new --create -- "カスタムタスク"
-
-# Interactive mode (no prompt)
-./scripts/spawn-agent.sh feat/my-feature
-
-# Main repo (no worktree)
-./scripts/spawn-agent.sh --main -- "プロンプト"
-```
-
-### kill-agent.sh
-Gracefully terminate an agent in a tmux pane.
-```bash
-./scripts/kill-agent.sh <pane-id> [--keep-pane]
-# Example: ./scripts/kill-agent.sh %31
-```
-
-### launch-agent.sh
-Low-level script to launch Claude in a tmux pane (used by spawn-*.sh).
-```bash
-./scripts/launch-agent.sh <worktree-dir> <prompt>
-```
-
-## Orchestration
-
-### orchestrate.sh
-Monitor all agents and automatically transition through the workflow.
-```bash
-# Start in background (recommended)
-./scripts/orchestrate.sh --background
-
-# Check status
-./scripts/orchestrate.sh --status
-
-# Stop
-./scripts/orchestrate.sh --stop
-
-# View logs
-tail -f /tmp/claude-orchestrator/orchestrator.log
-
-# View notifications
-cat /tmp/claude-orchestrator/notifications
-```
-
-Automatic transitions:
-- **Worker completes** (idle + PR + CI pass) → spawns Reviewer
-- **Reviewer approves** → notifies main agent, ready for merge
-- **Reviewer requests changes** → sends fix instructions to worker
-- **Errors/CI failures** → notifies main agent
-
-### merge-pr.sh
-Merge a PR with automatic cleanup.
-```bash
-./scripts/merge-pr.sh <pr-number> [options]
-
-# Options:
-#   --squash    Squash merge (default)
-#   --merge     Regular merge commit
-#   --rebase    Rebase merge
-#   --no-task   Skip task file management
-#   --dry-run   Preview actions without executing
-```
-
-Handles automatically:
-- CI completion wait
-- Worktree removal (force if locked)
-- Agent termination
-- Branch deletion (local + remote)
-- Task file move to completed/
-
-## Monitoring
-
-### monitor-agents.sh
-Display status of all active agents.
-```bash
-./scripts/monitor-agents.sh           # One-time display
-./scripts/monitor-agents.sh --watch   # Continuous monitoring
-./scripts/monitor-agents.sh --json    # JSON output
-```
-
-### check-agent-state.sh
-Check the state of a specific agent pane.
-```bash
-./scripts/check-agent-state.sh <pane-id>
-# Output: "idle" | "working" | "trust" | "error"
-```
-
-### check-task-completion.sh
-Check task completion status using GitHub API.
-```bash
-# Check if PR exists and CI passes
-./scripts/check-task-completion.sh <branch> pr-creation
-# Output: "pending" | "ci-pending" | "ci-failed" | "completed"
-
-# Check if review has been posted
-./scripts/check-task-completion.sh <branch> review <pr-number>
-# Output: "pending" | "approved" | "changes_requested" | "commented"
-```
-
-## Agent Interaction
-
-### send-to-agent.sh
-Send a prompt to an idle agent.
-```bash
-./scripts/send-to-agent.sh <pane-id> <prompt>
-# Example: ./scripts/send-to-agent.sh %31 "Fix the failing test"
-```
-
-## Layout & Setup
-
-### apply-layout.sh
-Apply a balanced tmux layout after spawning agents.
-```bash
-./scripts/apply-layout.sh
-```
-
-### set-role.sh
-Set the role marker in a worktree's CLAUDE.md.
-```bash
-./scripts/set-role.sh <worktree-dir> <role>
-# Roles: implement, review
-```
-
-### check-worker-launch.sh
-Session hook to verify proper worker launch method.
-
-## Typical Workflow
-
-```bash
-# 1. Spawn workers (creates worktrees and panes)
-./scripts/spawn-worker.sh feat/task-a 20260203-01
-./scripts/spawn-worker.sh feat/task-b 20260203-02
-./scripts/apply-layout.sh
-
-# 2. Start orchestration
-./scripts/orchestrate.sh --background
-
-# 3. Monitor progress (optional)
 ./scripts/monitor-agents.sh --watch
-
-# 4. Orchestrator automatically:
-#    - Detects worker completion
-#    - Spawns reviewers
-#    - Handles review results
-
-# 5. When notified of approval, merge from main agent
-./scripts/merge-pr.sh 44
-./scripts/merge-pr.sh 45
-
-# 6. Update ROADMAP.md and commit
 ```
 
-## Script Inventory
+### Send instruction to idle agent
+```bash
+./scripts/send-to-agent.sh feat-new-feature "Fix the failing test"
+```
 
-| Script | Purpose |
-|:-------|:--------|
-| `spawn-worker.sh` | Start implementation worker |
-| `spawn-reviewer.sh` | Start PR reviewer |
-| `spawn-agent.sh` | Start generic agent (research, PR comments, etc.) |
-| `kill-agent.sh` | Terminate agent |
-| `launch-agent.sh` | Low-level agent launcher |
-| `orchestrate.sh` | Auto-transition controller |
-| `merge-pr.sh` | PR merge + cleanup |
-| `monitor-agents.sh` | Agent status display |
-| `check-agent-state.sh` | Single agent state |
-| `check-task-completion.sh` | GitHub API status check |
-| `send-to-agent.sh` | Send prompt to agent |
-| `apply-layout.sh` | Arrange tmux panes |
-| `set-role.sh` | Set CLAUDE.md role |
-| `check-worker-launch.sh` | Session start hook |
+### Check PR completion status
+```bash
+./scripts/check-task-completion.sh feature/branch pr-creation
+```
 
-## Notes
-
-- All scripts use `set -euo pipefail` for safety
-- tmux text and Enter are always sent separately with `sleep 1` between
-- Agent state detection uses `-J` flag to handle narrow panes
-- Completion detection uses GitHub API, not tmux output parsing
+### Cleanup after merge (merge-pr.sh does this automatically)
+```bash
+cd "$HOME/.herdr/worktrees/search-hub/<branch>" && git checkout -- CLAUDE.md
+git worktree remove "$HOME/.herdr/worktrees/search-hub/<branch>"
+git branch -d <branch>
+```

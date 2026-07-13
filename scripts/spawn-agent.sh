@@ -28,8 +28,8 @@ set -euo pipefail
 # If no prompt is given after --, Claude starts in interactive mode.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="/workspaces/search-hub"
-WORKTREE_BASE="/workspaces/search-hub--worktrees"
+source "$SCRIPT_DIR/herdr-lib.sh"
+REPO_ROOT="$HERDR_LIB_REPO_ROOT"
 
 BRANCH=""
 PR_NUMBER=""
@@ -90,12 +90,10 @@ elif [ -n "$PR_NUMBER" ]; then
     exit 1
   }
   CREATE_WORKTREE=true
-  BRANCH_DIR=$(echo "$BRANCH" | tr '/' '-')
-  WORK_DIR="$WORKTREE_BASE/$BRANCH_DIR"
+  WORK_DIR="$(worktree_dir_for_branch "$BRANCH")"
   echo "[spawn-agent] Branch: $BRANCH"
 elif [ -n "$BRANCH" ]; then
-  BRANCH_DIR=$(echo "$BRANCH" | tr '/' '-')
-  WORK_DIR="$WORKTREE_BASE/$BRANCH_DIR"
+  WORK_DIR="$(worktree_dir_for_branch "$BRANCH")"
 else
   echo "Usage: spawn-agent.sh <branch-or-pr> [options] [-- <prompt>]" >&2
   echo "       spawn-agent.sh --main [-- <prompt>]" >&2
@@ -141,70 +139,12 @@ if [ -n "$ROLE" ]; then
   "$SCRIPT_DIR/set-role.sh" "$WORK_DIR" "$ROLE"
 fi
 
-# Determine prompt
 if [ -z "$PROMPT" ]; then
-  # Interactive mode - just start Claude
-  PROMPT=""
   echo "[spawn-agent] Starting Claude in interactive mode..."
 else
   echo "[spawn-agent] Starting Claude with prompt..."
 fi
 
-# Launch agent
+# Launch agent (launch-agent.sh handles empty prompt = interactive mode)
 export LAUNCH_AGENT_LABEL="spawn-agent"
-
-if [ -z "$PROMPT" ]; then
-  # For interactive mode, we need to modify launch-agent.sh behavior
-  # Just launch Claude without sending a prompt
-
-  if [ -z "${TMUX:-}" ]; then
-    echo "[spawn-agent] ERROR: Not in a tmux session" >&2
-    exit 1
-  fi
-
-  # Split pane and launch Claude
-  PANE_ID=$(tmux split-window -h -d -c "$WORK_DIR" -P -F '#{pane_id}')
-  echo "[spawn-agent] Agent pane: $PANE_ID"
-
-  # Setup settings and launch
-  WORKER_STATE_DIR="/tmp/claude-agent-states"
-  mkdir -p "$WORKER_STATE_DIR"
-  STATE_FILE="$WORKER_STATE_DIR/$PANE_ID"
-
-  mkdir -p "$WORK_DIR/.claude"
-  cat > "$WORK_DIR/.claude/settings.local.json" << SETTINGS_EOF
-{
-  "permissions": {
-    "allow": [
-      "Bash(*)",
-      "Read(*)",
-      "Write(*)",
-      "Edit(*)",
-      "Grep(*)",
-      "Glob(*)",
-      "mcp__serena__*"
-    ]
-  },
-  "enableAllProjectMcpServers": true,
-  "hooks": {
-    "Stop": [{ "hooks": [{ "type": "command", "command": "echo idle > '$STATE_FILE'" }] }],
-    "PreToolUse": [{ "hooks": [{ "type": "command", "command": "echo working > '$STATE_FILE'", "async": true }] }],
-    "Notification": [
-      { "matcher": "idle_prompt", "hooks": [{ "type": "command", "command": "echo idle > '$STATE_FILE'" }] }
-    ],
-    "SessionStart": [{ "hooks": [{ "type": "command", "command": "echo starting > '$STATE_FILE'" }] }],
-    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "rm -f '$STATE_FILE'" }] }]
-  }
-}
-SETTINGS_EOF
-
-  echo "starting" > "$STATE_FILE"
-
-  tmux send-keys -t "$PANE_ID" "CLAUDE_WORKER_ID='$PANE_ID' claude"
-  sleep 1
-  tmux send-keys -t "$PANE_ID" Enter
-
-  echo "[spawn-agent] Done. Agent running in pane $PANE_ID (interactive mode)"
-else
-  exec "$SCRIPT_DIR/launch-agent.sh" "$WORK_DIR" "$PROMPT"
-fi
+exec "$SCRIPT_DIR/launch-agent.sh" "$WORK_DIR" "$PROMPT"

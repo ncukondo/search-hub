@@ -5,16 +5,16 @@
   },
   "permissions": {
     "allow": [
-      "Bash(tmux capture-pane:*)",
-      "Bash(tmux send-keys:*)",
-      "Bash(tmux list-panes:*)",
-      "Bash(tmux list-windows:*)",
-      "Bash(tmux kill-pane:*)",
-      "Bash(tmux new-session:*)",
-      "Bash(tmux has-session:*)",
-      "Bash(which tmux)",
+      "Bash(herdr status:*)",
+      "Bash(herdr agent:*)",
+      "Bash(herdr pane:*)",
+      "Bash(herdr wait:*)",
+      "Bash(herdr worktree:*)",
+      "Bash(herdr workspace:*)",
+      "Bash(herdr tab:*)",
+      "Bash(herdr notification:*)",
       "Bash(sleep:*)",
-      "Read(/workspaces/search-hub--worktrees/**)"
+      "Read(~/.herdr/worktrees/search-hub/**)"
     ]
   },
   "hooks": {
@@ -35,11 +35,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-worktree-path.sh\""
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-worktree-path.sh"
           },
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/block-force-push.sh\""
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-force-push.sh"
           }
         ]
       }

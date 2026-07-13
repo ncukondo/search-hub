@@ -9,6 +9,9 @@ set -euo pipefail
 #   --background, -b    Run in background (detach from terminal)
 #   --interval <sec>    Check interval in seconds (default: 15)
 #   --main-pane <id>    Main agent pane ID for notifications (auto-detect if omitted)
+#   --stop              Stop a running background orchestrator
+#   --clean             Clear persisted terminal states
+#   --status            Show orchestrator status
 #
 # Model: Detect + Notify only
 #   - Detects state changes in worker/reviewer agents
@@ -18,11 +21,14 @@ set -euo pipefail
 #   - Main agent reads event files and decides what actions to take
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/herdr-lib.sh"
+REPO_ROOT="$HERDR_LIB_REPO_ROOT"
+
 STATE_DIR="/tmp/claude-orchestrator"
 EVENTS_DIR="$STATE_DIR/events"
 LOG_FILE="$STATE_DIR/orchestrator.log"
 PID_FILE="$STATE_DIR/orchestrator.pid"
-WORKTREE_BASE="/workspaces/search-hub--worktrees"
+TERMINAL_STATES_FILE="$STATE_DIR/terminal-states"
 
 BACKGROUND=false
 INTERVAL=15
@@ -45,12 +51,18 @@ while [[ $# -gt 0 ]]; do
       ;;
     --stop)
       if [ -f "$PID_FILE" ]; then
-        kill "$(cat "$PID_FILE")" 2>/dev/null || true
+        PID=$(cat "$PID_FILE")
+        kill "$PID" 2>/dev/null || true
         rm -f "$PID_FILE"
-        echo "[orchestrate] Stopped"
+        echo "[orchestrate] Stopped (PID: $PID)"
       else
         echo "[orchestrate] Not running"
       fi
+      exit 0
+      ;;
+    --clean)
+      rm -f "$TERMINAL_STATES_FILE"
+      echo "[orchestrate] Cleared persisted terminal states"
       exit 0
       ;;
     --status)
@@ -76,11 +88,9 @@ done
 # Setup
 mkdir -p "$STATE_DIR" "$EVENTS_DIR"
 
-# Auto-detect main pane (the pane running in main worktree)
+# Auto-detect main pane (the agent running in the main repo)
 if [ -z "$MAIN_PANE" ]; then
-  # Find pane with cwd = /workspaces/search-hub (not worktrees)
-  MAIN_PANE=$(tmux list-panes -a -F "#{pane_id} #{pane_current_path}" 2>/dev/null | \
-    grep " /workspaces/search-hub$" | head -1 | cut -d' ' -f1 || true)
+  MAIN_PANE=$(find_main_agent_pane)
 fi
 
 log() {
@@ -130,14 +140,13 @@ write_event() {
   notify_main "$event_file"
 }
 
-# Notify main agent about an event (short 1-line notification)
+# Notify main agent about an event (short 1-line notification).
+# `herdr pane run` submits text + Enter atomically (no input races).
 notify_main() {
   local event_file="$1"
 
-  if [ -n "$MAIN_PANE" ] && tmux has-session -t "$MAIN_PANE" 2>/dev/null; then
-    tmux send-keys -t "$MAIN_PANE" "# [ORCH] $(basename "$event_file")" 2>/dev/null || true
-    sleep 0.5
-    tmux send-keys -t "$MAIN_PANE" Enter 2>/dev/null || true
+  if [ -n "$MAIN_PANE" ] && pane_exists "$MAIN_PANE"; then
+    herdr pane run "$MAIN_PANE" "# [ORCH] $(basename "$event_file")" >/dev/null 2>&1 || true
   fi
 }
 
@@ -149,16 +158,9 @@ get_active_branches() {
     grep -v "^main$" || true
 }
 
-# Find pane ID for a branch
+# Find pane ID for a branch (via herdr agent list)
 find_pane_for_branch() {
-  local branch="$1"
-  local branch_dash
-  branch_dash=$(echo "$branch" | tr '/' '-')
-  local worktree_path="$WORKTREE_BASE/$branch_dash"
-
-  # Find pane with matching cwd
-  tmux list-panes -a -F "#{pane_id} #{pane_current_path}" 2>/dev/null | \
-    grep " $worktree_path$" | head -1 | cut -d' ' -f1 || true
+  find_agent_pane_for_branch "$1"
 }
 
 # Get current role from CLAUDE.md
@@ -179,6 +181,36 @@ get_current_role() {
 declare -A BRANCH_STATES
 declare -A BRANCH_LAST_ACTIVITY
 
+# Persist a terminal state to file (survives restarts)
+persist_terminal_state() {
+  local key="$1" state="$2"
+  # Remove old entry, append new
+  if [ -f "$TERMINAL_STATES_FILE" ]; then
+    grep -v "^${key}=" "$TERMINAL_STATES_FILE" > "${TERMINAL_STATES_FILE}.tmp" 2>/dev/null || true
+    mv "${TERMINAL_STATES_FILE}.tmp" "$TERMINAL_STATES_FILE"
+  fi
+  echo "${key}=${state}" >> "$TERMINAL_STATES_FILE"
+}
+
+# Load persisted terminal states (call at startup)
+load_terminal_states() {
+  if [ -f "$TERMINAL_STATES_FILE" ]; then
+    while IFS='=' read -r key state; do
+      [ -n "$key" ] && BRANCH_STATES[$key]="$state"
+    done < "$TERMINAL_STATES_FILE"
+    log "Loaded $(wc -l < "$TERMINAL_STATES_FILE") persisted terminal states"
+  fi
+}
+
+# Clear persisted terminal states for a branch (call on cleanup)
+clear_terminal_states_for_branch() {
+  local branch="$1"
+  if [ -f "$TERMINAL_STATES_FILE" ]; then
+    grep -v "^${branch}:" "$TERMINAL_STATES_FILE" > "${TERMINAL_STATES_FILE}.tmp" 2>/dev/null || true
+    mv "${TERMINAL_STATES_FILE}.tmp" "$TERMINAL_STATES_FILE"
+  fi
+}
+
 # Process a single branch
 process_branch() {
   local branch="$1"
@@ -186,13 +218,7 @@ process_branch() {
   pane_id=$(find_pane_for_branch "$branch")
 
   if [ -z "$pane_id" ]; then
-    # No pane found - might be cleaned up or not yet started
-    return
-  fi
-
-  # Check if pane still exists
-  if ! tmux has-session -t "$pane_id" 2>/dev/null; then
-    log "Branch $branch: pane $pane_id no longer exists"
+    # No agent found - might be cleaned up or not yet started
     return
   fi
 
@@ -221,6 +247,28 @@ process_branch() {
         "$pr_num" "$pane_id"
 
       BRANCH_STATES[$state_key]="error"
+    fi
+    return
+  fi
+
+  # Blocked on a dialog/permission prompt (e.g. auto-mode fallback,
+  # MCP/trust dialog) - notify main once so it can intervene
+  if [ "$agent_state" = "permission" ]; then
+    if [ "$prev_state" != "blocked-notified" ]; then
+      local pr_num
+      pr_num=$(gh pr list --head "$branch" --json number --jq '.[0].number' 2>/dev/null || true)
+
+      write_event "$branch" "agent-blocked" \
+        "Agent is blocked on a prompt/dialog (role: $role)." \
+        "# Inspect the pane
+herdr agent read $pane_id --lines 30
+# Accept a dialog
+herdr pane send-keys $pane_id Enter
+# Or restart the agent
+./scripts/kill-agent.sh $pane_id" \
+        "$pr_num" "$pane_id"
+
+      BRANCH_STATES[$state_key]="blocked-notified"
     fi
     return
   fi
@@ -285,6 +333,7 @@ process_implement_completion() {
           "$pr_num" "$pane_id"
 
         BRANCH_STATES["${branch}:implement"]="transitioned"
+        persist_terminal_state "${branch}:implement" "transitioned"
       else
         if [ "${BRANCH_STATES["${branch}:implement"]:-}" != "no-pr-notified" ]; then
           write_event "$branch" "worker-completed" \
@@ -294,6 +343,7 @@ gh pr list --head $branch" \
             "" "$pane_id"
 
           BRANCH_STATES["${branch}:implement"]="no-pr-notified"
+          persist_terminal_state "${branch}:implement" "no-pr-notified"
         fi
       fi
       ;;
@@ -372,11 +422,11 @@ gh pr list --head $branch" \
         "PR #$pr_num has been approved by the reviewer." \
         "# Kill reviewer and merge PR
 ./scripts/kill-agent.sh $pane_id
-gh pr merge $pr_num --squash --delete-branch
-git worktree remove $WORKTREE_BASE/$branch_dash --force" \
+./scripts/merge-pr.sh $pr_num" \
         "$pr_num" "$pane_id"
 
       BRANCH_STATES["${branch}:review"]="approved"
+      persist_terminal_state "${branch}:review" "approved"
       ;;
 
     changes_requested)
@@ -394,11 +444,13 @@ $review_body" \
         "$pr_num" "$pane_id"
 
       BRANCH_STATES["${branch}:review"]="fix-requested"
+      persist_terminal_state "${branch}:review" "fix-requested"
 
       # Clear implement terminal states to allow re-processing after fix
       unset 'BRANCH_STATES["${branch}:implement"]' 2>/dev/null || true
       unset 'BRANCH_STATES["${branch}:implement:ci-failed"]' 2>/dev/null || true
       unset 'BRANCH_STATES["${branch}:implement:error"]' 2>/dev/null || true
+      clear_terminal_states_for_branch "${branch}:implement"
       ;;
 
     commented)
@@ -415,6 +467,7 @@ gh pr view $pr_num --comments" \
         "$pr_num" "$pane_id"
 
       BRANCH_STATES["${branch}:review"]="commented"
+      persist_terminal_state "${branch}:review" "commented"
       ;;
 
     pending)
@@ -438,10 +491,11 @@ gh pr view $pr_num --comments" \
 # Main loop
 main_loop() {
   log "Orchestrator started (interval: ${INTERVAL}s, main pane: ${MAIN_PANE:-none}, events: $EVENTS_DIR)"
+  load_terminal_states
 
   while true; do
     # Main agent liveness check
-    if [ -n "$MAIN_PANE" ] && ! tmux has-session -t "$MAIN_PANE" 2>/dev/null; then
+    if [ -n "$MAIN_PANE" ] && ! pane_exists "$MAIN_PANE"; then
       log "Main agent pane $MAIN_PANE no longer exists. Stopping orchestrator."
       rm -f "$PID_FILE"
       exit 0
@@ -455,17 +509,26 @@ main_loop() {
   done
 }
 
+# Guard: prevent concurrent instances
+if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+  echo "[orchestrate] Already running (PID: $(cat "$PID_FILE"))"
+  exit 0
+fi
+
 # Run
 if [ "$BACKGROUND" = true ]; then
-  # Daemonize
-  echo $$ > "$PID_FILE"
-  exec >> "$LOG_FILE" 2>&1
-  main_loop &
-  disown
-  echo "[orchestrate] Started in background (PID: $$)"
+  # Print info BEFORE redirecting stdout
   echo "[orchestrate] Log: $LOG_FILE"
   echo "[orchestrate] Events: $EVENTS_DIR"
   echo "[orchestrate] Stop: $0 --stop"
+
+  # Start main_loop in background with log redirection
+  main_loop >> "$LOG_FILE" 2>&1 &
+  LOOP_PID=$!
+  echo "$LOOP_PID" > "$PID_FILE"
+  disown "$LOOP_PID"
+
+  echo "[orchestrate] Started in background (PID: $LOOP_PID)"
 else
   # Foreground
   echo $$ > "$PID_FILE"

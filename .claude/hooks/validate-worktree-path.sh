@@ -4,10 +4,10 @@
 
 set -euo pipefail
 
-# Determine allowed worktree parent dynamically from project directory
+# Worktrees live under herdr's checkout base for this repo
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
-PARENT_DIR="$(dirname "$PROJECT_DIR")"
-ALLOWED_PARENT="${PARENT_DIR}/search-hub--worktrees"
+PROJECT_NAME="$(basename "$PROJECT_DIR")"
+ALLOWED_PARENT="${HOME}/.herdr/worktrees/${PROJECT_NAME}"
 
 # Read JSON input from stdin
 input=$(cat)
@@ -73,5 +73,5 @@ fi
 
 echo "Error: Worktree must be created under ${ALLOWED_PARENT}/" >&2
 echo "Requested path: $target_path" >&2
-echo "Example: git worktree add ${ALLOWED_PARENT}/<branch-name> <branch>" >&2
+echo "Example: git worktree add ${ALLOWED_PARENT}/<branch-name> -b <branch-name>" >&2
 exit 2

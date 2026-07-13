@@ -5,7 +5,7 @@ description: Implements a task from spec/tasks in a git worktree following TDD. 
 
 # Task Implementation: $ARGUMENTS
 
-spec/tasks内の `[prefix]-*$ARGUMENTS*.md` に一致するタスクファイルの実装に取り組みます。
+CLAUDE.md, spec/README.mdを起点として必要事項を確認後、spec/tasks内の `[prefix]-*$ARGUMENTS*.md` に一致するタスクファイルの実装に取り組みます（ファイルは該当のブランチ内, worktree内にしか無いことがあります）。
 
 ## Prerequisites
 
@@ -19,12 +19,13 @@ spec/tasks内の `[prefix]-*$ARGUMENTS*.md` に一致するタスクファイル
 
 ```bash
 # worktree作成（ブランチがなければ自動作成）
-git worktree add /workspaces/search-hub--worktrees/<branch-name> -b <branch-name>
-cd /workspaces/search-hub--worktrees/<branch-name>
+PROJECT_NAME="$(basename "$(git rev-parse --show-toplevel)")"
+git worktree add "$HOME/.herdr/worktrees/${PROJECT_NAME}/<branch-name>" -b <branch-name>
+cd "$HOME/.herdr/worktrees/${PROJECT_NAME}/<branch-name>"
 npm install
 ```
 
-**パス規則**: worktreeは必ず `/workspaces/search-hub--worktrees/` 内に作成
+**パス規則**: worktreeは必ず `~/.herdr/worktrees/search-hub/` 内に作成（herdrのworktreeベースと共通）
 
 ## Implementation Flow
 

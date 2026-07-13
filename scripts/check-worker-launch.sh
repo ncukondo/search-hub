@@ -11,9 +11,9 @@ if [[ -n "${CLAUDE_WORKER_ID:-}" ]]; then
   exit 0
 fi
 
-# Check if we're in a worktree (search-hub specific)
+# Check if we're in a worktree
 CWD=$(pwd)
-if [[ "$CWD" == *"--worktrees"* ]]; then
+if [[ "$CWD" == *"--worktrees"* || "$CWD" == "$HOME/.herdr/worktrees/"* ]]; then
   # In a worktree but no WORKER_ID - block with helpful message
   cat << 'EOF'
 {

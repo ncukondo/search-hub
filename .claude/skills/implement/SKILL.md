@@ -21,10 +21,11 @@ spec/tasks/ROADMAP.md を確認し、並列実装可能なタスクを分析し�
 - タスク分析と優先順位付け
 - ワーカーのスポーン・監視
 - オーケストレーション管理
+- レビュー結果の報告・ユーザー判断の仲介
 - マージとROADMAP更新
 
 ## Planned Tasks
-!`grep "Planned" spec/tasks/ROADMAP.md`
+!`grep "Planned\|Pending" spec/tasks/ROADMAP.md`
 
 ## Active Worktrees
 !`git worktree list`
@@ -33,17 +34,17 @@ spec/tasks/ROADMAP.md を確認し、並列実装可能なタスクを分析し�
 
 ### 1. Task Analysis
 
-- Check spec/tasks/ROADMAP.md for "Planned" tasks
+- Check spec/tasks/ROADMAP.md for "Planned"/"Pending" tasks
 - Identify tasks with satisfied dependencies (parallel candidates)
 - Select tasks to implement
   - Multiple parallelizable tasks → use spawn-worker.sh
 
 ### 2. Spawn Workers
 
-**Pane limit: max 4 workers** (main + 4 workers = 5 panes).
-Before spawning, check current pane count:
+**Worker limit: max 4 workers** (plus the main agent).
+Before spawning, check current agent count:
 ```bash
-tmux list-panes | wc -l  # Must be < 5
+./scripts/monitor-agents.sh  # workers (non-main rows) must be < 4
 ```
 If 5+ tasks exist, spawn sequentially — wait for one to complete before spawning the next.
 
@@ -53,72 +54,88 @@ If 5+ tasks exist, spawn sequentially — wait for one to complete before spawni
 ```
 
 spawn-worker.sh automatically:
-1. Creates worktree at `search-hub--worktrees/<branch-name>`
+1. Creates worktree at `~/.herdr/worktrees/search-hub/<branch-name>`
 2. Runs npm install
-3. Creates new pane in current window
-4. Starts Claude with the task
+3. Opens a herdr workspace and starts Claude with the task (--permission-mode auto)
 
 ### 3. Start Orchestration
 
-After spawning all workers:
-
 ```bash
-# Background orchestration (recommended)
 ./scripts/orchestrate.sh --background
 ```
 
-Orchestrator automatically:
-- Worker completion → spawns Reviewer
-- Reviewer approval → notifies main agent
-- Changes requested → sends fix instructions
-- Errors → notifies main agent
+Orchestrator (detect + notify model):
+- Detects agent state changes (idle, error, etc.)
+- Writes event files to `/tmp/claude-orchestrator/events/`
+- Sends 1-line notification to main agent pane
+- Does **NOT** auto-execute actions — main agent decides
 
-### 4. Apply Layout
+### 4. Monitor Implementation
 
+Periodically check worker progress:
 ```bash
-./scripts/apply-layout.sh
+herdr agent read <pane-id> --lines 30
 ```
 
-### 5. Monitor (optional)
+**Context exhaustion handling:**
+If agent output shows signs of context exhaustion (repetitive output, no progress):
+1. Send commit instruction: `./scripts/send-to-agent.sh <pane-id> "現状をcommitしてpushしてください"`
+2. Wait for commit, then kill: `./scripts/kill-agent.sh <pane-id>`
+3. Re-spawn: `./scripts/spawn-worker.sh <branch-name> <task-keyword>`
+
+**Blocked (permission) handling:**
+If `check-agent-state.sh` reports `permission`, or the orchestrator sends an `agent-blocked` event:
+1. Inspect the pane: `herdr agent read <pane-id> --lines 30`
+2. Startup dialog (MCP/trust confirmation) → accept it: `herdr pane send-keys <pane-id> Enter`
+3. Auto-mode fallback to manual prompts, or an unexpected interactive prompt → kill and re-spawn:
+   `./scripts/kill-agent.sh <pane-id>` then `./scripts/spawn-worker.sh <branch-name> <task-keyword>`
+
+### 5. Implementation Complete → Kill → Spawn Reviewer
+
+When worker finishes (PR created, visible in pane output):
+1. Confirm PR exists: `gh pr list --head <branch>`
+2. Kill implementation agent: `./scripts/kill-agent.sh <pane-id>`
+3. Spawn reviewer: `./scripts/spawn-reviewer.sh --pr <pr-number>`
+
+### 6. Review Complete → Report to User
+
+When reviewer finishes (review comment posted, visible in pane output):
+1. Confirm review posted: `gh pr view <pr-number> --json reviews`
+2. Kill reviewer: `./scripts/kill-agent.sh <pane-id>`
+3. **Report ALL findings to user** (minor含む全件報告):
+   - Critical/Major issues
+   - Minor issues and suggestions
+   - Test/CI status
+4. **Ask user for decision** — merge or fix
+
+### 7. Fix (if user requests)
+
+When user requests fixes for review findings:
+1. Launch fix agent with specific instructions:
+   ```bash
+   ./scripts/launch-agent.sh <worktree-dir> "<fix instructions>"
+   ```
+2. Monitor until complete
+3. Kill fix agent: `./scripts/kill-agent.sh <pane-id>`
+4. Report to user and ask for next action (re-review or merge)
+
+### 8. Merge (after user approval)
 
 ```bash
-# Check orchestrator status
-./scripts/orchestrate.sh --status
-
-# View logs
-tail -f /tmp/claude-orchestrator/orchestrator.log
-
-# View notifications
-cat /tmp/claude-orchestrator/notifications
+./scripts/merge-pr.sh <pr-number>
 ```
 
-### 6. Review Report (main agent only)
-
-レビュー完了の通知を受けたら：
-1. PRのレビュー結果を取得する（`gh api repos/<owner>/<repo>/pulls/<PR>/reviews`）
-2. **Minor/Suggestions を含む全指摘事項をユーザーに報告する**
-3. ユーザーの判断を仰ぐ（マージ / 修正対応 / 保留）
-
-**ユーザーの明示的な承認なしにマージしないこと。**
-
-### 7. Merge (main agent only)
-
-ユーザーからマージの承認を得たら：
-```bash
-gh pr merge <pr-number> --squash --delete-branch
-git worktree remove <path> --force
-git branch -D <branch>
-```
-
-### 8. Post-Merge (main branch)
+### 9. Post-Merge (main branch)
 
 - Update ROADMAP.md status to "Done"
 - Move task file to `spec/tasks/completed/`
+- Clean up worktree if needed: `git worktree remove <path>`
 
 ## Notes
 
 - **メインエージェントは直接コードを書かない・テストを実行しない・レビューしない・調査しない**
-- All agents run in panes within the same tmux window
+- All agents run in herdr workspaces (one workspace per worktree)
 - Use `git worktree list` to see all worktrees
 - Use `./scripts/monitor-agents.sh` to see agent states
+- Orchestrator commands: `--status`, `--stop`, `--clean` (clear persisted states)
 - Be aware of dependency conflicts during parallel work

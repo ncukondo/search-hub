@@ -37,7 +37,7 @@ case "$TASK_TYPE" in
 
     PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
 
-    # Check CI status using 'bucket' field (normalized: pass, fail, pending, skipping, cancel)
+    # Check CI status using `bucket` field for normalized status
     FAILED_CHECKS=$(gh pr checks "$PR_NUM" --json name,bucket \
       --jq '.[] | select(.bucket == "fail" or .bucket == "cancel") | .name' \
       2>/dev/null || true)
