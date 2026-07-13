@@ -122,9 +122,10 @@ fi
 # Switch to main and pull
 log "Updating main branch..."
 run git checkout main 2>/dev/null || true
-run git pull --ff-only origin main || {
-  # If fast-forward fails, try regular pull
-  run git pull origin main
+# --autostash tolerates a dirty tree (pull.rebase=true refuses to run with
+# unstaged changes otherwise); --ff-only can fail when main has local commits.
+run git pull --ff-only --autostash origin main || {
+  run git pull --rebase --autostash origin main
 }
 
 # Remove worktree if exists
@@ -193,6 +194,17 @@ if [ "$SKIP_TASK" = false ]; then
   # type prefix — feat/, fix/, refactor/, chore/, ...)
   BRANCH_SHORT=$(echo "$BRANCH" | sed 's|^[^/]*/||' | tr '/' '-')
   TASK_FILE=$(find spec/tasks -maxdepth 1 \( -name "*${BRANCH_DIR}*" -o -name "*${BRANCH_SHORT}*" \) 2>/dev/null | head -1 || true)
+
+  # Fallback: branch and task file names often differ slightly
+  # (e.g. branch rate-limiter-jitter vs task rate-limiter-backoff-jitter).
+  # Try the last token of the branch name, but only on a unique match.
+  if [ -z "$TASK_FILE" ]; then
+    LAST_TOKEN="${BRANCH_SHORT##*-}"
+    MATCHES=$(find spec/tasks -maxdepth 1 -name "*${LAST_TOKEN}*.md" 2>/dev/null || true)
+    if [ -n "$MATCHES" ] && [ "$(echo "$MATCHES" | wc -l)" -eq 1 ]; then
+      TASK_FILE="$MATCHES"
+    fi
+  fi
 
   if [ -n "$TASK_FILE" ] && [ -f "$TASK_FILE" ]; then
     TASK_BASENAME=$(basename "$TASK_FILE")

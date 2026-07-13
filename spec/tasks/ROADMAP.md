@@ -143,7 +143,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 134 | Query Path を .search-hub/queries/ に統一 (#143) | 130, 127, 128 | ✅ Completed | [20260309-01](completed/20260309-01-query-path-to-project-dir.md) |
 | 135 | Register Articles with Alternative Identifiers (#151) | 11 | ✅ Completed | [20260712-01](completed/20260712-01-register-alt-identifiers.md) |
 | 136 | Self-Upgrade Command + Update Notification | 129 | ✅ Completed | [20260712-02](completed/20260712-02-self-upgrade.md) |
-| 137 | Rate Limiter Backoff Jitter (#4) | 5 | 📋 Planned | [20260713-01](20260713-01-rate-limiter-backoff-jitter.md) |
+| 137 | Rate Limiter Backoff Jitter (#4) | 5 | ✅ Completed | [20260713-01](completed/20260713-01-rate-limiter-backoff-jitter.md) |
 
 ## Development Flow
 
