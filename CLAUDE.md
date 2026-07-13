@@ -42,12 +42,5 @@ Notes:
 - herdr CLI exits 0 even on failure; errors come back as `{"error": ...}` JSON. Check the payload.
 - After sending a prompt, wait for `working` first, then `done`. Waiting for `done` right away can return immediately because the previous task's `done` state persists until the new task starts.
 - Startup dialogs (MCP confirmation etc.) can be reported as `idle`. Never treat `idle` alone as task completion; verify with `herdr agent read` or `gh`.
-- `herdr pane run` submits text + Enter atomically — no send-keys races, no sleep needed.
-
-## Review Agent Instructions
-
-You are a review agent for a PR in this worktree.
-
-### Responsibilities
-- **All PR comments and review bodies MUST be in English**
-<!-- role: implement -->
+- `herdr pane run` types text + Enter, but with the Claude TUI the Enter can be swallowed, leaving the prompt unsubmitted in the input box. `send-to-agent.sh` handles this (verifies the agent goes `working`, nudges with Enter otherwise) — another reason to prefer the wrapper over raw `herdr pane run`.
+- Pane captures may show ghost/suggestion text on the `❯` input line (e.g. a suggested slash command). It is not real input — don't react to it.

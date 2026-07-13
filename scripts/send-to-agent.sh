@@ -37,6 +37,36 @@ if [ "$STATE" != "idle" ] && [ "$STATE" != "done" ] && [ "$STATE" != "unknown" ]
 fi
 
 echo "[send-to-agent] Sending prompt to pane $PANE_ID..."
-herdr pane run "$PANE_ID" "$PROMPT" >/dev/null
+RUN_OUT=$(herdr pane run "$PANE_ID" "$PROMPT" 2>/dev/null || true)
+if [ -z "$RUN_OUT" ] || echo "$RUN_OUT" | jq -e '.error' >/dev/null 2>&1; then
+  echo "[send-to-agent] ERROR: herdr pane run failed: $(echo "$RUN_OUT" | jq -r '.error.message // "no response"')" >&2
+  exit 1
+fi
 
-echo "[send-to-agent] Prompt sent successfully"
+# `herdr pane run` is supposed to submit text + Enter atomically, but with the
+# Claude TUI the Enter can be swallowed, leaving the prompt sitting in the
+# input box. Verify the agent actually starts working; nudge with an explicit
+# Enter if it stays idle. (Enter on an empty/submitted input box is a no-op.)
+for attempt in 1 2 3; do
+  sleep 2
+  STATE=$(agent_status "$PANE_ID")
+  case "$STATE" in
+    working|blocked)
+      echo "[send-to-agent] Prompt submitted (state: $STATE)"
+      exit 0
+      ;;
+  esac
+  herdr pane send-keys "$PANE_ID" Enter >/dev/null 2>&1 || true
+done
+
+STATE=$(agent_status "$PANE_ID")
+case "$STATE" in
+  working|blocked|done)
+    echo "[send-to-agent] Prompt submitted (state: $STATE)"
+    ;;
+  *)
+    echo "[send-to-agent] WARNING: Could not confirm submission (state: $STATE)." >&2
+    echo "[send-to-agent] Inspect with: herdr agent read $PANE_ID --lines 20" >&2
+    exit 1
+    ;;
+esac
