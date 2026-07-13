@@ -229,6 +229,7 @@ describe('RateLimiter', () => {
       const limiter = new RateLimiter({
         initialBackoff: 100,
         maxBackoff: 10000,
+        random: () => 0.5, // jitter factor 1.0 for exact timing
       });
 
       // First call should wait initialBackoff
@@ -251,6 +252,7 @@ describe('RateLimiter', () => {
       const limiter = new RateLimiter({
         initialBackoff: 1000,
         maxBackoff: 2000,
+        random: () => 0.5, // jitter factor 1.0 for exact timing
       });
 
       // First call
@@ -273,6 +275,7 @@ describe('RateLimiter', () => {
       const limiter = new RateLimiter({
         initialBackoff: 100,
         maxBackoff: 10000,
+        random: () => 0.5, // jitter factor 1.0 for exact timing
       });
 
       // Build up backoff
@@ -293,6 +296,21 @@ describe('RateLimiter', () => {
       await p3;
     });
 
+    it('uses the injected random source for backoff', async () => {
+      const random = vi.fn().mockReturnValue(0.5);
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 10000,
+        random,
+      });
+
+      const promise = limiter.handleRateLimit();
+      vi.advanceTimersByTime(100);
+      await promise;
+
+      expect(random).toHaveBeenCalled();
+    });
+
     it('respects Retry-After even when backoff is higher', async () => {
       const limiter = new RateLimiter({
         initialBackoff: 5000,
@@ -303,6 +321,113 @@ describe('RateLimiter', () => {
       const promise = limiter.handleRateLimit(1000);
       vi.advanceTimersByTime(1000);
       await promise;
+    });
+  });
+
+  describe('backoff jitter', () => {
+    /** Assert that the promise resolves after exactly `ms` (not before). */
+    async function expectSleepsFor(promise: Promise<void>, ms: number): Promise<void> {
+      let resolved = false;
+      void promise.then(() => {
+        resolved = true;
+      });
+      await vi.advanceTimersByTimeAsync(ms - 1);
+      expect(resolved).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(resolved).toBe(true);
+    }
+
+    it('sleeps exactly currentBackoff when random() = 0.5 (factor 1.0)', async () => {
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 10000,
+        random: () => 0.5,
+      });
+
+      await expectSleepsFor(limiter.handleRateLimit(), 100);
+    });
+
+    it('sleeps 0.75 * currentBackoff when random() = 0', async () => {
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 10000,
+        random: () => 0,
+      });
+
+      await expectSleepsFor(limiter.handleRateLimit(), 75);
+    });
+
+    it('sleeps 1.25 * currentBackoff when random() = 1', async () => {
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 10000,
+        random: () => 1,
+      });
+
+      await expectSleepsFor(limiter.handleRateLimit(), 125);
+    });
+
+    it('jittered delay never exceeds maxBackoff', async () => {
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 110,
+        random: () => 1,
+      });
+
+      // 100 * 1.25 = 125, capped at maxBackoff 110
+      await expectSleepsFor(limiter.handleRateLimit(), 110);
+    });
+
+    it('currentBackoff still doubles deterministically regardless of jitter', async () => {
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 10000,
+        random: () => 0,
+      });
+
+      // Growth is 100 -> 200 -> 400; sleep is always 0.75x of the current value
+      await expectSleepsFor(limiter.handleRateLimit(), 75);
+      await expectSleepsFor(limiter.handleRateLimit(), 150);
+      await expectSleepsFor(limiter.handleRateLimit(), 300);
+    });
+
+    it('default Math.random produces varying delays within [0.75, 1.25) * backoff', async () => {
+      const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+      const delays: number[] = [];
+
+      for (let i = 0; i < 100; i++) {
+        // No random option: default Math.random is used
+        const limiter = new RateLimiter({ initialBackoff: 1000, maxBackoff: 60000 });
+        const promise = limiter.handleRateLimit();
+
+        const lastCall = setTimeoutSpy.mock.calls.at(-1);
+        delays.push(Number(lastCall?.[1]));
+
+        await vi.advanceTimersByTimeAsync(1250);
+        await promise;
+      }
+
+      for (const delay of delays) {
+        expect(delay).toBeGreaterThanOrEqual(750);
+        expect(delay).toBeLessThan(1250);
+      }
+
+      // Sanity check that jitter actually varies the delays
+      expect(new Set(delays).size).toBeGreaterThan(1);
+
+      setTimeoutSpy.mockRestore();
+    });
+
+    it('does not apply jitter to the retryAfter path', async () => {
+      const random = vi.fn().mockReturnValue(0);
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 10000,
+        random,
+      });
+
+      await expectSleepsFor(limiter.handleRateLimit(1000), 1000);
+      expect(random).not.toHaveBeenCalled();
     });
   });
 });

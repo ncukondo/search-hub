@@ -11,6 +11,8 @@ export interface RateLimiterOptions {
   initialBackoff?: number;
   /** Maximum backoff time in ms */
   maxBackoff?: number;
+  /** Random source for backoff jitter, in [0, 1). Defaults to Math.random */
+  random?: () => number;
 }
 
 const DEFAULT_OPTIONS: Required<RateLimiterOptions> = {
@@ -18,6 +20,7 @@ const DEFAULT_OPTIONS: Required<RateLimiterOptions> = {
   burstSize: 3,
   initialBackoff: 1000,
   maxBackoff: 60000,
+  random: Math.random,
 };
 
 /**
@@ -35,12 +38,14 @@ export class RateLimiter {
   private readonly initialBackoff: number;
   private readonly maxBackoff: number;
   private currentBackoff: number;
+  private readonly random: () => number;
 
   constructor(options: RateLimiterOptions = {}) {
     this.tokensPerSecond = options.tokensPerSecond ?? DEFAULT_OPTIONS.tokensPerSecond;
     this.burstSize = options.burstSize ?? DEFAULT_OPTIONS.burstSize;
     this.initialBackoff = options.initialBackoff ?? DEFAULT_OPTIONS.initialBackoff;
     this.maxBackoff = options.maxBackoff ?? DEFAULT_OPTIONS.maxBackoff;
+    this.random = options.random ?? DEFAULT_OPTIONS.random;
     this.tokens = this.burstSize;
     this.lastRefill = Date.now();
     this.currentBackoff = this.initialBackoff;
@@ -116,8 +121,9 @@ export class RateLimiter {
 
   /**
    * Handle a rate limit response (429) by waiting.
-   * If retryAfter is provided, waits that long.
-   * Otherwise, uses exponential backoff.
+   * If retryAfter is provided, waits exactly that long (no jitter).
+   * Otherwise, uses exponential backoff with random jitter (±25%)
+   * to avoid thundering-herd retries across concurrent clients.
    * @param retryAfter Optional time to wait in milliseconds (from Retry-After header)
    */
   async handleRateLimit(retryAfter?: number): Promise<void> {
@@ -126,10 +132,12 @@ export class RateLimiter {
       return;
     }
 
-    // Use exponential backoff
-    await this.sleep(this.currentBackoff);
+    // Exponential backoff with jitter factor in [0.75, 1.25)
+    const jitter = 1 + (this.random() - 0.5) * 0.5;
+    const delay = Math.min(this.currentBackoff * jitter, this.maxBackoff);
+    await this.sleep(delay);
 
-    // Increase backoff for next time (exponential with cap)
+    // Backoff growth stays deterministic (exponential with cap)
     this.currentBackoff = Math.min(this.currentBackoff * 2, this.maxBackoff);
   }
 
