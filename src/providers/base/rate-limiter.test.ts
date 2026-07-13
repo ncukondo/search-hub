@@ -391,6 +391,33 @@ describe('RateLimiter', () => {
       await expectSleepsFor(limiter.handleRateLimit(), 300);
     });
 
+    it('default Math.random produces varying delays within [0.75, 1.25) * backoff', async () => {
+      const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+      const delays: number[] = [];
+
+      for (let i = 0; i < 100; i++) {
+        // No random option: default Math.random is used
+        const limiter = new RateLimiter({ initialBackoff: 1000, maxBackoff: 60000 });
+        const promise = limiter.handleRateLimit();
+
+        const lastCall = setTimeoutSpy.mock.calls.at(-1);
+        delays.push(Number(lastCall?.[1]));
+
+        await vi.advanceTimersByTimeAsync(1250);
+        await promise;
+      }
+
+      for (const delay of delays) {
+        expect(delay).toBeGreaterThanOrEqual(750);
+        expect(delay).toBeLessThan(1250);
+      }
+
+      // Sanity check that jitter actually varies the delays
+      expect(new Set(delays).size).toBeGreaterThan(1);
+
+      setTimeoutSpy.mockRestore();
+    });
+
     it('does not apply jitter to the retryAfter path', async () => {
       const random = vi.fn().mockReturnValue(0);
       const limiter = new RateLimiter({

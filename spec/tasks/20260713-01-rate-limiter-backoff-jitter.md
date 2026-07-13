@@ -64,10 +64,13 @@ Each step follows the TDD cycle: Red → Green → Refactor.
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Verify existing rate limiter tests still pass unchanged (backward compatibility)
-- [ ] Statistical test with real `Math.random` (no stub): over many calls, sleep durations vary within [0.75, 1.25] × backoff
-- [ ] Run full test suite: `npm test`
-- [ ] Acceptance: all tests pass, default behavior (no `random` option) uses jitter
+- [x] Verify existing rate limiter tests still pass unchanged (backward compatibility)
+      (three exact-timing tests stub `random: () => 0.5` — see Step 2 note)
+- [x] Statistical test with real `Math.random` (no stub): over many calls, sleep durations vary within [0.75, 1.25] × backoff
+- [x] Run full test suite: `npm test`
+      (unit + e2e pass; api-project failures are environmental `fetch failed`
+      network errors, unrelated to this change)
+- [x] Acceptance: all tests pass, default behavior (no `random` option) uses jitter
 
 ## Notes
 
