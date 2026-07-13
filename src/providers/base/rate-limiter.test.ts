@@ -293,6 +293,21 @@ describe('RateLimiter', () => {
       await p3;
     });
 
+    it('uses the injected random source for backoff', async () => {
+      const random = vi.fn().mockReturnValue(0.5);
+      const limiter = new RateLimiter({
+        initialBackoff: 100,
+        maxBackoff: 10000,
+        random,
+      });
+
+      const promise = limiter.handleRateLimit();
+      vi.advanceTimersByTime(100);
+      await promise;
+
+      expect(random).toHaveBeenCalled();
+    });
+
     it('respects Retry-After even when backoff is higher', async () => {
       const limiter = new RateLimiter({
         initialBackoff: 5000,

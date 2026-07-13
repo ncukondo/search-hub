@@ -37,13 +37,13 @@ Notes:
 
 Each step follows the TDD cycle: Red → Green → Refactor.
 
-- [ ] Step 1: Injectable random source
-  - [ ] Write test: `RateLimiterOptions.random` is used by `handleRateLimit` (pass a stub returning fixed values)
-  - [ ] Verify test fails (Red)
-  - [ ] Add `random?: () => number` option, default `Math.random`
-  - [ ] Verify test passes (Green)
-  - [ ] Run `npm run lint && npm run typecheck`
-  - [ ] Acceptance: stubbed random source is observed by handleRateLimit
+- [x] Step 1: Injectable random source
+  - [x] Write test: `RateLimiterOptions.random` is used by `handleRateLimit` (pass a stub returning fixed values)
+  - [x] Verify test fails (Red)
+  - [x] Add `random?: () => number` option, default `Math.random`
+  - [x] Verify test passes (Green)
+  - [x] Run `npm run lint && npm run typecheck`
+  - [x] Acceptance: stubbed random source is observed by handleRateLimit
 
 - [ ] Step 2: Jitter applied to backoff sleep
   - [ ] Write tests (use fake timers + stubbed random):

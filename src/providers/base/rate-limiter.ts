@@ -11,6 +11,8 @@ export interface RateLimiterOptions {
   initialBackoff?: number;
   /** Maximum backoff time in ms */
   maxBackoff?: number;
+  /** Random source for backoff jitter, in [0, 1). Defaults to Math.random */
+  random?: () => number;
 }
 
 const DEFAULT_OPTIONS: Required<RateLimiterOptions> = {
@@ -18,6 +20,7 @@ const DEFAULT_OPTIONS: Required<RateLimiterOptions> = {
   burstSize: 3,
   initialBackoff: 1000,
   maxBackoff: 60000,
+  random: Math.random,
 };
 
 /**
@@ -35,12 +38,14 @@ export class RateLimiter {
   private readonly initialBackoff: number;
   private readonly maxBackoff: number;
   private currentBackoff: number;
+  private readonly random: () => number;
 
   constructor(options: RateLimiterOptions = {}) {
     this.tokensPerSecond = options.tokensPerSecond ?? DEFAULT_OPTIONS.tokensPerSecond;
     this.burstSize = options.burstSize ?? DEFAULT_OPTIONS.burstSize;
     this.initialBackoff = options.initialBackoff ?? DEFAULT_OPTIONS.initialBackoff;
     this.maxBackoff = options.maxBackoff ?? DEFAULT_OPTIONS.maxBackoff;
+    this.random = options.random ?? DEFAULT_OPTIONS.random;
     this.tokens = this.burstSize;
     this.lastRefill = Date.now();
     this.currentBackoff = this.initialBackoff;
@@ -127,6 +132,7 @@ export class RateLimiter {
     }
 
     // Use exponential backoff
+    this.random();
     await this.sleep(this.currentBackoff);
 
     // Increase backoff for next time (exponential with cap)
