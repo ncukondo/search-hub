@@ -18,7 +18,6 @@
     "typescript/no-unsafe-type-assertion": "warn",
     "typescript/no-unnecessary-type-assertion": "error",
     "typescript/explicit-function-return-type": "off",
-    "import/no-unresolved": "off",
     "import/no-dynamic-require": ["warn", { "esmodule": true }]
   },
   "ignorePatterns": ["dist", "node_modules", "coverage"]

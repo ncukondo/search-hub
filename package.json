@@ -65,23 +65,23 @@
     "@iarna/toml": "^3.0.0",
     "@ncukondo/academic-fulltext": "^0.2.6",
     "cli-progress": "^3.12.0",
-    "commander": "^13.0.0",
-    "dotenv": "^17.2.3",
+    "commander": "^13.1.0",
+    "dotenv": "^17.4.2",
     "env-paths": "^3.0.0",
-    "fast-xml-parser": "^5.3.3",
-    "ora": "^8.1.1",
-    "yaml": "^2.6.1",
-    "zod": "^4.3.5"
+    "fast-xml-parser": "^5.10.1",
+    "ora": "^8.2.0",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/cli-progress": "^3.11.6",
-    "@types/node": "^22.10.5",
+    "@types/node": "^22.20.1",
     "husky": "^9.1.7",
     "oxfmt": "^0.21.0",
-    "oxlint": "^1.36.0",
+    "oxlint": "^1.74.0",
     "typescript": "^5.7.2",
-    "vite": "^6.0.7",
-    "vite-plugin-dts": "^4.4.0",
-    "vitest": "^3.0.2"
+    "vite": "^6.4.3",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^3.2.7"
   }
 }
