@@ -12,10 +12,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
 import {
   parseIdentifierFile,
   checkCoverage,
@@ -141,11 +138,11 @@ describe('search-hub check E2E', () => {
 
       const fileContent = [
         '# Known articles from prior review',
-        '10.1000/med.2024.001',       // found (Article 1)
-        '10.1000/med.2024.002',       // found (Article 2)
-        '10.9999/not-in-results',     // missing
-        'PMID:33333333',              // found (Article 3)
-        '99999999',                   // missing PMID
+        '10.1000/med.2024.001', // found (Article 1)
+        '10.1000/med.2024.002', // found (Article 2)
+        '10.9999/not-in-results', // missing
+        'PMID:33333333', // found (Article 3)
+        '99999999', // missing PMID
       ].join('\n');
 
       const identifiers = parseIdentifierFile(fileContent);
@@ -228,7 +225,11 @@ describe('search-hub check E2E', () => {
       const session = await loadSession(sessionId, ctx.sessionsDir);
       const articles = await loadSessionArticles(session, sessionId, ctx.sessionsDir);
       const result = checkCoverage(articles, identifiers);
-      const output = formatCheckResult(result, { sessionId, source: 'refs.txt', missingOnly: true });
+      const output = formatCheckResult(result, {
+        sessionId,
+        source: 'refs.txt',
+        missingOnly: true,
+      });
 
       expect(output).toContain('Missing (1):');
       expect(output).toContain('10.9999/missing');

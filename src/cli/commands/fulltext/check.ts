@@ -6,7 +6,15 @@
 import { readFile, readdir, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse as parseYaml } from 'yaml';
-import { discoverOA, loadMeta, saveMeta, type DiscoveryConfig, type DiscoveryArticle, type OAStatus, type OALocation } from '@ncukondo/academic-fulltext';
+import {
+  discoverOA,
+  loadMeta,
+  saveMeta,
+  type DiscoveryConfig,
+  type DiscoveryArticle,
+  type OAStatus,
+  type OALocation,
+} from '@ncukondo/academic-fulltext';
 import type { ReviewFile, ArticleEntry } from '../review/types';
 import { verifyPmcid } from './verify-pmcid';
 
@@ -55,10 +63,7 @@ async function loadIncludedArticles(sessionDir: string): Promise<ArticleEntry[]>
  * Try to find a meta.json matching an article in the fulltext directory.
  * Returns the dirName if found, null otherwise.
  */
-async function findArticleDir(
-  sessionDir: string,
-  article: ArticleEntry
-): Promise<string | null> {
+async function findArticleDir(sessionDir: string, article: ArticleEntry): Promise<string | null> {
   const fulltextDir = join(sessionDir, 'fulltext');
   try {
     await access(fulltextDir);
@@ -106,7 +111,7 @@ async function validateDiscoveredPmcid(
   config: DiscoveryConfig,
   discoveredPmcid: string | undefined,
   oaStatus: OAStatus,
-  locations: OALocation[]
+  locations: OALocation[],
 ): Promise<ValidatedDiscovery> {
   const hasPmcLocations = locations.some((loc) => loc.source === 'pmc');
   if (!discoveredPmcid || !hasPmcLocations) {
@@ -142,7 +147,7 @@ async function validateDiscoveredPmcid(
 async function processArticle(
   article: ArticleEntry,
   sessionDir: string,
-  config: DiscoveryConfig
+  config: DiscoveryConfig,
 ): Promise<FulltextCheckArticleResult> {
   const discoveryArticle: DiscoveryArticle = {};
   if (article.doi) discoveryArticle.doi = article.doi;
@@ -155,7 +160,7 @@ async function processArticle(
     config,
     discoveryResult.discoveredIds.pmcid,
     discoveryResult.oaStatus,
-    discoveryResult.locations
+    discoveryResult.locations,
   );
 
   const articleResult: FulltextCheckArticleResult = {
@@ -194,7 +199,7 @@ async function processArticle(
  */
 async function runWithConcurrency<T>(
   tasks: Array<() => Promise<T>>,
-  concurrency: number
+  concurrency: number,
 ): Promise<PromiseSettledResult<T>[]> {
   const results: PromiseSettledResult<T>[] = new Array(tasks.length);
   let nextIndex = 0;
@@ -222,7 +227,7 @@ async function runWithConcurrency<T>(
  * processing articles in parallel with a concurrency limit.
  */
 export async function executeFulltextCheck(
-  options: FulltextCheckOptions
+  options: FulltextCheckOptions,
 ): Promise<FulltextCheckResult> {
   const { sessionDir, config, concurrency = DEFAULT_CONCURRENCY } = options;
 
@@ -231,9 +236,7 @@ export async function executeFulltextCheck(
 
   const summary = { total: articles.length, open: 0, closed: 0, unknown: 0 };
 
-  const tasks = articles.map(
-    (article) => () => processArticle(article, sessionDir, config)
-  );
+  const tasks = articles.map((article) => () => processArticle(article, sessionDir, config));
 
   const settled = await runWithConcurrency(tasks, concurrency);
 

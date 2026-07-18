@@ -17,8 +17,12 @@ import type { Command } from 'commander';
 function captureHelpOutput(program: Command): string {
   let output = '';
   program.configureOutput({
-    writeOut: (str) => { output += str; },
-    writeErr: (str) => { output += str; },
+    writeOut: (str) => {
+      output += str;
+    },
+    writeErr: (str) => {
+      output += str;
+    },
   });
   program.outputHelp();
   return output;
@@ -32,8 +36,12 @@ function captureSubcommandHelp(program: Command, commandName: string): string {
   if (!subcommand) throw new Error(`Command ${commandName} not found`);
   let output = '';
   subcommand.configureOutput({
-    writeOut: (str) => { output += str; },
-    writeErr: (str) => { output += str; },
+    writeOut: (str) => {
+      output += str;
+    },
+    writeErr: (str) => {
+      output += str;
+    },
   });
   subcommand.outputHelp();
   return output;

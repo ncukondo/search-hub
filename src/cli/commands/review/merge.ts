@@ -8,7 +8,6 @@ import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile, ArticleEntry, Review, WorkFile, ReviewBasis } from './types.js';
 import { validateName } from './extract.js';
 
-
 /**
  * Check if a file is a work file (has basis field)
  */
@@ -86,7 +85,7 @@ export function registerReviewer(reviewFile: ReviewFile, name: string, basis: Re
  */
 function findMatchingArticle(
   extracted: ArticleEntry,
-  mainArticles: ArticleEntry[]
+  mainArticles: ArticleEntry[],
 ): ArticleEntry | undefined {
   // Try matching by various identifiers
   for (const main of mainArticles) {
@@ -115,7 +114,7 @@ function findMatchingArticle(
  */
 function findMatchingArticleById(
   id: string,
-  mainArticles: ArticleEntry[]
+  mainArticles: ArticleEntry[],
 ): ArticleEntry | undefined {
   for (const main of mainArticles) {
     // Match by DOI (case-insensitive)
@@ -152,7 +151,7 @@ function findMatchingArticleById(
 function processWorkFile(
   workFile: WorkFile,
   mainFile: ReviewFile,
-  options: ReviewMergeOptions
+  options: ReviewMergeOptions,
 ): ReviewMergeResult {
   const result: ReviewMergeResult = {
     reviewsAdded: 0,
@@ -224,7 +223,7 @@ function processWorkFile(
 function processReviewFile(
   extractedFile: ReviewFile,
   mainFile: ReviewFile,
-  options: ReviewMergeOptions
+  options: ReviewMergeOptions,
 ): ReviewMergeResult {
   const result: ReviewMergeResult = {
     reviewsAdded: 0,
@@ -261,7 +260,9 @@ function processReviewFile(
       // Fill in reviewer from top-level field if not on individual review
       const reviewer = review.reviewer ?? topLevelReviewer;
       if (!reviewer) {
-        throw new Error('reviewer is required: set reviewer on individual review or top-level ReviewFile');
+        throw new Error(
+          'reviewer is required: set reviewer on individual review or top-level ReviewFile',
+        );
       }
       // Fill in basis from review, top-level field, or auto-detect from article data
       const basis = review.basis ?? extractedFile.basis ?? detectBasis(extracted);
@@ -306,7 +307,7 @@ function processReviewFile(
  */
 export async function executeReviewMerge(
   options: ReviewMergeOptions,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<ReviewMergeResult> {
   validateName(options.name);
   const sessionDir = join(sessionsDir, options.sessionId);
@@ -375,8 +376,10 @@ export function formatMergeOutput(result: ReviewMergeResult, dryRun: boolean): s
   // Show final decisions only when some were set
   if (result.finalDecisionsSet > 0) {
     const parts: string[] = [];
-    if (result.finalDecisionsIncludeCount > 0) parts.push(`${result.finalDecisionsIncludeCount} include`);
-    if (result.finalDecisionsExcludeCount > 0) parts.push(`${result.finalDecisionsExcludeCount} exclude`);
+    if (result.finalDecisionsIncludeCount > 0)
+      parts.push(`${result.finalDecisionsIncludeCount} include`);
+    if (result.finalDecisionsExcludeCount > 0)
+      parts.push(`${result.finalDecisionsExcludeCount} exclude`);
 
     if (parts.length > 0) {
       lines.push(`  Final decisions set: ${result.finalDecisionsSet} (${parts.join(', ')})`);

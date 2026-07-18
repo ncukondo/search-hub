@@ -29,17 +29,17 @@ describe('extractCommandName', () => {
 
   it('skips the value of value-taking global options', () => {
     expect(
-      extractCommandName(['node', 'cli.js', '--config', 'upgrade', 'status'], makeProgram())
+      extractCommandName(['node', 'cli.js', '--config', 'upgrade', 'status'], makeProgram()),
     ).toBe('status');
-    expect(
-      extractCommandName(['node', 'cli.js', '--session-dir', 'upgrade'], makeProgram())
-    ).toBe('');
+    expect(extractCommandName(['node', 'cli.js', '--session-dir', 'upgrade'], makeProgram())).toBe(
+      '',
+    );
   });
 
   it('does not skip a value for --opt=value form', () => {
-    expect(
-      extractCommandName(['node', 'cli.js', '--config=x.toml', 'export'], makeProgram())
-    ).toBe('export');
+    expect(extractCommandName(['node', 'cli.js', '--config=x.toml', 'export'], makeProgram())).toBe(
+      'export',
+    );
   });
 
   it('returns empty string when no command is present', () => {
@@ -72,33 +72,32 @@ describe('hasQuietFlag', () => {
 
 describe('rewriteUpgradeVersionFlag', () => {
   it('rewrites `upgrade --version <tag>` to `--version=<tag>`', () => {
-    expect(rewriteUpgradeVersionFlag(['node', 'cli.js', 'upgrade', '--version', 'v1.2.3'], makeProgram())).toEqual(
-      ['node', 'cli.js', 'upgrade', '--version=v1.2.3']
-    );
+    expect(
+      rewriteUpgradeVersionFlag(
+        ['node', 'cli.js', 'upgrade', '--version', 'v1.2.3'],
+        makeProgram(),
+      ),
+    ).toEqual(['node', 'cli.js', 'upgrade', '--version=v1.2.3']);
   });
 
   it('leaves a bare `upgrade --version` (no value) alone', () => {
-    expect(rewriteUpgradeVersionFlag(['node', 'cli.js', 'upgrade', '--version'], makeProgram())).toEqual([
-      'node',
-      'cli.js',
-      'upgrade',
-      '--version',
-    ]);
+    expect(
+      rewriteUpgradeVersionFlag(['node', 'cli.js', 'upgrade', '--version'], makeProgram()),
+    ).toEqual(['node', 'cli.js', 'upgrade', '--version']);
   });
 
   it('does not rewrite for other commands', () => {
-    expect(rewriteUpgradeVersionFlag(['node', 'cli.js', 'status', '--version', 'x'], makeProgram())).toEqual([
-      'node',
-      'cli.js',
-      'status',
-      '--version',
-      'x',
-    ]);
+    expect(
+      rewriteUpgradeVersionFlag(['node', 'cli.js', 'status', '--version', 'x'], makeProgram()),
+    ).toEqual(['node', 'cli.js', 'status', '--version', 'x']);
   });
 
   it('does not consume a following option as the tag value', () => {
-    expect(rewriteUpgradeVersionFlag(['node', 'cli.js', 'upgrade', '--version', '--check'], makeProgram())).toEqual(
-      ['node', 'cli.js', 'upgrade', '--version', '--check']
-    );
+    expect(
+      rewriteUpgradeVersionFlag(
+        ['node', 'cli.js', 'upgrade', '--version', '--check'],
+        makeProgram(),
+      ),
+    ).toEqual(['node', 'cli.js', 'upgrade', '--version', '--check']);
   });
 });

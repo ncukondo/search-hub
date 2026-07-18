@@ -15,7 +15,7 @@ export class RefCliError extends Error {
   constructor(
     message: string,
     public readonly code: string,
-    cause?: Error
+    cause?: Error,
   ) {
     super(message);
     this.name = 'RefCliError';
@@ -52,11 +52,13 @@ export async function installRefManager(): Promise<void> {
   return new Promise((resolve, reject) => {
     exec('npm i -g @ncukondo/reference-manager', (error, stdout, stderr) => {
       if (error) {
-        reject(new RefCliError(
-          `Failed to install reference-manager: ${stderr || error.message}`,
-          'INSTALL_FAILED',
-          error
-        ));
+        reject(
+          new RefCliError(
+            `Failed to install reference-manager: ${stderr || error.message}`,
+            'INSTALL_FAILED',
+            error,
+          ),
+        );
       } else {
         resolve();
       }
@@ -94,10 +96,7 @@ function buildLibraryOption(libraryPath?: string): string {
  * Note: ref add returns exit code 1 when there are failures (e.g., fetch errors),
  * but still outputs valid JSON. We parse stdout even when exit code is non-zero.
  */
-export async function refAdd(
-  id: string,
-  options?: RefCliOptions
-): Promise<RefAddOutput> {
+export async function refAdd(id: string, options?: RefCliOptions): Promise<RefAddOutput> {
   const escapedId = escapeShellArg(id);
   const libraryOpt = buildLibraryOption(options?.libraryPath);
   const cmd = `ref ${libraryOpt}add "${escapedId}" -o json`;
@@ -115,38 +114,37 @@ export async function refAdd(
         } catch (parseError) {
           // If parsing fails and we had an exec error, report the exec error
           if (error) {
-            reject(new RefCliError(
-              `ref add failed: ${stderr || error.message}`,
-              'REF_ADD_FAILED',
-              error
-            ));
+            reject(
+              new RefCliError(
+                `ref add failed: ${stderr || error.message}`,
+                'REF_ADD_FAILED',
+                error,
+              ),
+            );
             return;
           }
           // Otherwise report the parse error
-          reject(new RefCliError(
-            `Failed to parse ref add output: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
-            'PARSE_ERROR',
-            parseError instanceof Error ? parseError : undefined
-          ));
+          reject(
+            new RefCliError(
+              `Failed to parse ref add output: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+              'PARSE_ERROR',
+              parseError instanceof Error ? parseError : undefined,
+            ),
+          );
           return;
         }
       }
 
       // No stdout - report the exec error
       if (error) {
-        reject(new RefCliError(
-          `ref add failed: ${stderr || error.message}`,
-          'REF_ADD_FAILED',
-          error
-        ));
+        reject(
+          new RefCliError(`ref add failed: ${stderr || error.message}`, 'REF_ADD_FAILED', error),
+        );
         return;
       }
 
       // No stdout and no error - unexpected
-      reject(new RefCliError(
-        'ref add produced no output',
-        'NO_OUTPUT'
-      ));
+      reject(new RefCliError('ref add produced no output', 'NO_OUTPUT'));
     });
   });
 }
@@ -157,10 +155,7 @@ export async function refAdd(
  * Imports all entries from a CSL-JSON file in a single call.
  * The output format is identical to single-item ref add -o json.
  */
-export async function refAddBulk(
-  filePath: string,
-  options?: RefCliOptions
-): Promise<RefAddOutput> {
+export async function refAddBulk(filePath: string, options?: RefCliOptions): Promise<RefAddOutput> {
   const escapedPath = escapeShellArg(filePath);
   const libraryOpt = buildLibraryOption(options?.libraryPath);
   const cmd = `ref ${libraryOpt}add -i json "${escapedPath}" -o json`;
@@ -175,35 +170,38 @@ export async function refAddBulk(
           return;
         } catch (parseError) {
           if (error) {
-            reject(new RefCliError(
-              `ref add bulk failed: ${stderr || error.message}`,
-              'REF_ADD_FAILED',
-              error
-            ));
+            reject(
+              new RefCliError(
+                `ref add bulk failed: ${stderr || error.message}`,
+                'REF_ADD_FAILED',
+                error,
+              ),
+            );
             return;
           }
-          reject(new RefCliError(
-            `Failed to parse ref add bulk output: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
-            'PARSE_ERROR',
-            parseError instanceof Error ? parseError : undefined
-          ));
+          reject(
+            new RefCliError(
+              `Failed to parse ref add bulk output: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+              'PARSE_ERROR',
+              parseError instanceof Error ? parseError : undefined,
+            ),
+          );
           return;
         }
       }
 
       if (error) {
-        reject(new RefCliError(
-          `ref add bulk failed: ${stderr || error.message}`,
-          'REF_ADD_FAILED',
-          error
-        ));
+        reject(
+          new RefCliError(
+            `ref add bulk failed: ${stderr || error.message}`,
+            'REF_ADD_FAILED',
+            error,
+          ),
+        );
         return;
       }
 
-      reject(new RefCliError(
-        'ref add bulk produced no output',
-        'NO_OUTPUT'
-      ));
+      reject(new RefCliError('ref add bulk produced no output', 'NO_OUTPUT'));
     });
   });
 }
@@ -217,7 +215,7 @@ export async function refAddBulk(
 export async function refFulltextAttach(
   refId: string,
   filePath: string,
-  options?: RefCliOptions
+  options?: RefCliOptions,
 ): Promise<void> {
   const escapedRefId = escapeShellArg(refId);
   const escapedFilePath = escapeShellArg(filePath);
@@ -227,11 +225,13 @@ export async function refFulltextAttach(
   return new Promise((resolve, reject) => {
     exec(cmd, (error, _stdout, stderr) => {
       if (error) {
-        reject(new RefCliError(
-          `ref fulltext attach failed: ${stderr || error.message}`,
-          'REF_FULLTEXT_ATTACH_FAILED',
-          error
-        ));
+        reject(
+          new RefCliError(
+            `ref fulltext attach failed: ${stderr || error.message}`,
+            'REF_FULLTEXT_ATTACH_FAILED',
+            error,
+          ),
+        );
       } else {
         resolve();
       }
@@ -246,7 +246,7 @@ export async function refUpdate(
   id: string,
   field: string,
   value: string,
-  options?: RefCliOptions
+  options?: RefCliOptions,
 ): Promise<void> {
   const escapedId = escapeShellArg(id);
   const escapedField = escapeShellArg(field);
@@ -257,11 +257,13 @@ export async function refUpdate(
   return new Promise((resolve, reject) => {
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
-        reject(new RefCliError(
-          `ref update failed: ${stderr || error.message}`,
-          'REF_UPDATE_FAILED',
-          error
-        ));
+        reject(
+          new RefCliError(
+            `ref update failed: ${stderr || error.message}`,
+            'REF_UPDATE_FAILED',
+            error,
+          ),
+        );
       } else {
         resolve();
       }
@@ -272,10 +274,7 @@ export async function refUpdate(
 /**
  * Execute ref export command and return the entry data.
  */
-export async function refExport(
-  id: string,
-  options?: RefCliOptions
-): Promise<unknown> {
+export async function refExport(id: string, options?: RefCliOptions): Promise<unknown> {
   const escapedId = escapeShellArg(id);
   const libraryOpt = buildLibraryOption(options?.libraryPath);
   const cmd = `ref ${libraryOpt}export "${escapedId}"`;
@@ -283,11 +282,13 @@ export async function refExport(
   return new Promise((resolve, reject) => {
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
-        reject(new RefCliError(
-          `ref export failed: ${stderr || error.message}`,
-          'REF_EXPORT_FAILED',
-          error
-        ));
+        reject(
+          new RefCliError(
+            `ref export failed: ${stderr || error.message}`,
+            'REF_EXPORT_FAILED',
+            error,
+          ),
+        );
         return;
       }
 
@@ -295,11 +296,13 @@ export async function refExport(
         const parsed = JSON.parse(stdout);
         resolve(parsed);
       } catch (parseError) {
-        reject(new RefCliError(
-          `Failed to parse ref export output: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
-          'PARSE_ERROR',
-          parseError instanceof Error ? parseError : undefined
-        ));
+        reject(
+          new RefCliError(
+            `Failed to parse ref export output: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+            'PARSE_ERROR',
+            parseError instanceof Error ? parseError : undefined,
+          ),
+        );
       }
     });
   });

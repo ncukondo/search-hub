@@ -478,7 +478,10 @@ describe('export command', () => {
       const articles: Article[] = [
         {
           title: 'Test CSL Article',
-          authors: [{ family: 'Doe', given: 'John' }, { family: 'Smith', given: 'Jane' }],
+          authors: [
+            { family: 'Doe', given: 'John' },
+            { family: 'Smith', given: 'Jane' },
+          ],
           doi: '10.1234/test',
           pmid: '11111111',
           abstract: 'Test abstract',

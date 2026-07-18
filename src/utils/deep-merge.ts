@@ -3,9 +3,7 @@
  * Allows undefined values explicitly (for overriding with undefined).
  */
 export type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object
-    ? DeepPartial<T[P]> | undefined
-    : T[P] | undefined;
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> | undefined : T[P] | undefined;
 };
 
 /**

@@ -45,7 +45,8 @@ export interface SessionNotes {
 }
 
 const NOTES_FILE = 'notes.yaml';
-const HEADER_COMMENT = '# Notes for session\n# Add entries manually or via: search-hub notes <session-id> add "..."\n\n';
+const HEADER_COMMENT =
+  '# Notes for session\n# Add entries manually or via: search-hub notes <session-id> add "..."\n\n';
 
 /**
  * Generate a timestamp in "YYYY-MM-DD HH:mm" format.
@@ -149,10 +150,7 @@ export async function addNote(sessionDir: string, text: string): Promise<void> {
 /**
  * Add a structured assessment to a session.
  */
-export async function addAssessment(
-  sessionDir: string,
-  options: AssessmentOptions
-): Promise<void> {
+export async function addAssessment(sessionDir: string, options: AssessmentOptions): Promise<void> {
   const entry: Record<string, unknown> = {
     date: formatTimestamp(),
     type: 'assessment',
@@ -174,10 +172,7 @@ export async function addAssessment(
 /**
  * Format notes list for display.
  */
-export function formatNotesList(
-  notes: NoteEntry[],
-  options?: { json?: boolean }
-): string {
+export function formatNotesList(notes: NoteEntry[], options?: { json?: boolean }): string {
   if (options?.json) {
     return JSON.stringify(notes, null, 2);
   }
@@ -216,7 +211,7 @@ export function formatNotesList(
  */
 export function formatAllSessionNotes(
   sessions: SessionNotes[],
-  options?: { json?: boolean }
+  options?: { json?: boolean },
 ): string {
   if (options?.json) {
     const filtered = sessions.filter((s) => s.notes.length > 0);

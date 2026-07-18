@@ -75,7 +75,7 @@ describe('loadNotes', () => {
     await writeFile(
       join(sessionDir, 'notes.yaml'),
       '# Notes for session\n# No entries yet\n',
-      'utf-8'
+      'utf-8',
     );
     const notes = await loadNotes(sessionDir);
     expect(notes).toEqual([]);
@@ -145,7 +145,7 @@ describe('addNote', () => {
       parseInt(parts[1]!, 10) - 1,
       parseInt(parts[2]!, 10),
       parseInt(parts[3]!, 10),
-      parseInt(parts[4]!, 10)
+      parseInt(parts[4]!, 10),
     );
     expect(parsedDate.getTime()).toBeGreaterThanOrEqual(before.getTime() - 60000);
     expect(parsedDate.getTime()).toBeLessThanOrEqual(after.getTime() + 60000);
@@ -239,9 +239,7 @@ describe('formatNotesList', () => {
   });
 
   it('should format as JSON when json option is true', () => {
-    const notes: NoteEntry[] = [
-      { date: '2026-02-03 10:30', text: 'First note' },
-    ];
+    const notes: NoteEntry[] = [{ date: '2026-02-03 10:30', text: 'First note' }];
 
     const output = formatNotesList(notes, { json: true });
     const parsed = JSON.parse(output);
@@ -256,16 +254,12 @@ describe('formatAllSessionNotes', () => {
       {
         sessionId: 'session-1',
         sessionName: 'First Search',
-        notes: [
-          { date: '2026-02-03 10:30', text: 'Note A' } as NoteEntry,
-        ],
+        notes: [{ date: '2026-02-03 10:30', text: 'Note A' } as NoteEntry],
       },
       {
         sessionId: 'session-2',
         sessionName: 'Second Search',
-        notes: [
-          { date: '2026-02-03 11:00', text: 'Note B' } as NoteEntry,
-        ],
+        notes: [{ date: '2026-02-03 11:00', text: 'Note B' } as NoteEntry],
       },
     ];
 
@@ -283,9 +277,7 @@ describe('formatAllSessionNotes', () => {
       {
         sessionId: 'session-1',
         sessionName: 'First Search',
-        notes: [
-          { date: '2026-02-03 10:30', text: 'Note A' } as NoteEntry,
-        ],
+        notes: [{ date: '2026-02-03 10:30', text: 'Note A' } as NoteEntry],
       },
       {
         sessionId: 'session-2',
@@ -309,9 +301,7 @@ describe('formatAllSessionNotes', () => {
       {
         sessionId: 'session-1',
         sessionName: 'First Search',
-        notes: [
-          { date: '2026-02-03 10:30', text: 'Note A' } as NoteEntry,
-        ],
+        notes: [{ date: '2026-02-03 10:30', text: 'Note A' } as NoteEntry],
       },
     ];
 

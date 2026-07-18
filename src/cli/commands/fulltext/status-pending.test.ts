@@ -75,7 +75,9 @@ const metaAlpha: FulltextMeta = {
   doi: '10.1234/with-pdf',
   title: 'Article With PDF',
   oaStatus: 'open',
-  files: { pdf: { filename: 'fulltext.pdf', source: 'unpaywall', retrievedAt: '2024-01-01T00:00:00Z' } },
+  files: {
+    pdf: { filename: 'fulltext.pdf', source: 'unpaywall', retrievedAt: '2024-01-01T00:00:00Z' },
+  },
 };
 
 const metaBeta: FulltextMeta = {
@@ -113,8 +115,8 @@ describe('fulltext status + pending integration', () => {
       throw new Error(`File not found: ${p}`);
     });
 
-    mockGetMetaPath.mockImplementation((sessionDir: string, dirName: string) =>
-      `${sessionDir}/fulltext/${dirName}/meta.json`
+    mockGetMetaPath.mockImplementation(
+      (sessionDir: string, dirName: string) => `${sessionDir}/fulltext/${dirName}/meta.json`,
     );
 
     const metaMap: Record<string, FulltextMeta> = {
@@ -135,9 +137,9 @@ describe('fulltext status + pending integration', () => {
 
     expect(status.totalIncluded).toBe(4);
     expect(status.withFulltext).toBe(2); // alpha (pdf) + beta (both)
-    expect(status.pdfOnly).toBe(1);      // alpha
-    expect(status.both).toBe(1);          // beta
-    expect(status.pending).toBe(1);       // gamma (dir, no files)
+    expect(status.pdfOnly).toBe(1); // alpha
+    expect(status.both).toBe(1); // beta
+    expect(status.pending).toBe(1); // gamma (dir, no files)
     expect(status.notInitialized).toBe(1); // delta (no dir)
   });
 
@@ -160,8 +162,6 @@ describe('fulltext status + pending integration', () => {
     expect(pending.totalPending).toBe(status.pending + status.notInitialized);
 
     // total = withFulltext + pending + notInitialized
-    expect(status.totalIncluded).toBe(
-      status.withFulltext + status.pending + status.notInitialized,
-    );
+    expect(status.totalIncluded).toBe(status.withFulltext + status.pending + status.notInitialized);
   });
 });

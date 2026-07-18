@@ -49,11 +49,7 @@ describe('CLI Error Messages E2E', () => {
       const { createProgram } = await import('./index.js');
       const program = createProgram();
 
-      await program.parseAsync([
-        'node', 'search-hub',
-        'config',
-        '-c', ctx.configPath,
-      ]);
+      await program.parseAsync(['node', 'search-hub', 'config', '-c', ctx.configPath]);
 
       expect(process.exitCode).toBe(EXIT_CODES.SUCCESS);
     });
@@ -62,17 +58,13 @@ describe('CLI Error Messages E2E', () => {
       const invalidQueryPath = await createRawQueryFile(
         ctx.tempDir,
         'invalid yaml content: [',
-        'invalid.yaml'
+        'invalid.yaml',
       );
 
       const { createProgram } = await import('./index.js');
       const program = createProgram();
 
-      await program.parseAsync([
-        'node', 'search-hub',
-        'query', 'validate',
-        invalidQueryPath,
-      ]);
+      await program.parseAsync(['node', 'search-hub', 'query', 'validate', invalidQueryPath]);
 
       expect(process.exitCode).toBe(EXIT_CODES.QUERY_ERROR);
     });
@@ -82,8 +74,10 @@ describe('CLI Error Messages E2E', () => {
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
-        'query', 'validate',
+        'node',
+        'search-hub',
+        'query',
+        'validate',
         '/nonexistent/query.yaml',
       ]);
 
@@ -95,10 +89,12 @@ describe('CLI Error Messages E2E', () => {
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'status',
         'nonexistent-session',
-        '--session-dir', ctx.sessionsDir,
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       expect(process.exitCode).toBe(EXIT_CODES.SESSION_ERROR);
@@ -109,10 +105,12 @@ describe('CLI Error Messages E2E', () => {
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'export',
         'nonexistent-session',
-        '--session-dir', ctx.sessionsDir,
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       expect(process.exitCode).toBe(EXIT_CODES.SESSION_ERROR);
@@ -126,11 +124,7 @@ describe('CLI Error Messages E2E', () => {
       const { createProgram } = await import('./index.js');
       const program = createProgram();
 
-      await program.parseAsync([
-        'node', 'search-hub',
-        'query', 'validate',
-        missingPath,
-      ]);
+      await program.parseAsync(['node', 'search-hub', 'query', 'validate', missingPath]);
 
       // Check both stdout and stderr for error messages
       const allOutput = [...capturedOutput, ...capturedErrors].join(' ');
@@ -144,10 +138,12 @@ describe('CLI Error Messages E2E', () => {
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'status',
         sessionId,
-        '--session-dir', ctx.sessionsDir,
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       const errorOutput = capturedErrors.join(' ');
@@ -168,17 +164,13 @@ query:
         - test
     operator: AND
 `,
-        'missing-name.yaml'
+        'missing-name.yaml',
       );
 
       const { createProgram } = await import('./index.js');
       const program = createProgram();
 
-      await program.parseAsync([
-        'node', 'search-hub',
-        'query', 'validate',
-        queryPath,
-      ]);
+      await program.parseAsync(['node', 'search-hub', 'query', 'validate', queryPath]);
 
       const errorOutput = capturedOutput.join(' ') + capturedErrors.join(' ');
       // Should indicate something is wrong with the query structure
@@ -199,17 +191,13 @@ query:
         - test
     operator: AND
 `,
-        'invalid-field.yaml'
+        'invalid-field.yaml',
       );
 
       const { createProgram } = await import('./index.js');
       const program = createProgram();
 
-      await program.parseAsync([
-        'node', 'search-hub',
-        'query', 'validate',
-        queryPath,
-      ]);
+      await program.parseAsync(['node', 'search-hub', 'query', 'validate', queryPath]);
 
       const errorOutput = capturedOutput.join(' ') + capturedErrors.join(' ');
       // Should indicate field validation failed
@@ -229,17 +217,13 @@ query:
       keywords
         - missing colon after keywords
 `,
-        'malformed.yaml'
+        'malformed.yaml',
       );
 
       const { createProgram } = await import('./index.js');
       const program = createProgram();
 
-      await program.parseAsync([
-        'node', 'search-hub',
-        'query', 'validate',
-        queryPath,
-      ]);
+      await program.parseAsync(['node', 'search-hub', 'query', 'validate', queryPath]);
 
       const errorOutput = capturedOutput.join(' ') + capturedErrors.join(' ');
       expect(errorOutput.toLowerCase()).toMatch(/error|yaml|parse|syntax/i);
@@ -252,21 +236,19 @@ query:
       const invalidConfigPath = await createRawConfig(
         ctx.tempDir,
         'invalid toml [ missing quote',
-        'invalid-config.toml'
+        'invalid-config.toml',
       );
 
       const { createProgram } = await import('./index.js');
       const program = createProgram();
 
-      await program.parseAsync([
-        'node', 'search-hub',
-        'config',
-        '-c', invalidConfigPath,
-      ]);
+      await program.parseAsync(['node', 'search-hub', 'config', '-c', invalidConfigPath]);
 
       // Config loading may fall back to defaults, so check if error or fallback behavior
       // The important thing is it doesn't crash
-      expect(process.exitCode === EXIT_CODES.SUCCESS || process.exitCode === EXIT_CODES.CONFIG_ERROR).toBe(true);
+      expect(
+        process.exitCode === EXIT_CODES.SUCCESS || process.exitCode === EXIT_CODES.CONFIG_ERROR,
+      ).toBe(true);
     });
 
     it('should show error when setting invalid config key', async () => {
@@ -274,11 +256,13 @@ query:
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'config',
         'nonexistent.key',
         'value',
-        '-c', ctx.configPath,
+        '-c',
+        ctx.configPath,
       ]);
 
       // Check both stdout and stderr for error messages
@@ -294,11 +278,15 @@ query:
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'search',
-        '--query', 'diabetes mellitus',
-        '-c', ctx.configPath,
-        '--session-dir', ctx.sessionsDir,
+        '--query',
+        'diabetes mellitus',
+        '-c',
+        ctx.configPath,
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       const errorOutput = capturedErrors.join(' ');
@@ -311,10 +299,13 @@ query:
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'search',
-        '-c', ctx.configPath,
-        '--session-dir', ctx.sessionsDir,
+        '-c',
+        ctx.configPath,
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       const errorOutput = capturedErrors.join(' ');
@@ -329,11 +320,14 @@ query:
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'export',
         'any-session',
-        '--format', 'invalid-format',
-        '--session-dir', ctx.sessionsDir,
+        '--format',
+        'invalid-format',
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       const errorOutput = capturedErrors.join(' ');
@@ -345,12 +339,16 @@ query:
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'export',
         'any-session',
-        '--format', 'ids',
-        '--id-type', 'invalid-type',
-        '--session-dir', ctx.sessionsDir,
+        '--format',
+        'ids',
+        '--id-type',
+        'invalid-type',
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       const errorOutput = capturedErrors.join(' ');
@@ -364,10 +362,12 @@ query:
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'resume',
         'nonexistent-session',
-        '--session-dir', ctx.sessionsDir,
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       const errorOutput = capturedErrors.join(' ');
@@ -382,10 +382,12 @@ query:
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'register',
         'nonexistent-session',
-        '--session-dir', ctx.sessionsDir,
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       const errorOutput = capturedErrors.join(' ');
@@ -398,16 +400,20 @@ query:
       const program = createProgram();
 
       await program.parseAsync([
-        'node', 'search-hub',
+        'node',
+        'search-hub',
         'register',
         'nonexistent-session',
         '--dry-run',
-        '--session-dir', ctx.sessionsDir,
+        '--session-dir',
+        ctx.sessionsDir,
       ]);
 
       // With --dry-run, session errors may still occur, but ref availability is not checked
       // The important thing is it handles the scenario gracefully
-      expect(process.exitCode === EXIT_CODES.SUCCESS || process.exitCode === EXIT_CODES.SESSION_ERROR).toBe(true);
+      expect(
+        process.exitCode === EXIT_CODES.SUCCESS || process.exitCode === EXIT_CODES.SESSION_ERROR,
+      ).toBe(true);
     });
   });
 });

@@ -41,7 +41,7 @@
     "lint": "oxlint -c oxlint.json .",
     "lint:fix": "oxlint -c oxlint.json --fix .",
     "format": "oxfmt --write src",
-    "format:check": "oxfmt src",
+    "format:check": "oxfmt --check src",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "prepare": "husky",

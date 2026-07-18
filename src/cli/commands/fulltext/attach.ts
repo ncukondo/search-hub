@@ -31,7 +31,9 @@ async function buildRefLookupFromLibrary(
     const parsed: unknown = JSON.parse(content);
 
     if (!Array.isArray(parsed)) {
-      console.warn('Warning: Reference library file is not a JSON array. Falling back to ref export.');
+      console.warn(
+        'Warning: Reference library file is not a JSON array. Falling back to ref export.',
+      );
       throw new Error('Not an array');
     }
 
@@ -52,7 +54,7 @@ async function buildRefLookupFromLibrary(
   } catch {
     // If library doesn't exist or can't be read, try ref export
     try {
-      const entries = await refExport('*', refCliOptions) as Array<Record<string, unknown>>;
+      const entries = (await refExport('*', refCliOptions)) as Array<Record<string, unknown>>;
       if (Array.isArray(entries)) {
         for (const entry of entries) {
           const id = entry['id'] as string;
@@ -68,7 +70,9 @@ async function buildRefLookupFromLibrary(
         }
       }
     } catch {
-      console.warn('Warning: Could not read reference library. All articles will be skipped as "not_in_ref".');
+      console.warn(
+        'Warning: Could not read reference library. All articles will be skipped as "not_in_ref".',
+      );
     }
   }
 

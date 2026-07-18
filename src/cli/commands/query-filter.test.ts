@@ -9,15 +9,11 @@ import { tokenizeQuery, matchArticle, filterByQuery } from './query-filter.js';
 
 describe('tokenizeQuery', () => {
   it('tokenizes free text word', () => {
-    expect(tokenizeQuery('diabetes')).toEqual([
-      { type: 'text', value: 'diabetes' },
-    ]);
+    expect(tokenizeQuery('diabetes')).toEqual([{ type: 'text', value: 'diabetes' }]);
   });
 
   it('tokenizes quoted free text phrase', () => {
-    expect(tokenizeQuery('"deep learning"')).toEqual([
-      { type: 'text', value: 'deep learning' },
-    ]);
+    expect(tokenizeQuery('"deep learning"')).toEqual([{ type: 'text', value: 'deep learning' }]);
   });
 
   it('tokenizes field:value term', () => {
@@ -63,32 +59,36 @@ describe('tokenizeQuery', () => {
 
   it('handles unclosed quotes by treating as regular text', () => {
     const tokens = tokenizeQuery('"unclosed');
-    expect(tokens).toEqual([
-      { type: 'text', value: 'unclosed' },
-    ]);
+    expect(tokens).toEqual([{ type: 'text', value: 'unclosed' }]);
   });
 
   it('handles unclosed quotes in field value', () => {
     const tokens = tokenizeQuery('title:"unclosed');
-    expect(tokens).toEqual([
-      { type: 'field', field: 'title', value: 'unclosed' },
-    ]);
+    expect(tokens).toEqual([{ type: 'field', field: 'title', value: 'unclosed' }]);
   });
 
   it('tokenizes all supported field names', () => {
-    const fields = ['title', 'abstract', 'author', 'journal', 'year', 'doi', 'pmid', 'arxiv', 'scopus', 'eric', 'source'];
+    const fields = [
+      'title',
+      'abstract',
+      'author',
+      'journal',
+      'year',
+      'doi',
+      'pmid',
+      'arxiv',
+      'scopus',
+      'eric',
+      'source',
+    ];
     for (const field of fields) {
       const tokens = tokenizeQuery(`${field}:test`);
-      expect(tokens).toEqual([
-        { type: 'field', field, value: 'test' },
-      ]);
+      expect(tokens).toEqual([{ type: 'field', field, value: 'test' }]);
     }
   });
 
   it('treats unknown field prefix as free text', () => {
-    expect(tokenizeQuery('unknown:value')).toEqual([
-      { type: 'text', value: 'unknown:value' },
-    ]);
+    expect(tokenizeQuery('unknown:value')).toEqual([{ type: 'text', value: 'unknown:value' }]);
   });
 });
 
@@ -295,7 +295,11 @@ describe('matchArticle', () => {
 describe('filterByQuery', () => {
   const articles = [
     createTestArticle({ title: 'Alpha Study on Diabetes', pmid: '111' }),
-    createTestArticle({ title: 'Beta Study on Obesity', pmid: '222', abstract: 'An obesity research paper.' }),
+    createTestArticle({
+      title: 'Beta Study on Obesity',
+      pmid: '222',
+      abstract: 'An obesity research paper.',
+    }),
     createTestArticle({ title: 'Gamma Study on Heart Disease', pmid: '333', source: 'eric' }),
   ];
 

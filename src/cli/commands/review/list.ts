@@ -55,7 +55,7 @@ async function loadReviewFile(sessionDir: string): Promise<ReviewFile> {
  */
 export async function executeReviewList(
   options: ReviewListOptions,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<ReviewListResult> {
   const sessionDir = join(sessionsDir, options.sessionId);
   const reviewFile = await loadReviewFile(sessionDir);
@@ -110,7 +110,8 @@ export function formatListOutput(result: ReviewListResult): string {
   lines.push('');
 
   for (const article of result.articles) {
-    const id = article.pmid ?? article.doi ?? article.scopusId ?? article.arxivId ?? article.ericId ?? '-';
+    const id =
+      article.pmid ?? article.doi ?? article.scopusId ?? article.arxivId ?? article.ericId ?? '-';
     const year = article.year ?? '-';
     const decision = article.finalDecision ? ` [${article.finalDecision}]` : '';
     lines.push(`[${article.status}] ${article.title}`);

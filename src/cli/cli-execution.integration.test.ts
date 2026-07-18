@@ -179,7 +179,15 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'query', 'translate', queryFile, '--db', 'pubmed']);
+        await program.parseAsync([
+          'node',
+          'test',
+          'query',
+          'translate',
+          queryFile,
+          '--db',
+          'pubmed',
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -202,7 +210,9 @@ filters: {}
       }
 
       expect(process.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(capturedOutput.some((o) => o.includes('No sessions') || o.includes('no sessions'))).toBe(true);
+      expect(
+        capturedOutput.some((o) => o.includes('No sessions') || o.includes('no sessions')),
+      ).toBe(true);
     });
 
     it('should list sessions when present', async () => {
@@ -293,7 +303,14 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'status', sessionId, '--session-dir', sessionsDir]);
+        await program.parseAsync([
+          'node',
+          'test',
+          'status',
+          sessionId,
+          '--session-dir',
+          sessionsDir,
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -306,7 +323,14 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'status', 'nonexistent-session', '--session-dir', sessionsDir]);
+        await program.parseAsync([
+          'node',
+          'test',
+          'status',
+          'nonexistent-session',
+          '--session-dir',
+          sessionsDir,
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -334,7 +358,14 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'search', queryFile, '--dry-run', '--skip-connection-test']);
+        await program.parseAsync([
+          'node',
+          'test',
+          'search',
+          queryFile,
+          '--dry-run',
+          '--skip-connection-test',
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -348,13 +379,24 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'search', '--dry-run', '--db', 'pubmed', '--query', 'diabetes']);
+        await program.parseAsync([
+          'node',
+          'test',
+          'search',
+          '--dry-run',
+          '--db',
+          'pubmed',
+          '--query',
+          'diabetes',
+        ]);
       } catch {
         // exitOverride may throw
       }
 
       expect(process.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(capturedOutput.some((o) => o.includes('Translated') || o.includes('pubmed'))).toBe(true);
+      expect(capturedOutput.some((o) => o.includes('Translated') || o.includes('pubmed'))).toBe(
+        true,
+      );
     });
   });
 
@@ -396,19 +438,42 @@ filters: {}
       await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       // Create results file
-      const article1 = { title: 'Article 1', authors: [], pmid: '12345', doi: '10.1234/test1', source: 'pubmed', retrievedAt: new Date().toISOString() };
-      const article2 = { title: 'Article 2', authors: [], pmid: '12346', doi: '10.1234/test2', source: 'pubmed', retrievedAt: new Date().toISOString() };
+      const article1 = {
+        title: 'Article 1',
+        authors: [],
+        pmid: '12345',
+        doi: '10.1234/test1',
+        source: 'pubmed',
+        retrievedAt: new Date().toISOString(),
+      };
+      const article2 = {
+        title: 'Article 2',
+        authors: [],
+        pmid: '12346',
+        doi: '10.1234/test2',
+        source: 'pubmed',
+        retrievedAt: new Date().toISOString(),
+      };
       await writeFile(
         join(sessionDir, 'pubmed_results.jsonl'),
         JSON.stringify(article1) + '\n' + JSON.stringify(article2) + '\n',
-        'utf-8'
+        'utf-8',
       );
 
       const program = createProgram();
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'export', sessionId, '--session-dir', sessionsDir, '--format', 'jsonl']);
+        await program.parseAsync([
+          'node',
+          'test',
+          'export',
+          sessionId,
+          '--session-dir',
+          sessionsDir,
+          '--format',
+          'jsonl',
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -453,11 +518,18 @@ filters: {}
       await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
       // Create results file
-      const article = { title: 'Article', authors: [], pmid: '12345', doi: '10.1234/test', source: 'pubmed', retrievedAt: new Date().toISOString() };
+      const article = {
+        title: 'Article',
+        authors: [],
+        pmid: '12345',
+        doi: '10.1234/test',
+        source: 'pubmed',
+        retrievedAt: new Date().toISOString(),
+      };
       await writeFile(
         join(sessionDir, 'pubmed_results.jsonl'),
         JSON.stringify(article) + '\n',
-        'utf-8'
+        'utf-8',
       );
 
       const outputFile = join(tempDir, 'ids.txt');
@@ -465,7 +537,18 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'export', sessionId, '--session-dir', sessionsDir, '--format', 'ids', '-o', outputFile]);
+        await program.parseAsync([
+          'node',
+          'test',
+          'export',
+          sessionId,
+          '--session-dir',
+          sessionsDir,
+          '--format',
+          'ids',
+          '-o',
+          outputFile,
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -480,7 +563,14 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'export', 'nonexistent-session', '--session-dir', sessionsDir]);
+        await program.parseAsync([
+          'node',
+          'test',
+          'export',
+          'nonexistent-session',
+          '--session-dir',
+          sessionsDir,
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -501,7 +591,9 @@ filters: {}
       }
 
       expect(process.exitCode).toBe(EXIT_CODES.SUCCESS);
-      expect(capturedOutput.some((o) => o.includes('session') || o.includes('providers'))).toBe(true);
+      expect(capturedOutput.some((o) => o.includes('session') || o.includes('providers'))).toBe(
+        true,
+      );
     });
 
     it('should view specific config key', async () => {
@@ -509,7 +601,14 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'config', 'session.directory', '--config', configPath]);
+        await program.parseAsync([
+          'node',
+          'test',
+          'config',
+          'session.directory',
+          '--config',
+          configPath,
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -522,7 +621,15 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'config', 'providers.pubmed.max_results', '500', '--config', configPath]);
+        await program.parseAsync([
+          'node',
+          'test',
+          'config',
+          'providers.pubmed.max_results',
+          '500',
+          '--config',
+          configPath,
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -588,7 +695,14 @@ filters: {}
       program.exitOverride();
 
       try {
-        await program.parseAsync(['node', 'test', 'resume', 'nonexistent-session', '--session-dir', sessionsDir]);
+        await program.parseAsync([
+          'node',
+          'test',
+          'resume',
+          'nonexistent-session',
+          '--session-dir',
+          sessionsDir,
+        ]);
       } catch {
         // exitOverride may throw
       }

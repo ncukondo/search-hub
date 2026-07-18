@@ -9,11 +9,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { parse as parseYaml } from 'yaml';
 import type { Article } from '../providers/base/types.js';
-import {
-  convertResultsToYaml,
-  loadResults,
-  type ConversionMetadata,
-} from './results-io.js';
+import { convertResultsToYaml, loadResults, type ConversionMetadata } from './results-io.js';
 
 describe('results-io', () => {
   let testDir: string;
@@ -164,7 +160,7 @@ METHODS: The study used various methods.`,
         const { rawResponse: _rawResponse, ...rest } = a;
         // Remove undefined/null values for comparison
         return Object.fromEntries(
-          Object.entries(rest).filter(([, v]) => v !== undefined && v !== null)
+          Object.entries(rest).filter(([, v]) => v !== undefined && v !== null),
         );
       });
 
@@ -182,9 +178,7 @@ METHODS: The study used various methods.`,
       // Compare (ignoring rawResponse and null/undefined fields)
       for (let i = 0; i < loadedArticles.length; i++) {
         const loaded = Object.fromEntries(
-          Object.entries(loadedArticles[i]!).filter(
-            ([, v]) => v !== undefined && v !== null
-          )
+          Object.entries(loadedArticles[i]!).filter(([, v]) => v !== undefined && v !== null),
         );
         expect(loaded).toEqual(articlesForComparison[i]);
       }
@@ -254,7 +248,7 @@ METHODS: The study used various methods.`,
       await writeFile(
         join(jsonlDir, 'pubmed_results.jsonl'),
         JSON.stringify(sampleArticles[0]),
-        'utf-8'
+        'utf-8',
       );
 
       const jsonlArticles = await loadResults(jsonlDir, 'pubmed');

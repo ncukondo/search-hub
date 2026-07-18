@@ -96,7 +96,7 @@ PMID:36543210
 arxiv:2301.12345`;
     const result = parseIdentifierFile(input);
     expect(result).toHaveLength(5);
-    expect(result.map(r => r.type)).toEqual(['doi', 'pmid', 'doi', 'pmid', 'arxiv']);
+    expect(result.map((r) => r.type)).toEqual(['doi', 'pmid', 'doi', 'pmid', 'arxiv']);
   });
 
   it('returns empty array for empty input', () => {
@@ -116,7 +116,12 @@ function makeArticle(overrides: Partial<Article> & { title: string }): Article {
 
 describe('checkCoverage', () => {
   const articles: Article[] = [
-    makeArticle({ doi: '10.1001/jama.2023.12345', pmid: '37654321', title: 'Article A', source: 'pubmed' }),
+    makeArticle({
+      doi: '10.1001/jama.2023.12345',
+      pmid: '37654321',
+      title: 'Article A',
+      source: 'pubmed',
+    }),
     makeArticle({ doi: '10.1038/s41586-023-xxxxx', title: 'Article B', source: 'pubmed' }),
     makeArticle({ doi: '10.1038/s41586-023-xxxxx', title: 'Article B (scopus)', source: 'scopus' }),
     makeArticle({ pmid: '11111111', title: 'Article C', source: 'pubmed' }),
@@ -133,9 +138,7 @@ describe('checkCoverage', () => {
   });
 
   it('matches PMID exactly', () => {
-    const ids: ParsedIdentifier[] = [
-      { type: 'pmid', value: '37654321', raw: 'PMID:37654321' },
-    ];
+    const ids: ParsedIdentifier[] = [{ type: 'pmid', value: '37654321', raw: 'PMID:37654321' }];
     const result = checkCoverage(articles, ids);
     expect(result.found).toHaveLength(1);
     expect(result.found[0]!.title).toBe('Article A');
@@ -174,9 +177,7 @@ describe('checkCoverage', () => {
 
   it('handles articles with multiple identifiers (any match counts)', () => {
     // Article A has both DOI and PMID - searching by PMID should find it
-    const ids: ParsedIdentifier[] = [
-      { type: 'pmid', value: '37654321', raw: '37654321' },
-    ];
+    const ids: ParsedIdentifier[] = [{ type: 'pmid', value: '37654321', raw: '37654321' }];
     const result = checkCoverage(articles, ids);
     expect(result.found).toHaveLength(1);
     expect(result.found[0]!.title).toBe('Article A');
@@ -222,12 +223,20 @@ describe('formatCheckResult', () => {
     missingCount: 1,
     coverage: 2 / 3,
     found: [
-      { query: '10.1038/s41586-023-xxxxx', type: 'doi', sources: ['pubmed', 'scopus'], title: 'Multi-source Article' },
-      { query: '10.1001/jama.2023.12345', type: 'doi', sources: ['pubmed'], title: 'Single-source Article' },
+      {
+        query: '10.1038/s41586-023-xxxxx',
+        type: 'doi',
+        sources: ['pubmed', 'scopus'],
+        title: 'Multi-source Article',
+      },
+      {
+        query: '10.1001/jama.2023.12345',
+        type: 'doi',
+        sources: ['pubmed'],
+        title: 'Single-source Article',
+      },
     ],
-    missing: [
-      { query: '10.9999/not-found', type: 'doi' },
-    ],
+    missing: [{ query: '10.9999/not-found', type: 'doi' }],
   };
 
   it('shows coverage summary with found/total and percentage', () => {
@@ -255,7 +264,11 @@ describe('formatCheckResult', () => {
   });
 
   it('--missing-only shows only missing', () => {
-    const output = formatCheckResult(baseResult, { sessionId: 'test_session', source: 'refs.txt', missingOnly: true });
+    const output = formatCheckResult(baseResult, {
+      sessionId: 'test_session',
+      source: 'refs.txt',
+      missingOnly: true,
+    });
     expect(output).toContain('Missing (1):');
     expect(output).toContain('10.9999/not-found');
     expect(output).not.toContain('Found (2):');
@@ -269,15 +282,21 @@ describe('formatCheckResultJson', () => {
     missingCount: 1,
     coverage: 0.5,
     found: [
-      { query: '10.1038/s41586-023-xxxxx', type: 'doi', sources: ['pubmed', 'scopus'], title: 'Test Article' },
+      {
+        query: '10.1038/s41586-023-xxxxx',
+        type: 'doi',
+        sources: ['pubmed', 'scopus'],
+        title: 'Test Article',
+      },
     ],
-    missing: [
-      { query: '10.9999/not-found', type: 'doi' },
-    ],
+    missing: [{ query: '10.9999/not-found', type: 'doi' }],
   };
 
   it('returns valid JSON with correct structure', () => {
-    const json = formatCheckResultJson(baseResult, { sessionId: 'test_session', source: 'refs.txt' });
+    const json = formatCheckResultJson(baseResult, {
+      sessionId: 'test_session',
+      source: 'refs.txt',
+    });
     const parsed = JSON.parse(json);
     expect(parsed.session).toBe('test_session');
     expect(parsed.source).toBe('refs.txt');
@@ -290,7 +309,10 @@ describe('formatCheckResultJson', () => {
   });
 
   it('includes correct detail fields', () => {
-    const json = formatCheckResultJson(baseResult, { sessionId: 'test_session', source: 'refs.txt' });
+    const json = formatCheckResultJson(baseResult, {
+      sessionId: 'test_session',
+      source: 'refs.txt',
+    });
     const parsed = JSON.parse(json);
     expect(parsed.details.found[0]).toEqual({
       query: '10.1038/s41586-023-xxxxx',

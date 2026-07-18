@@ -6,11 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
 import { readFile, access, stat } from 'node:fs/promises';
-import {
-  setupE2EContext,
-  type E2EContext,
-  createRawQueryFile,
-} from '../../e2e-helpers.js';
+import { setupE2EContext, type E2EContext, createRawQueryFile } from '../../e2e-helpers.js';
 import { generateQueryTemplate, writeQueryTemplate } from './init.js';
 import { parseQueryString } from '../../../query/parser.js';
 import { validateQueryCommand } from './validate.js';

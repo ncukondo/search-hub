@@ -24,9 +24,7 @@ export class VocabCache {
   private readonly ttlMs: number;
 
   constructor(options?: { cachePath?: string; ttlMs?: number }) {
-    this.cachePath =
-      options?.cachePath ??
-      join(getConfigDir(), 'cache', 'vocab-lookup.json');
+    this.cachePath = options?.cachePath ?? join(getConfigDir(), 'cache', 'vocab-lookup.json');
     this.ttlMs = options?.ttlMs ?? DEFAULT_TTL_MS;
   }
 

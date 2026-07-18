@@ -90,10 +90,7 @@ export class ScopusProvider extends BaseProvider {
   /**
    * Execute search and return results as async iterable.
    */
-  async *search(
-    query: TranslatedQuery,
-    options: SearchOptions = {}
-  ): AsyncIterable<Article> {
+  async *search(query: TranslatedQuery, options: SearchOptions = {}): AsyncIterable<Article> {
     const maxResults = options.maxResults ?? this.scopusConfig.maxResults ?? 10000;
     const pageSize = Math.min(options.pageSize ?? DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZE);
 

@@ -23,16 +23,19 @@ export const fieldTypeSchema = z.enum([
 /**
  * Schema for term block containing search terms.
  */
-export const termBlockSchema = z.object({
-  keywords: z.array(z.string()).min(1).optional(),
-  mesh: z.array(z.string()).optional(),
-  emtree: z.array(z.string()).optional(),
-  eric: z.array(z.string()).optional(),
-  exclude: z.array(z.string()).optional(),
-}).refine(
-  (data) => data.keywords?.length || data.mesh?.length || data.emtree?.length || data.eric?.length,
-  { message: 'At least one of keywords, mesh, emtree, or eric is required' }
-);
+export const termBlockSchema = z
+  .object({
+    keywords: z.array(z.string()).min(1).optional(),
+    mesh: z.array(z.string()).optional(),
+    emtree: z.array(z.string()).optional(),
+    eric: z.array(z.string()).optional(),
+    exclude: z.array(z.string()).optional(),
+  })
+  .refine(
+    (data) =>
+      data.keywords?.length || data.mesh?.length || data.emtree?.length || data.eric?.length,
+    { message: 'At least one of keywords, mesh, emtree, or eric is required' },
+  );
 
 /**
  * Schema for operator.
@@ -84,14 +87,7 @@ export const filtersSchema = z
 /**
  * Provider names schema.
  */
-export const providerNameSchema = z.enum([
-  'pubmed',
-  'scopus',
-  'eric',
-  'arxiv',
-  'wos',
-  'embase',
-]);
+export const providerNameSchema = z.enum(['pubmed', 'scopus', 'eric', 'arxiv', 'wos', 'embase']);
 
 /**
  * Schema for a block replacement (QueryBlock without id).
@@ -128,9 +124,11 @@ const addsFiltersSchema = z
  */
 export const providerSectionSchema = z.object({
   replaces: z.record(z.string(), blockReplacementSchema).optional(),
-  adds: z.object({
-    filters: addsFiltersSchema.optional(),
-  }).optional(),
+  adds: z
+    .object({
+      filters: addsFiltersSchema.optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -175,7 +173,7 @@ export const queryFileSchema = z
       }
       return true;
     },
-    { message: 'replaces keys must reference existing block ids' }
+    { message: 'replaces keys must reference existing block ids' },
   )
   .transform((data) => ({
     name: data.name,
@@ -196,7 +194,7 @@ export function validateQueryFile(data: unknown): QueryAST {
   if (typeof data === 'object' && data !== null && 'overrides' in data) {
     throw new Error(
       'The "overrides" key is no longer supported. ' +
-      'Migrate to the new "providers" format. See spec/models/query-dsl.md for details.'
+        'Migrate to the new "providers" format. See spec/models/query-dsl.md for details.',
     );
   }
   return queryFileSchema.parse(data);
@@ -208,7 +206,7 @@ export function validateQueryFile(data: unknown): QueryAST {
 export class ValidationError extends Error {
   constructor(
     public readonly path: string,
-    message: string
+    message: string,
   ) {
     super(message);
     this.name = 'ValidationError';
@@ -228,7 +226,7 @@ export function formatValidationErrors(data: unknown): ValidationError[] {
       new ValidationError(
         'overrides',
         'The "overrides" key is no longer supported. ' +
-        'Migrate to the new "providers" format. See spec/models/query-dsl.md for details.'
+          'Migrate to the new "providers" format. See spec/models/query-dsl.md for details.',
       ),
     ];
   }

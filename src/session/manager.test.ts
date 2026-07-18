@@ -17,12 +17,7 @@ import {
   getResumableProviders,
   type CreateSessionOptions,
 } from './manager';
-import type {
-  SessionFile,
-  ProviderName,
-  SessionSummary,
-  DatabaseStatus,
-} from './types';
+import type { SessionFile, ProviderName, SessionSummary, DatabaseStatus } from './types';
 
 describe('Session Manager', () => {
   describe('sanitizeName', () => {
@@ -50,7 +45,7 @@ describe('Session Manager', () => {
 
     it('should handle complex names', () => {
       expect(sanitizeName('Diabetes & AI - Scoping Review 2024')).toBe(
-        'diabetes-ai-scoping-review-2024'
+        'diabetes-ai-scoping-review-2024',
       );
     });
   });
@@ -65,7 +60,7 @@ describe('Session Manager', () => {
     it('should use first 6 characters of hash', () => {
       const id = generateSessionId(
         'test',
-        'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+        'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
       );
       expect(id).toContain('_abcdef');
     });
@@ -116,7 +111,7 @@ describe('Session Manager', () => {
     });
 
     const createTestOptions = (
-      overrides: Partial<CreateSessionOptions> = {}
+      overrides: Partial<CreateSessionOptions> = {},
     ): CreateSessionOptions => ({
       name: 'Test Query',
       queryFile: '/path/to/query.yaml',
@@ -179,9 +174,7 @@ describe('Session Manager', () => {
       expect(sessionFile.databases.arxiv?.status).toBe('pending');
 
       expect(sessionFile.databases.pubmed?.files.query).toBe('query_pubmed.txt');
-      expect(sessionFile.databases.pubmed?.files.results).toBe(
-        'results_pubmed.jsonl'
-      );
+      expect(sessionFile.databases.pubmed?.files.results).toBe('results_pubmed.jsonl');
     });
 
     it('should have valid ISO 8601 timestamps', async () => {
@@ -234,7 +227,7 @@ describe('Session Manager', () => {
     });
 
     const createTestOptions = (
-      overrides: Partial<CreateSessionOptions> = {}
+      overrides: Partial<CreateSessionOptions> = {},
     ): CreateSessionOptions => ({
       name: 'Test Query',
       queryFile: '/path/to/query.yaml',
@@ -257,9 +250,9 @@ describe('Session Manager', () => {
     });
 
     it('should throw on non-existent session', async () => {
-      await expect(
-        loadSession('nonexistent-session-id', testDir)
-      ).rejects.toThrow('Session not found');
+      await expect(loadSession('nonexistent-session-id', testDir)).rejects.toThrow(
+        'Session not found',
+      );
     });
 
     it('should load all session data correctly', async () => {
@@ -456,7 +449,7 @@ describe('Session Manager', () => {
           retrievedCount: 100,
           completedAt: new Date().toISOString(),
         },
-        testDir
+        testDir,
       );
 
       // Complete eric with results
@@ -469,7 +462,7 @@ describe('Session Manager', () => {
           retrievedCount: 50,
           completedAt: new Date().toISOString(),
         },
-        testDir
+        testDir,
       );
 
       const loaded = await loadSession(session.id, testDir);
@@ -485,16 +478,11 @@ describe('Session Manager', () => {
       // Wait a bit to ensure different timestamp
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      await updateDatabaseStatus(
-        session.id,
-        'pubmed',
-        { status: 'in_progress' },
-        testDir
-      );
+      await updateDatabaseStatus(session.id, 'pubmed', { status: 'in_progress' }, testDir);
 
       const loaded = await loadSession(session.id, testDir);
       expect(new Date(loaded.updatedAt).getTime()).toBeGreaterThan(
-        new Date(originalUpdatedAt).getTime()
+        new Date(originalUpdatedAt).getTime(),
       );
     });
 
@@ -510,7 +498,7 @@ describe('Session Manager', () => {
           status: 'in_progress',
           startedAt: '2024-01-15T10:00:00.000Z',
         },
-        testDir
+        testDir,
       );
 
       // Second update: set totalHits (should preserve startedAt)
@@ -520,7 +508,7 @@ describe('Session Manager', () => {
         {
           totalHits: 100,
         },
-        testDir
+        testDir,
       );
 
       const loaded = await loadSession(session.id, testDir);
@@ -648,13 +636,13 @@ describe('Session Manager', () => {
           session.id,
           'pubmed',
           { status: 'in_progress', startedAt: new Date().toISOString() },
-          testDir
+          testDir,
         ),
         updateDatabaseStatus(
           session.id,
           'eric',
           { status: 'in_progress', startedAt: new Date().toISOString() },
-          testDir
+          testDir,
         ),
       ];
 
@@ -719,7 +707,7 @@ describe('Session Manager', () => {
             retryable: true,
           },
         },
-        testDir
+        testDir,
       );
 
       const loaded = await loadSession(session.id, testDir);
@@ -746,7 +734,7 @@ describe('Session Manager', () => {
             retryable: false,
           },
         },
-        testDir
+        testDir,
       );
 
       const loaded = await loadSession(session.id, testDir);
@@ -772,7 +760,7 @@ describe('Session Manager', () => {
             isComplete: false,
           },
         },
-        testDir
+        testDir,
       );
 
       const loaded = await loadSession(session.id, testDir);
@@ -799,7 +787,7 @@ describe('Session Manager', () => {
           retrievedCount: 100,
           completedAt: new Date().toISOString(),
         },
-        testDir
+        testDir,
       );
 
       const loaded = await loadSession(session.id, testDir);
@@ -818,12 +806,7 @@ describe('Session Manager', () => {
       const session = await createSession(options);
 
       // Set pubmed as skipped
-      await updateDatabaseStatus(
-        session.id,
-        'pubmed',
-        { status: 'skipped' },
-        testDir
-      );
+      await updateDatabaseStatus(session.id, 'pubmed', { status: 'skipped' }, testDir);
 
       const loaded = await loadSession(session.id, testDir);
       const resumable = getResumableProviders(loaded);
@@ -847,7 +830,7 @@ describe('Session Manager', () => {
             retrievedCount: 50,
             completedAt: new Date().toISOString(),
           },
-          testDir
+          testDir,
         );
       }
 

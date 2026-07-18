@@ -31,9 +31,7 @@ describe('CLI Entry Point', () => {
 
     it('should have --version option', () => {
       const program = createProgram();
-      const versionOption = program.options.find(
-        (opt) => opt.long === '--version'
-      );
+      const versionOption = program.options.find((opt) => opt.long === '--version');
       expect(versionOption).toBeDefined();
     });
   });
@@ -47,24 +45,18 @@ describe('CLI Entry Point', () => {
     });
 
     it('should support --config option', () => {
-      const configOption = program.options.find(
-        (opt) => opt.long === '--config'
-      );
+      const configOption = program.options.find((opt) => opt.long === '--config');
       expect(configOption).toBeDefined();
       expect(configOption?.short).toBe('-c');
     });
 
     it('should support --session-dir option', () => {
-      const sessionDirOption = program.options.find(
-        (opt) => opt.long === '--session-dir'
-      );
+      const sessionDirOption = program.options.find((opt) => opt.long === '--session-dir');
       expect(sessionDirOption).toBeDefined();
     });
 
     it('should support --verbose option', () => {
-      const verboseOption = program.options.find(
-        (opt) => opt.long === '--verbose'
-      );
+      const verboseOption = program.options.find((opt) => opt.long === '--verbose');
       expect(verboseOption).toBeDefined();
       expect(verboseOption?.short).toBe('-v');
     });
@@ -76,9 +68,7 @@ describe('CLI Entry Point', () => {
     });
 
     it('should support --no-color option', () => {
-      const noColorOption = program.options.find(
-        (opt) => opt.long === '--no-color'
-      );
+      const noColorOption = program.options.find((opt) => opt.long === '--no-color');
       expect(noColorOption).toBeDefined();
     });
 
@@ -138,9 +128,7 @@ describe('CLI Entry Point', () => {
       const program = createProgram();
       const initCommand = program.commands.find((cmd) => cmd.name() === 'init');
       expect(initCommand).toBeDefined();
-      const forceOption = initCommand?.options.find(
-        (opt) => opt.long === '--force'
-      );
+      const forceOption = initCommand?.options.find((opt) => opt.long === '--force');
       expect(forceOption).toBeDefined();
     });
 
@@ -148,9 +136,7 @@ describe('CLI Entry Point', () => {
       const program = createProgram();
       const initCommand = program.commands.find((cmd) => cmd.name() === 'init');
       expect(initCommand).toBeDefined();
-      const globalOption = initCommand?.options.find(
-        (opt) => opt.long === '--global'
-      );
+      const globalOption = initCommand?.options.find((opt) => opt.long === '--global');
       expect(globalOption).toBeDefined();
     });
   });
@@ -163,8 +149,12 @@ describe('CLI Entry Point', () => {
     function captureHelpOutput(program: Command): string {
       let output = '';
       program.configureOutput({
-        writeOut: (str) => { output += str; },
-        writeErr: (str) => { output += str; },
+        writeOut: (str) => {
+          output += str;
+        },
+        writeErr: (str) => {
+          output += str;
+        },
       });
       program.outputHelp();
       return output;
@@ -196,8 +186,12 @@ describe('CLI Entry Point', () => {
       if (!searchCommand) throw new Error(`Command ${commandName} not found`);
       let output = '';
       searchCommand.configureOutput({
-        writeOut: (str) => { output += str; },
-        writeErr: (str) => { output += str; },
+        writeOut: (str) => {
+          output += str;
+        },
+        writeErr: (str) => {
+          output += str;
+        },
       });
       searchCommand.outputHelp();
       return output;
@@ -251,9 +245,7 @@ describe('CLI Entry Point', () => {
       const program = createProgram();
       const registerCommand = program.commands.find((cmd) => cmd.name() === 'register');
       expect(registerCommand).toBeDefined();
-      const dbOption = registerCommand?.options.find(
-        (opt) => opt.long === '--db'
-      );
+      const dbOption = registerCommand?.options.find((opt) => opt.long === '--db');
       expect(dbOption).toBeDefined();
     });
 
@@ -261,9 +253,7 @@ describe('CLI Entry Point', () => {
       const program = createProgram();
       const registerCommand = program.commands.find((cmd) => cmd.name() === 'register');
       expect(registerCommand).toBeDefined();
-      const dryRunOption = registerCommand?.options.find(
-        (opt) => opt.long === '--dry-run'
-      );
+      const dryRunOption = registerCommand?.options.find((opt) => opt.long === '--dry-run');
       expect(dryRunOption).toBeDefined();
     });
 
@@ -272,7 +262,7 @@ describe('CLI Entry Point', () => {
       const registerCommand = program.commands.find((cmd) => cmd.name() === 'register');
       expect(registerCommand).toBeDefined();
       const withAbstractsOption = registerCommand?.options.find(
-        (opt) => opt.long === '--with-abstracts'
+        (opt) => opt.long === '--with-abstracts',
       );
       expect(withAbstractsOption).toBeDefined();
     });

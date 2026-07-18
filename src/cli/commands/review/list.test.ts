@@ -21,7 +21,10 @@ describe('executeReviewList', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  async function writeReviewFile(articles: ArticleEntry[], reviewFile?: Partial<ReviewFile>): Promise<void> {
+  async function writeReviewFile(
+    articles: ArticleEntry[],
+    reviewFile?: Partial<ReviewFile>,
+  ): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
     const internalDir = join(sessionDir, '.internal');
     await mkdir(internalDir, { recursive: true });
@@ -86,7 +89,10 @@ describe('executeReviewList', () => {
 
       expect(result.articles).toHaveLength(2);
       expect(result.articles.every((a) => a.status === 'pending')).toBe(true);
-      expect(result.articles.map((a) => a.title)).toEqual(['Pending Article 1', 'Pending Article 2']);
+      expect(result.articles.map((a) => a.title)).toEqual([
+        'Pending Article 1',
+        'Pending Article 2',
+      ]);
     });
 
     it('filters divided articles correctly', async () => {

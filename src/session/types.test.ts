@@ -15,27 +15,14 @@ import type { SessionSeeds } from './types';
 describe('Session Types', () => {
   describe('SessionStatus', () => {
     it('should allow valid session status values', () => {
-      const statuses: SessionStatus[] = [
-        'created',
-        'running',
-        'completed',
-        'partial',
-        'failed',
-      ];
+      const statuses: SessionStatus[] = ['created', 'running', 'completed', 'partial', 'failed'];
       expect(statuses).toHaveLength(5);
     });
   });
 
   describe('ProviderName', () => {
     it('should allow valid provider names', () => {
-      const providers: ProviderName[] = [
-        'pubmed',
-        'eric',
-        'arxiv',
-        'scopus',
-        'wos',
-        'embase',
-      ];
+      const providers: ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopus', 'wos', 'embase'];
       expect(providers).toHaveLength(6);
     });
   });

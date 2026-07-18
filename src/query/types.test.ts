@@ -219,14 +219,7 @@ describe('Query AST Types', () => {
 
   describe('ProviderName', () => {
     it('should accept valid provider names', () => {
-      const providers: ProviderName[] = [
-        'pubmed',
-        'scopus',
-        'eric',
-        'arxiv',
-        'wos',
-        'embase',
-      ];
+      const providers: ProviderName[] = ['pubmed', 'scopus', 'eric', 'arxiv', 'wos', 'embase'];
       expect(providers).toHaveLength(6);
     });
   });

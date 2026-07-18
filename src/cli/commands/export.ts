@@ -36,7 +36,7 @@ const VALID_ID_TYPES: IdType[] = ['doi', 'pmid', 'all'];
 
 export function parseExportOptions(
   sessionId: string,
-  options: CommandLineOptions
+  options: CommandLineOptions,
 ): ExportCommandOptions {
   const result: ExportCommandOptions = {
     sessionId,
@@ -162,7 +162,7 @@ export function formatJson(articles: Article[], metadata?: JsonExportMetadata): 
       results: articlesWithYear,
     },
     null,
-    2
+    2,
   );
 }
 
@@ -170,7 +170,9 @@ export function formatJsonl(articles: Article[]): string {
   if (articles.length === 0) {
     return '';
   }
-  return addYearField(articles).map((article) => JSON.stringify(article)).join('\n');
+  return addYearField(articles)
+    .map((article) => JSON.stringify(article))
+    .join('\n');
 }
 
 export function formatCslJson(articles: Article[]): string {
@@ -178,10 +180,18 @@ export function formatCslJson(articles: Article[]): string {
   return JSON.stringify(cslItems, null, 2);
 }
 
-
 const METADATA_FIELDS: (keyof Article)[] = [
-  'doi', 'pmid', 'arxivId', 'scopusId', 'ericId',
-  'abstract', 'publicationDate', 'journal', 'volume', 'issue', 'pages',
+  'doi',
+  'pmid',
+  'arxivId',
+  'scopusId',
+  'ericId',
+  'abstract',
+  'publicationDate',
+  'journal',
+  'volume',
+  'issue',
+  'pages',
 ];
 
 function countMetadataFields(article: Article): number {
@@ -253,7 +263,8 @@ export function deduplicateArticles(articles: Article[]): DeduplicationResult {
 export function filterArticles(articles: Article[], filter: ExportFilter): Article[] {
   const hasYearFilter = filter.yearFrom !== undefined || filter.yearTo !== undefined;
   const hasTitleFilter = filter.titleKeywords !== undefined && filter.titleKeywords.length > 0;
-  const hasAbstractFilter = filter.abstractKeywords !== undefined && filter.abstractKeywords.length > 0;
+  const hasAbstractFilter =
+    filter.abstractKeywords !== undefined && filter.abstractKeywords.length > 0;
 
   if (!hasYearFilter && !hasTitleFilter && !hasAbstractFilter) {
     return articles;
@@ -279,7 +290,9 @@ export function filterArticles(articles: Article[], filter: ExportFilter): Artic
     if (hasAbstractFilter) {
       if (!article.abstract) return false;
       const abstractLower = article.abstract.toLowerCase();
-      const matched = filter.abstractKeywords!.some((kw) => abstractLower.includes(kw.toLowerCase()));
+      const matched = filter.abstractKeywords!.some((kw) =>
+        abstractLower.includes(kw.toLowerCase()),
+      );
       if (!matched) return false;
     }
 

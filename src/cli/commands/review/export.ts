@@ -74,7 +74,7 @@ function articleToExport(article: ArticleEntry): ExportedArticle {
  */
 export async function executeReviewExport(
   options: ReviewExportOptions,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<ReviewExportResult> {
   const sessionDir = join(sessionsDir, options.sessionId);
   const reviewFile = await loadReviewFile(sessionDir);
@@ -82,7 +82,7 @@ export async function executeReviewExport(
   // Filter articles by final decision
   const targetDecision = options.only === 'included' ? 'include' : 'exclude';
   const filtered = reviewFile.articles.filter(
-    (article) => article.finalDecision === targetDecision
+    (article) => article.finalDecision === targetDecision,
   );
 
   // Convert to export format

@@ -53,10 +53,7 @@ export function sanitizeName(name: string): string {
  * - name: Sanitized query name
  * - hash: First 6 characters of query hash
  */
-export function generateSessionId(
-  queryName: string,
-  queryHash: string
-): string {
+export function generateSessionId(queryName: string, queryHash: string): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const name = sanitizeName(queryName);
   const hash = queryHash.slice(0, 6);
@@ -79,11 +76,8 @@ function createInitialDatabaseStatus(provider: ProviderName): DatabaseStatus {
 /**
  * Create a new session.
  */
-export async function createSession(
-  options: CreateSessionOptions
-): Promise<SessionFile> {
-  const { name, description, queryFile, queryContent, queryHash, targets, sessionsDir } =
-    options;
+export async function createSession(options: CreateSessionOptions): Promise<SessionFile> {
+  const { name, description, queryFile, queryContent, queryHash, targets, sessionsDir } = options;
 
   const id = generateSessionId(name, queryHash);
   const sessionDir = join(sessionsDir, id);
@@ -120,11 +114,7 @@ export async function createSession(
   };
 
   // Write session.yaml
-  await writeFile(
-    join(sessionDir, 'session.yaml'),
-    stringifyYaml(sessionFile),
-    'utf-8'
-  );
+  await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(sessionFile), 'utf-8');
 
   // Write query file copy
   await writeFile(join(sessionDir, 'query_common.yaml'), queryContent, 'utf-8');
@@ -135,10 +125,7 @@ export async function createSession(
 /**
  * Check if a session exists.
  */
-export async function sessionExists(
-  sessionId: string,
-  sessionsDir: string
-): Promise<boolean> {
+export async function sessionExists(sessionId: string, sessionsDir: string): Promise<boolean> {
   try {
     await access(join(sessionsDir, sessionId, 'session.yaml'));
     return true;
@@ -150,10 +137,7 @@ export async function sessionExists(
 /**
  * Load an existing session by ID.
  */
-export async function loadSession(
-  sessionId: string,
-  sessionsDir: string
-): Promise<SessionFile> {
+export async function loadSession(sessionId: string, sessionsDir: string): Promise<SessionFile> {
   const sessionPath = join(sessionsDir, sessionId, 'session.yaml');
 
   try {
@@ -226,10 +210,7 @@ function calculateSummaryTotals(databases: Partial<Record<ProviderName, Database
 /**
  * Save a session to disk.
  */
-export async function saveSession(
-  session: SessionFile,
-  sessionsDir: string
-): Promise<void> {
+export async function saveSession(session: SessionFile, sessionsDir: string): Promise<void> {
   const sessionPath = join(sessionsDir, session.id, 'session.yaml');
   await writeFile(sessionPath, stringifyYaml(session), 'utf-8');
 }
@@ -242,7 +223,7 @@ export async function updateDatabaseStatus(
   sessionId: string,
   provider: ProviderName,
   status: Partial<DatabaseStatus>,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<void> {
   const session = await loadSession(sessionId, sessionsDir);
 
@@ -274,7 +255,7 @@ export async function updateDatabaseStatus(
 export async function updateSessionStatus(
   sessionId: string,
   status: SessionStatus,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<void> {
   const session = await loadSession(sessionId, sessionsDir);
 

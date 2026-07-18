@@ -36,14 +36,14 @@ describe('executeReviewFinalize', () => {
     const schemaComment = `# yaml-language-server: $schema=./review.schema.json\n`;
     await writeFile(
       join(internalDir, 'reviews.yaml'),
-      schemaComment + stringifyYaml(reviewFile, { lineWidth: 0 })
+      schemaComment + stringifyYaml(reviewFile, { lineWidth: 0 }),
     );
   }
 
   async function readReviewFile(): Promise<ReviewFile> {
     const content = await readFile(
       join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-      'utf-8'
+      'utf-8',
     );
     return parseYaml(content) as ReviewFile;
   }
@@ -180,7 +180,7 @@ describe('executeReviewFinalize', () => {
 
       const content = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const firstLine = content.split('\n')[0];
       expect(firstLine).toBe('# yaml-language-server: $schema=./review.schema.json');
@@ -254,10 +254,7 @@ describe('executeReviewFinalize', () => {
         ],
       });
 
-      const result = await executeReviewFinalize(
-        { sessionId, dryRun: true },
-        sessionsDir
-      );
+      const result = await executeReviewFinalize({ sessionId, dryRun: true }, sessionsDir);
       expect(result.includedCount).toBe(1);
       expect(result.excludedCount).toBe(1);
 
@@ -282,10 +279,7 @@ describe('executeReviewFinalize', () => {
         ],
       });
 
-      const result = await executeReviewFinalize(
-        { sessionId, minReviewers: 2 },
-        sessionsDir
-      );
+      const result = await executeReviewFinalize({ sessionId, minReviewers: 2 }, sessionsDir);
       expect(result.includedCount).toBe(0);
       expect(result.excludedCount).toBe(0);
       // Single reviewer article is skipped due to insufficient reviewers
@@ -331,10 +325,7 @@ describe('executeReviewFinalize', () => {
         ],
       });
 
-      const result = await executeReviewFinalize(
-        { sessionId, minReviewers: 3 },
-        sessionsDir
-      );
+      const result = await executeReviewFinalize({ sessionId, minReviewers: 3 }, sessionsDir);
       expect(result.includedCount).toBe(0);
       expect(result.skippedByStatus['agreed-include']).toBe(1);
     });
@@ -400,9 +391,7 @@ describe('executeReviewFinalize', () => {
           {
             doi: '10.1234/unc-only',
             title: 'Uncertain Only',
-            reviews: [
-              { reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' },
-            ],
+            reviews: [{ reviewer: 'ai:claude', decision: 'uncertain', basis: 'title' }],
           },
         ],
       });
@@ -436,10 +425,7 @@ describe('executeReviewFinalize', () => {
         ],
       });
 
-      const result = await executeReviewFinalize(
-        { sessionId, decision: 'exclude' },
-        sessionsDir
-      );
+      const result = await executeReviewFinalize({ sessionId, decision: 'exclude' }, sessionsDir);
       expect(result.excludedCount).toBe(1);
       expect(result.includedCount).toBe(0);
       expect(result.skippedByStatus['agreed-include']).toBe(1);
@@ -467,10 +453,7 @@ describe('executeReviewFinalize', () => {
         ],
       });
 
-      const result = await executeReviewFinalize(
-        { sessionId, decision: 'include' },
-        sessionsDir
-      );
+      const result = await executeReviewFinalize({ sessionId, decision: 'include' }, sessionsDir);
       expect(result.includedCount).toBe(1);
       expect(result.excludedCount).toBe(0);
       expect(result.skippedByStatus['agreed-exclude']).toBe(1);
@@ -542,10 +525,7 @@ describe('executeReviewFinalize', () => {
         ],
       });
 
-      const result = await executeReviewFinalize(
-        { sessionId, decision: 'exclude' },
-        sessionsDir
-      );
+      const result = await executeReviewFinalize({ sessionId, decision: 'exclude' }, sessionsDir);
       expect(result.excludedCount).toBe(1);
       expect(result.includedCount).toBe(0);
       expect(result.skippedByStatus['agreed-include']).toBe(2);

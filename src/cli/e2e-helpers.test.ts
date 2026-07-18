@@ -41,7 +41,7 @@ describe('E2E Helpers', () => {
         async () => {
           const { rm } = await import('node:fs/promises');
           await rm(dir2, { recursive: true, force: true });
-        }
+        },
       );
 
       expect(dir1).toContain('search-hub-e2e-');
@@ -114,11 +114,7 @@ describe('E2E Helpers', () => {
       cleanupFns.push(ctx.cleanup);
 
       const query = createSimpleQuery();
-      const filePath = await createQueryFile(
-        ctx.tempDir,
-        query,
-        'custom-query.yaml'
-      );
+      const filePath = await createQueryFile(ctx.tempDir, query, 'custom-query.yaml');
 
       expect(filePath).toBe(join(ctx.tempDir, 'custom-query.yaml'));
       const stats = await stat(filePath);

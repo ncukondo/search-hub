@@ -78,7 +78,9 @@ describe('PubMedProvider', () => {
       searchCount: vi.fn(),
     };
 
-    MockPubMedClient.mockImplementation(() => mockClientInstance as unknown as InstanceType<typeof PubMedClient>);
+    MockPubMedClient.mockImplementation(
+      () => mockClientInstance as unknown as InstanceType<typeof PubMedClient>,
+    );
   });
 
   afterEach(() => {
@@ -121,7 +123,6 @@ describe('PubMedProvider', () => {
       expect(result.provider).toBe('pubmed');
       expect(result.native).toContain('diabetes');
       expect(result.native).toContain('[tiab]');
-
     });
 
     it('handles complex queries with MeSH terms', () => {
@@ -210,9 +211,7 @@ describe('PubMedProvider', () => {
         retstart: 0,
         idlist: ['12345678'],
       });
-      mockClientInstance.fetch.mockResolvedValueOnce([
-        createMockArticle('12345678'),
-      ]);
+      mockClientInstance.fetch.mockResolvedValueOnce([createMockArticle('12345678')]);
 
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
@@ -238,9 +237,7 @@ describe('PubMedProvider', () => {
         retstart: 0,
         idlist: ['12345678'],
       });
-      mockClientInstance.fetch.mockResolvedValueOnce([
-        createMockArticle('12345678'),
-      ]);
+      mockClientInstance.fetch.mockResolvedValueOnce([createMockArticle('12345678')]);
 
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
@@ -278,7 +275,7 @@ describe('PubMedProvider', () => {
 
       // Fetch responses
       mockClientInstance.fetch.mockImplementation((pmids: string[]) =>
-        Promise.resolve(pmids.map((pmid: string) => createMockArticle(pmid)))
+        Promise.resolve(pmids.map((pmid: string) => createMockArticle(pmid))),
       );
 
       const provider = new PubMedProvider(baseConfig);
@@ -307,7 +304,7 @@ describe('PubMedProvider', () => {
       });
 
       mockClientInstance.fetch.mockImplementation((pmids: string[]) =>
-        Promise.resolve(pmids.map((pmid: string) => createMockArticle(pmid)))
+        Promise.resolve(pmids.map((pmid: string) => createMockArticle(pmid))),
       );
 
       const provider = new PubMedProvider(baseConfig);
@@ -361,7 +358,9 @@ describe('PubMedProvider', () => {
         provider: 'pubmed',
         retryable: true,
       };
-      mockClientInstance.search.mockImplementation(async () => { throw networkError; });
+      mockClientInstance.search.mockImplementation(async () => {
+        throw networkError;
+      });
 
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
@@ -375,7 +374,9 @@ describe('PubMedProvider', () => {
         for await (const _ of provider.search(query)) {
           // Should throw
         }
-      })().catch((e: unknown) => { caughtError = e; });
+      })().catch((e: unknown) => {
+        caughtError = e;
+      });
       await vi.advanceTimersByTimeAsync(120_000);
       await p;
       expect(caughtError).toMatchObject({ code: 'NETWORK_ERROR' });
@@ -389,7 +390,9 @@ describe('PubMedProvider', () => {
         retryable: true,
         retryAfter: 5000,
       };
-      mockClientInstance.search.mockImplementation(async () => { throw rateLimitError; });
+      mockClientInstance.search.mockImplementation(async () => {
+        throw rateLimitError;
+      });
 
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {
@@ -403,7 +406,9 @@ describe('PubMedProvider', () => {
         for await (const _ of provider.search(query)) {
           // Should throw
         }
-      })().catch((e: unknown) => { caughtError = e; });
+      })().catch((e: unknown) => {
+        caughtError = e;
+      });
       await vi.advanceTimersByTimeAsync(120_000);
       await p;
       expect(caughtError).toMatchObject({ code: 'RATE_LIMIT_EXCEEDED' });
@@ -425,16 +430,19 @@ describe('PubMedProvider', () => {
         retryAfter: 1000,
       };
 
-      mockClientInstance.search
-        .mockRejectedValueOnce(rateLimitError)
-        .mockResolvedValueOnce({
-          count: 1, retmax: 20, retstart: 0, idlist: ['12345678'],
-        });
+      mockClientInstance.search.mockRejectedValueOnce(rateLimitError).mockResolvedValueOnce({
+        count: 1,
+        retmax: 20,
+        retstart: 0,
+        idlist: ['12345678'],
+      });
       mockClientInstance.fetch.mockResolvedValueOnce([createMockArticle('12345678')]);
 
       const provider = new PubMedProvider(baseConfig);
       const articles: Article[] = [];
-      const p = (async () => { for await (const a of provider.search(retryQuery)) articles.push(a); })();
+      const p = (async () => {
+        for await (const a of provider.search(retryQuery)) articles.push(a);
+      })();
       await vi.advanceTimersByTimeAsync(5000);
       await p;
 
@@ -450,16 +458,19 @@ describe('PubMedProvider', () => {
         retryable: true,
       };
 
-      mockClientInstance.search
-        .mockRejectedValueOnce(serverError)
-        .mockResolvedValueOnce({
-          count: 1, retmax: 20, retstart: 0, idlist: ['12345678'],
-        });
+      mockClientInstance.search.mockRejectedValueOnce(serverError).mockResolvedValueOnce({
+        count: 1,
+        retmax: 20,
+        retstart: 0,
+        idlist: ['12345678'],
+      });
       mockClientInstance.fetch.mockResolvedValueOnce([createMockArticle('12345678')]);
 
       const provider = new PubMedProvider(baseConfig);
       const articles: Article[] = [];
-      const p = (async () => { for await (const a of provider.search(retryQuery)) articles.push(a); })();
+      const p = (async () => {
+        for await (const a of provider.search(retryQuery)) articles.push(a);
+      })();
       await vi.advanceTimersByTimeAsync(5000);
       await p;
 
@@ -478,7 +489,9 @@ describe('PubMedProvider', () => {
       const provider = new PubMedProvider(baseConfig);
 
       await expect(async () => {
-        for await (const _ of provider.search(retryQuery)) { /* noop */ }
+        for await (const _ of provider.search(retryQuery)) {
+          /* noop */
+        }
       }).rejects.toMatchObject({ code: 'PARSE_ERROR' });
       expect(mockClientInstance.search).toHaveBeenCalledTimes(1);
     });
@@ -490,13 +503,19 @@ describe('PubMedProvider', () => {
         provider: 'pubmed',
         retryable: true,
       };
-      mockClientInstance.search.mockImplementation(async () => { throw serverError; });
+      mockClientInstance.search.mockImplementation(async () => {
+        throw serverError;
+      });
       const provider = new PubMedProvider({ ...baseConfig, retries: 2 });
 
       let caughtError: unknown;
       const p = (async () => {
-        for await (const _ of provider.search(retryQuery)) { /* noop */ }
-      })().catch((e: unknown) => { caughtError = e; });
+        for await (const _ of provider.search(retryQuery)) {
+          /* noop */
+        }
+      })().catch((e: unknown) => {
+        caughtError = e;
+      });
       await vi.advanceTimersByTimeAsync(120_000);
       await p;
       expect(caughtError).toMatchObject({ code: 'SERVER_ERROR' });
@@ -559,7 +578,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-  
+
           provider: 'pubmed' as const,
         },
         totalResults: 100,
@@ -577,7 +596,7 @@ describe('PubMedProvider', () => {
       expect(articles).toHaveLength(3);
       expect(mockClientInstance.search).toHaveBeenCalledWith(
         'test[tiab]',
-        expect.objectContaining({ retstart: 50 })
+        expect.objectContaining({ retstart: 50 }),
       );
     });
 
@@ -592,7 +611,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-  
+
           provider: 'pubmed' as const,
         },
         totalResults: 102,
@@ -617,7 +636,7 @@ describe('PubMedProvider', () => {
           webenv: 'MCID_test123',
           querykey: '1',
           retstart: 100,
-        })
+        }),
       );
     });
 
@@ -627,7 +646,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-  
+
           provider: 'pubmed' as const,
         },
         totalResults: 100,
@@ -647,7 +666,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-  
+
           provider: 'pubmed' as const,
         },
         totalResults: 100,
@@ -666,16 +685,14 @@ describe('PubMedProvider', () => {
     });
 
     it('validateState returns invalid for expired webenv', async () => {
-      mockClientInstance.fetchFromHistory.mockRejectedValueOnce(
-        new Error('WebEnv expired')
-      );
+      mockClientInstance.fetchFromHistory.mockRejectedValueOnce(new Error('WebEnv expired'));
 
       const provider = new PubMedProvider(baseConfig);
       const state = {
         provider: 'pubmed' as const,
         query: {
           native: 'test[tiab]',
-  
+
           provider: 'pubmed' as const,
         },
         totalResults: 100,
@@ -735,9 +752,7 @@ describe('PubMedProvider', () => {
         provider: 'pubmed',
         retryable: true,
       };
-      mockClientInstance.searchCount
-        .mockRejectedValueOnce(serverError)
-        .mockResolvedValueOnce(10);
+      mockClientInstance.searchCount.mockRejectedValueOnce(serverError).mockResolvedValueOnce(10);
 
       const provider = new PubMedProvider(baseConfig);
       const query: TranslatedQuery = {

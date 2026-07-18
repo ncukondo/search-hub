@@ -10,15 +10,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
-import {
-  computeSummary,
-  formatSummary,
-  formatSummaryJson,
-} from './summary.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
+import { computeSummary, formatSummary, formatSummaryJson } from './summary.js';
 import { deduplicateArticles } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 import type { SessionSummary } from './summary.js';
@@ -127,11 +120,7 @@ describe('search-hub summary E2E', () => {
       };
 
       const jsonl = providerArticles.map((a) => JSON.stringify(a)).join('\n');
-      await writeFile(
-        join(sessionDir, `${provider}_results.jsonl`),
-        jsonl,
-        'utf-8',
-      );
+      await writeFile(join(sessionDir, `${provider}_results.jsonl`), jsonl, 'utf-8');
       await writeFile(
         join(sessionDir, `${provider}_query.txt`),
         `${provider} query string`,
@@ -157,11 +146,7 @@ describe('search-hub summary E2E', () => {
       },
     };
 
-    await writeFile(
-      join(sessionDir, 'session.yaml'),
-      stringifyYaml(session),
-      'utf-8',
-    );
+    await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
     return id;
   }
@@ -172,14 +157,13 @@ describe('search-hub summary E2E', () => {
   ): Promise<Article[]> {
     const articles: Article[] = [];
     for (const provider of providers) {
-      const resultsPath = join(
-        ctx.sessionsDir,
-        sessionId,
-        `${provider}_results.jsonl`,
-      );
+      const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
       try {
         const content = await readFile(resultsPath, 'utf-8');
-        const lines = content.trim().split('\n').filter((l) => l);
+        const lines = content
+          .trim()
+          .split('\n')
+          .filter((l) => l);
         for (const line of lines) {
           articles.push(JSON.parse(line));
         }
@@ -192,16 +176,19 @@ describe('search-hub summary E2E', () => {
 
   describe('summary command with real session data', () => {
     it('should produce human-readable output from session data', async () => {
-      await createTestSession(
-        'summary-e2e-human',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('summary-e2e-human', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'summary-e2e-human',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('summary-e2e-human', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const dedupResult = deduplicateArticles(allArticles);
       const summary = computeSummary(allArticles, dedupResult.articles, {
         sessionId: 'summary-e2e-human',
@@ -217,16 +204,19 @@ describe('search-hub summary E2E', () => {
     });
 
     it('should produce parseable JSON with --json flag', async () => {
-      await createTestSession(
-        'summary-e2e-json',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('summary-e2e-json', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'summary-e2e-json',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('summary-e2e-json', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const dedupResult = deduplicateArticles(allArticles);
       const summary = computeSummary(allArticles, dedupResult.articles, {
         sessionId: 'summary-e2e-json',
@@ -246,16 +236,19 @@ describe('search-hub summary E2E', () => {
     });
 
     it('should produce statistics that match actual session data', async () => {
-      await createTestSession(
-        'summary-e2e-stats',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('summary-e2e-stats', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'summary-e2e-stats',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('summary-e2e-stats', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
       expect(allArticles).toHaveLength(6); // 3 pubmed + 1 eric + 1 arxiv + 1 scopus
 

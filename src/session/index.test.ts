@@ -85,7 +85,7 @@ describe('Session Module', () => {
           startedAt: new Date().toISOString(),
           totalHits: 500,
         },
-        testDir
+        testDir,
       );
 
       // Step 4: Update pagination state
@@ -100,7 +100,7 @@ describe('Session Module', () => {
           },
           retrievedCount: 200,
         },
-        testDir
+        testDir,
       );
 
       // Step 5: Load and verify
@@ -133,7 +133,7 @@ describe('Session Module', () => {
             isComplete: true,
           },
         },
-        testDir
+        testDir,
       );
 
       // Step 8: Verify completion

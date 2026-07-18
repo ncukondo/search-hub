@@ -40,7 +40,7 @@ function stripV(tag: string): string {
 
 export async function defaultRunCommand(
   command: string,
-  args: string[]
+  args: string[],
 ): Promise<RunCommandResult> {
   try {
     const { stdout, stderr } = await execFileAsync(command, args, { encoding: 'utf-8' });

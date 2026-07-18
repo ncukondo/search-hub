@@ -26,9 +26,7 @@ describe('MeSHLookupClient (real API)', () => {
   });
 
   it('should return not found for an invalid term', async () => {
-    const result = await client.lookupTerm(
-      'Xyzzy Not A Real Medical Subject Heading'
-    );
+    const result = await client.lookupTerm('Xyzzy Not A Real Medical Subject Heading');
 
     expect(result.found).toBe(false);
     expect(result.term).toBe('Xyzzy Not A Real Medical Subject Heading');
@@ -40,16 +38,11 @@ describe('MeSHLookupClient (real API)', () => {
     expect(result.found).toBe(false);
     expect(result.suggestions).toBeDefined();
     expect(result.suggestions!.length).toBeGreaterThan(0);
-    expect(
-      result.suggestions!.some((s) => s.startsWith('Diabetes Mellitu'))
-    ).toBe(true);
+    expect(result.suggestions!.some((s) => s.startsWith('Diabetes Mellitu'))).toBe(true);
   });
 
   it('should validate multiple terms', async () => {
-    const results = await client.lookupTerms([
-      'Machine Learning',
-      'Not A Real Term',
-    ]);
+    const results = await client.lookupTerms(['Machine Learning', 'Not A Real Term']);
 
     expect(results).toHaveLength(2);
     expect(results[0]!.found).toBe(true);

@@ -10,8 +10,18 @@ describe('inspectQuery', () => {
     const ast: QueryAST = {
       name: 'test-query',
       blocks: [
-        { id: 'population', field: 'title_abstract', terms: { keywords: ['diabetes'] }, operator: 'OR' },
-        { id: 'intervention', field: 'title_abstract', terms: { keywords: ['AI'] }, operator: 'OR' },
+        {
+          id: 'population',
+          field: 'title_abstract',
+          terms: { keywords: ['diabetes'] },
+          operator: 'OR',
+        },
+        {
+          id: 'intervention',
+          field: 'title_abstract',
+          terms: { keywords: ['AI'] },
+          operator: 'OR',
+        },
       ],
       filters: {},
       providers: {},
@@ -38,14 +48,28 @@ describe('inspectQuery', () => {
     const ast: QueryAST = {
       name: 'test-query',
       blocks: [
-        { id: 'population', field: 'title_abstract', terms: { keywords: ['diabetes'] }, operator: 'OR' },
-        { id: 'intervention', field: 'title_abstract', terms: { keywords: ['AI'] }, operator: 'OR' },
+        {
+          id: 'population',
+          field: 'title_abstract',
+          terms: { keywords: ['diabetes'] },
+          operator: 'OR',
+        },
+        {
+          id: 'intervention',
+          field: 'title_abstract',
+          terms: { keywords: ['AI'] },
+          operator: 'OR',
+        },
       ],
       filters: {},
       providers: {
         arxiv: {
           replaces: {
-            population: { field: 'all', terms: { keywords: ['diabetes mellitus'] }, operator: 'OR' },
+            population: {
+              field: 'all',
+              terms: { keywords: ['diabetes mellitus'] },
+              operator: 'OR',
+            },
           },
         },
       },
@@ -184,8 +208,18 @@ describe('formatInspectOutput', () => {
     const ast: QueryAST = {
       name: 'format-test',
       blocks: [
-        { id: 'population', field: 'title_abstract', terms: { keywords: ['diabetes'] }, operator: 'OR' },
-        { id: 'intervention', field: 'title_abstract', terms: { keywords: ['AI'] }, operator: 'OR' },
+        {
+          id: 'population',
+          field: 'title_abstract',
+          terms: { keywords: ['diabetes'] },
+          operator: 'OR',
+        },
+        {
+          id: 'intervention',
+          field: 'title_abstract',
+          terms: { keywords: ['AI'] },
+          operator: 'OR',
+        },
       ],
       filters: {},
       providers: {},
@@ -210,13 +244,22 @@ describe('formatInspectOutput', () => {
     const ast: QueryAST = {
       name: 'full-format-test',
       blocks: [
-        { id: 'population', field: 'title_abstract', terms: { keywords: ['diabetes'] }, operator: 'OR' },
+        {
+          id: 'population',
+          field: 'title_abstract',
+          terms: { keywords: ['diabetes'] },
+          operator: 'OR',
+        },
       ],
       filters: {},
       providers: {
         arxiv: {
           replaces: {
-            population: { field: 'all', terms: { keywords: ['diabetes mellitus'] }, operator: 'OR' },
+            population: {
+              field: 'all',
+              terms: { keywords: ['diabetes mellitus'] },
+              operator: 'OR',
+            },
           },
           adds: {
             filters: {
@@ -239,9 +282,7 @@ describe('formatInspectOutput', () => {
   it('should use em-dash for providers without added filters in a filter row', () => {
     const ast: QueryAST = {
       name: 'dash-test',
-      blocks: [
-        { id: 'b1', field: 'title_abstract', terms: { keywords: ['x'] }, operator: 'OR' },
-      ],
+      blocks: [{ id: 'b1', field: 'title_abstract', terms: { keywords: ['x'] }, operator: 'OR' }],
       filters: {},
       providers: {
         pubmed: {

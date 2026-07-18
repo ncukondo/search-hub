@@ -86,9 +86,7 @@ function countMetadataFields(article: Article): number {
  * When duplicates are found (same DOI, PMID, etc.), the article with
  * richer metadata is kept.
  */
-export function mergeArticles(
-  sessionArticles: Map<string, Article[]>,
-): MergeResult {
+export function mergeArticles(sessionArticles: Map<string, Article[]>): MergeResult {
   const keyToIndex = new Map<string, number>();
   const unique: Article[] = [];
   let totalBefore = 0;
@@ -188,9 +186,7 @@ export async function copySourceProvenance(
 /**
  * Validate that all source sessions are valid for merging.
  */
-export function validateMergeSources(
-  sessions: Map<string, SessionFile>,
-): MergeValidationResult {
+export function validateMergeSources(sessions: Map<string, SessionFile>): MergeValidationResult {
   // Check for merged sessions as sources
   for (const [sessionId, session] of sessions) {
     if (isMergedSession(session)) {
@@ -256,9 +252,7 @@ export async function createMergedSession(
     const jsonlPath = join(sessionDir, jsonlFilename);
 
     // Write JSONL results
-    const jsonlContent = articles
-      .map((a) => JSON.stringify(a))
-      .join('\n') + '\n';
+    const jsonlContent = articles.map((a) => JSON.stringify(a)).join('\n') + '\n';
     await writeFile(jsonlPath, jsonlContent, 'utf-8');
 
     // Convert to YAML
@@ -297,11 +291,7 @@ export async function createMergedSession(
   };
 
   // Write session.yaml
-  await writeFile(
-    join(sessionDir, 'session.yaml'),
-    stringifyYaml(sessionFile),
-    'utf-8',
-  );
+  await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(sessionFile), 'utf-8');
 
   // Copy provenance from source sessions
   for (const sourceId of sourceSessionIds) {
@@ -324,7 +314,9 @@ export function formatMergeOutput(data: MergeOutputData): string {
     lines.push(`  ${source.id} (${source.name}): ${source.count} articles`);
   }
   lines.push('');
-  lines.push(`Total articles: ${data.totalBefore} → ${data.totalAfter} unique (${data.duplicatesRemoved} duplicates removed)`);
+  lines.push(
+    `Total articles: ${data.totalBefore} → ${data.totalAfter} unique (${data.duplicatesRemoved} duplicates removed)`,
+  );
 
   if (data.byProvider.size > 0) {
     lines.push('');
@@ -341,12 +333,16 @@ export function formatMergeOutput(data: MergeOutputData): string {
  * Format merge result as JSON.
  */
 export function formatMergeJson(data: MergeOutputData): string {
-  return JSON.stringify({
-    sessionId: data.sessionId,
-    totalBefore: data.totalBefore,
-    totalAfter: data.totalAfter,
-    duplicatesRemoved: data.duplicatesRemoved,
-    sources: data.sources,
-    byProvider: Object.fromEntries(data.byProvider),
-  }, null, 2);
+  return JSON.stringify(
+    {
+      sessionId: data.sessionId,
+      totalBefore: data.totalBefore,
+      totalAfter: data.totalAfter,
+      duplicatesRemoved: data.duplicatesRemoved,
+      sources: data.sources,
+      byProvider: Object.fromEntries(data.byProvider),
+    },
+    null,
+    2,
+  );
 }

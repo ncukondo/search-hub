@@ -55,9 +55,7 @@ describe('executeReviewMerge', () => {
 
   describe('--name option', () => {
     it('reads from for-review/<name>/review.yaml when --name is specified', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       const extractedArticles: ArticleEntry[] = [
@@ -77,40 +75,36 @@ describe('executeReviewMerge', () => {
     });
 
     it('rejects name with path separators', async () => {
-      await expect(
-        executeReviewMerge({ sessionId, name: 'foo/bar' }, sessionsDir)
-      ).rejects.toThrow('must not contain path separators');
+      await expect(executeReviewMerge({ sessionId, name: 'foo/bar' }, sessionsDir)).rejects.toThrow(
+        'must not contain path separators',
+      );
     });
 
     it('rejects name with ".."', async () => {
       await expect(
-        executeReviewMerge({ sessionId, name: 'foo..bar' }, sessionsDir)
+        executeReviewMerge({ sessionId, name: 'foo..bar' }, sessionsDir),
       ).rejects.toThrow('must not contain ".."');
     });
 
     it('rejects empty name', async () => {
-      await expect(
-        executeReviewMerge({ sessionId, name: '' }, sessionsDir)
-      ).rejects.toThrow('must not be empty');
+      await expect(executeReviewMerge({ sessionId, name: '' }, sessionsDir)).rejects.toThrow(
+        'must not be empty',
+      );
     });
 
     it('throws error when file does not exist for given name', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       await expect(
-        executeReviewMerge({ sessionId, name: 'nonexistent' }, sessionsDir)
+        executeReviewMerge({ sessionId, name: 'nonexistent' }, sessionsDir),
       ).rejects.toThrow();
     });
   });
 
   describe('appending reviews', () => {
     it('appends new reviews to matching articles', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       const extractedArticles: ArticleEntry[] = [
@@ -134,7 +128,9 @@ describe('executeReviewMerge', () => {
         {
           title: 'Article 1',
           pmid: '1',
-          reviews: [{ reviewer: 'human:alice', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
+          reviews: [
+            { reviewer: 'human:alice', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
+          ],
         },
       ];
       await writeMainReviewFile(mainArticles);
@@ -158,9 +154,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('auto-assigns timestamp when not provided', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       const extractedArticles: ArticleEntry[] = [
@@ -179,7 +173,7 @@ describe('executeReviewMerge', () => {
       expect(merged.articles[0]!.reviews[0]!.timestamp).toBeDefined();
       // Should be a valid ISO timestamp
       expect(new Date(merged.articles[0]!.reviews[0]!.timestamp!).toISOString()).toBe(
-        merged.articles[0]!.reviews[0]!.timestamp
+        merged.articles[0]!.reviews[0]!.timestamp,
       );
     });
 
@@ -296,9 +290,7 @@ describe('executeReviewMerge', () => {
 
   describe('article matching', () => {
     it('matches articles by pmid', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       const extractedArticles: ArticleEntry[] = [
@@ -338,9 +330,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('warns about articles not in main file', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       const extractedArticles: ArticleEntry[] = [
@@ -361,9 +351,7 @@ describe('executeReviewMerge', () => {
 
   describe('dry-run mode', () => {
     it('shows changes without applying', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       const extractedArticles: ArticleEntry[] = [
@@ -376,7 +364,10 @@ describe('executeReviewMerge', () => {
       ];
       await writeExtractedFile(extractedArticles, 'batch');
 
-      const result = await executeReviewMerge({ sessionId, name: 'batch', dryRun: true }, sessionsDir);
+      const result = await executeReviewMerge(
+        { sessionId, name: 'batch', dryRun: true },
+        sessionsDir,
+      );
 
       expect(result.reviewsAdded).toBe(1);
       expect(result.decisionsSet).toBe(1);
@@ -389,9 +380,7 @@ describe('executeReviewMerge', () => {
   });
 
   it('writes merged YAML with local schema reference (./review.schema.json)', async () => {
-    const mainArticles: ArticleEntry[] = [
-      { title: 'Article 1', pmid: '1', reviews: [] },
-    ];
+    const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
     await writeMainReviewFile(mainArticles);
 
     const extractedArticles: ArticleEntry[] = [
@@ -416,19 +405,15 @@ describe('executeReviewMerge', () => {
     await mkdir(sessionDir, { recursive: true });
     await writeExtractedFile([{ title: 'Article', pmid: '1', reviews: [] }], 'batch');
 
-    await expect(
-      executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir)
-    ).rejects.toThrow();
+    await expect(executeReviewMerge({ sessionId, name: 'batch' }, sessionsDir)).rejects.toThrow();
   });
 
   it('throws error if extracted file does not exist', async () => {
-    const mainArticles: ArticleEntry[] = [
-      { title: 'Article 1', pmid: '1', reviews: [] },
-    ];
+    const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
     await writeMainReviewFile(mainArticles);
 
     await expect(
-      executeReviewMerge({ sessionId, name: 'nonexistent' }, sessionsDir)
+      executeReviewMerge({ sessionId, name: 'nonexistent' }, sessionsDir),
     ).rejects.toThrow();
   });
 
@@ -485,9 +470,7 @@ describe('executeReviewMerge', () => {
         sessionId,
         basis: 'title',
         reviewer: 'ai:claude',
-        articles: [
-          { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: '' },
-        ],
+        articles: [{ id: '10.1234/test', title: 'Article 1', decision: 'include', comment: '' }],
       };
       await writeWorkFile(workFile, 'phase1');
 
@@ -498,9 +481,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('registers reviewers from review file after merge', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       const extractedArticles: ArticleEntry[] = [
@@ -508,7 +489,12 @@ describe('executeReviewMerge', () => {
           title: 'Article 1',
           pmid: '1',
           reviews: [
-            { reviewer: 'gpt-4o', decision: 'include', basis: 'abstract', timestamp: '2024-01-01T00:00:00Z' },
+            {
+              reviewer: 'gpt-4o',
+              decision: 'include',
+              basis: 'abstract',
+              timestamp: '2024-01-01T00:00:00Z',
+            },
           ],
         },
       ];
@@ -550,7 +536,7 @@ describe('executeReviewMerge', () => {
     async function writeExtractedReviewFile(
       articles: ArticleEntry[],
       name: string,
-      reviewer: string
+      reviewer: string,
     ): Promise<void> {
       const reviewFile: ReviewFile = {
         sessionId,
@@ -565,9 +551,7 @@ describe('executeReviewMerge', () => {
     }
 
     it('ignores reviewHistory and does not add it to master', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       await writeExtractedReviewFile(
@@ -576,14 +560,19 @@ describe('executeReviewMerge', () => {
             title: 'Article 1',
             pmid: '1',
             reviewHistory: [
-              { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+              {
+                reviewer: 'ai:claude',
+                decision: 'include',
+                basis: 'title',
+                timestamp: '2024-01-01T00:00:00Z',
+              },
             ],
             reviews: [],
             finalDecision: null,
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -594,9 +583,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('processes only reviews[] entries as new reviews', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       await writeExtractedReviewFile(
@@ -605,16 +592,19 @@ describe('executeReviewMerge', () => {
             title: 'Article 1',
             pmid: '1',
             reviewHistory: [
-              { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+              {
+                reviewer: 'ai:claude',
+                decision: 'include',
+                basis: 'title',
+                timestamp: '2024-01-01T00:00:00Z',
+              },
             ],
-            reviews: [
-              { reviewer: 'human:admin', decision: 'include', basis: 'abstract' },
-            ],
+            reviews: [{ reviewer: 'human:admin', decision: 'include', basis: 'abstract' }],
             finalDecision: null,
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -626,9 +616,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('takes reviewer from top-level field when not on individual review', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       await writeExtractedReviewFile(
@@ -644,7 +632,7 @@ describe('executeReviewMerge', () => {
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -654,9 +642,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('throws when reviewer is undefined on both review and top-level', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       // Write extracted file WITHOUT top-level reviewer and without reviewer on the review
@@ -682,7 +668,7 @@ describe('executeReviewMerge', () => {
       await writeFile(join(dir, 'review.yaml'), content);
 
       await expect(
-        executeReviewMerge({ sessionId, name: 'no-reviewer' }, sessionsDir)
+        executeReviewMerge({ sessionId, name: 'no-reviewer' }, sessionsDir),
       ).rejects.toThrow('reviewer is required');
     });
 
@@ -699,14 +685,12 @@ describe('executeReviewMerge', () => {
             pmid: '1',
             abstract: 'Some abstract',
             reviewHistory: [],
-            reviews: [
-              { reviewer: 'human:admin', decision: 'include' },
-            ],
+            reviews: [{ reviewer: 'human:admin', decision: 'include' }],
             finalDecision: null,
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -716,9 +700,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('auto-detects basis as title when no abstract or fulltext', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       await writeExtractedReviewFile(
@@ -727,14 +709,12 @@ describe('executeReviewMerge', () => {
             title: 'Article 1',
             pmid: '1',
             reviewHistory: [],
-            reviews: [
-              { reviewer: 'human:admin', decision: 'include' },
-            ],
+            reviews: [{ reviewer: 'human:admin', decision: 'include' }],
             finalDecision: null,
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -744,9 +724,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('auto-assigns timestamp when not specified on review', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       await writeExtractedReviewFile(
@@ -755,14 +733,12 @@ describe('executeReviewMerge', () => {
             title: 'Article 1',
             pmid: '1',
             reviewHistory: [],
-            reviews: [
-              { reviewer: 'human:admin', decision: 'include' },
-            ],
+            reviews: [{ reviewer: 'human:admin', decision: 'include' }],
             finalDecision: null,
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -772,9 +748,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('applies finalDecision when set (non-null)', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       await writeExtractedReviewFile(
@@ -788,7 +762,7 @@ describe('executeReviewMerge', () => {
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -814,7 +788,7 @@ describe('executeReviewMerge', () => {
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -830,7 +804,12 @@ describe('executeReviewMerge', () => {
           title: 'Article 1',
           pmid: '1',
           reviews: [
-            { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+            {
+              reviewer: 'ai:claude',
+              decision: 'include',
+              basis: 'title',
+              timestamp: '2024-01-01T00:00:00Z',
+            },
           ],
         },
       ];
@@ -842,17 +821,27 @@ describe('executeReviewMerge', () => {
             title: 'Article 1',
             pmid: '1',
             reviewHistory: [
-              { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
+              {
+                reviewer: 'ai:claude',
+                decision: 'include',
+                basis: 'title',
+                timestamp: '2024-01-01T00:00:00Z',
+              },
             ],
             reviews: [
               // Same reviewer+timestamp as existing - should still be added (no duplicate detection)
-              { reviewer: 'human:admin', decision: 'include', basis: 'abstract', timestamp: '2024-02-01T00:00:00Z' },
+              {
+                reviewer: 'human:admin',
+                decision: 'include',
+                basis: 'abstract',
+                timestamp: '2024-02-01T00:00:00Z',
+              },
             ],
             finalDecision: null,
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -863,9 +852,7 @@ describe('executeReviewMerge', () => {
     });
 
     it('registers reviewer from top-level field', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       await writeExtractedReviewFile(
@@ -874,14 +861,12 @@ describe('executeReviewMerge', () => {
             title: 'Article 1',
             pmid: '1',
             reviewHistory: [],
-            reviews: [
-              { reviewer: 'human:admin', decision: 'include' },
-            ],
+            reviews: [{ reviewer: 'human:admin', decision: 'include' }],
             finalDecision: null,
           },
         ],
         'confirm',
-        'human:admin'
+        'human:admin',
       );
 
       await executeReviewMerge({ sessionId, name: 'confirm' }, sessionsDir);
@@ -969,7 +954,7 @@ describe('executeReviewMerge', () => {
       expect(merged.articles[0]!.reviews[0]!.timestamp).toBeDefined();
       // Should be a valid ISO timestamp
       expect(new Date(merged.articles[0]!.reviews[0]!.timestamp!).toISOString()).toBe(
-        merged.articles[0]!.reviews[0]!.timestamp
+        merged.articles[0]!.reviews[0]!.timestamp,
       );
     });
 
@@ -1020,18 +1005,14 @@ describe('executeReviewMerge', () => {
     });
 
     it('matches work file articles by id (pmid)', async () => {
-      const mainArticles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '12345', reviews: [] },
-      ];
+      const mainArticles: ArticleEntry[] = [{ title: 'Article 1', pmid: '12345', reviews: [] }];
       await writeMainReviewFile(mainArticles);
 
       const workFile: WorkFile = {
         sessionId,
         basis: 'title',
         reviewer: 'ai:claude',
-        articles: [
-          { id: '12345', title: 'Article 1', decision: 'include', comment: '' },
-        ],
+        articles: [{ id: '12345', title: 'Article 1', decision: 'include', comment: '' }],
       };
       await writeWorkFile(workFile, 'phase1');
 
@@ -1195,17 +1176,20 @@ describe('executeReviewMerge', () => {
 
       const extractedArticles: ArticleEntry[] = [
         {
-          title: 'A1', pmid: '1',
+          title: 'A1',
+          pmid: '1',
           reviews: [{ reviewer: 'human:admin', decision: 'include' }],
           finalDecision: 'include',
         },
         {
-          title: 'A2', pmid: '2',
+          title: 'A2',
+          pmid: '2',
           reviews: [{ reviewer: 'human:admin', decision: 'exclude' }],
           finalDecision: 'exclude',
         },
         {
-          title: 'A3', pmid: '3',
+          title: 'A3',
+          pmid: '3',
           reviews: [{ reviewer: 'human:admin', decision: 'include' }],
         },
       ];
@@ -1370,7 +1354,7 @@ describe('executeReviewMerge', () => {
       articles: ArticleEntry[],
       name: string,
       basis: string,
-      reviewer: string
+      reviewer: string,
     ): Promise<void> {
       const reviewFile = {
         sessionId,
@@ -1401,7 +1385,7 @@ describe('executeReviewMerge', () => {
         ],
         'screening1',
         'title',
-        'ai:claude'
+        'ai:claude',
       );
 
       await executeReviewMerge({ sessionId, name: 'screening1' }, sessionsDir);
@@ -1430,7 +1414,7 @@ describe('executeReviewMerge', () => {
         ],
         'screening1',
         'abstract',
-        'ai:claude'
+        'ai:claude',
       );
 
       await executeReviewMerge({ sessionId, name: 'screening1' }, sessionsDir);
@@ -1449,9 +1433,7 @@ describe('executeReviewMerge', () => {
         sessionId,
         basis: 'title',
         reviewer: 'ai:claude',
-        articles: [
-          { id: '10.1234/test', title: 'Article 1', decision: 'include', comment: '' },
-        ],
+        articles: [{ id: '10.1234/test', title: 'Article 1', decision: 'include', comment: '' }],
       };
       const dir = join(sessionsDir, sessionId, 'for-review', 'compat');
       await mkdir(dir, { recursive: true });

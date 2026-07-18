@@ -204,8 +204,20 @@ describe('register command', () => {
   describe('formatDryRunOutput', () => {
     it('should show count of articles to register', () => {
       const articles = [
-        { pmid: '12345678', title: 'Article 1', authors: [], source: 'pubmed' as const, retrievedAt: '' },
-        { doi: '10.1234/test', title: 'Article 2', authors: [], source: 'pubmed' as const, retrievedAt: '' },
+        {
+          pmid: '12345678',
+          title: 'Article 1',
+          authors: [],
+          source: 'pubmed' as const,
+          retrievedAt: '',
+        },
+        {
+          doi: '10.1234/test',
+          title: 'Article 2',
+          authors: [],
+          source: 'pubmed' as const,
+          retrievedAt: '',
+        },
         { title: 'Article 3', authors: [], source: 'pubmed' as const, retrievedAt: '' }, // no ID
       ];
 
@@ -218,8 +230,20 @@ describe('register command', () => {
 
     it('should list articles with their identifiers', () => {
       const articles = [
-        { pmid: '12345678', title: 'Article 1', authors: [], source: 'pubmed' as const, retrievedAt: '' },
-        { doi: '10.1234/test', title: 'Article 2', authors: [], source: 'pubmed' as const, retrievedAt: '' },
+        {
+          pmid: '12345678',
+          title: 'Article 1',
+          authors: [],
+          source: 'pubmed' as const,
+          retrievedAt: '',
+        },
+        {
+          doi: '10.1234/test',
+          title: 'Article 2',
+          authors: [],
+          source: 'pubmed' as const,
+          retrievedAt: '',
+        },
       ];
 
       const output = formatDryRunOutput(articles);
@@ -230,7 +254,14 @@ describe('register command', () => {
 
     it('should indicate PMID preference over DOI', () => {
       const articles = [
-        { pmid: '12345678', doi: '10.1234/test', title: 'Article with both', authors: [], source: 'pubmed' as const, retrievedAt: '' },
+        {
+          pmid: '12345678',
+          doi: '10.1234/test',
+          title: 'Article with both',
+          authors: [],
+          source: 'pubmed' as const,
+          retrievedAt: '',
+        },
       ];
 
       const output = formatDryRunOutput(articles);
@@ -252,8 +283,20 @@ describe('register command', () => {
 
     it('should list arXiv/ERIC-only articles under "Would register" with prefixed ids', () => {
       const articles = [
-        { title: 'Article with arXiv', authors: [], source: 'arxiv' as const, retrievedAt: '', arxivId: '2401.12345' },
-        { title: 'Article with ERIC', authors: [], source: 'eric' as const, retrievedAt: '', ericId: 'ED123456' },
+        {
+          title: 'Article with arXiv',
+          authors: [],
+          source: 'arxiv' as const,
+          retrievedAt: '',
+          arxivId: '2401.12345',
+        },
+        {
+          title: 'Article with ERIC',
+          authors: [],
+          source: 'eric' as const,
+          retrievedAt: '',
+          ericId: 'ED123456',
+        },
       ];
 
       const output = formatDryRunOutput(articles);
@@ -266,8 +309,22 @@ describe('register command', () => {
 
     it('should prefer PMID and DOI over alternative identifiers', () => {
       const articles = [
-        { title: 'PMID beats arXiv', authors: [], source: 'pubmed' as const, retrievedAt: '', pmid: '12345678', arxivId: '2401.12345' },
-        { title: 'DOI beats ERIC', authors: [], source: 'eric' as const, retrievedAt: '', doi: '10.1234/test', ericId: 'ED123456' },
+        {
+          title: 'PMID beats arXiv',
+          authors: [],
+          source: 'pubmed' as const,
+          retrievedAt: '',
+          pmid: '12345678',
+          arxivId: '2401.12345',
+        },
+        {
+          title: 'DOI beats ERIC',
+          authors: [],
+          source: 'eric' as const,
+          retrievedAt: '',
+          doi: '10.1234/test',
+          ericId: 'ED123456',
+        },
       ];
 
       const output = formatDryRunOutput(articles);
@@ -280,7 +337,13 @@ describe('register command', () => {
 
     it('should skip only truly identifier-less articles with "no identifier" wording', () => {
       const articles = [
-        { title: 'Article with arXiv', authors: [], source: 'arxiv' as const, retrievedAt: '', arxivId: '2401.12345' },
+        {
+          title: 'Article with arXiv',
+          authors: [],
+          source: 'arxiv' as const,
+          retrievedAt: '',
+          arxivId: '2401.12345',
+        },
         { title: 'Plain article', authors: [], source: 'pubmed' as const, retrievedAt: '' },
       ];
 
@@ -337,7 +400,13 @@ describe('register command', () => {
 
     it('should list Scopus-only articles under "Would register" with scopus: prefix', () => {
       const articles = [
-        { title: 'Scopus Article', authors: [], source: 'scopus' as const, retrievedAt: '', scopusId: '2-s2.0-12345' },
+        {
+          title: 'Scopus Article',
+          authors: [],
+          source: 'scopus' as const,
+          retrievedAt: '',
+          scopusId: '2-s2.0-12345',
+        },
       ];
 
       const output = formatDryRunOutput(articles);
@@ -829,7 +898,7 @@ articles:
       await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       await expect(getIncludedArticles(sessionId, sessionsDir)).rejects.toThrow(
-        /mergedFrom.*missing/i
+        /mergedFrom.*missing/i,
       );
     });
 
@@ -851,7 +920,7 @@ articles:
       await writeFile(join(internalDir, 'reviews.yaml'), reviewContent);
 
       await expect(getIncludedArticles(sessionId, sessionsDir)).rejects.toThrow(
-        /mergedFrom.*empty/i
+        /mergedFrom.*empty/i,
       );
     });
 
@@ -876,7 +945,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'pubmed_results.jsonl'),
-          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+          resultArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
 
         // reviews.yaml only keeps the lossy display string
@@ -920,7 +989,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'scopus_results.jsonl'),
-          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+          resultArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
 
         // "Dupont É" would be mis-parsed as {family: "É", given: "Dupont"}
@@ -960,7 +1029,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'scopus_results.jsonl'),
-          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+          resultArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
 
         const reviewContent = `
@@ -1000,7 +1069,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'pubmed_results.jsonl'),
-          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+          resultArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
 
         const reviewContent = `
@@ -1041,7 +1110,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'arxiv_results.jsonl'),
-          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+          resultArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
 
         const reviewContent = `
@@ -1080,7 +1149,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'eric_results.jsonl'),
-          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+          resultArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
 
         const reviewContent = `
@@ -1121,7 +1190,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'scopus_results.jsonl'),
-          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+          resultArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
 
         const reviewContent = `
@@ -1159,7 +1228,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'pubmed_results.jsonl'),
-          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+          resultArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
 
         // Manually added article that never came from a search result
@@ -1199,7 +1268,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'pubmed_results.jsonl'),
-          resultArticles.map((a) => JSON.stringify(a)).join('\n')
+          resultArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
 
         // Authors string was filled in by hand after the fact
@@ -1239,7 +1308,7 @@ articles:
         ];
         await writeFile(
           join(sessionDir, 'pubmed_results.jsonl'),
-          jsonlArticles.map((a) => JSON.stringify(a)).join('\n')
+          jsonlArticles.map((a) => JSON.stringify(a)).join('\n'),
         );
         const yamlContent = `
 - title: "Test Article"

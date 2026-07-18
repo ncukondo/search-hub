@@ -48,10 +48,7 @@ function translateTitleAbstractTerm(term: string): string {
 /**
  * Translate exclude terms to NOT clause.
  */
-function translateExcludeTerms(
-  exclude: string[],
-  field: QueryBlock['field']
-): string | null {
+function translateExcludeTerms(exclude: string[], field: QueryBlock['field']): string | null {
   if (exclude.length === 0) {
     return null;
   }
@@ -122,9 +119,7 @@ function translateBlock(block: QueryBlock): { query: string; notClause: string |
   }
 
   // Translate exclude terms
-  const notClause = terms.exclude
-    ? translateExcludeTerms(terms.exclude, field)
-    : null;
+  const notClause = terms.exclude ? translateExcludeTerms(terms.exclude, field) : null;
 
   return { query, notClause };
 }

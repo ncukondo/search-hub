@@ -95,7 +95,9 @@ const metaWithPdf: FulltextMeta = {
   authors: 'Jones B',
   year: '2023',
   oaStatus: 'open',
-  files: { pdf: { filename: 'fulltext.pdf', source: 'unpaywall', retrievedAt: '2024-01-01T00:00:00Z' } },
+  files: {
+    pdf: { filename: 'fulltext.pdf', source: 'unpaywall', retrievedAt: '2024-01-01T00:00:00Z' },
+  },
 };
 
 // Meta for article with OA locations
@@ -110,8 +112,18 @@ const metaWithOA: FulltextMeta = {
   year: '2024',
   oaStatus: 'open',
   oaLocations: [
-    { source: 'unpaywall', url: 'https://repository.edu/paper.pdf', urlType: 'pdf', version: 'published' },
-    { source: 'pmc', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC12345/', urlType: 'html', version: 'published' },
+    {
+      source: 'unpaywall',
+      url: 'https://repository.edu/paper.pdf',
+      urlType: 'pdf',
+      version: 'published',
+    },
+    {
+      source: 'pmc',
+      url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC12345/',
+      urlType: 'html',
+      version: 'published',
+    },
   ],
   files: {},
 };
@@ -129,8 +141,8 @@ describe('executeFulltextPending', () => {
     });
 
     // Mock getMetaPath to return predictable paths
-    mockGetMetaPath.mockImplementation((sessionDir: string, dirName: string) =>
-      `${sessionDir}/fulltext/${dirName}/meta.json`
+    mockGetMetaPath.mockImplementation(
+      (sessionDir: string, dirName: string) => `${sessionDir}/fulltext/${dirName}/meta.json`,
     );
 
     // Mock loadMeta to return meta based on path
@@ -213,9 +225,7 @@ articles:
   it('handles missing reviews.yaml', async () => {
     mockReadFile.mockRejectedValue(new Error('ENOENT'));
 
-    await expect(
-      executeFulltextPending({ sessionDir }),
-    ).rejects.toThrow();
+    await expect(executeFulltextPending({ sessionDir })).rejects.toThrow();
   });
 
   describe('--export', () => {

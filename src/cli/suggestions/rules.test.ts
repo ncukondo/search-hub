@@ -664,7 +664,7 @@ describe('getSuggestion', () => {
         expect(result!.next).toHaveLength(1);
         expect(result!.next[0]!.command).toContain('review merge');
         expect(result!.seeAlso.length).toBeGreaterThanOrEqual(1);
-        const batchSuggestion = result!.seeAlso.find(s => s.command.includes('--offset'));
+        const batchSuggestion = result!.seeAlso.find((s) => s.command.includes('--offset'));
         expect(batchSuggestion).toBeDefined();
         expect(batchSuggestion!.command).toContain('--offset 20');
         expect(batchSuggestion!.command).toContain('--limit 20');

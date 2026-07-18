@@ -17,7 +17,7 @@ function createBlock(
   field: QueryBlock['field'],
   terms: TermBlock,
   operator: QueryBlock['operator'] = 'OR',
-  id = 'block1'
+  id = 'block1',
 ): QueryBlock {
   return { id, field, terms, operator };
 }
@@ -121,9 +121,7 @@ describe('translateQuery', () => {
       ]);
       const result = translateQuery(ast);
       // Each keyword expanded: (ti:diabetes OR abs:diabetes) OR (ti:insulin OR abs:insulin)
-      expect(result.native).toBe(
-        '((ti:diabetes OR abs:diabetes) OR (ti:insulin OR abs:insulin))'
-      );
+      expect(result.native).toBe('((ti:diabetes OR abs:diabetes) OR (ti:insulin OR abs:insulin))');
     });
 
     it('should expand title_abstract with AND operator', () => {
@@ -131,9 +129,7 @@ describe('translateQuery', () => {
         createBlock('title_abstract', { keywords: ['diabetes', 'insulin'] }, 'AND'),
       ]);
       const result = translateQuery(ast);
-      expect(result.native).toBe(
-        '((ti:diabetes OR abs:diabetes) AND (ti:insulin OR abs:insulin))'
-      );
+      expect(result.native).toBe('((ti:diabetes OR abs:diabetes) AND (ti:insulin OR abs:insulin))');
     });
   });
 
@@ -173,28 +169,25 @@ describe('translateQuery', () => {
 
   describe('category filter', () => {
     it('should translate arxiv categories from resolved filters', () => {
-      const ast = createResolvedAST(
-        [createBlock('title', { keywords: ['quantum'] })],
-        { categories: ['cs.AI'] }
-      );
+      const ast = createResolvedAST([createBlock('title', { keywords: ['quantum'] })], {
+        categories: ['cs.AI'],
+      });
       const result = translateQuery(ast);
       expect(result.native).toContain('cat:cs.AI');
     });
 
     it('should combine multiple categories with OR', () => {
-      const ast = createResolvedAST(
-        [createBlock('title', { keywords: ['quantum'] })],
-        { categories: ['cs.AI', 'cs.LG'] }
-      );
+      const ast = createResolvedAST([createBlock('title', { keywords: ['quantum'] })], {
+        categories: ['cs.AI', 'cs.LG'],
+      });
       const result = translateQuery(ast);
       expect(result.native).toContain('(cat:cs.AI OR cat:cs.LG)');
     });
 
     it('should AND categories with main query', () => {
-      const ast = createResolvedAST(
-        [createBlock('title', { keywords: ['quantum'] })],
-        { categories: ['cs.AI'] }
-      );
+      const ast = createResolvedAST([createBlock('title', { keywords: ['quantum'] })], {
+        categories: ['cs.AI'],
+      });
       const result = translateQuery(ast);
       expect(result.native).toBe('ti:quantum AND (cat:cs.AI)');
     });
@@ -235,9 +228,7 @@ describe('translateQuery', () => {
         yearTo: 2024,
       });
       const result = translateQuery(ast);
-      expect(result.native).toBe(
-        'ti:quantum AND (submittedDate:[202001010000 TO 202412312359])'
-      );
+      expect(result.native).toBe('ti:quantum AND (submittedDate:[202001010000 TO 202412312359])');
     });
   });
 
@@ -251,9 +242,7 @@ describe('translateQuery', () => {
     });
 
     it('should still work when keywords is undefined but has no arXiv-relevant terms', () => {
-      const ast = createResolvedAST([
-        createBlock('title', { mesh: ['Diabetes Mellitus'] }),
-      ]);
+      const ast = createResolvedAST([createBlock('title', { mesh: ['Diabetes Mellitus'] })]);
       const result = translateQuery(ast);
       expect(result.native).toBe('');
     });
@@ -334,7 +323,7 @@ describe('translateQuery', () => {
             exclude: ['classical'],
           }),
         ],
-        { yearFrom: 2020, yearTo: 2024 }
+        { yearFrom: 2020, yearTo: 2024 },
       );
       const result = translateQuery(ast);
       expect(result.native).toContain('ti:quantum');
@@ -350,7 +339,7 @@ describe('translateQuery', () => {
             exclude: ['survey'],
           }),
         ],
-        { categories: ['cs.AI'] }
+        { categories: ['cs.AI'] },
       );
       const result = translateQuery(ast);
       expect(result.native).toContain('ti:"machine learning"');
@@ -372,7 +361,7 @@ describe('translateQuery', () => {
 
       const result = translateQuery(ast);
       expect(result.warnings).toContainEqual(
-        'arXiv: block 1 skipped (contains only MeSH terms, not supported)'
+        'arXiv: block 1 skipped (contains only MeSH terms, not supported)',
       );
     });
 
@@ -388,7 +377,7 @@ describe('translateQuery', () => {
 
       const result = translateQuery(ast);
       expect(result.warnings).toContainEqual(
-        'arXiv: MeSH terms in block 1 ignored (not supported) — keywords still searched'
+        'arXiv: MeSH terms in block 1 ignored (not supported) — keywords still searched',
       );
     });
 

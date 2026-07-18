@@ -75,9 +75,11 @@ export class ERICProvider extends BaseProvider {
 
     this.pageSize = config.maxResultsPerPage ?? DEFAULT_PAGE_SIZE;
     // Allow client injection for testing
-    this.client = config.client ?? new ERICClient({
-      timeout: this.config.timeout,
-    });
+    this.client =
+      config.client ??
+      new ERICClient({
+        timeout: this.config.timeout,
+      });
   }
 
   /**
@@ -94,7 +96,7 @@ export class ERICProvider extends BaseProvider {
   async count(query: TranslatedQuery): Promise<number> {
     await this.rateLimiter.acquire();
     const result = await this.withRetry(() =>
-      this.client.search(query.native, { start: 0, rows: 0 })
+      this.client.search(query.native, { start: 0, rows: 0 }),
     );
     return result.totalResults;
   }
@@ -102,10 +104,7 @@ export class ERICProvider extends BaseProvider {
   /**
    * Execute search and return results as async iterable (streaming).
    */
-  async *search(
-    query: TranslatedQuery,
-    options: SearchOptions = {}
-  ): AsyncIterable<Article> {
+  async *search(query: TranslatedQuery, options: SearchOptions = {}): AsyncIterable<Article> {
     const maxResults = options.maxResults ?? Number.MAX_SAFE_INTEGER;
     const pageSize = options.pageSize ?? this.pageSize;
 
@@ -113,7 +112,7 @@ export class ERICProvider extends BaseProvider {
     this.searchWarnings = [];
     if (options.sort) {
       this.searchWarnings.push(
-        `ERIC does not support sort option '${options.sort}'; using default order`
+        `ERIC does not support sort option '${options.sort}'; using default order`,
       );
     }
 
@@ -137,9 +136,7 @@ export class ERICProvider extends BaseProvider {
       if (options.signal) {
         searchOptions.signal = options.signal;
       }
-      const result = await this.withRetry(() =>
-        this.client.search(query.native, searchOptions)
-      );
+      const result = await this.withRetry(() => this.client.search(query.native, searchOptions));
 
       // Update total on first page
       if (this.currentOffset === 0) {
@@ -209,7 +206,7 @@ export class ERICProvider extends BaseProvider {
       ...this.createBaseState(
         this.currentQuery,
         this.currentTotalResults,
-        this.currentRetrievedCount
+        this.currentRetrievedCount,
       ),
       providerState,
     };
@@ -244,7 +241,7 @@ export class ERICProvider extends BaseProvider {
       };
 
       const result = await this.withRetry(() =>
-        this.client.search(state.query.native, searchOptions)
+        this.client.search(state.query.native, searchOptions),
       );
 
       if (result.documents.length === 0) {

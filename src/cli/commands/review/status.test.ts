@@ -21,7 +21,10 @@ describe('executeReviewStatus', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  async function writeReviewFile(articles: ArticleEntry[], reviewFile?: Partial<ReviewFile>): Promise<void> {
+  async function writeReviewFile(
+    articles: ArticleEntry[],
+    reviewFile?: Partial<ReviewFile>,
+  ): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
     const internalDir = join(sessionDir, '.internal');
     await mkdir(internalDir, { recursive: true });
@@ -43,12 +46,14 @@ describe('executeReviewStatus', () => {
       { title: 'Article 2', pmid: '2', reviews: [] },
       // agreed-include (has reviews, all include, no registry)
       {
-        title: 'Article 3', pmid: '3',
+        title: 'Article 3',
+        pmid: '3',
         reviews: [{ reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
       },
       // divided (reviewers disagree)
       {
-        title: 'Article 4', pmid: '4',
+        title: 'Article 4',
+        pmid: '4',
         reviews: [
           { reviewer: 'gpt-4o', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
           { reviewer: 'claude', decision: 'exclude', timestamp: '2024-01-01T01:00:00Z' },
@@ -56,12 +61,14 @@ describe('executeReviewStatus', () => {
       },
       // finalized
       {
-        title: 'Article 5', pmid: '5',
+        title: 'Article 5',
+        pmid: '5',
         reviews: [{ reviewer: 'human', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
         finalDecision: 'include',
       },
       {
-        title: 'Article 6', pmid: '6',
+        title: 'Article 6',
+        pmid: '6',
         reviews: [{ reviewer: 'human', decision: 'exclude', timestamp: '2024-01-01T00:00:00Z' }],
         finalDecision: 'exclude',
       },
@@ -87,12 +94,16 @@ describe('executeReviewStatus', () => {
     const articles: ArticleEntry[] = [
       // incomplete: only claude reviewed, gpt-4o missing
       {
-        title: 'Article 1', pmid: '1',
-        reviews: [{ reviewer: 'ai:claude', decision: 'include', timestamp: '2024-01-01T00:00:00Z' }],
+        title: 'Article 1',
+        pmid: '1',
+        reviews: [
+          { reviewer: 'ai:claude', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
+        ],
       },
       // divided: both reviewed, include + uncertain = mixed decisions
       {
-        title: 'Article 2', pmid: '2',
+        title: 'Article 2',
+        pmid: '2',
         reviews: [
           { reviewer: 'ai:claude', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
           { reviewer: 'ai:gpt-4o', decision: 'uncertain', timestamp: '2024-01-01T01:00:00Z' },
@@ -100,7 +111,8 @@ describe('executeReviewStatus', () => {
       },
       // agreed-include: both include
       {
-        title: 'Article 3', pmid: '3',
+        title: 'Article 3',
+        pmid: '3',
         reviews: [
           { reviewer: 'ai:claude', decision: 'include', timestamp: '2024-01-01T00:00:00Z' },
           { reviewer: 'ai:gpt-4o', decision: 'include', timestamp: '2024-01-01T01:00:00Z' },
@@ -108,7 +120,8 @@ describe('executeReviewStatus', () => {
       },
       // agreed-exclude: both exclude
       {
-        title: 'Article 4', pmid: '4',
+        title: 'Article 4',
+        pmid: '4',
         reviews: [
           { reviewer: 'ai:claude', decision: 'exclude', timestamp: '2024-01-01T00:00:00Z' },
           { reviewer: 'ai:gpt-4o', decision: 'exclude', timestamp: '2024-01-01T01:00:00Z' },

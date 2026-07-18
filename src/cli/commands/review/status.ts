@@ -43,7 +43,7 @@ async function loadReviewFile(sessionDir: string): Promise<ReviewFile> {
  */
 export async function executeReviewStatus(
   options: ReviewStatusOptions,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<ReviewStatusResult> {
   const sessionDir = join(sessionsDir, options.sessionId);
   const reviewFile = await loadReviewFile(sessionDir);
@@ -109,7 +109,9 @@ export async function executeReviewStatus(
 export function formatStatusOutput(result: ReviewStatusResult): string {
   const id = result.sessionId;
   const agreed = result.agreedInclude + result.agreedExclude;
-  const header = result.mode ? `Review Progress: ${id} (${result.mode} mode)` : `Review Progress: ${id}`;
+  const header = result.mode
+    ? `Review Progress: ${id} (${result.mode} mode)`
+    : `Review Progress: ${id}`;
   const lines = [
     header,
     `  Total:           ${result.total}`,

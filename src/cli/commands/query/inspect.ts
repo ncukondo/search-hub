@@ -47,20 +47,12 @@ export interface InspectCommandResult {
 /**
  * Default providers to inspect for.
  */
-const DEFAULT_PROVIDERS: ProviderName[] = [
-  'pubmed',
-  'eric',
-  'arxiv',
-  'scopus',
-];
+const DEFAULT_PROVIDERS: ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopus'];
 
 /**
  * Inspect a QueryAST to determine block resolution and filter additions per provider.
  */
-export function inspectQuery(
-  ast: QueryAST,
-  enabledProviders: ProviderName[]
-): InspectResult {
+export function inspectQuery(ast: QueryAST, enabledProviders: ProviderName[]): InspectResult {
   const blocks: BlockInspectRow[] = ast.blocks.map((block) => {
     const status: Partial<Record<ProviderName, 'default' | 'replaced'>> = {};
     for (const provider of enabledProviders) {
@@ -145,18 +137,14 @@ export function formatInspectOutput(result: InspectResult): string {
   lines.push(`Query: ${result.name}`);
   lines.push('');
 
-  const providerHeaders = result.providers.map(
-    (p) => PROVIDER_DISPLAY_NAMES[p] || p
-  );
+  const providerHeaders = result.providers.map((p) => PROVIDER_DISPLAY_NAMES[p] || p);
 
   // Block resolution table
   const blockRows = result.blocks.map((block) => [
     block.id,
     ...result.providers.map((p) => block.status[p] || 'default'),
   ]);
-  lines.push(
-    ...formatTable(['Block', ...providerHeaders], blockRows)
-  );
+  lines.push(...formatTable(['Block', ...providerHeaders], blockRows));
 
   // Added filters table (only if there are added filters)
   if (result.addedFilters.length > 0) {
@@ -165,9 +153,7 @@ export function formatInspectOutput(result: InspectResult): string {
       camelToSnakeCase(filter.filterKey),
       ...result.providers.map((p) => filter.values[p] || '\u2014'),
     ]);
-    lines.push(
-      ...formatTable(['Added Filters', ...providerHeaders], filterRows)
-    );
+    lines.push(...formatTable(['Added Filters', ...providerHeaders], filterRows));
   }
 
   return lines.join('\n');
@@ -197,22 +183,16 @@ function formatTable(headers: string[], rows: string[][]): string[] {
   const lines: string[] = [];
 
   // Header row
-  const headerLine = headers
-    .map((h, i) => h.padEnd(colWidths[i]!))
-    .join(' \u2502 ');
+  const headerLine = headers.map((h, i) => h.padEnd(colWidths[i]!)).join(' \u2502 ');
   lines.push(`  ${headerLine}`);
 
   // Separator
-  const separatorLine = colWidths
-    .map((w) => '\u2500'.repeat(w))
-    .join('\u2500\u253C\u2500');
+  const separatorLine = colWidths.map((w) => '\u2500'.repeat(w)).join('\u2500\u253C\u2500');
   lines.push(`  ${separatorLine}`);
 
   // Data rows
   for (const row of rows) {
-    const rowLine = row
-      .map((cell, i) => (cell || '').padEnd(colWidths[i]!))
-      .join(' \u2502 ');
+    const rowLine = row.map((cell, i) => (cell || '').padEnd(colWidths[i]!)).join(' \u2502 ');
     lines.push(`  ${rowLine}`);
   }
 
@@ -224,14 +204,13 @@ function formatTable(headers: string[], rows: string[][]): string[] {
  */
 export async function inspectQueryCommand(
   filePath: string,
-  options: { providers?: ProviderName[] } = {}
+  options: { providers?: ProviderName[] } = {},
 ): Promise<InspectCommandResult> {
   let content: string;
   try {
     content = await readFile(filePath, 'utf-8');
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to read file';
+    const message = error instanceof Error ? error.message : 'Failed to read file';
     return { success: false, error: message };
   }
 
@@ -239,8 +218,7 @@ export async function inspectQueryCommand(
   try {
     ast = parseQueryString(content);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to parse query file';
+    const message = error instanceof Error ? error.message : 'Failed to parse query file';
     return { success: false, error: message };
   }
 

@@ -160,17 +160,13 @@ describe('reviewSchema validation', () => {
   });
 
   it('rejects unknown fields', () => {
-    expect(() =>
-      reviewSchema.parse({ reviewer: 'test', unknown: true })
-    ).toThrow();
+    expect(() => reviewSchema.parse({ reviewer: 'test', unknown: true })).toThrow();
   });
 });
 
 describe('articleEntrySchema validation', () => {
   it('accepts minimal article (title + reviews)', () => {
-    expect(() =>
-      articleEntrySchema.parse({ title: 'Test', reviews: [] })
-    ).not.toThrow();
+    expect(() => articleEntrySchema.parse({ title: 'Test', reviews: [] })).not.toThrow();
   });
 
   it('accepts finalDecision as null', () => {
@@ -179,7 +175,7 @@ describe('articleEntrySchema validation', () => {
         title: 'Test',
         reviews: [],
         finalDecision: null,
-      })
+      }),
     ).not.toThrow();
   });
 
@@ -189,14 +185,14 @@ describe('articleEntrySchema validation', () => {
         title: 'Test',
         reviews: [],
         finalDecision: 'include',
-      })
+      }),
     ).not.toThrow();
     expect(() =>
       articleEntrySchema.parse({
         title: 'Test',
         reviews: [],
         finalDecision: 'exclude',
-      })
+      }),
     ).not.toThrow();
   });
 
@@ -206,7 +202,7 @@ describe('articleEntrySchema validation', () => {
         title: 'Test',
         reviews: [],
         finalDecision: 'uncertain',
-      })
+      }),
     ).toThrow();
   });
 
@@ -219,16 +215,14 @@ describe('articleEntrySchema validation', () => {
           dirName: 'smith-2024-abc12345',
           hasFiles: { pdf: true, xml: false, html: false, markdown: true },
         },
-      })
+      }),
     ).not.toThrow();
   });
 });
 
 describe('mergedSourceSchema validation', () => {
   it('accepts minimal source', () => {
-    expect(() =>
-      mergedSourceSchema.parse({ source: 'pubmed' })
-    ).not.toThrow();
+    expect(() => mergedSourceSchema.parse({ source: 'pubmed' })).not.toThrow();
   });
 
   it('accepts source with identifiers', () => {
@@ -237,16 +231,14 @@ describe('mergedSourceSchema validation', () => {
         source: 'pubmed',
         pmid: '12345678',
         doi: '10.1234/test',
-      })
+      }),
     ).not.toThrow();
   });
 });
 
 describe('reviewerRecordSchema validation', () => {
   it('accepts valid record', () => {
-    expect(() =>
-      reviewerRecordSchema.parse({ name: 'ai:claude', basis: 'title' })
-    ).not.toThrow();
+    expect(() => reviewerRecordSchema.parse({ name: 'ai:claude', basis: 'title' })).not.toThrow();
   });
 
   it('rejects missing basis', () => {

@@ -15,11 +15,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import {
-  setupE2EContext,
-  execCli,
-  type E2EContext,
-} from '../e2e-helpers.js';
+import { setupE2EContext, execCli, type E2EContext } from '../e2e-helpers.js';
 import {
   parseExportOptions,
   validateExportInput,
@@ -98,7 +94,7 @@ describe('search-hub export E2E', () => {
   async function createTestSessionWithResults(
     id: string,
     articles: Article[],
-    providers: string[] = ['pubmed']
+    providers: string[] = ['pubmed'],
   ): Promise<string> {
     const sessionDir = join(ctx.sessionsDir, id);
     await mkdir(sessionDir, { recursive: true });
@@ -129,17 +125,13 @@ describe('search-hub export E2E', () => {
 
       // Create results file
       const jsonl = providerArticles.map((a) => JSON.stringify(a)).join('\n');
-      await writeFile(
-        join(sessionDir, `${provider}_results.jsonl`),
-        jsonl,
-        'utf-8'
-      );
+      await writeFile(join(sessionDir, `${provider}_results.jsonl`), jsonl, 'utf-8');
 
       // Create query file
       await writeFile(
         join(sessionDir, `${provider}_query.txt`),
         `${provider} query string`,
-        'utf-8'
+        'utf-8',
       );
     }
 
@@ -161,11 +153,7 @@ describe('search-hub export E2E', () => {
       },
     };
 
-    await writeFile(
-      join(sessionDir, 'session.yaml'),
-      stringifyYaml(session),
-      'utf-8'
-    );
+    await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
     return id;
   }
@@ -386,15 +374,22 @@ describe('search-hub export E2E', () => {
       await createTestSessionWithResults(
         'multi-provider-export',
         [...pubmedArticles, ...arxivArticles],
-        ['pubmed', 'arxiv']
+        ['pubmed', 'arxiv'],
       );
 
       // Read all results from session
       const allArticles: Article[] = [];
       for (const provider of ['pubmed', 'arxiv']) {
-        const resultsPath = join(ctx.sessionsDir, 'multi-provider-export', `${provider}_results.jsonl`);
+        const resultsPath = join(
+          ctx.sessionsDir,
+          'multi-provider-export',
+          `${provider}_results.jsonl`,
+        );
         const content = await readFile(resultsPath, 'utf-8');
-        for (const line of content.trim().split('\n').filter(l => l)) {
+        for (const line of content
+          .trim()
+          .split('\n')
+          .filter((l) => l)) {
           allArticles.push(JSON.parse(line));
         }
       }
@@ -412,7 +407,9 @@ describe('search-hub export E2E', () => {
 
   describe('--output writes to file', () => {
     it('should create output file at specified path', async () => {
-      await createTestSessionWithResults('session-for-file-export', sampleArticles.slice(0, 2), ['pubmed']);
+      await createTestSessionWithResults('session-for-file-export', sampleArticles.slice(0, 2), [
+        'pubmed',
+      ]);
 
       const outputPath = join(ctx.tempDir, 'export-output.jsonl');
 
@@ -436,7 +433,10 @@ describe('search-hub export E2E', () => {
       // Read results and format them
       const resultsPath = join(ctx.sessionsDir, 'session-stdout', 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map((line) => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       const output = formatJsonl(articles);
 
@@ -447,11 +447,16 @@ describe('search-hub export E2E', () => {
 
   describe('integration: export workflow', () => {
     it('should export session results in ids format', async () => {
-      await createTestSessionWithResults('export-ids-workflow', sampleArticles.slice(0, 2), ['pubmed']);
+      await createTestSessionWithResults('export-ids-workflow', sampleArticles.slice(0, 2), [
+        'pubmed',
+      ]);
 
       const resultsPath = join(ctx.sessionsDir, 'export-ids-workflow', 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map((line) => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       const output = formatIds(articles, 'doi');
 
@@ -460,11 +465,16 @@ describe('search-hub export E2E', () => {
     });
 
     it('should export session results in json format', async () => {
-      await createTestSessionWithResults('export-json-workflow', sampleArticles.slice(0, 2), ['pubmed']);
+      await createTestSessionWithResults('export-json-workflow', sampleArticles.slice(0, 2), [
+        'pubmed',
+      ]);
 
       const resultsPath = join(ctx.sessionsDir, 'export-json-workflow', 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map((line) => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       const output = formatJson(articles);
       const parsed = JSON.parse(output);
@@ -473,15 +483,16 @@ describe('search-hub export E2E', () => {
     });
 
     it('should produce correctly grouped IDs output from session data', async () => {
-      await createTestSessionWithResults(
-        'export-grouped-ids',
-        sampleArticles.slice(0, 2),
-        ['pubmed']
-      );
+      await createTestSessionWithResults('export-grouped-ids', sampleArticles.slice(0, 2), [
+        'pubmed',
+      ]);
 
       const resultsPath = join(ctx.sessionsDir, 'export-grouped-ids', 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map((line) => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       const output = formatIds(articles, 'all');
       const groups = output.split('\n\n');
@@ -501,11 +512,12 @@ describe('search-hub export E2E', () => {
     });
 
     it('should include year field in JSON export matching publicationDate', async () => {
-      await createTestSessionWithResults(
-        'export-json-year',
-        sampleArticles,
-        ['pubmed', 'arxiv', 'eric', 'scopus']
-      );
+      await createTestSessionWithResults('export-json-year', sampleArticles, [
+        'pubmed',
+        'arxiv',
+        'eric',
+        'scopus',
+      ]);
 
       // Read all results and combine
       const allArticles: Article[] = [];
@@ -513,7 +525,10 @@ describe('search-hub export E2E', () => {
         const resultsPath = join(ctx.sessionsDir, 'export-json-year', `${provider}_results.jsonl`);
         try {
           const content = await readFile(resultsPath, 'utf-8');
-          const lines = content.trim().split('\n').filter(l => l);
+          const lines = content
+            .trim()
+            .split('\n')
+            .filter((l) => l);
           for (const line of lines) {
             allArticles.push(JSON.parse(line));
           }
@@ -538,15 +553,16 @@ describe('search-hub export E2E', () => {
     });
 
     it('should include year field in JSONL export matching publicationDate', async () => {
-      await createTestSessionWithResults(
-        'export-jsonl-year',
-        sampleArticles.slice(0, 2),
-        ['pubmed']
-      );
+      await createTestSessionWithResults('export-jsonl-year', sampleArticles.slice(0, 2), [
+        'pubmed',
+      ]);
 
       const resultsPath = join(ctx.sessionsDir, 'export-jsonl-year', 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map((line) => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       const output = formatJsonl(articles);
       const lines = output.trim().split('\n');
@@ -614,7 +630,10 @@ describe('search-hub export E2E', () => {
       // Read session results
       const resultsPath = join(ctx.sessionsDir, 'dedup-pmid-test', 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map((line) => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       // Apply deduplication
       const result = deduplicateArticles(articles);
@@ -674,7 +693,7 @@ describe('search-hub export E2E', () => {
       await writeFile(
         join(sessionDir, 'pubmed_results.jsonl'),
         pubmedArticles.map((a) => JSON.stringify(a)).join('\n'),
-        'utf-8'
+        'utf-8',
       );
       await writeFile(join(sessionDir, 'pubmed_query.txt'), 'pubmed query', 'utf-8');
 
@@ -682,7 +701,7 @@ describe('search-hub export E2E', () => {
       await writeFile(
         join(sessionDir, 'scopus_results.jsonl'),
         scopusArticles.map((a) => JSON.stringify(a)).join('\n'),
-        'utf-8'
+        'utf-8',
       );
       await writeFile(join(sessionDir, 'scopus_query.txt'), 'scopus query', 'utf-8');
 
@@ -780,7 +799,12 @@ describe('search-hub export E2E', () => {
   describe('CSL-JSON export E2E', () => {
     it('should produce valid CSL-JSON array from session data', async () => {
       const sessionId = 'csl-json-basic';
-      await createTestSessionWithResults(sessionId, sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+      await createTestSessionWithResults(sessionId, sampleArticles, [
+        'pubmed',
+        'arxiv',
+        'eric',
+        'scopus',
+      ]);
 
       // Read all articles from session (simulating CLI handler)
       const allArticles: Article[] = [];
@@ -788,7 +812,10 @@ describe('search-hub export E2E', () => {
         const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
         try {
           const content = await readFile(resultsPath, 'utf-8');
-          const lines = content.trim().split('\n').filter(l => l);
+          const lines = content
+            .trim()
+            .split('\n')
+            .filter((l) => l);
           for (const line of lines) {
             allArticles.push(JSON.parse(line));
           }
@@ -820,7 +847,10 @@ describe('search-hub export E2E', () => {
 
       const resultsPath = join(ctx.sessionsDir, sessionId, 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map(line => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       const output = formatCslJson(articles);
       const parsed = JSON.parse(output);
@@ -834,7 +864,12 @@ describe('search-hub export E2E', () => {
 
     it('should produce output parseable as JSON array of CSL-JSON items', async () => {
       const sessionId = 'csl-json-parseable';
-      await createTestSessionWithResults(sessionId, sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+      await createTestSessionWithResults(sessionId, sampleArticles, [
+        'pubmed',
+        'arxiv',
+        'eric',
+        'scopus',
+      ]);
 
       // Read all articles
       const allArticles: Article[] = [];
@@ -842,7 +877,10 @@ describe('search-hub export E2E', () => {
         const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
         try {
           const content = await readFile(resultsPath, 'utf-8');
-          const lines = content.trim().split('\n').filter(l => l);
+          const lines = content
+            .trim()
+            .split('\n')
+            .filter((l) => l);
           for (const line of lines) {
             allArticles.push(JSON.parse(line));
           }
@@ -880,7 +918,10 @@ describe('search-hub export E2E', () => {
 
       const resultsPath = join(ctx.sessionsDir, sessionId, 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map(line => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       const output = formatCslJson(articles);
       const parsed = JSON.parse(output);
@@ -908,7 +949,12 @@ describe('search-hub export E2E', () => {
   describe('JSON metadata envelope E2E', () => {
     it('should produce metadata envelope when session metadata is provided', async () => {
       const sessionId = 'envelope-basic-test';
-      await createTestSessionWithResults(sessionId, sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+      await createTestSessionWithResults(sessionId, sampleArticles, [
+        'pubmed',
+        'arxiv',
+        'eric',
+        'scopus',
+      ]);
 
       // Read all articles (simulating what the CLI handler does)
       const allArticles: Article[] = [];
@@ -916,7 +962,10 @@ describe('search-hub export E2E', () => {
         const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
         try {
           const content = await readFile(resultsPath, 'utf-8');
-          const lines = content.trim().split('\n').filter(l => l);
+          const lines = content
+            .trim()
+            .split('\n')
+            .filter((l) => l);
           for (const line of lines) {
             allArticles.push(JSON.parse(line));
           }
@@ -953,7 +1002,10 @@ describe('search-hub export E2E', () => {
 
       const resultsPath = join(ctx.sessionsDir, sessionId, 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map(line => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       const metadata: JsonExportMetadata = {
         sessionId,
@@ -972,7 +1024,12 @@ describe('search-hub export E2E', () => {
 
     it('should have summary.databases counts matching actual results', async () => {
       const sessionId = 'envelope-db-counts';
-      await createTestSessionWithResults(sessionId, sampleArticles, ['pubmed', 'arxiv', 'eric', 'scopus']);
+      await createTestSessionWithResults(sessionId, sampleArticles, [
+        'pubmed',
+        'arxiv',
+        'eric',
+        'scopus',
+      ]);
 
       // Read all articles
       const allArticles: Article[] = [];
@@ -980,7 +1037,10 @@ describe('search-hub export E2E', () => {
         const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
         try {
           const content = await readFile(resultsPath, 'utf-8');
-          const lines = content.trim().split('\n').filter(l => l);
+          const lines = content
+            .trim()
+            .split('\n')
+            .filter((l) => l);
           for (const line of lines) {
             allArticles.push(JSON.parse(line));
           }
@@ -1022,7 +1082,10 @@ describe('search-hub export E2E', () => {
 
       const resultsPath = join(ctx.sessionsDir, sessionId, 'pubmed_results.jsonl');
       const content = await readFile(resultsPath, 'utf-8');
-      const articles = content.trim().split('\n').map(line => JSON.parse(line));
+      const articles = content
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
 
       const metadata: JsonExportMetadata = {
         sessionId,
@@ -1050,9 +1113,14 @@ describe('search-hub export E2E', () => {
       const sessionId = 'stdout-jsonl-cli';
       await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
 
-      const result = await execCli(
-        ['export', sessionId, '--format', 'jsonl', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'export',
+        sessionId,
+        '--format',
+        'jsonl',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
 
@@ -1073,9 +1141,14 @@ describe('search-hub export E2E', () => {
       const sessionId = 'stdout-json-cli';
       await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
 
-      const result = await execCli(
-        ['export', sessionId, '--format', 'json', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'export',
+        sessionId,
+        '--format',
+        'json',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
 
@@ -1091,9 +1164,16 @@ describe('search-hub export E2E', () => {
       const sessionId = 'stdout-ids-cli';
       await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
 
-      const result = await execCli(
-        ['export', sessionId, '--format', 'ids', '--id-type', 'doi', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'export',
+        sessionId,
+        '--format',
+        'ids',
+        '--id-type',
+        'doi',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
 
@@ -1108,9 +1188,14 @@ describe('search-hub export E2E', () => {
       const sessionId = 'stdout-csljson-cli';
       await createTestSessionWithResults(sessionId, sampleArticles.slice(0, 2), ['pubmed']);
 
-      const result = await execCli(
-        ['export', sessionId, '--format', 'csl-json', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'export',
+        sessionId,
+        '--format',
+        'csl-json',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
 
@@ -1130,9 +1215,14 @@ describe('search-hub export E2E', () => {
       const sessionId = 'stdout-clean-cli';
       await createTestSessionWithResults(sessionId, articlesWithDup, ['pubmed']);
 
-      const result = await execCli(
-        ['export', sessionId, '--format', 'jsonl', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'export',
+        sessionId,
+        '--format',
+        'jsonl',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
 
@@ -1152,9 +1242,16 @@ describe('search-hub export E2E', () => {
 
       const outputPath = join(ctx.tempDir, 'output-stderr-test.jsonl');
 
-      const result = await execCli(
-        ['export', sessionId, '--format', 'jsonl', '-o', outputPath, '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'export',
+        sessionId,
+        '--format',
+        'jsonl',
+        '-o',
+        outputPath,
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
 
@@ -1166,5 +1263,4 @@ describe('search-hub export E2E', () => {
       expect(result.stderr).toContain('articles');
     });
   });
-
 });

@@ -54,12 +54,12 @@ describe('search-hub search --dry-run E2E', () => {
       expect(result.translations).toBeDefined();
 
       // Format as dry run output
-      const translations: TranslationResult[] = Object.entries(
-        result.translations!
-      ).map(([provider, t]) => ({
-        provider,
-        query: t.native,
-      }));
+      const translations: TranslationResult[] = Object.entries(result.translations!).map(
+        ([provider, t]) => ({
+          provider,
+          query: t.native,
+        }),
+      );
 
       const output = await formatDryRunOutput(translations);
 
@@ -79,12 +79,12 @@ describe('search-hub search --dry-run E2E', () => {
 
       expect(result.success).toBe(true);
 
-      const translations: TranslationResult[] = Object.entries(
-        result.translations!
-      ).map(([provider, t]) => ({
-        provider,
-        query: t.native,
-      }));
+      const translations: TranslationResult[] = Object.entries(result.translations!).map(
+        ([provider, t]) => ({
+          provider,
+          query: t.native,
+        }),
+      );
 
       const output = await formatDryRunOutput(translations);
 
@@ -273,9 +273,7 @@ describe('search-hub search --dry-run E2E', () => {
     });
 
     it('should format single translation', async () => {
-      const translations: TranslationResult[] = [
-        { provider: 'pubmed', query: 'diabetes[tiab]' },
-      ];
+      const translations: TranslationResult[] = [{ provider: 'pubmed', query: 'diabetes[tiab]' }];
 
       const output = await formatDryRunOutput(translations);
 
@@ -337,7 +335,7 @@ filters:
   year_to: 2024
   languages:
     - en
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath);
@@ -345,7 +343,7 @@ filters:
       expect(result.success).toBe(true);
       // Check that year filters are included in translations
       const anyHasYear = Object.values(result.translations!).some((t) =>
-        /2022|2024/.test(t.native)
+        /2022|2024/.test(t.native),
       );
       expect(anyHasYear).toBe(true);
     });
@@ -353,19 +351,14 @@ filters:
 
   describe('error handling in dry run', () => {
     it('should handle missing query file', async () => {
-      const result = await translateQueryCommand(
-        join(ctx.tempDir, 'nonexistent.yaml')
-      );
+      const result = await translateQueryCommand(join(ctx.tempDir, 'nonexistent.yaml'));
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
 
     it('should handle invalid query file', async () => {
-      const queryPath = await createRawQueryFile(
-        ctx.tempDir,
-        'invalid: yaml: content'
-      );
+      const queryPath = await createRawQueryFile(ctx.tempDir, 'invalid: yaml: content');
 
       const result = await translateQueryCommand(queryPath);
 
@@ -382,12 +375,12 @@ filters:
 
       expect(result.success).toBe(true);
 
-      const translations: TranslationResult[] = Object.entries(
-        result.translations!
-      ).map(([provider, t]) => ({
-        provider,
-        query: t.native,
-      }));
+      const translations: TranslationResult[] = Object.entries(result.translations!).map(
+        ([provider, t]) => ({
+          provider,
+          query: t.native,
+        }),
+      );
 
       const { getDefaultConfig: getDefConfig } = await import('../../config/index.js');
       const config = getDefConfig();
@@ -415,7 +408,17 @@ filters:
       const program = createProgram();
       program.exitOverride();
       try {
-        await program.parseAsync(['node', 'test', 'search', queryPath, '--db', 'pubmed,eric', '--dry-run', '--config', ctx.configPath]);
+        await program.parseAsync([
+          'node',
+          'test',
+          'search',
+          queryPath,
+          '--db',
+          'pubmed,eric',
+          '--dry-run',
+          '--config',
+          ctx.configPath,
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -436,7 +439,18 @@ filters:
       const program = createProgram();
       program.exitOverride();
       try {
-        await program.parseAsync(['node', 'test', 'search', '--db', 'pubmed', '--query', 'diabetes[tiab]', '--dry-run', '--config', ctx.configPath]);
+        await program.parseAsync([
+          'node',
+          'test',
+          'search',
+          '--db',
+          'pubmed',
+          '--query',
+          'diabetes[tiab]',
+          '--dry-run',
+          '--config',
+          ctx.configPath,
+        ]);
       } catch {
         // exitOverride may throw
       }
@@ -458,12 +472,12 @@ filters:
 
       expect(result.success).toBe(true);
 
-      const translations: TranslationResult[] = Object.entries(
-        result.translations!
-      ).map(([provider, t]) => ({
-        provider,
-        query: t.native,
-      }));
+      const translations: TranslationResult[] = Object.entries(result.translations!).map(
+        ([provider, t]) => ({
+          provider,
+          query: t.native,
+        }),
+      );
 
       const diagnostics = formatQueryDiagnostics(translations);
       expect(diagnostics).toBe('');
@@ -637,7 +651,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
         { queryFile: queryPath },
         ctx.sessionsDir,
         config,
-        false // disable progress display
+        false, // disable progress display
       );
 
       expect(result.success).toBe(true);
@@ -663,12 +677,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
 
@@ -688,12 +697,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
 
@@ -717,12 +721,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
 
@@ -764,12 +763,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       // Session should still be created, but status should reflect failure
       expect(result.sessionId).toBeDefined();
@@ -834,12 +828,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('All providers failed');
@@ -880,12 +869,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       // Should succeed because pubmed worked
       expect(result.success).toBe(true);
@@ -916,7 +900,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
         { queryFile: queryPath, maxResults: 1 },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -933,12 +917,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
       // The config value should be used
@@ -958,7 +937,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
         { queryFile: queryPath, providers: ['pubmed'] },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -979,7 +958,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
         { queryFile: queryPath, providers: ['pubmed', 'arxiv'] },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -1001,7 +980,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
         { directQuery: 'diabetes[tiab] AND treatment[tiab]', providers: ['pubmed'] },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -1023,7 +1002,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
         { queryFile: queryPath, sessionName: 'my-diabetes-search' },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -1038,12 +1017,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
       // queryFixtures.simple has name 'simple-test'
@@ -1060,12 +1034,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = true;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
@@ -1082,12 +1051,7 @@ describe('search-hub search (Live with Mock API) E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
 
@@ -1138,12 +1102,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       // Zero results with no error should be success (exit code 0),
       // NOT a network error (exit code 4)
@@ -1194,12 +1153,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       // All zero results with no errors should still be success
       expect(result.success).toBe(true);
@@ -1234,12 +1188,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
       expect(result.sessionId).toBeDefined();
@@ -1293,12 +1242,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       config.providers.arxiv.enabled = true;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
 
@@ -1359,12 +1303,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       // The search-executor checks anySucceeded (retrieved > 0) and anyFailed.
       // Zero results from pubmed means anySucceeded=false, eric failed means anyFailed=true.
@@ -1383,7 +1322,6 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       expect(session.databases.eric.status).toBe('failed');
     });
   });
-
 
   describe('--verbose flag shows provider details on failure', () => {
     it('should show per-provider details when verbose is enabled and search fails', async () => {
@@ -1414,12 +1352,7 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(false);
       expect(result.results).toBeDefined();
@@ -1435,7 +1368,6 @@ describe('search-hub search: zero-result searches (Task 15)', () => {
     });
   });
 });
-
 
 describe('search-hub search: UX improvements (Tasks #19 and #22)', () => {
   let ctx: E2EContext;
@@ -1461,17 +1393,16 @@ describe('search-hub search: UX improvements (Tasks #19 and #22)', () => {
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('No email configured for PubMed'));
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('No email configured for PubMed'),
+      );
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('config.toml'));
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('search-hub config providers.pubmed.email'));
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('search-hub config providers.pubmed.email'),
+      );
 
       warnSpy.mockRestore();
     });
@@ -1508,12 +1439,7 @@ describe('search-hub search: UX improvements (Tasks #19 and #22)', () => {
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       warnSpy.mockRestore();
 
@@ -1538,12 +1464,7 @@ describe('search-hub search: UX improvements (Tasks #19 and #22)', () => {
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
@@ -1583,12 +1504,7 @@ describe('search-hub search: skip unconfigured providers E2E', () => {
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
@@ -1624,7 +1540,7 @@ describe('search-hub search: skip unconfigured providers E2E', () => {
         { queryFile: queryPath, providers: ['scopus'] },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(false);
@@ -1659,10 +1575,7 @@ describe('search-hub search --count-only E2E', () => {
       config.providers.arxiv.enabled = true;
       config.providers.scopus.enabled = false;
 
-      const counts = await executeCountOnly(
-        { queryFile: queryPath, countOnly: true },
-        config
-      );
+      const counts = await executeCountOnly({ queryFile: queryPath, countOnly: true }, config);
 
       expect(counts).toHaveLength(3);
       expect(counts.find((c) => c.provider === 'pubmed')?.count).toBe(2);
@@ -1680,7 +1593,7 @@ describe('search-hub search --count-only E2E', () => {
 
       const counts = await executeCountOnly(
         { queryFile: queryPath, countOnly: true, providers: ['pubmed'] },
-        config
+        config,
       );
 
       expect(counts).toHaveLength(1);
@@ -1696,7 +1609,7 @@ describe('search-hub search --count-only E2E', () => {
 
       const counts = await executeCountOnly(
         { directQuery: 'diabetes[tiab]', providers: ['pubmed'], countOnly: true },
-        config
+        config,
       );
 
       expect(counts).toHaveLength(1);
@@ -1714,10 +1627,7 @@ describe('search-hub search --count-only E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      await executeCountOnly(
-        { queryFile: queryPath, countOnly: true },
-        config
-      );
+      await executeCountOnly({ queryFile: queryPath, countOnly: true }, config);
 
       // Sessions directory should remain empty
       const entries = await readdir(ctx.sessionsDir);
@@ -1734,10 +1644,7 @@ describe('search-hub search --count-only E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const counts = await executeCountOnly(
-        { queryFile: queryPath, countOnly: true },
-        config
-      );
+      const counts = await executeCountOnly({ queryFile: queryPath, countOnly: true }, config);
 
       const output = formatCountOnlyOutput(counts, 'test-query.yaml');
 
@@ -1773,10 +1680,7 @@ describe('search-hub search --count-only E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const counts = await executeCountOnly(
-        { queryFile: queryPath, countOnly: true },
-        config
-      );
+      const counts = await executeCountOnly({ queryFile: queryPath, countOnly: true }, config);
 
       expect(counts).toHaveLength(2);
 
@@ -1800,10 +1704,7 @@ describe('search-hub search --count-only E2E', () => {
       config.providers.scopus.enabled = true;
       config.providers.scopus.api_key = '';
 
-      const counts = await executeCountOnly(
-        { queryFile: queryPath, countOnly: true },
-        config
-      );
+      const counts = await executeCountOnly({ queryFile: queryPath, countOnly: true }, config);
 
       // Scopus should be skipped since no API key and no explicit --db
       expect(counts).toHaveLength(1);
@@ -1842,10 +1743,7 @@ describe('search-hub search: Query Refinement UX (Task #07)', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const results = await executePreview(
-        { queryFile: queryPath, preview: true },
-        config
-      );
+      const results = await executePreview({ queryFile: queryPath, preview: true }, config);
 
       expect(results).toHaveLength(1);
       expect(results[0]!.provider).toBe('pubmed');
@@ -1861,10 +1759,7 @@ describe('search-hub search: Query Refinement UX (Task #07)', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const results = await executePreview(
-        { queryFile: queryPath, preview: true },
-        config
-      );
+      const results = await executePreview({ queryFile: queryPath, preview: true }, config);
 
       expect(results).toHaveLength(2);
       expect(results.find((r) => r.provider === 'pubmed')).toBeDefined();
@@ -1879,10 +1774,7 @@ describe('search-hub search: Query Refinement UX (Task #07)', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      await executePreview(
-        { queryFile: queryPath, preview: true },
-        config
-      );
+      await executePreview({ queryFile: queryPath, preview: true }, config);
 
       const entries = await readdir(ctx.sessionsDir);
       expect(entries).toHaveLength(0);
@@ -1910,7 +1802,9 @@ describe('search-hub search: Query Refinement UX (Task #07)', () => {
 
   describe('Short keyword warning', () => {
     it('should detect short keywords from query AST', async () => {
-      const queryPath = await createRawQueryFile(ctx.tempDir, `
+      const queryPath = await createRawQueryFile(
+        ctx.tempDir,
+        `
 name: short_keywords_test
 query:
   - id: block-1
@@ -1922,7 +1816,8 @@ query:
         - AI
         - medical education
     operator: OR
-`);
+`,
+      );
       const { parseQueryFile } = await import('../../query/parser.js');
       const ast = await parseQueryFile(queryPath);
       const shortKeywords = detectShortKeywords(ast);
@@ -1974,12 +1869,7 @@ describe('search-hub search: partial success exit code E2E', () => {
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       // Should succeed (exit 0) — Scopus is skipped in default mode
       expect(result.success).toBe(true);
@@ -2008,7 +1898,7 @@ describe('search-hub search: partial success exit code E2E', () => {
         { queryFile: queryPath, providers: ['pubmed', 'eric', 'scopus'] },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       // Should succeed (exit 0) — partial success is OK without --strict
@@ -2037,7 +1927,7 @@ describe('search-hub search: partial success exit code E2E', () => {
         { queryFile: queryPath, providers: ['pubmed', 'eric', 'scopus'], strict: true },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       // Should fail (exit non-zero) — strict mode treats partial as failure
@@ -2063,7 +1953,7 @@ describe('search-hub search: partial success exit code E2E', () => {
         { queryFile: queryPath, strict: true },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       // Should succeed (exit 0) — all providers worked
@@ -2084,7 +1974,7 @@ describe('search-hub search: partial success exit code E2E', () => {
 
       const counts = await executeCountOnly(
         { queryFile: queryPath, providers: ['pubmed', 'scopus'] },
-        config
+        config,
       );
 
       // pubmed succeeds, scopus fails
@@ -2131,7 +2021,7 @@ describe('search-hub search --sort E2E', () => {
         { queryFile: queryPath, sort: 'relevance' },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -2157,7 +2047,7 @@ describe('search-hub search --sort E2E', () => {
         { queryFile: queryPath, sort: 'date' },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -2178,12 +2068,7 @@ describe('search-hub search --sort E2E', () => {
       config.providers.arxiv.enabled = false;
       config.providers.scopus.enabled = false;
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       expect(result.success).toBe(true);
 

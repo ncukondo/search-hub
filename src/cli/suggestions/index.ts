@@ -49,7 +49,7 @@ export function formatSuggestion(result: SuggestionResult | null): string {
   // Or section (after Next, before See also)
   if (result.or && result.or.items.length > 0) {
     const lines = result.or.items.map((s) =>
-      s.description ? `  ${s.command}    # ${s.description}` : `  ${s.command}`
+      s.description ? `  ${s.command}    # ${s.description}` : `  ${s.command}`,
     );
     sections.push(`${result.or.label}:\n${lines.join('\n')}`);
   }

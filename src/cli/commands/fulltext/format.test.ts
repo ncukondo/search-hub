@@ -9,8 +9,18 @@ describe('formatInitOutput', () => {
       created: 2,
       skipped: 0,
       entries: [
-        { dirName: 'smith2024-a1b2c3d4', citationKey: 'smith2024', title: 'Article 1', doi: '10.1234/example' },
-        { dirName: 'jones2023-e5f6g7h8', citationKey: 'jones2023', title: 'Article 2', pmid: '12345678' },
+        {
+          dirName: 'smith2024-a1b2c3d4',
+          citationKey: 'smith2024',
+          title: 'Article 1',
+          doi: '10.1234/example',
+        },
+        {
+          dirName: 'jones2023-e5f6g7h8',
+          citationKey: 'jones2023',
+          title: 'Article 2',
+          pmid: '12345678',
+        },
       ],
     };
 
@@ -27,9 +37,7 @@ describe('formatInitOutput', () => {
     const result: FulltextInitResult = {
       created: 1,
       skipped: 0,
-      entries: [
-        { dirName: 'smith2024-a1b2c3d4', citationKey: 'smith2024', title: 'Article 1' },
-      ],
+      entries: [{ dirName: 'smith2024-a1b2c3d4', citationKey: 'smith2024', title: 'Article 1' }],
     };
 
     const output = formatInitOutput(result);
@@ -55,9 +63,7 @@ describe('formatInitOutput', () => {
     const result: FulltextInitResult = {
       created: 1,
       skipped: 0,
-      entries: [
-        { dirName: 'smith2024-a1b2c3d4', citationKey: 'smith2024', title: 'Article 1' },
-      ],
+      entries: [{ dirName: 'smith2024-a1b2c3d4', citationKey: 'smith2024', title: 'Article 1' }],
       dryRun: true,
     };
 
@@ -85,7 +91,11 @@ describe('formatSyncOutput', () => {
       synced: 2,
       articlesUpdated: 1,
       entries: [
-        { dirName: 'smith2024-a1b2c3d4', files: ['fulltext.pdf', 'fulltext.md'], sizes: [2_400_000, 45_000] },
+        {
+          dirName: 'smith2024-a1b2c3d4',
+          files: ['fulltext.pdf', 'fulltext.md'],
+          sizes: [2_400_000, 45_000],
+        },
       ],
     };
 
@@ -103,7 +113,11 @@ describe('formatSyncOutput', () => {
       articlesUpdated: 3,
       entries: [
         { dirName: 'smith2024-a1b2c3d4', files: ['fulltext.pdf'], sizes: [100] },
-        { dirName: 'jones2023-e5f6g7h8', files: ['fulltext.pdf', 'fulltext.md'], sizes: [200, 300] },
+        {
+          dirName: 'jones2023-e5f6g7h8',
+          files: ['fulltext.pdf', 'fulltext.md'],
+          sizes: [200, 300],
+        },
         { dirName: 'chen2024-i9j0k1l2', files: ['fulltext.md'], sizes: [400] },
       ],
     };
@@ -120,9 +134,7 @@ describe('formatSyncOutput', () => {
     const result: FulltextSyncResult = {
       synced: 1,
       articlesUpdated: 1,
-      entries: [
-        { dirName: 'smith2024-a1b2c3d4', files: ['fulltext.pdf'], sizes: [100] },
-      ],
+      entries: [{ dirName: 'smith2024-a1b2c3d4', files: ['fulltext.pdf'], sizes: [100] }],
       dryRun: true,
     };
 

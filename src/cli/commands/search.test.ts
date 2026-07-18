@@ -216,23 +216,23 @@ describe('search command', () => {
     });
 
     it('should include provider readiness section when config is provided', async () => {
-      const translations: TranslationResult[] = [
-        { provider: 'pubmed', query: 'diabetes[tiab]' },
-      ];
+      const translations: TranslationResult[] = [{ provider: 'pubmed', query: 'diabetes[tiab]' }];
       const config = getDefaultConfig();
       config.providers.pubmed.email = 'test@example.com';
       const providers: ProviderName[] = ['pubmed'];
 
-      const result = await formatDryRunOutput(translations, { config, providers, skipConnectionTest: true });
+      const result = await formatDryRunOutput(translations, {
+        config,
+        providers,
+        skipConnectionTest: true,
+      });
 
       expect(result).toContain('Provider readiness:');
       expect(result).toContain('Translated queries:');
     });
 
     it('should produce same output without config (backward compat)', async () => {
-      const translations: TranslationResult[] = [
-        { provider: 'pubmed', query: 'diabetes[tiab]' },
-      ];
+      const translations: TranslationResult[] = [{ provider: 'pubmed', query: 'diabetes[tiab]' }];
 
       const withoutConfig = await formatDryRunOutput(translations);
       expect(withoutConfig).not.toContain('Provider readiness:');
@@ -246,7 +246,11 @@ describe('search command', () => {
       const config = getDefaultConfig();
       const providers: ProviderName[] = ['pubmed'];
 
-      const result = await formatDryRunOutput(translations, { config, providers, skipConnectionTest: true });
+      const result = await formatDryRunOutput(translations, {
+        config,
+        providers,
+        skipConnectionTest: true,
+      });
 
       expect(result).toContain('Diagnostics:');
     });
@@ -258,7 +262,11 @@ describe('search command', () => {
       const config = getDefaultConfig();
       const providers: ProviderName[] = ['eric'];
 
-      const result = await formatDryRunOutput(translations, { config, providers, skipConnectionTest: true });
+      const result = await formatDryRunOutput(translations, {
+        config,
+        providers,
+        skipConnectionTest: true,
+      });
 
       expect(result).not.toContain('Diagnostics:');
     });
@@ -499,9 +507,7 @@ describe('search command', () => {
     });
 
     it('should format count results for a single provider', () => {
-      const counts: CountResult[] = [
-        { provider: 'pubmed', count: 42 },
-      ];
+      const counts: CountResult[] = [{ provider: 'pubmed', count: 42 }];
 
       const result = formatCountOnlyOutput(counts, 'query.yaml');
 
@@ -527,9 +533,7 @@ describe('search command', () => {
     });
 
     it('should handle zero results', () => {
-      const counts: CountResult[] = [
-        { provider: 'pubmed', count: 0 },
-      ];
+      const counts: CountResult[] = [{ provider: 'pubmed', count: 0 }];
 
       const result = formatCountOnlyOutput(counts, 'query.yaml');
 
@@ -538,9 +542,7 @@ describe('search command', () => {
     });
 
     it('should use direct-query as label when no query file', () => {
-      const counts: CountResult[] = [
-        { provider: 'pubmed', count: 10 },
-      ];
+      const counts: CountResult[] = [{ provider: 'pubmed', count: 10 }];
 
       const result = formatCountOnlyOutput(counts);
 
@@ -584,11 +586,7 @@ describe('search command', () => {
         {
           provider: 'pubmed',
           count: 28,
-          titles: [
-            'First article title',
-            'Second article title',
-            'Third article title',
-          ],
+          titles: ['First article title', 'Second article title', 'Third article title'],
         },
       ];
 

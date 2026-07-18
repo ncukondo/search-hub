@@ -101,7 +101,9 @@ export function formatSummary(summary: SessionSummary): string {
 
   // Header
   lines.push(`Session: ${summary.sessionName} (${summary.sessionId})`);
-  lines.push(`Total: ${summary.totalArticles} articles (${summary.uniqueArticles} unique after deduplication)`);
+  lines.push(
+    `Total: ${summary.totalArticles} articles (${summary.uniqueArticles} unique after deduplication)`,
+  );
   lines.push('');
 
   // Year distribution
@@ -131,8 +133,7 @@ export function formatSummary(summary: SessionSummary): string {
 
   // Database breakdown
   lines.push('Database breakdown:');
-  const dbEntries = Object.entries(summary.databaseBreakdown)
-    .sort((a, b) => b[1] - a[1]);
+  const dbEntries = Object.entries(summary.databaseBreakdown).sort((a, b) => b[1] - a[1]);
 
   if (dbEntries.length > 0) {
     const maxDbLabelWidth = Math.max(...dbEntries.map(([name]) => name.length));
@@ -141,7 +142,9 @@ export function formatSummary(summary: SessionSummary): string {
     for (const [name, count] of dbEntries) {
       const paddedName = name.padEnd(maxDbLabelWidth);
       const paddedCount = String(count).padStart(maxDbCountWidth);
-      lines.push(`  ${paddedName}: ${paddedCount} (${formatPercent(count, summary.uniqueArticles)})`);
+      lines.push(
+        `  ${paddedName}: ${paddedCount} (${formatPercent(count, summary.uniqueArticles)})`,
+      );
     }
   }
   lines.push('');
@@ -150,7 +153,9 @@ export function formatSummary(summary: SessionSummary): string {
   lines.push('Top journals (by article count):');
   if (summary.topJournals.length > 0) {
     const maxJournalWidth = Math.max(...summary.topJournals.map((j) => j.name.length));
-    const maxJournalCountWidth = Math.max(...summary.topJournals.map((j) => String(j.count).length));
+    const maxJournalCountWidth = Math.max(
+      ...summary.topJournals.map((j) => String(j.count).length),
+    );
 
     for (const journal of summary.topJournals) {
       const paddedName = journal.name.padEnd(maxJournalWidth);
@@ -173,7 +178,9 @@ export function formatSummary(summary: SessionSummary): string {
   for (const [label, count] of idEntries) {
     const paddedLabel = label.padEnd(maxIdLabelWidth);
     const paddedCount = String(count).padStart(maxIdCountWidth);
-    lines.push(`  ${paddedLabel}: ${paddedCount} (${formatPercent(count, summary.uniqueArticles)})`);
+    lines.push(
+      `  ${paddedLabel}: ${paddedCount} (${formatPercent(count, summary.uniqueArticles)})`,
+    );
   }
 
   return lines.join('\n');

@@ -25,9 +25,7 @@ const mockLoadMeta = vi.mocked(loadMeta);
 const mockGetMetaPath = vi.mocked(getMetaPath);
 
 /** Helper: create a FulltextMeta object for testing */
-function makeMeta(
-  overrides: Partial<FulltextMeta> & { dirName: string },
-): FulltextMeta {
+function makeMeta(overrides: Partial<FulltextMeta> & { dirName: string }): FulltextMeta {
   return {
     citationKey: 'test2024',
     uuid: '00000000-0000-0000-0000-000000000000',
@@ -85,21 +83,45 @@ const metaA1 = makeMeta({
   dirName: 'smith2024-aaaa1111',
   doi: '10.1234/a1',
   title: 'Article with PDF only',
-  files: { pdf: { filename: 'fulltext.pdf', source: 'manual', retrievedAt: '2024-01-01T00:00:00Z', size: 1000 } },
+  files: {
+    pdf: {
+      filename: 'fulltext.pdf',
+      source: 'manual',
+      retrievedAt: '2024-01-01T00:00:00Z',
+      size: 1000,
+    },
+  },
 });
 const metaA2 = makeMeta({
   dirName: 'jones2024-bbbb2222',
   doi: '10.1234/a2',
   title: 'Article with Markdown only',
-  files: { markdown: { filename: 'fulltext.md', source: 'converted', retrievedAt: '2024-01-01T00:00:00Z', size: 500 } },
+  files: {
+    markdown: {
+      filename: 'fulltext.md',
+      source: 'converted',
+      retrievedAt: '2024-01-01T00:00:00Z',
+      size: 500,
+    },
+  },
 });
 const metaA3 = makeMeta({
   dirName: 'lee2024-cccc3333',
   doi: '10.1234/a3',
   title: 'Article with both PDF and Markdown',
   files: {
-    pdf: { filename: 'fulltext.pdf', source: 'unpaywall', retrievedAt: '2024-01-01T00:00:00Z', size: 2000 },
-    markdown: { filename: 'fulltext.md', source: 'converted', retrievedAt: '2024-01-01T00:00:00Z', size: 800 },
+    pdf: {
+      filename: 'fulltext.pdf',
+      source: 'unpaywall',
+      retrievedAt: '2024-01-01T00:00:00Z',
+      size: 2000,
+    },
+    markdown: {
+      filename: 'fulltext.md',
+      source: 'converted',
+      retrievedAt: '2024-01-01T00:00:00Z',
+      size: 800,
+    },
   },
 });
 const metaA4 = makeMeta({
@@ -122,8 +144,8 @@ describe('executeFulltextStatus', () => {
     });
 
     // Mock getMetaPath to return predictable paths
-    mockGetMetaPath.mockImplementation((sessionDir: string, dirName: string) =>
-      `${sessionDir}/fulltext/${dirName}/meta.json`
+    mockGetMetaPath.mockImplementation(
+      (sessionDir: string, dirName: string) => `${sessionDir}/fulltext/${dirName}/meta.json`,
     );
 
     // Mock loadMeta to return meta based on path
@@ -139,7 +161,6 @@ describe('executeFulltextStatus', () => {
       }
       throw new Error(`File not found: ${path}`);
     });
-
   });
 
   it('shows total included articles count', async () => {
@@ -215,8 +236,6 @@ articles:
   it('handles missing reviews.yaml', async () => {
     mockReadFile.mockRejectedValue(new Error('ENOENT'));
 
-    await expect(
-      executeFulltextStatus({ sessionDir }),
-    ).rejects.toThrow();
+    await expect(executeFulltextStatus({ sessionDir })).rejects.toThrow();
   });
 });

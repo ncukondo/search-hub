@@ -84,7 +84,7 @@ function articleToEntry(article: Article & { mergedFrom?: MergedSource[] }): Art
  */
 export async function executeReviewInit(
   options: ReviewInitOptions,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<ReviewInitResult> {
   const sessionDir = join(sessionsDir, options.sessionId);
 
@@ -145,10 +145,7 @@ export async function executeReviewInit(
         # - reviewer: human:your-name
         #   decision: include  # include / exclude / uncertain
         #   comment: reason`;
-  const finalContent = schemaComment + yamlContent.replace(
-    /reviews: \[\]/g,
-    reviewsExample
-  );
+  const finalContent = schemaComment + yamlContent.replace(/reviews: \[\]/g, reviewsExample);
 
   // Write reviews.yaml
   await writeFile(reviewsPath, finalContent, 'utf-8');

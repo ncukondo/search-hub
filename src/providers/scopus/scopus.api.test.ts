@@ -173,7 +173,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
     expect(articles.length).toBe(30);
 
     // Verify all articles are unique
-    const scopusIds = articles.map(a => a.scopusId);
+    const scopusIds = articles.map((a) => a.scopusId);
     const uniqueIds = new Set(scopusIds);
     expect(uniqueIds.size).toBe(30);
   });
@@ -264,7 +264,7 @@ describe.skipIf(skip)('Scopus Provider E2E', () => {
     expect(resumedArticles.length).toBe(5);
 
     // Verify resumed articles are different from initial
-    const initialIds = new Set(initialArticles.map(a => a.scopusId));
+    const initialIds = new Set(initialArticles.map((a) => a.scopusId));
     for (const article of resumedArticles) {
       expect(initialIds.has(article.scopusId)).toBe(false);
     }

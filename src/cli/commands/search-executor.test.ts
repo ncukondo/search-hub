@@ -122,7 +122,13 @@ vi.mock('../../integration/ref-cli.js', () => ({
 }));
 
 // Import after mocking
-const { executeSearch, executeCountOnly, executePreview, createProviderInstance, isProviderConfigured } = await import('./search-executor.js');
+const {
+  executeSearch,
+  executeCountOnly,
+  executePreview,
+  createProviderInstance,
+  isProviderConfigured,
+} = await import('./search-executor.js');
 
 describe('search-executor', () => {
   let tempDir: string;
@@ -326,23 +332,26 @@ filters:
       const mockedPubMed = vi.mocked(PubMedProvider);
       // Save original implementation to restore later
       const originalImpl = mockedPubMed.getMockImplementation();
-      mockedPubMed.mockImplementation(() => ({
-        name: 'pubmed',
-        translateQuery: vi.fn().mockReturnValue({
-          native: 'test query',
-          provider: 'pubmed',
-        }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw {
-            code: 'NETWORK_ERROR',
-            message: 'Connection refused to PubMed API',
-            provider: 'pubmed',
-            retryable: true,
-          };
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedPubMed.mockImplementation(
+        () =>
+          ({
+            name: 'pubmed',
+            translateQuery: vi.fn().mockReturnValue({
+              native: 'test query',
+              provider: 'pubmed',
+            }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw {
+                code: 'NETWORK_ERROR',
+                message: 'Connection refused to PubMed API',
+                provider: 'pubmed',
+                retryable: true,
+              };
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       const options: SearchCommandOptions = {
         queryFile: queryFilePath,
@@ -370,17 +379,22 @@ filters:
       const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
       const mockedPubMed = vi.mocked(PubMedProvider);
       const originalImpl = mockedPubMed.getMockImplementation();
-      mockedPubMed.mockImplementation(() => ({
-        name: 'pubmed',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
-        search: vi.fn().mockImplementation(async function* () {
-          // Yield nothing - legitimate zero results
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedPubMed.mockImplementation(
+        () =>
+          ({
+            name: 'pubmed',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+            search: vi.fn().mockImplementation(async function* () {
+              // Yield nothing - legitimate zero results
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);
-      if (originalImpl) { mockedPubMed.mockImplementation(originalImpl); }
+      if (originalImpl) {
+        mockedPubMed.mockImplementation(originalImpl);
+      }
       expect(result.success).toBe(true);
       expect(result.sessionId).toBeDefined();
       expect(result.results?.['pubmed']).toBeDefined();
@@ -396,18 +410,23 @@ filters:
       const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
       const mockedPubMed = vi.mocked(PubMedProvider);
       const originalImpl = mockedPubMed.getMockImplementation();
-      mockedPubMed.mockImplementation(() => ({
-        name: 'pubmed',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('API rate limit exceeded');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedPubMed.mockImplementation(
+        () =>
+          ({
+            name: 'pubmed',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('API rate limit exceeded');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);
-      if (originalImpl) { mockedPubMed.mockImplementation(originalImpl); }
+      if (originalImpl) {
+        mockedPubMed.mockImplementation(originalImpl);
+      }
       expect(result.success).toBe(false);
       expect(result.error).toContain('All providers failed');
       expect(result.error).toContain('pubmed');
@@ -430,31 +449,41 @@ filters:
       const originalPubMedImpl = mockedPubMed.getMockImplementation();
       const originalEricImpl = mockedEric.getMockImplementation();
 
-      mockedPubMed.mockImplementation(() => ({
-        name: 'pubmed',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('Network request failed');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedPubMed.mockImplementation(
+        () =>
+          ({
+            name: 'pubmed',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('Network request failed');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
-      mockedEric.mockImplementation(() => ({
-        name: 'eric',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('Timeout');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedEric.mockImplementation(
+        () =>
+          ({
+            name: 'eric',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('Timeout');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);
 
-      if (originalPubMedImpl) { mockedPubMed.mockImplementation(originalPubMedImpl); }
-      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+      if (originalPubMedImpl) {
+        mockedPubMed.mockImplementation(originalPubMedImpl);
+      }
+      if (originalEricImpl) {
+        mockedEric.mockImplementation(originalEricImpl);
+      }
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('All providers failed');
@@ -469,17 +498,22 @@ filters:
       const { ERICProvider } = await import('../../providers/eric/provider.js');
       const mockedEric = vi.mocked(ERICProvider);
       const originalEricImpl = mockedEric.getMockImplementation();
-      mockedEric.mockImplementation(() => ({
-        name: 'eric',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
-        search: vi.fn().mockImplementation(async function* () {
-          // Yield nothing - legitimate zero results
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedEric.mockImplementation(
+        () =>
+          ({
+            name: 'eric',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+            search: vi.fn().mockImplementation(async function* () {
+              // Yield nothing - legitimate zero results
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);
-      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+      if (originalEricImpl) {
+        mockedEric.mockImplementation(originalEricImpl);
+      }
       expect(result.success).toBe(true);
       expect(result.results?.['pubmed']?.retrieved).toBe(2);
       expect(result.results?.['eric']?.retrieved).toBe(0);
@@ -518,9 +552,7 @@ filters:
     });
 
     it('should throw for unsupported provider', () => {
-      expect(() =>
-        createProviderInstance('wos' as any, config)
-      ).toThrow('not implemented');
+      expect(() => createProviderInstance('wos' as any, config)).toThrow('not implemented');
     });
   });
 
@@ -632,9 +664,13 @@ filters:
 
       createProviderInstance('pubmed', config);
 
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('No email configured for PubMed'));
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('No email configured for PubMed'),
+      );
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('config.toml'));
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('search-hub config providers.pubmed.email'));
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('search-hub config providers.pubmed.email'),
+      );
 
       warnSpy.mockRestore();
     });
@@ -817,20 +853,25 @@ filters:
       const { ScopusProvider } = await import('../../providers/scopus/provider.js');
       const mockedScopus = vi.mocked(ScopusProvider);
       const originalScopusImpl = mockedScopus.getMockImplementation();
-      mockedScopus.mockImplementation(() => ({
-        name: 'scopus',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'scopus' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('Scopus API key expired');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedScopus.mockImplementation(
+        () =>
+          ({
+            name: 'scopus',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'scopus' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('Scopus API key expired');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);
 
-      if (originalScopusImpl) { mockedScopus.mockImplementation(originalScopusImpl); }
+      if (originalScopusImpl) {
+        mockedScopus.mockImplementation(originalScopusImpl);
+      }
 
       expect(result.success).toBe(true);
       expect(result.sessionStatus).toBe('partial');
@@ -851,31 +892,41 @@ filters:
       const originalPubMedImpl = mockedPubMed.getMockImplementation();
       const originalEricImpl = mockedEric.getMockImplementation();
 
-      mockedPubMed.mockImplementation(() => ({
-        name: 'pubmed',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('Network error');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedPubMed.mockImplementation(
+        () =>
+          ({
+            name: 'pubmed',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('Network error');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
-      mockedEric.mockImplementation(() => ({
-        name: 'eric',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('Timeout');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedEric.mockImplementation(
+        () =>
+          ({
+            name: 'eric',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('Timeout');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);
 
-      if (originalPubMedImpl) { mockedPubMed.mockImplementation(originalPubMedImpl); }
-      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+      if (originalPubMedImpl) {
+        mockedPubMed.mockImplementation(originalPubMedImpl);
+      }
+      if (originalEricImpl) {
+        mockedEric.mockImplementation(originalEricImpl);
+      }
 
       expect(result.success).toBe(false);
       expect(result.sessionStatus).toBe('failed');
@@ -904,20 +955,25 @@ filters:
       const { ERICProvider } = await import('../../providers/eric/provider.js');
       const mockedEric = vi.mocked(ERICProvider);
       const originalEricImpl = mockedEric.getMockImplementation();
-      mockedEric.mockImplementation(() => ({
-        name: 'eric',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('ERIC unavailable');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedEric.mockImplementation(
+        () =>
+          ({
+            name: 'eric',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('ERIC unavailable');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       const options: SearchCommandOptions = { queryFile: queryFilePath, strict: true };
       const result = await executeSearch(options, sessionsDir, config);
 
-      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+      if (originalEricImpl) {
+        mockedEric.mockImplementation(originalEricImpl);
+      }
 
       expect(result.success).toBe(false);
       expect(result.sessionStatus).toBe('partial');
@@ -944,20 +1000,25 @@ filters:
       const { ERICProvider } = await import('../../providers/eric/provider.js');
       const mockedEric = vi.mocked(ERICProvider);
       const originalEricImpl = mockedEric.getMockImplementation();
-      mockedEric.mockImplementation(() => ({
-        name: 'eric',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('ERIC unavailable');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedEric.mockImplementation(
+        () =>
+          ({
+            name: 'eric',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('ERIC unavailable');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const result = await executeSearch(options, sessionsDir, config);
 
-      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+      if (originalEricImpl) {
+        mockedEric.mockImplementation(originalEricImpl);
+      }
 
       expect(result.success).toBe(true);
       expect(result.sessionStatus).toBe('partial');
@@ -1136,18 +1197,23 @@ filters:
       const { ERICProvider } = await import('../../providers/eric/provider.js');
       const mockedEric = vi.mocked(ERICProvider);
       const originalEricImpl = mockedEric.getMockImplementation();
-      mockedEric.mockImplementation(() => ({
-        name: 'eric',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
-        search: vi.fn().mockImplementation(async function* () {}),
-        count: vi.fn().mockRejectedValue(new Error('ERIC API timeout')),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedEric.mockImplementation(
+        () =>
+          ({
+            name: 'eric',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+            search: vi.fn().mockImplementation(async function* () {}),
+            count: vi.fn().mockRejectedValue(new Error('ERIC API timeout')),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const results = await executeCountOnly(options, config);
 
-      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+      if (originalEricImpl) {
+        mockedEric.mockImplementation(originalEricImpl);
+      }
 
       expect(results).toHaveLength(2);
       const pubmed = results.find((r) => r.provider === 'pubmed');
@@ -1182,21 +1248,26 @@ filters:
       const { ERICProvider } = await import('../../providers/eric/provider.js');
       const mockedEric = vi.mocked(ERICProvider);
       const originalEricImpl = mockedEric.getMockImplementation();
-      mockedEric.mockImplementation(() => ({
-        name: 'eric',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('ERIC preview error');
-        }),
-        count: vi.fn().mockRejectedValue(new Error('ERIC preview error')),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedEric.mockImplementation(
+        () =>
+          ({
+            name: 'eric',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('ERIC preview error');
+            }),
+            count: vi.fn().mockRejectedValue(new Error('ERIC preview error')),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       const options: SearchCommandOptions = { queryFile: queryFilePath };
       const results = await executePreview(options, config);
 
-      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+      if (originalEricImpl) {
+        mockedEric.mockImplementation(originalEricImpl);
+      }
 
       expect(results).toHaveLength(2);
       const pubmed = results.find((r) => r.provider === 'pubmed');

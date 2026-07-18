@@ -96,9 +96,7 @@ describe('extractControlledVocabTerms', () => {
 
     const terms = extractControlledVocabTerms(ast);
 
-    expect(terms).toEqual([
-      { term: 'Diabetes Mellitus', vocabulary: 'mesh' },
-    ]);
+    expect(terms).toEqual([{ term: 'Diabetes Mellitus', vocabulary: 'mesh' }]);
   });
 
   it('should return empty array when no controlled vocab terms exist', () => {
@@ -230,14 +228,12 @@ describe('validateControlledVocab', () => {
       new Map([
         ['Diabetes Mellitus', { found: true }],
         ['Not A Real Term', { found: false, suggestions: ['Diabetes'] }],
-      ])
+      ]),
     );
 
     const result = await validateControlledVocab(ast, client);
 
-    expect(result.valid).toEqual([
-      { term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true },
-    ]);
+    expect(result.valid).toEqual([{ term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true }]);
     expect(result.invalid).toEqual([
       {
         term: 'Not A Real Term',
@@ -283,7 +279,7 @@ describe('validateControlledVocab', () => {
       new Map([
         ['Artificial Intelligence', { found: true }],
         ['Machine Learning', { found: true }],
-      ])
+      ]),
     );
 
     const result = await validateControlledVocab(ast, client);
@@ -309,7 +305,7 @@ describe('validateControlledVocab', () => {
       new Map([
         ['Diabetes Mellitus', { found: true }],
         ['Artificial Intelligence', { found: false, suggestions: ['AI'] }],
-      ])
+      ]),
     );
     // Make 'Timeout Term' throw an error
     (client.lookupTerm as ReturnType<typeof import('vitest').vi.fn>).mockImplementation(
@@ -325,14 +321,12 @@ describe('validateControlledVocab', () => {
         return result
           ? { term, found: result.found, suggestions: result.suggestions }
           : { term, found: false };
-      }
+      },
     );
 
     const result = await validateControlledVocab(ast, client);
 
-    expect(result.valid).toEqual([
-      { term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true },
-    ]);
+    expect(result.valid).toEqual([{ term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true }]);
     expect(result.invalid).toEqual([
       {
         term: 'Artificial Intelligence',
@@ -363,9 +357,7 @@ describe('validateControlledVocab', () => {
       },
     ]);
 
-    const client = createMockMeSHClient(
-      new Map([['Completely Invalid', { found: false }]])
-    );
+    const client = createMockMeSHClient(new Map([['Completely Invalid', { found: false }]]));
 
     const result = await validateControlledVocab(ast, client);
 
@@ -402,9 +394,7 @@ describe('validateControlledVocab', () => {
       countValidators: [ericValidator],
     });
 
-    expect(result.valid).toEqual([
-      { term: 'Medical Education', vocabulary: 'eric', found: true },
-    ]);
+    expect(result.valid).toEqual([{ term: 'Medical Education', vocabulary: 'eric', found: true }]);
     expect(result.invalid).toEqual([
       { term: 'Medcial Education', vocabulary: 'eric', found: false },
     ]);
@@ -467,9 +457,7 @@ describe('validateControlledVocab', () => {
       countValidators: [ericValidator],
     });
 
-    expect(result.valid).toEqual([
-      { term: 'Valid Term', vocabulary: 'eric', found: true },
-    ]);
+    expect(result.valid).toEqual([{ term: 'Valid Term', vocabulary: 'eric', found: true }]);
     expect(result.errors).toEqual([
       { term: 'Error Term', vocabulary: 'eric', error: 'API timeout' },
     ]);
@@ -489,9 +477,7 @@ describe('validateControlledVocab', () => {
       },
     ]);
 
-    const meshClient = createMockMeSHClient(
-      new Map([['Diabetes Mellitus', { found: true }]])
-    );
+    const meshClient = createMockMeSHClient(new Map([['Diabetes Mellitus', { found: true }]]));
 
     const ericValidator: CountVocabValidator = {
       vocabulary: 'eric',
@@ -528,16 +514,12 @@ describe('validateControlledVocab', () => {
       },
     ]);
 
-    const meshClient = createMockMeSHClient(
-      new Map([['Diabetes Mellitus', { found: true }]])
-    );
+    const meshClient = createMockMeSHClient(new Map([['Diabetes Mellitus', { found: true }]]));
 
     const result = await validateControlledVocab(ast, meshClient);
 
     // Only MeSH terms validated, eric/emtree skipped
-    expect(result.valid).toEqual([
-      { term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true },
-    ]);
+    expect(result.valid).toEqual([{ term: 'Diabetes Mellitus', vocabulary: 'mesh', found: true }]);
     expect(result.invalid).toEqual([]);
   });
 });
@@ -559,9 +541,7 @@ describe('createEricCountValidator', () => {
   }
 
   it('should return count from provider', async () => {
-    const provider = createMockProvider(
-      new Map([['Medical Education', 42]])
-    );
+    const provider = createMockProvider(new Map([['Medical Education', 42]]));
     const validator = createEricCountValidator(provider);
 
     const count = await validator.countTerm('Medical Education');
@@ -581,9 +561,7 @@ describe('createEricCountValidator', () => {
   });
 
   it('should use cache when available', async () => {
-    const provider = createMockProvider(
-      new Map([['Medical Education', 42]])
-    );
+    const provider = createMockProvider(new Map([['Medical Education', 42]]));
     const cache = new VocabCache({ cachePath: '/tmp/test-cache.json' });
     cache.set('eric', 'Medical Education', { term: 'Medical Education', found: true });
 
@@ -595,9 +573,7 @@ describe('createEricCountValidator', () => {
   });
 
   it('should store result in cache after lookup', async () => {
-    const provider = createMockProvider(
-      new Map([['Medical Education', 42]])
-    );
+    const provider = createMockProvider(new Map([['Medical Education', 42]]));
     const cache = new VocabCache({ cachePath: '/tmp/test-cache.json' });
     const validator = createEricCountValidator(provider, { cache });
 
@@ -642,9 +618,7 @@ describe('createEmtreeCountValidator', () => {
   }
 
   it('should return count from provider', async () => {
-    const provider = createMockProvider(
-      new Map([['diabetes mellitus', 100]])
-    );
+    const provider = createMockProvider(new Map([['diabetes mellitus', 100]]));
     const validator = createEmtreeCountValidator(provider);
 
     const count = await validator.countTerm('diabetes mellitus');
@@ -664,9 +638,7 @@ describe('createEmtreeCountValidator', () => {
   });
 
   it('should use cache when available', async () => {
-    const provider = createMockProvider(
-      new Map([['diabetes mellitus', 100]])
-    );
+    const provider = createMockProvider(new Map([['diabetes mellitus', 100]]));
     const cache = new VocabCache({ cachePath: '/tmp/test-cache.json' });
     cache.set('emtree', 'diabetes mellitus', { term: 'diabetes mellitus', found: true });
 
@@ -781,8 +753,6 @@ describe('validateControlledVocab concurrency', () => {
     expect(ericStartIdx).toBeLessThan(ericEndIdx);
     expect(emtreeStartIdx).toBeLessThan(emtreeEndIdx);
     // Both started before either finished
-    expect(Math.max(ericStartIdx, emtreeStartIdx)).toBeLessThan(
-      Math.min(ericEndIdx, emtreeEndIdx)
-    );
+    expect(Math.max(ericStartIdx, emtreeStartIdx)).toBeLessThan(Math.min(ericEndIdx, emtreeEndIdx));
   });
 });

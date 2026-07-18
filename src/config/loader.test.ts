@@ -135,7 +135,7 @@ level = "debug"
 
 [providers.pubmed]
 rate_limit = 5
-`
+`,
     );
 
     const config = await loadConfig({
@@ -161,14 +161,14 @@ level = "debug"
 
 [providers.pubmed]
 rate_limit = 5
-`
+`,
     );
     await writeFile(
       localPath,
       `
 [log]
 level = "warn"
-`
+`,
     );
 
     const config = await loadConfig({
@@ -189,7 +189,7 @@ level = "warn"
       `
 [log]
 level = "warn"
-`
+`,
     );
 
     process.env['SEARCH_HUB_LOG_LEVEL'] = 'error';
@@ -226,14 +226,14 @@ level = "warn"
 [providers.pubmed]
 api_key = "global-key"
 rate_limit = 5
-`
+`,
     );
     await writeFile(
       localPath,
       `
 [providers.pubmed]
 rate_limit = 8
-`
+`,
     );
 
     process.env['SEARCH_HUB_PUBMED_API_KEY'] = 'env-key';
@@ -268,7 +268,7 @@ rate_limit = 8
       `
 [log]
 level = "warn"
-`
+`,
     );
 
     const config = await loadConfig({
@@ -286,7 +286,7 @@ level = "warn"
       `
 [log]
 level = "debug"
-`
+`,
     );
 
     const config = await loadConfig({
@@ -309,14 +309,14 @@ level = "debug"
 [providers.pubmed]
 api_key = "global-key"
 rate_limit = 5
-`
+`,
     );
     await writeFile(
       join(searchHubDir, 'config.toml'),
       `
 [providers.pubmed]
 rate_limit = 10
-`
+`,
     );
 
     const config = await loadConfig({
@@ -377,7 +377,7 @@ rate_limit = 10
         `
 [session]
 directory = "/explicit/sessions"
-`
+`,
       );
 
       const config = await loadConfig({

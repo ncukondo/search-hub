@@ -79,7 +79,7 @@ interface ReleaseApiResponse {
 }
 
 export async function getLatestVersion(
-  options: GetLatestVersionOptions = {}
+  options: GetLatestVersionOptions = {},
 ): Promise<ReleaseInfo | null> {
   const {
     force = false,

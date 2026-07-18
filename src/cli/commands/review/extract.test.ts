@@ -21,7 +21,10 @@ describe('executeReviewExtract', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  async function writeReviewFile(articles: ArticleEntry[], reviewFileOverrides?: Partial<ReviewFile>): Promise<void> {
+  async function writeReviewFile(
+    articles: ArticleEntry[],
+    reviewFileOverrides?: Partial<ReviewFile>,
+  ): Promise<void> {
     const sessionDir = join(sessionsDir, sessionId);
     const internalDir = join(sessionDir, '.internal');
     await mkdir(internalDir, { recursive: true });
@@ -74,10 +77,16 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'title-screening', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
-      const expectedPath = join(sessionsDir, sessionId, 'for-review', 'title-screening', 'review.yaml');
+      const expectedPath = join(
+        sessionsDir,
+        sessionId,
+        'for-review',
+        'title-screening',
+        'review.yaml',
+      );
       expect(result.outputPath).toBe(expectedPath);
 
       const content = await readFile(expectedPath, 'utf-8');
@@ -88,33 +97,20 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       await expect(
-        executeReviewExtract(
-          { sessionId, name: 'invalid/name' },
-          sessionsDir
-        )
+        executeReviewExtract({ sessionId, name: 'invalid/name' }, sessionsDir),
       ).rejects.toThrow();
     });
 
     it('rejects names containing ..', async () => {
       await writeReviewFile(sampleArticles);
 
-      await expect(
-        executeReviewExtract(
-          { sessionId, name: '..' },
-          sessionsDir
-        )
-      ).rejects.toThrow();
+      await expect(executeReviewExtract({ sessionId, name: '..' }, sessionsDir)).rejects.toThrow();
     });
 
     it('rejects empty name', async () => {
       await writeReviewFile(sampleArticles);
 
-      await expect(
-        executeReviewExtract(
-          { sessionId, name: '' },
-          sessionsDir
-        )
-      ).rejects.toThrow();
+      await expect(executeReviewExtract({ sessionId, name: '' }, sessionsDir)).rejects.toThrow();
     });
   });
 
@@ -124,7 +120,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, filter: ['pending'], name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       expect(result.extractedCount).toBe(3);
@@ -138,7 +134,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, filter: ['pending', 'divided'], name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       expect(result.extractedCount).toBe(4); // 3 pending + 1 divided
@@ -149,7 +145,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       expect(result.extractedCount).toBe(6);
@@ -162,7 +158,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, filter: ['pending'], sort: 'year', name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -176,7 +172,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, filter: ['pending'], sort: 'title', name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -189,12 +185,26 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result1 = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch1', reviewer: 'human:admin' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          sort: 'random',
+          seed: 42,
+          name: 'batch1',
+          reviewer: 'human:admin',
+        },
+        sessionsDir,
       );
       const result2 = await executeReviewExtract(
-        { sessionId, filter: ['pending'], sort: 'random', seed: 42, name: 'batch2', reviewer: 'human:admin' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          sort: 'random',
+          seed: 42,
+          name: 'batch2',
+          reviewer: 'human:admin',
+        },
+        sessionsDir,
       );
 
       const content1 = await readFile(result1.outputPath, 'utf-8');
@@ -203,7 +213,7 @@ describe('executeReviewExtract', () => {
       const extracted2 = parseYaml(content2) as ReviewFile;
 
       expect(extracted1.articles.map((a) => a.title)).toEqual(
-        extracted2.articles.map((a) => a.title)
+        extracted2.articles.map((a) => a.title),
       );
     });
 
@@ -212,7 +222,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, filter: ['pending'], sort: 'none', name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -228,7 +238,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, filter: ['pending'], limit: 2, name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       expect(result.extractedCount).toBe(2);
@@ -239,7 +249,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, filter: ['pending'], offset: 1, name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -252,8 +262,15 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(sampleArticles);
 
       const result = await executeReviewExtract(
-        { sessionId, filter: ['pending'], offset: 1, limit: 1, name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          offset: 1,
+          limit: 1,
+          name: 'batch',
+          reviewer: 'human:admin',
+        },
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -269,7 +286,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'new-review', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -281,7 +298,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -297,12 +314,15 @@ describe('executeReviewExtract', () => {
       await mkdir(internalDir, { recursive: true });
       await writeFile(
         join(internalDir, 'review.schema.json'),
-        JSON.stringify({ $schema: 'http://json-schema.org/draft-07/schema#', title: 'Review File' })
+        JSON.stringify({
+          $schema: 'http://json-schema.org/draft-07/schema#',
+          title: 'Review File',
+        }),
       );
 
       const result = await executeReviewExtract(
         { sessionId, name: 'batch', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const schemaPath = join(dirname(result.outputPath), 'review.schema.json');
@@ -316,9 +336,7 @@ describe('executeReviewExtract', () => {
     const sessionDir = join(sessionsDir, sessionId);
     await mkdir(sessionDir, { recursive: true });
 
-    await expect(
-      executeReviewExtract({ sessionId, name: 'batch' }, sessionsDir)
-    ).rejects.toThrow();
+    await expect(executeReviewExtract({ sessionId, name: 'batch' }, sessionsDir)).rejects.toThrow();
   });
 
   describe('ReviewFile extract with reviewHistory', () => {
@@ -328,8 +346,18 @@ describe('executeReviewExtract', () => {
           title: 'Reviewed Article',
           pmid: '1',
           reviews: [
-            { reviewer: 'gpt-4o', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
-            { reviewer: 'claude', decision: 'include', basis: 'abstract', timestamp: '2024-01-02T00:00:00Z' },
+            {
+              reviewer: 'gpt-4o',
+              decision: 'include',
+              basis: 'title',
+              timestamp: '2024-01-01T00:00:00Z',
+            },
+            {
+              reviewer: 'claude',
+              decision: 'include',
+              basis: 'abstract',
+              timestamp: '2024-01-02T00:00:00Z',
+            },
           ],
         },
         {
@@ -342,11 +370,13 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'confirm', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
-      const extracted = parseYaml(content) as ReviewFile & { articles: Array<ArticleEntry & { reviewHistory?: import('./types.js').Review[] }> };
+      const extracted = parseYaml(content) as ReviewFile & {
+        articles: Array<ArticleEntry & { reviewHistory?: import('./types.js').Review[] }>;
+      };
 
       // reviews should be empty
       expect(extracted.articles[0]!.reviews).toEqual([]);
@@ -362,14 +392,12 @@ describe('executeReviewExtract', () => {
     });
 
     it('includes top-level reviewer field in extracted ReviewFile', async () => {
-      const articles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const articles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeReviewFile(articles);
 
       const result = await executeReviewExtract(
         { sessionId, name: 'confirm', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -379,14 +407,12 @@ describe('executeReviewExtract', () => {
     });
 
     it('replaces finalDecision: null preserving indentation', async () => {
-      const articles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const articles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeReviewFile(articles);
 
       const result = await executeReviewExtract(
         { sessionId, name: 'indent-test', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -414,7 +440,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'confirm', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -428,16 +454,11 @@ describe('executeReviewExtract', () => {
 
   describe('reviewer validation for ReviewFile mode', () => {
     it('throws when --reviewer is not specified for review file extract (no basis)', async () => {
-      const articles: ArticleEntry[] = [
-        { title: 'Article 1', pmid: '1', reviews: [] },
-      ];
+      const articles: ArticleEntry[] = [{ title: 'Article 1', pmid: '1', reviews: [] }];
       await writeReviewFile(articles);
 
       await expect(
-        executeReviewExtract(
-          { sessionId, name: 'no-reviewer' },
-          sessionsDir
-        )
+        executeReviewExtract({ sessionId, name: 'no-reviewer' }, sessionsDir),
       ).rejects.toThrow('--reviewer is required for review file extract');
     });
   });
@@ -468,7 +489,7 @@ describe('executeReviewExtract', () => {
           reviewer: 'ai:claude',
           name: 'phase1',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -500,7 +521,7 @@ describe('executeReviewExtract', () => {
           reviewer: 'ai:claude',
           name: 'phase2',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -522,7 +543,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'title', reviewer: 'ai:test', name: 'ids' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -545,7 +566,7 @@ describe('executeReviewExtract', () => {
           reviewer: 'ai:claude',
           name: 'default-decision',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -565,7 +586,10 @@ describe('executeReviewExtract', () => {
           pmid: '200',
           doi: '10.1234/ft',
           abstract: 'Abstract text.',
-          fulltext: { dirName: 'smith2024-abcd1234', hasFiles: { pdf: true, xml: false, html: false, markdown: true } },
+          fulltext: {
+            dirName: 'smith2024-abcd1234',
+            hasFiles: { pdf: true, xml: false, html: false, markdown: true },
+          },
           reviews: [],
         },
         {
@@ -584,7 +608,7 @@ describe('executeReviewExtract', () => {
           reviewer: 'ai:claude',
           name: 'fulltext-phase',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -592,7 +616,10 @@ describe('executeReviewExtract', () => {
 
       expect(reviewFile.basis).toBe('fulltext');
       // Article with fulltext should have fulltext ref (as object with dirName) and abstract
-      expect(reviewFile.articles[0]!.fulltext).toEqual({ dirName: 'smith2024-abcd1234', hasFiles: { pdf: true, xml: false, html: false, markdown: true } });
+      expect(reviewFile.articles[0]!.fulltext).toEqual({
+        dirName: 'smith2024-abcd1234',
+        hasFiles: { pdf: true, xml: false, html: false, markdown: true },
+      });
       expect(reviewFile.articles[0]!.abstract).toBe('Abstract text.');
       // Article without fulltext should still be included but without fulltext
       expect(reviewFile.articles[1]!.fulltext).toBeUndefined();
@@ -604,7 +631,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'title', reviewer: 'ai:claude', name: 'comment-test' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -616,7 +643,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'abstract', reviewer: 'ai:claude', name: 'comment-test' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -628,7 +655,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'title', reviewer: 'ai:claude', name: 'comment-guide' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -641,7 +668,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'title', reviewer: 'ai:claude', name: 'schema-test' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -655,7 +682,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'abstract', reviewer: 'ai:claude', name: 'basis-field' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -678,7 +705,7 @@ describe('executeReviewExtract', () => {
           reviewer: 'ai:claude',
           name: 'filtered',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -697,8 +724,18 @@ describe('executeReviewExtract', () => {
         doi: '10.1234/reviewed',
         abstract: 'Abstract text.',
         reviews: [
-          { reviewer: 'ai:claude', decision: 'include', basis: 'title', timestamp: '2024-01-01T00:00:00Z' },
-          { reviewer: 'ai:gpt-4o', decision: 'include', basis: 'abstract', timestamp: '2024-01-02T00:00:00Z' },
+          {
+            reviewer: 'ai:claude',
+            decision: 'include',
+            basis: 'title',
+            timestamp: '2024-01-01T00:00:00Z',
+          },
+          {
+            reviewer: 'ai:gpt-4o',
+            decision: 'include',
+            basis: 'abstract',
+            timestamp: '2024-01-02T00:00:00Z',
+          },
         ],
       },
       {
@@ -714,7 +751,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'finalize-test', reviewer: 'human:admin', finalize: true },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -742,7 +779,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'finalize-guide', reviewer: 'human:admin', finalize: true },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -756,7 +793,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'finalize-reviews-guide', reviewer: 'human:admin', finalize: true },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -767,8 +804,14 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(articlesWithReviews);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'finalize-title', reviewer: 'human:admin', finalize: true, basis: 'title' },
-        sessionsDir
+        {
+          sessionId,
+          name: 'finalize-title',
+          reviewer: 'human:admin',
+          finalize: true,
+          basis: 'title',
+        },
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -788,8 +831,14 @@ describe('executeReviewExtract', () => {
       await writeReviewFile(articlesWithReviews);
 
       const result = await executeReviewExtract(
-        { sessionId, name: 'finalize-abstract', reviewer: 'human:admin', finalize: true, basis: 'abstract' },
-        sessionsDir
+        {
+          sessionId,
+          name: 'finalize-abstract',
+          reviewer: 'human:admin',
+          finalize: true,
+          basis: 'abstract',
+        },
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -810,7 +859,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, name: 'compat', reviewer: 'human:admin' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -841,7 +890,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'title', reviewer: 'human:me', name: 'pick-title' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -854,7 +903,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'title', reviewer: 'human:me', name: 'screen-title' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -866,7 +915,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'abstract', reviewer: 'human:me', name: 'pick-abstract' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -878,7 +927,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'title', reviewer: 'human:me', name: 'pick-guidance' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');
@@ -891,7 +940,7 @@ describe('executeReviewExtract', () => {
 
       const result = await executeReviewExtract(
         { sessionId, basis: 'title', reviewer: 'human:me', name: 'screen-guidance' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(result.outputPath, 'utf-8');

@@ -315,12 +315,24 @@ describe('config command helpers', () => {
 
   describe('formatShowOrigin', () => {
     it('should format value with origin info', () => {
-      const result = formatShowOrigin('providers.pubmed.api_key', 'test-key', 'global', '/home/user/.config/search-hub/config.toml');
-      expect(result).toBe('global\t/home/user/.config/search-hub/config.toml\tproviders.pubmed.api_key = test-key');
+      const result = formatShowOrigin(
+        'providers.pubmed.api_key',
+        'test-key',
+        'global',
+        '/home/user/.config/search-hub/config.toml',
+      );
+      expect(result).toBe(
+        'global\t/home/user/.config/search-hub/config.toml\tproviders.pubmed.api_key = test-key',
+      );
     });
 
     it('should format env origin', () => {
-      const result = formatShowOrigin('providers.pubmed.api_key', 'env-val', 'env', 'SEARCH_HUB_PUBMED_API_KEY');
+      const result = formatShowOrigin(
+        'providers.pubmed.api_key',
+        'env-val',
+        'env',
+        'SEARCH_HUB_PUBMED_API_KEY',
+      );
       expect(result).toBe('env\tSEARCH_HUB_PUBMED_API_KEY\tproviders.pubmed.api_key = env-val');
     });
 

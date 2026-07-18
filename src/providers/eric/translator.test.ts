@@ -7,10 +7,7 @@ import { translateQuery, translateQueryAST } from './translator';
 import type { ResolvedAST, QueryBlock, Filters } from '../../query/types';
 
 // Helper to create a minimal ResolvedAST
-function createResolvedAST(
-  blocks: QueryBlock[],
-  filters: Partial<Filters> = {}
-): ResolvedAST {
+function createResolvedAST(blocks: QueryBlock[], filters: Partial<Filters> = {}): ResolvedAST {
   return {
     name: 'test-query',
     blocks,
@@ -25,7 +22,7 @@ function createBlock(
   field: QueryBlock['field'],
   keywords: string[],
   operator: QueryBlock['operator'] = 'OR',
-  id = 'block1'
+  id = 'block1',
 ): QueryBlock {
   return {
     id,
@@ -237,7 +234,9 @@ describe('ERIC Query Translator', () => {
       // title_abstract expands to title and description
       expect(result.native).toContain('title:diabetes');
       expect(result.native).toContain('description:diabetes');
-      expect(result.native).toContain('NOT ((title:animal OR description:animal) OR (title:mice OR description:mice))');
+      expect(result.native).toContain(
+        'NOT ((title:animal OR description:animal) OR (title:mice OR description:mice))',
+      );
     });
 
     it('should combine exclude with date filters', () => {
@@ -423,7 +422,7 @@ describe('ERIC Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.warnings).toContainEqual(
-        'ERIC: block 1 skipped (contains only Emtree terms, not supported)'
+        'ERIC: block 1 skipped (contains only Emtree terms, not supported)',
       );
     });
 

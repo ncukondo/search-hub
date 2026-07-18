@@ -76,7 +76,7 @@ export class ArxivProvider extends BaseProvider {
    */
   async count(query: TranslatedQuery): Promise<number> {
     const response = await this.withRetry(() =>
-      this.client.search(query.native, { start: 0, maxResults: 1 })
+      this.client.search(query.native, { start: 0, maxResults: 1 }),
     );
     return response.totalResults;
   }
@@ -103,9 +103,7 @@ export class ArxivProvider extends BaseProvider {
         ...(arxivSortBy && { sortBy: arxivSortBy }),
       };
 
-      const response = await this.withRetry(() =>
-        this.client.search(query.native, searchOptions)
-      );
+      const response = await this.withRetry(() => this.client.search(query.native, searchOptions));
 
       totalResults = response.totalResults;
 
@@ -183,7 +181,7 @@ export class ArxivProvider extends BaseProvider {
         this.client.search(state.query.native, {
           start: offset,
           maxResults: Math.min(pageSize, maxResults - retrievedCount),
-        })
+        }),
       );
 
       // Update state

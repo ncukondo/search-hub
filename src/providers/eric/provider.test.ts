@@ -487,7 +487,7 @@ describe('ERIC Provider', () => {
         provider: 'eric' as const,
         query: {
           native: 'title:test',
-  
+
           provider: 'eric' as const,
         },
         totalResults: 100,
@@ -520,7 +520,7 @@ describe('ERIC Provider', () => {
         provider: 'eric' as const,
         query: {
           native: 'title:education',
-  
+
           provider: 'eric' as const,
         },
         totalResults: 100,

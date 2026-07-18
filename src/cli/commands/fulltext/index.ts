@@ -25,7 +25,9 @@ export function registerFulltextCommands(
   const fulltextCommand = program
     .command('fulltext')
     .description('Fulltext management: retrieval, conversion, attachment')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub fulltext init SESSION_ID               # Create directories for included articles
   $ search-hub fulltext init SESSION_ID --dry-run     # Preview what would be created
@@ -39,7 +41,8 @@ Examples:
   $ search-hub fulltext attach SESSION_ID             # Attach fulltexts to ref entries
   $ search-hub fulltext attach SESSION_ID --dry-run   # Preview what would be attached
   $ search-hub fulltext status SESSION_ID            # Show fulltext retrieval status
-  $ search-hub fulltext pending SESSION_ID           # List articles needing download`);
+  $ search-hub fulltext pending SESSION_ID           # List articles needing download`,
+    );
 
   fulltextCommand
     .command('init')
@@ -64,10 +67,7 @@ Examples:
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error,
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.SESSION_ERROR;
       }
@@ -96,10 +96,7 @@ Examples:
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error,
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.SESSION_ERROR;
       }
@@ -128,9 +125,12 @@ Examples:
         const result = await executeFulltextConvert(convertOpts, sessionsDir);
 
         if (!globalOpts.quiet) {
-          console.log(`Converted: ${result.converted}  Skipped: ${result.skipped}  Failed: ${result.failed}`);
+          console.log(
+            `Converted: ${result.converted}  Skipped: ${result.skipped}  Failed: ${result.failed}`,
+          );
           for (const article of result.articles) {
-            const icon = article.status === 'converted' ? '+' : article.status === 'skipped' ? '-' : '!';
+            const icon =
+              article.status === 'converted' ? '+' : article.status === 'skipped' ? '-' : '!';
             console.log(`  [${icon}] ${article.dirName}: ${article.title}`);
           }
         }
@@ -196,10 +196,7 @@ Examples:
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error,
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.SESSION_ERROR;
       }
@@ -216,7 +213,7 @@ Examples:
         const sessionsDir = await getSessionsDir(globalOpts);
         const sessionDir = join(sessionsDir, options.session);
         const config = await loadConfig(
-          globalOpts.config ? { globalConfigPath: globalOpts.config } : {}
+          globalOpts.config ? { globalConfigPath: globalOpts.config } : {},
         );
         const result = await executeFulltextCheck({
           sessionDir,
@@ -225,7 +222,12 @@ Examples:
             coreApiKey: config.fulltext?.sources?.core_api_key ?? '',
             ncbiEmail: config.fulltext?.sources?.ncbi_email ?? '',
             ncbiTool: config.fulltext?.sources?.ncbi_tool ?? 'search-hub',
-            preferSources: config.fulltext?.sources?.prefer_sources ?? ['pmc', 'arxiv', 'unpaywall', 'core'],
+            preferSources: config.fulltext?.sources?.prefer_sources ?? [
+              'pmc',
+              'arxiv',
+              'unpaywall',
+              'core',
+            ],
           },
         });
 
@@ -242,7 +244,7 @@ Examples:
             console.log(`\nWarnings:`);
             for (const article of rejected) {
               console.log(
-                `  Discovered ${article.rejectedPmcid} does not match "${article.title}" — PMC locations dropped.`
+                `  Discovered ${article.rejectedPmcid} does not match "${article.title}" — PMC locations dropped.`,
               );
             }
           }
@@ -266,43 +268,50 @@ Examples:
     .option('--source <sources>', 'filter by source (comma-separated: pmc,arxiv,unpaywall,core)')
     .option('--no-convert-markdown', 'skip auto-conversion of PMC XML to Markdown')
     .option('--dry-run', 'show what would be downloaded without downloading', false)
-    .action(async (sessionId: string, options: { source?: string; convertMarkdown: boolean; dryRun: boolean }) => {
-      const globalOpts = program.opts() as GlobalOptions;
-      try {
-        const sessionsDir = await getSessionsDir(globalOpts);
+    .action(
+      async (
+        sessionId: string,
+        options: { source?: string; convertMarkdown: boolean; dryRun: boolean },
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          const sessionsDir = await getSessionsDir(globalOpts);
 
-        const fetchOpts: Parameters<typeof executeFulltextFetch>[0] = {
-          sessionId,
-          sessionsDir,
-          convertMarkdown: options.convertMarkdown,
-          dryRun: options.dryRun,
-        };
-        if (options.source) fetchOpts.source = options.source.split(',');
-        const result = await executeFulltextFetch(fetchOpts);
+          const fetchOpts: Parameters<typeof executeFulltextFetch>[0] = {
+            sessionId,
+            sessionsDir,
+            convertMarkdown: options.convertMarkdown,
+            dryRun: options.dryRun,
+          };
+          if (options.source) fetchOpts.source = options.source.split(',');
+          const result = await executeFulltextFetch(fetchOpts);
 
-        if (!globalOpts.quiet) {
-          if (result.dryRun) {
-            console.log(`\nDry run: would fetch ${result.articles.length} articles`);
-            for (const article of result.articles) {
-              console.log(`  ${article.dirName}: ${article.title} (${article.locationCount} sources)`);
+          if (!globalOpts.quiet) {
+            if (result.dryRun) {
+              console.log(`\nDry run: would fetch ${result.articles.length} articles`);
+              for (const article of result.articles) {
+                console.log(
+                  `  ${article.dirName}: ${article.title} (${article.locationCount} sources)`,
+                );
+              }
+            } else {
+              console.log(`\nFulltext Fetch Summary:`);
+              console.log(`  Downloaded: ${result.summary.downloaded}`);
+              console.log(`  Failed:     ${result.summary.failed}`);
+              console.log(`  Skipped:    ${result.summary.skipped}`);
+              console.log(`  Total:      ${result.summary.total}`);
             }
-          } else {
-            console.log(`\nFulltext Fetch Summary:`);
-            console.log(`  Downloaded: ${result.summary.downloaded}`);
-            console.log(`  Failed:     ${result.summary.failed}`);
-            console.log(`  Skipped:    ${result.summary.skipped}`);
-            console.log(`  Total:      ${result.summary.total}`);
           }
-        }
 
-        process.exitCode = EXIT_CODES.SUCCESS;
-      } catch (error) {
-        if (!globalOpts.quiet) {
-          console.error('Error:', error instanceof Error ? error.message : error);
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error('Error:', error instanceof Error ? error.message : error);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
         }
-        process.exitCode = EXIT_CODES.SESSION_ERROR;
-      }
-    });
+      },
+    );
 
   fulltextCommand
     .command('status')

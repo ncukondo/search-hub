@@ -45,9 +45,7 @@ describe('formatSuggestion', () => {
   it('should format See also only when no Next', () => {
     const result: SuggestionResult = {
       next: [],
-      seeAlso: [
-        { command: 'search-hub results my-session', description: '結果を詳しく見る' },
-      ],
+      seeAlso: [{ command: 'search-hub results my-session', description: '結果を詳しく見る' }],
     };
 
     const output = formatSuggestion(result);
@@ -76,7 +74,9 @@ describe('formatSuggestion', () => {
 
   it('should render tip before Next section', () => {
     const result: SuggestionResult = {
-      next: [{ command: 'search-hub search query.yaml --dry-run', description: 'Check DB translations' }],
+      next: [
+        { command: 'search-hub search query.yaml --dry-run', description: 'Check DB translations' },
+      ],
       seeAlso: [],
       tip: 'Tip: Start from a template to get $schema support and usage examples:\n     search-hub query init -o query.yaml',
     };
@@ -93,7 +93,9 @@ describe('formatSuggestion', () => {
 
   it('should render normally when tip is undefined', () => {
     const result: SuggestionResult = {
-      next: [{ command: 'search-hub search query.yaml --dry-run', description: 'Check DB translations' }],
+      next: [
+        { command: 'search-hub search query.yaml --dry-run', description: 'Check DB translations' },
+      ],
       seeAlso: [],
     };
 

@@ -43,7 +43,7 @@ function createArticle(overrides: Partial<Article> = {}): Article {
 function createBulkOutput(
   added: Array<{ source: string; id: string; title: string }> = [],
   skipped: Array<{ source: string; existingId: string; duplicateType: string }> = [],
-  failed: Array<{ source: string; reason: string; error?: string }> = []
+  failed: Array<{ source: string; reason: string; error?: string }> = [],
 ): RefAddOutput {
   return {
     summary: {
@@ -103,25 +103,39 @@ describe('registerArticles (bulk import)', () => {
       await registerArticles(articles, createOptions());
 
       // Verify refAddBulk was called with correct library path
-      expect(mockRefAddBulk).toHaveBeenCalledWith(
-        path.join(tempDir, '_bulk_import.json'),
-        { libraryPath: path.join(tempDir, 'references.json') }
-      );
+      expect(mockRefAddBulk).toHaveBeenCalledWith(path.join(tempDir, '_bulk_import.json'), {
+        libraryPath: path.join(tempDir, 'references.json'),
+      });
     });
 
     it('should map RefAddOutput to RegistrationRecord correctly', async () => {
       const articles = [
-        createArticle({ pmid: '11111111', title: 'New Article', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
-        createArticle({ pmid: '22222222', title: 'Dup Article', authors: [{ family: 'Jones' }], publicationDate: '2024' }),
-        createArticle({ doi: '10.1234/fail', title: 'Fail Article', authors: [{ family: 'Chen' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '11111111',
+          title: 'New Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+        createArticle({
+          pmid: '22222222',
+          title: 'Dup Article',
+          authors: [{ family: 'Jones' }],
+          publicationDate: '2024',
+        }),
+        createArticle({
+          doi: '10.1234/fail',
+          title: 'Fail Article',
+          authors: [{ family: 'Chen' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
         createBulkOutput(
           [{ source: 'smith-2024', id: 'smith-2024', title: 'New Article' }],
           [{ source: 'jones-2024', existingId: 'existing-2023', duplicateType: 'pmid' }],
-          [{ source: 'chen-2024', reason: 'fetch_error', error: 'Not found' }]
-        )
+          [{ source: 'chen-2024', reason: 'fetch_error', error: 'Not found' }],
+        ),
       );
 
       const result = await registerArticles(articles, createOptions());
@@ -132,11 +146,23 @@ describe('registerArticles (bulk import)', () => {
       expect(result.summary.failed).toBe(1);
       expect(result.summary.noId).toBe(0);
       expect(result.added).toHaveLength(1);
-      expect(result.added[0]).toEqual({ source: 'smith-2024', id: 'smith-2024', title: 'New Article' });
+      expect(result.added[0]).toEqual({
+        source: 'smith-2024',
+        id: 'smith-2024',
+        title: 'New Article',
+      });
       expect(result.duplicates).toHaveLength(1);
-      expect(result.duplicates[0]).toEqual({ source: 'jones-2024', existingId: 'existing-2023', duplicateType: 'pmid' });
+      expect(result.duplicates[0]).toEqual({
+        source: 'jones-2024',
+        existingId: 'existing-2023',
+        duplicateType: 'pmid',
+      });
       expect(result.failed).toHaveLength(1);
-      expect(result.failed[0]).toEqual({ source: 'chen-2024', reason: 'fetch_error', error: 'Not found' });
+      expect(result.failed[0]).toEqual({
+        source: 'chen-2024',
+        reason: 'fetch_error',
+        error: 'Not found',
+      });
     });
   });
 
@@ -145,7 +171,12 @@ describe('registerArticles (bulk import)', () => {
       const articles = [
         createArticle({ title: 'No ID Article 1' }),
         createArticle({ title: 'No ID Article 2' }),
-        createArticle({ pmid: '12345678', title: 'With PMID', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '12345678',
+          title: 'With PMID',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockImplementation(async (filePath: string) => {
@@ -163,9 +194,7 @@ describe('registerArticles (bulk import)', () => {
     });
 
     it('should not call refAddBulk when all articles lack identifiers', async () => {
-      const articles = [
-        createArticle({ title: 'No ID Article' }),
-      ];
+      const articles = [createArticle({ title: 'No ID Article' })];
 
       const result = await registerArticles(articles, createOptions());
 
@@ -191,7 +220,9 @@ describe('registerArticles (bulk import)', () => {
         const cslJson = JSON.parse(content);
         expect(cslJson).toHaveLength(1);
         expect(cslJson[0].custom).toEqual({ arxiv_id: '2401.12345' });
-        return createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'arXiv Article' }]);
+        return createBulkOutput([
+          { source: 'smith-2024', id: 'smith-2024', title: 'arXiv Article' },
+        ]);
       });
 
       const result = await registerArticles(articles, createOptions());
@@ -216,7 +247,9 @@ describe('registerArticles (bulk import)', () => {
         const cslJson = JSON.parse(content);
         expect(cslJson).toHaveLength(1);
         expect(cslJson[0].custom).toEqual({ eric_id: 'ED123456' });
-        return createBulkOutput([{ source: 'jones-2024', id: 'jones-2024', title: 'ERIC Article' }]);
+        return createBulkOutput([
+          { source: 'jones-2024', id: 'jones-2024', title: 'ERIC Article' },
+        ]);
       });
 
       const result = await registerArticles(articles, createOptions());
@@ -241,7 +274,9 @@ describe('registerArticles (bulk import)', () => {
         const cslJson = JSON.parse(content);
         expect(cslJson).toHaveLength(1);
         expect(cslJson[0].custom).toEqual({ scopus_id: '2-s2.0-85012345678' });
-        return createBulkOutput([{ source: 'chen-2024', id: 'chen-2024', title: 'Scopus Article' }]);
+        return createBulkOutput([
+          { source: 'chen-2024', id: 'chen-2024', title: 'Scopus Article' },
+        ]);
       });
 
       const result = await registerArticles(articles, createOptions());
@@ -253,7 +288,12 @@ describe('registerArticles (bulk import)', () => {
 
     it('should count only truly identifier-less articles as noId in a mixed batch', async () => {
       const articles = [
-        createArticle({ arxivId: '2401.12345', title: 'arXiv Article', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({
+          arxivId: '2401.12345',
+          title: 'arXiv Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
         createArticle({ title: 'No ID Article' }),
       ];
 
@@ -261,7 +301,9 @@ describe('registerArticles (bulk import)', () => {
         const content = await fs.readFile(filePath, 'utf-8');
         const cslJson = JSON.parse(content);
         expect(cslJson).toHaveLength(1);
-        return createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'arXiv Article' }]);
+        return createBulkOutput([
+          { source: 'smith-2024', id: 'smith-2024', title: 'arXiv Article' },
+        ]);
       });
 
       const result = await registerArticles(articles, createOptions());
@@ -275,24 +317,37 @@ describe('registerArticles (bulk import)', () => {
   describe('temp file cleanup', () => {
     it('should clean up temp file after successful import', async () => {
       const articles = [
-        createArticle({ pmid: '12345678', title: 'Article', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
-        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }])
+        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }]),
       );
 
       await registerArticles(articles, createOptions());
 
       // Verify temp file was cleaned up
       const tempFilePath = path.join(tempDir, '_bulk_import.json');
-      const exists = await fs.access(tempFilePath).then(() => true).catch(() => false);
+      const exists = await fs
+        .access(tempFilePath)
+        .then(() => true)
+        .catch(() => false);
       expect(exists).toBe(false);
     });
 
     it('should clean up temp file even when refAddBulk throws', async () => {
       const articles = [
-        createArticle({ pmid: '12345678', title: 'Article', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockRejectedValueOnce(new Error('Bulk import failed'));
@@ -301,7 +356,10 @@ describe('registerArticles (bulk import)', () => {
 
       // Temp file should still be cleaned up
       const tempFilePath = path.join(tempDir, '_bulk_import.json');
-      const exists = await fs.access(tempFilePath).then(() => true).catch(() => false);
+      const exists = await fs
+        .access(tempFilePath)
+        .then(() => true)
+        .catch(() => false);
       expect(exists).toBe(false);
 
       // Error should be recorded
@@ -312,9 +370,16 @@ describe('registerArticles (bulk import)', () => {
 
   describe('registration record metadata', () => {
     it('should include sessionId in the record', async () => {
-      const articles = [createArticle({ pmid: '12345678', title: 'Article', authors: [{ family: 'Smith' }], publicationDate: '2024' })];
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+      ];
       mockRefAddBulk.mockResolvedValueOnce(
-        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }])
+        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }]),
       );
 
       const result = await registerArticles(articles, createOptions());
@@ -323,9 +388,16 @@ describe('registerArticles (bulk import)', () => {
     });
 
     it('should include timestamp in ISO format', async () => {
-      const articles = [createArticle({ pmid: '12345678', title: 'Article', authors: [{ family: 'Smith' }], publicationDate: '2024' })];
+      const articles = [
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+      ];
       mockRefAddBulk.mockResolvedValueOnce(
-        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }])
+        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }]),
       );
 
       const result = await registerArticles(articles, createOptions());
@@ -337,27 +409,41 @@ describe('registerArticles (bulk import)', () => {
   describe('session-specific library path', () => {
     it('should pass libraryPath option to refAddBulk', async () => {
       const articles = [
-        createArticle({ pmid: '12345678', title: 'Article', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '12345678',
+          title: 'Article',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
-        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }])
+        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }]),
       );
 
       await registerArticles(articles, createOptions());
 
-      expect(mockRefAddBulk).toHaveBeenCalledWith(
-        expect.any(String),
-        { libraryPath: path.join(tempDir, 'references.json') }
-      );
+      expect(mockRefAddBulk).toHaveBeenCalledWith(expect.any(String), {
+        libraryPath: path.join(tempDir, 'references.json'),
+      });
     });
   });
 
   describe('progress callback', () => {
     it('should call onProgress', async () => {
       const articles = [
-        createArticle({ pmid: '11111111', title: 'Article 1', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
-        createArticle({ pmid: '22222222', title: 'Article 2', authors: [{ family: 'Jones' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '11111111',
+          title: 'Article 1',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+        createArticle({
+          pmid: '22222222',
+          title: 'Article 2',
+          authors: [{ family: 'Jones' }],
+          publicationDate: '2024',
+        }),
         createArticle({ title: 'No ID' }),
       ];
 
@@ -365,7 +451,7 @@ describe('registerArticles (bulk import)', () => {
         createBulkOutput([
           { source: 'smith-2024', id: 'smith-2024', title: 'Article 1' },
           { source: 'jones-2024', id: 'jones-2024', title: 'Article 2' },
-        ])
+        ]),
       );
 
       const onProgress = vi.fn();
@@ -388,7 +474,7 @@ describe('registerArticles (bulk import)', () => {
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
-        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }])
+        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }]),
       );
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -396,7 +482,7 @@ describe('registerArticles (bulk import)', () => {
         await registerArticles(articles, { ...createOptions(), withAbstracts: true });
 
         expect(warnSpy).toHaveBeenCalledWith(
-          'Note: abstracts are now always included in bulk import. --with-abstracts flag is no longer needed.'
+          'Note: abstracts are now always included in bulk import. --with-abstracts flag is no longer needed.',
         );
       } finally {
         warnSpy.mockRestore();
@@ -414,7 +500,7 @@ describe('registerArticles (bulk import)', () => {
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
-        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }])
+        createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article' }]),
       );
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -443,7 +529,9 @@ describe('registerArticles (bulk import)', () => {
         const cslJson = JSON.parse(content);
         // Abstract should always be included
         expect(cslJson[0].abstract).toBe('This is the abstract.');
-        return createBulkOutput([{ source: 'smith-2024', id: 'smith-2024', title: 'Article with Abstract' }]);
+        return createBulkOutput([
+          { source: 'smith-2024', id: 'smith-2024', title: 'Article with Abstract' },
+        ]);
       });
 
       await registerArticles(articles, createOptions());
@@ -455,11 +543,16 @@ describe('registerArticles (bulk import)', () => {
 
     it('should call attachFulltexts after successful bulk import', async () => {
       const articles = [
-        createArticle({ pmid: '12345678', title: 'Article 1', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '12345678',
+          title: 'Article 1',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
-        createBulkOutput([{ source: 'pmid:12345678', id: 'smith-2024', title: 'Article 1' }])
+        createBulkOutput([{ source: 'pmid:12345678', id: 'smith-2024', title: 'Article 1' }]),
       );
 
       mockAttachFulltexts.mockResolvedValueOnce({
@@ -471,24 +564,29 @@ describe('registerArticles (bulk import)', () => {
 
       const result = await registerArticles(articles, createOptions());
 
-      expect(mockAttachFulltexts).toHaveBeenCalledWith(expect.objectContaining({
-        sessionDir: tempDir,
-        libraryPath: path.join(tempDir, 'references.json'),
-        addedRefs: expect.arrayContaining([
-          { id: 'smith-2024', source: 'pmid:12345678' },
-        ]),
-      }));
+      expect(mockAttachFulltexts).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionDir: tempDir,
+          libraryPath: path.join(tempDir, 'references.json'),
+          addedRefs: expect.arrayContaining([{ id: 'smith-2024', source: 'pmid:12345678' }]),
+        }),
+      );
       expect(result.fulltext).toBeDefined();
       expect(result.fulltext!.summary.attached).toBe(1);
     });
 
     it('should skip attachFulltexts when noAttachFulltext is true', async () => {
       const articles = [
-        createArticle({ pmid: '12345678', title: 'Article 1', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '12345678',
+          title: 'Article 1',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
-        createBulkOutput([{ source: 'pmid:12345678', id: 'smith-2024', title: 'Article 1' }])
+        createBulkOutput([{ source: 'pmid:12345678', id: 'smith-2024', title: 'Article 1' }]),
       );
 
       const result = await registerArticles(articles, {
@@ -502,15 +600,25 @@ describe('registerArticles (bulk import)', () => {
 
     it('should include fulltext results in registration record', async () => {
       const articles = [
-        createArticle({ pmid: '11111111', title: 'A1', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
-        createArticle({ doi: '10.1234/test', title: 'A2', authors: [{ family: 'Jones' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '11111111',
+          title: 'A1',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+        createArticle({
+          doi: '10.1234/test',
+          title: 'A2',
+          authors: [{ family: 'Jones' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
         createBulkOutput([
           { source: 'pmid:11111111', id: 'smith-2024', title: 'A1' },
           { source: '10.1234/test', id: 'jones-2024', title: 'A2' },
-        ])
+        ]),
       );
 
       mockAttachFulltexts.mockResolvedValueOnce({
@@ -530,15 +638,25 @@ describe('registerArticles (bulk import)', () => {
 
     it('should include duplicates in addedRefs for fulltext attach', async () => {
       const articles = [
-        createArticle({ pmid: '11111111', title: 'New', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
-        createArticle({ pmid: '22222222', title: 'Dup', authors: [{ family: 'Jones' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '11111111',
+          title: 'New',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+        createArticle({
+          pmid: '22222222',
+          title: 'Dup',
+          authors: [{ family: 'Jones' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
         createBulkOutput(
           [{ source: 'pmid:11111111', id: 'smith-2024', title: 'New' }],
           [{ source: 'pmid:22222222', existingId: 'jones-2024', duplicateType: 'pmid' }],
-        )
+        ),
       );
 
       mockAttachFulltexts.mockResolvedValueOnce({
@@ -562,8 +680,18 @@ describe('registerArticles (bulk import)', () => {
 
     it('should call attachFulltexts when all articles are duplicates', async () => {
       const articles = [
-        createArticle({ pmid: '11111111', title: 'Dup1', authors: [{ family: 'Smith' }], publicationDate: '2024' }),
-        createArticle({ pmid: '22222222', title: 'Dup2', authors: [{ family: 'Jones' }], publicationDate: '2024' }),
+        createArticle({
+          pmid: '11111111',
+          title: 'Dup1',
+          authors: [{ family: 'Smith' }],
+          publicationDate: '2024',
+        }),
+        createArticle({
+          pmid: '22222222',
+          title: 'Dup2',
+          authors: [{ family: 'Jones' }],
+          publicationDate: '2024',
+        }),
       ];
 
       mockRefAddBulk.mockResolvedValueOnce(
@@ -573,7 +701,7 @@ describe('registerArticles (bulk import)', () => {
             { source: 'pmid:11111111', existingId: 'smith-2024', duplicateType: 'pmid' },
             { source: 'pmid:22222222', existingId: 'jones-2024', duplicateType: 'pmid' },
           ],
-        )
+        ),
       );
 
       mockAttachFulltexts.mockResolvedValueOnce({
@@ -596,9 +724,7 @@ describe('registerArticles (bulk import)', () => {
     });
 
     it('should not call attachFulltexts when no articles were added', async () => {
-      const articles = [
-        createArticle({ title: 'No ID' }),
-      ];
+      const articles = [createArticle({ title: 'No ID' })];
 
       const result = await registerArticles(articles, createOptions());
 
@@ -653,7 +779,12 @@ describe('Registration Record Storage', () => {
       await saveRegistrationRecord(nestedDir, record);
 
       const filePath = path.join(nestedDir, 'registration.json');
-      expect(await fs.access(filePath).then(() => true).catch(() => false)).toBe(true);
+      expect(
+        await fs
+          .access(filePath)
+          .then(() => true)
+          .catch(() => false),
+      ).toBe(true);
     });
 
     it('should format JSON with indentation', async () => {

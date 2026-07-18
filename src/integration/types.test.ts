@@ -11,12 +11,8 @@ describe('Integration Types', () => {
     it('validates valid ref add output', () => {
       const validOutput: RefAddOutput = {
         summary: { total: 3, added: 2, skipped: 1, failed: 0 },
-        added: [
-          { source: '10.1234/example', id: 'smith2024', title: 'Example Article' },
-        ],
-        skipped: [
-          { source: '10.5678/existing', existingId: 'jones2023', duplicateType: 'doi' },
-        ],
+        added: [{ source: '10.1234/example', id: 'smith2024', title: 'Example Article' }],
+        skipped: [{ source: '10.5678/existing', existingId: 'jones2023', duplicateType: 'doi' }],
         failed: [],
       };
 
@@ -70,12 +66,8 @@ describe('Integration Types', () => {
         sessionId: '20240115_diabetes-ai_a3f2c1',
         timestamp: '2024-01-15T10:30:00Z',
         summary: { total: 100, added: 95, skipped: 4, failed: 0, noId: 1 },
-        added: [
-          { source: 'pmid:12345678', id: 'smith2024', title: 'Test Article' },
-        ],
-        duplicates: [
-          { source: '10.1234/existing', existingId: 'jones2023', duplicateType: 'doi' },
-        ],
+        added: [{ source: 'pmid:12345678', id: 'smith2024', title: 'Test Article' }],
+        duplicates: [{ source: '10.1234/existing', existingId: 'jones2023', duplicateType: 'doi' }],
         failed: [],
       };
 
@@ -90,9 +82,7 @@ describe('Integration Types', () => {
         summary: { total: 10, added: 5, skipped: 2, failed: 1, noId: 2 },
         added: [],
         duplicates: [],
-        failed: [
-          { source: '10.1234/fail', reason: 'not_found' },
-        ],
+        failed: [{ source: '10.1234/fail', reason: 'not_found' }],
       };
 
       const result = RegistrationRecordSchema.safeParse(record);

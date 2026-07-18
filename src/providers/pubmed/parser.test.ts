@@ -302,11 +302,7 @@ describe('PubMed Parser', () => {
       const result = parseEFetchResponse(xml);
       const article = result.articles[0]!;
 
-      expect(article.meshTerms).toEqual([
-        'Diabetes Mellitus, Type 2',
-        'Humans',
-        'Animals',
-      ]);
+      expect(article.meshTerms).toEqual(['Diabetes Mellitus, Type 2', 'Humans', 'Animals']);
     });
 
     it('should parse publication types correctly', () => {
@@ -342,7 +338,7 @@ describe('PubMed Parser', () => {
       expect(article.pubTypes).toEqual([
         'Journal Article',
         'Review',
-        'Research Support, Non-U.S. Gov\'t',
+        "Research Support, Non-U.S. Gov't",
       ]);
     });
 
@@ -952,7 +948,9 @@ describe('PubMed Parser', () => {
       // Article 1: Italic species names and bold in title, structured abstract with entities
       const art1 = result.articles[0]!;
       expect(typeof art1.title).toBe('string');
-      expect(art1.title).toBe('Predictors of Mortality in Pseudomonas aeruginosa Bloodstream Infections Caused by NDM-1-Producing Strains');
+      expect(art1.title).toBe(
+        'Predictors of Mortality in Pseudomonas aeruginosa Bloodstream Infections Caused by NDM-1-Producing Strains',
+      );
       expect(art1.abstract).toContain('BACKGROUND: Pseudomonas aeruginosa is a leading cause');
       expect(art1.abstract).toContain('≥ 30%');
       expect(art1.abstract).toContain('≤ 2 μg/mL');

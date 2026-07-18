@@ -92,9 +92,9 @@ articles:
     mockLoadMeta.mockImplementation(async () => ({ ...sampleMeta, files: {} }));
 
     // Default: fulltext directory with one entry
-    mockReaddir.mockResolvedValue(
-      ['smith2024-abcd1234'] as unknown as Awaited<ReturnType<typeof readdir>>
-    );
+    mockReaddir.mockResolvedValue(['smith2024-abcd1234'] as unknown as Awaited<
+      ReturnType<typeof readdir>
+    >);
 
     // Default: access succeeds
     mockAccess.mockResolvedValue(undefined);
@@ -105,7 +105,12 @@ articles:
         return {
           oaStatus: 'open' as const,
           locations: [
-            { source: 'unpaywall' as const, url: 'https://example.com/paper.pdf', urlType: 'pdf' as const, version: 'published' as const },
+            {
+              source: 'unpaywall' as const,
+              url: 'https://example.com/paper.pdf',
+              urlType: 'pdf' as const,
+              version: 'published' as const,
+            },
           ],
           errors: [],
           skipped: [],
@@ -227,7 +232,14 @@ articles:
       // Simulate async work
       await new Promise((resolve) => setTimeout(resolve, 10));
       currentConcurrent--;
-      return { oaStatus: 'closed' as const, locations: [], errors: [], skipped: [], checkedSources: [], discoveredIds: {} };
+      return {
+        oaStatus: 'closed' as const,
+        locations: [],
+        errors: [],
+        skipped: [],
+        checkedSources: [],
+        discoveredIds: {},
+      };
     });
 
     const result = await executeFulltextCheck({
@@ -247,8 +259,18 @@ articles:
     const pmcDiscoveryResult = {
       oaStatus: 'open' as const,
       locations: [
-        { source: 'pmc' as const, url: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12928693/pdf/', urlType: 'pdf' as const, version: 'published' as const },
-        { source: 'pmc' as const, url: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=12928693', urlType: 'xml' as const, version: 'published' as const },
+        {
+          source: 'pmc' as const,
+          url: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12928693/pdf/',
+          urlType: 'pdf' as const,
+          version: 'published' as const,
+        },
+        {
+          source: 'pmc' as const,
+          url: 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=12928693',
+          urlType: 'xml' as const,
+          version: 'published' as const,
+        },
       ],
       errors: [],
       skipped: [],
@@ -272,7 +294,7 @@ articles:
 
       // meta.json must not receive the unrelated PMC locations
       const savedMeta = mockSaveMeta.mock.calls.find(
-        ([, meta]) => (meta as FulltextMeta).pmid === '11111111'
+        ([, meta]) => (meta as FulltextMeta).pmid === '11111111',
       )?.[1] as FulltextMeta | undefined;
       if (savedMeta) {
         expect(savedMeta.oaLocations).toEqual([]);
@@ -285,7 +307,12 @@ articles:
         ...pmcDiscoveryResult,
         locations: [
           ...pmcDiscoveryResult.locations,
-          { source: 'unpaywall' as const, url: 'https://example.com/paper.pdf', urlType: 'pdf' as const, version: 'published' as const },
+          {
+            source: 'unpaywall' as const,
+            url: 'https://example.com/paper.pdf',
+            urlType: 'pdf' as const,
+            version: 'published' as const,
+          },
         ],
       });
       mockVerifyPmcid.mockResolvedValue('mismatch');
@@ -316,7 +343,7 @@ articles:
 
       // Verified PMCID is persisted to meta.json
       const savedMeta = mockSaveMeta.mock.calls.find(
-        ([, meta]) => (meta as FulltextMeta).pmid === '11111111'
+        ([, meta]) => (meta as FulltextMeta).pmid === '11111111',
       )?.[1] as FulltextMeta | undefined;
       expect(savedMeta?.pmcid).toBe('PMC12928693');
     });
@@ -336,7 +363,7 @@ articles:
       expect(article?.locationCount).toBe(2);
 
       const savedMeta = mockSaveMeta.mock.calls.find(
-        ([, meta]) => (meta as FulltextMeta).pmid === '11111111'
+        ([, meta]) => (meta as FulltextMeta).pmid === '11111111',
       )?.[1] as FulltextMeta | undefined;
       expect(savedMeta?.pmcid).toBeUndefined();
     });
@@ -363,7 +390,7 @@ articles:
       executeFulltextCheck({
         sessionDir,
         config: { unpaywallEmail: 'test@example.com', coreApiKey: '', preferSources: [] },
-      })
+      }),
     ).rejects.toThrow();
   });
 });

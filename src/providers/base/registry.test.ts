@@ -22,10 +22,7 @@ class MockProvider extends BaseProvider {
     this.name = name;
   }
 
-  async *search(
-    _query: TranslatedQuery,
-    _options?: SearchOptions
-  ): AsyncIterable<Article> {
+  async *search(_query: TranslatedQuery, _options?: SearchOptions): AsyncIterable<Article> {
     yield {
       doi: '10.1234/mock',
       title: 'Mock Article',
@@ -73,8 +70,7 @@ describe('ProviderRegistry', () => {
 
   describe('register', () => {
     it('registers a provider factory', () => {
-      const factory: ProviderFactory = (config) =>
-        new MockProvider('pubmed', config);
+      const factory: ProviderFactory = (config) => new MockProvider('pubmed', config);
 
       registry.register('pubmed', factory);
 
@@ -123,9 +119,7 @@ describe('ProviderRegistry', () => {
     });
 
     it('throws on unknown provider', () => {
-      expect(() => registry.get('unknown' as ProviderName)).toThrow(
-        /provider.*not.*registered/i
-      );
+      expect(() => registry.get('unknown' as ProviderName)).toThrow(/provider.*not.*registered/i);
     });
 
     it('creates new instance each call', () => {

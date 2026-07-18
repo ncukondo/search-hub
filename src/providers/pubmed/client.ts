@@ -9,7 +9,14 @@
 import { RateLimiter, createProviderError } from '../base/index.js';
 import type { ProviderError, ProviderErrorCode } from '../base/types.js';
 import { parseESearchResponse, parseEFetchResponse, parseELinkResponse } from './parser.js';
-import type { ELinkOptions, ELinkResponse, RelatedArticle, ESearchResponse, PubMedArticle, PubMedConfig } from './types.js';
+import type {
+  ELinkOptions,
+  ELinkResponse,
+  RelatedArticle,
+  ESearchResponse,
+  PubMedArticle,
+  PubMedConfig,
+} from './types.js';
 
 const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 
@@ -288,7 +295,7 @@ export class PubMedClient {
       const error = this.createError(
         'RATE_LIMIT_EXCEEDED',
         'Too many requests',
-        true
+        true,
       ) as ProviderError & { retryAfter?: number };
       if (retryAfterMs !== undefined) {
         error.retryAfter = retryAfterMs;
@@ -303,7 +310,7 @@ export class PubMedClient {
     throw this.createError(
       'NETWORK_ERROR',
       `HTTP ${response.status}: ${response.statusText}`,
-      true
+      true,
     );
   }
 
@@ -314,7 +321,7 @@ export class PubMedClient {
     code: ProviderErrorCode,
     message: string,
     retryable: boolean,
-    cause?: unknown
+    cause?: unknown,
   ): ProviderError {
     return createProviderError(code, message, 'pubmed', { retryable, cause });
   }

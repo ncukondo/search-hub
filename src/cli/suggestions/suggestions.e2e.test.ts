@@ -10,10 +10,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
 import { getSuggestion } from './rules.js';
 import { formatSuggestion } from './index.js';
 import type { SuggestionContext } from './types.js';
@@ -332,7 +329,20 @@ describe('Next Step Suggestions E2E', () => {
         command: 'review status',
         ctx: {
           sessionId: 'sid',
-          reviewStatus: { sessionId: 'sid', total: 10, pending: 5, incomplete: 0, allUncertain: 0, agreedInclude: 0, agreedExclude: 0, divided: 0, finalized: 0, included: 0, excluded: 0, reviewers: [] },
+          reviewStatus: {
+            sessionId: 'sid',
+            total: 10,
+            pending: 5,
+            incomplete: 0,
+            allUncertain: 0,
+            agreedInclude: 0,
+            agreedExclude: 0,
+            divided: 0,
+            finalized: 0,
+            included: 0,
+            excluded: 0,
+            reviewers: [],
+          },
         },
       },
       { command: 'review list', ctx: { sessionId: 'sid' } },

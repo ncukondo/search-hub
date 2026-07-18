@@ -94,7 +94,7 @@ export function checkCoverage(articles: Article[], identifiers: ParsedIdentifier
     const matched = keyToArticles.get(key);
 
     if (matched && matched.length > 0) {
-      const sources = [...new Set(matched.map(a => a.source))];
+      const sources = [...new Set(matched.map((a) => a.source))];
       found.push({
         query: id.raw,
         type: id.type,
@@ -159,24 +159,28 @@ export function formatCheckResult(result: CheckResult, options: FormatCheckOptio
 }
 
 export function formatCheckResultJson(result: CheckResult, options: FormatCheckOptions): string {
-  return JSON.stringify({
-    session: options.sessionId,
-    source: options.source,
-    total: result.total,
-    found: result.foundCount,
-    missing: result.missingCount,
-    coverage: result.coverage,
-    details: {
-      found: result.found.map(f => ({
-        query: f.query,
-        type: f.type,
-        sources: f.sources,
-        title: f.title,
-      })),
-      missing: result.missing.map(m => ({
-        query: m.query,
-        type: m.type,
-      })),
+  return JSON.stringify(
+    {
+      session: options.sessionId,
+      source: options.source,
+      total: result.total,
+      found: result.foundCount,
+      missing: result.missingCount,
+      coverage: result.coverage,
+      details: {
+        found: result.found.map((f) => ({
+          query: f.query,
+          type: f.type,
+          sources: f.sources,
+          title: f.title,
+        })),
+        missing: result.missing.map((m) => ({
+          query: m.query,
+          type: m.type,
+        })),
+      },
     },
-  }, null, 2);
+    null,
+    2,
+  );
 }

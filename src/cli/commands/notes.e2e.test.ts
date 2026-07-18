@@ -13,7 +13,13 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
 import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
-import { loadNotes, addNote, addAssessment, formatAllSessionNotes, type SessionNotes } from './notes.js';
+import {
+  loadNotes,
+  addNote,
+  addAssessment,
+  formatAllSessionNotes,
+  type SessionNotes,
+} from './notes.js';
 import { getSessionDetails, formatSessionDetails } from './status.js';
 
 describe('search-hub notes E2E', () => {
@@ -29,7 +35,7 @@ describe('search-hub notes E2E', () => {
 
   async function createTestSession(
     id: string,
-    options: { name?: string; status?: string } = {}
+    options: { name?: string; status?: string } = {},
   ): Promise<string> {
     const sessionDir = join(ctx.sessionsDir, id);
     await mkdir(sessionDir, { recursive: true });
@@ -42,7 +48,12 @@ describe('search-hub notes E2E', () => {
       updatedAt: new Date().toISOString(),
       query: { file: 'test-query.yaml', hash: 'abc123', targets: ['pubmed'] },
       databases: {
-        pubmed: { status: 'completed', totalHits: 100, retrievedCount: 50, files: { query: 'query_pubmed.txt', results: 'results_pubmed.jsonl' } },
+        pubmed: {
+          status: 'completed',
+          totalHits: 100,
+          retrievedCount: 50,
+          files: { query: 'query_pubmed.txt', results: 'results_pubmed.jsonl' },
+        },
       },
       summary: { status: options.status ?? 'completed', totalHits: 100, totalRetrieved: 50 },
     };

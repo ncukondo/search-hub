@@ -75,10 +75,7 @@ export function computeQueryHash(queryContent: string): string {
 /**
  * Build a CountLogEntry from count-only results.
  */
-export function buildCountLogEntry(
-  queryHash: string,
-  results: CountResult[],
-): CountLogEntry {
+export function buildCountLogEntry(queryHash: string, results: CountResult[]): CountLogEntry {
   const counts: Record<string, number> = {};
   let total = 0;
   for (const r of results) {
@@ -181,10 +178,7 @@ export async function readLogEntries(queryFilePath: string): Promise<LogEntry[]>
  * Append a log entry to the iteration log file.
  * Creates the file with a header comment if it does not exist.
  */
-export async function appendLogEntry(
-  queryFilePath: string,
-  entry: LogEntry,
-): Promise<void> {
+export async function appendLogEntry(queryFilePath: string, entry: LogEntry): Promise<void> {
   const logPath = getLogFilePath(queryFilePath);
   const queryBasename = basename(queryFilePath);
   const existing = await readRawLog(logPath);

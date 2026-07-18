@@ -143,7 +143,8 @@ describe('Scopus authentication diagnostics E2E', () => {
       const connectionResults: Record<string, ConnectionTestResult> = {
         scopus: {
           ok: false,
-          error: 'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
+          error:
+            'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
         },
       };
 
@@ -177,7 +178,8 @@ describe('Scopus authentication diagnostics E2E', () => {
       const connectionResults: Record<string, ConnectionTestResult> = {
         scopus: {
           ok: false,
-          error: 'Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.',
+          error:
+            'Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.',
         },
       };
 
@@ -228,7 +230,8 @@ describe('Scopus authentication diagnostics E2E', () => {
       const connectionResults: Record<string, ConnectionTestResult> = {
         scopus: {
           ok: false,
-          error: 'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
+          error:
+            'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
         },
         pubmed: { ok: true },
       };
@@ -259,9 +262,9 @@ describe('Scopus authentication diagnostics E2E', () => {
           async next() {
             const error = Object.assign(
               new Error(
-                'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/'
+                'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
               ),
-              { code: 'API_KEY_INVALID', retryable: false }
+              { code: 'API_KEY_INVALID', retryable: false },
             );
             throw error;
           },
@@ -271,7 +274,8 @@ describe('Scopus authentication diagnostics E2E', () => {
         }),
         testConnection: vi.fn().mockResolvedValue({
           ok: false,
-          error: 'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
+          error:
+            'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
         }),
       }));
 
@@ -285,12 +289,7 @@ describe('Scopus authentication diagnostics E2E', () => {
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       warnSpy.mockRestore();
 
@@ -329,9 +328,9 @@ describe('Scopus authentication diagnostics E2E', () => {
           async next() {
             const error = Object.assign(
               new Error(
-                'Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.'
+                'Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.',
               ),
-              { code: 'ACCESS_DENIED', retryable: false }
+              { code: 'ACCESS_DENIED', retryable: false },
             );
             throw error;
           },
@@ -341,7 +340,8 @@ describe('Scopus authentication diagnostics E2E', () => {
         }),
         testConnection: vi.fn().mockResolvedValue({
           ok: false,
-          error: 'Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.',
+          error:
+            'Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.',
         }),
       }));
 
@@ -355,12 +355,7 @@ describe('Scopus authentication diagnostics E2E', () => {
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       warnSpy.mockRestore();
 
@@ -396,7 +391,7 @@ describe('Scopus authentication diagnostics E2E', () => {
         search: vi.fn().mockReturnValue({
           async next() {
             throw new Error(
-              'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/'
+              'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
             );
           },
           [Symbol.asyncIterator]() {
@@ -405,7 +400,8 @@ describe('Scopus authentication diagnostics E2E', () => {
         }),
         testConnection: vi.fn().mockResolvedValue({
           ok: false,
-          error: 'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
+          error:
+            'Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/',
         }),
       }));
 
@@ -419,12 +415,7 @@ describe('Scopus authentication diagnostics E2E', () => {
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-      const result = await executeSearch(
-        { queryFile: queryPath },
-        ctx.sessionsDir,
-        config,
-        false
-      );
+      const result = await executeSearch({ queryFile: queryPath }, ctx.sessionsDir, config, false);
 
       warnSpy.mockRestore();
 

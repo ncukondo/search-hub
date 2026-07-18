@@ -12,10 +12,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
 import {
   listSessionsForDisplay,
   getSessionDetails,
@@ -45,13 +42,16 @@ describe('search-hub status E2E', () => {
       status?: 'pending' | 'in_progress' | 'completed' | 'partial' | 'failed';
       totalHits?: number;
       totalRetrieved?: number;
-      databases?: Record<string, {
-        status: string;
-        totalHits?: number;
-        retrievedCount?: number;
-        error?: { code: string; message: string };
-      }>;
-    } = {}
+      databases?: Record<
+        string,
+        {
+          status: string;
+          totalHits?: number;
+          retrievedCount?: number;
+          error?: { code: string; message: string };
+        }
+      >;
+    } = {},
   ): Promise<string> {
     const sessionDir = join(ctx.sessionsDir, id);
     await mkdir(sessionDir, { recursive: true });
@@ -81,11 +81,7 @@ describe('search-hub status E2E', () => {
       },
     };
 
-    await writeFile(
-      join(sessionDir, 'session.yaml'),
-      stringifyYaml(session),
-      'utf-8'
-    );
+    await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
     return id;
   }
@@ -210,23 +206,29 @@ describe('search-hub status E2E', () => {
 
   describe('formatSessionList', () => {
     it('should format empty list with helpful message when no sessions exist', () => {
-      const output = formatSessionList({
-        sessions: [],
-        totalCount: 0,
-        filteredCount: 0,
-        showingAll: true,
-      }, { json: false });
+      const output = formatSessionList(
+        {
+          sessions: [],
+          totalCount: 0,
+          filteredCount: 0,
+          showingAll: true,
+        },
+        { json: false },
+      );
 
       expect(output).toBe('No sessions found.');
     });
 
     it('should show hint about hidden completed sessions', () => {
-      const output = formatSessionList({
-        sessions: [],
-        totalCount: 3,
-        filteredCount: 0,
-        showingAll: false,
-      }, { json: false });
+      const output = formatSessionList(
+        {
+          sessions: [],
+          totalCount: 3,
+          filteredCount: 0,
+          showingAll: false,
+        },
+        { json: false },
+      );
 
       expect(output).toContain('No active sessions');
       expect(output).toContain('3 completed sessions hidden');
@@ -234,20 +236,23 @@ describe('search-hub status E2E', () => {
     });
 
     it('should format session list as table', () => {
-      const output = formatSessionList({
-        sessions: [
-          {
-            id: 'session-001',
-            name: 'Test Search',
-            status: 'completed',
-            createdAt: '2024-01-15T10:00:00Z',
-            progress: '100/100',
-          },
-        ],
-        totalCount: 1,
-        filteredCount: 1,
-        showingAll: true,
-      }, { json: false });
+      const output = formatSessionList(
+        {
+          sessions: [
+            {
+              id: 'session-001',
+              name: 'Test Search',
+              status: 'completed',
+              createdAt: '2024-01-15T10:00:00Z',
+              progress: '100/100',
+            },
+          ],
+          totalCount: 1,
+          filteredCount: 1,
+          showingAll: true,
+        },
+        { json: false },
+      );
 
       expect(output).toContain('ID');
       expect(output).toContain('NAME');
@@ -257,20 +262,23 @@ describe('search-hub status E2E', () => {
     });
 
     it('should output valid JSON with --json flag', () => {
-      const output = formatSessionList({
-        sessions: [
-          {
-            id: 'session-001',
-            name: 'Test Search',
-            status: 'completed',
-            createdAt: '2024-01-15T10:00:00Z',
-            progress: '100/100',
-          },
-        ],
-        totalCount: 1,
-        filteredCount: 1,
-        showingAll: true,
-      }, { json: true });
+      const output = formatSessionList(
+        {
+          sessions: [
+            {
+              id: 'session-001',
+              name: 'Test Search',
+              status: 'completed',
+              createdAt: '2024-01-15T10:00:00Z',
+              progress: '100/100',
+            },
+          ],
+          totalCount: 1,
+          filteredCount: 1,
+          showingAll: true,
+        },
+        { json: true },
+      );
 
       // Should be valid JSON
       const parsed = JSON.parse(output);

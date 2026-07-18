@@ -15,12 +15,7 @@ import type { ProviderName } from '../../providers/base/types.js';
  * 1. Implement the provider in `src/providers/{name}/`
  * 2. Add it to this list to make it available via CLI
  */
-const VALID_PROVIDERS: readonly ProviderName[] = [
-  'pubmed',
-  'eric',
-  'arxiv',
-  'scopus',
-];
+const VALID_PROVIDERS: readonly ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopus'];
 
 /**
  * Check if a string is a valid provider name.
@@ -41,7 +36,7 @@ export function parseProviderNames(input: string): ProviderName[] {
   const invalid = names.filter((n) => !isValidProviderName(n));
   if (invalid.length > 0) {
     throw new Error(
-      `Invalid provider(s): ${invalid.join(', ')}. Valid: ${VALID_PROVIDERS.join(', ')}`
+      `Invalid provider(s): ${invalid.join(', ')}. Valid: ${VALID_PROVIDERS.join(', ')}`,
     );
   }
   return names as ProviderName[];

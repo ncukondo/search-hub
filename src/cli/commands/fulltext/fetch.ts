@@ -6,7 +6,12 @@ import { join } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import { loadMeta, fetchAllFulltexts, type FulltextMeta, type FetchArticle } from '@ncukondo/academic-fulltext';
+import {
+  loadMeta,
+  fetchAllFulltexts,
+  type FulltextMeta,
+  type FetchArticle,
+} from '@ncukondo/academic-fulltext';
 import { executeFulltextConvert } from './convert.js';
 export interface FulltextFetchOptions {
   sessionId: string;
@@ -123,10 +128,10 @@ export async function executeFulltextFetch(
   const convertMarkdown = options.convertMarkdown !== false;
   if (convertMarkdown) {
     const convertibleArticles = results.filter(
-      (r) => r.status === 'downloaded' && (
-        r.filesDownloaded?.includes('fulltext.xml') ||
-        r.filesDownloaded?.includes('fulltext.html')
-      ),
+      (r) =>
+        r.status === 'downloaded' &&
+        (r.filesDownloaded?.includes('fulltext.xml') ||
+          r.filesDownloaded?.includes('fulltext.html')),
     );
     for (const article of convertibleArticles) {
       await executeFulltextConvert({ sessionId, article: article.dirName }, sessionsDir);
@@ -167,9 +172,7 @@ async function updateReviews(
   results: Array<{ dirName: string; status: string; filesDownloaded?: string[] }>,
 ): Promise<void> {
   const downloadedDirs = new Set(
-    results
-      .filter((r) => r.status === 'downloaded')
-      .map((r) => r.dirName),
+    results.filter((r) => r.status === 'downloaded').map((r) => r.dirName),
   );
 
   if (downloadedDirs.size === 0) return;
@@ -187,8 +190,10 @@ async function updateReviews(
           article.fulltext.hasFiles = {
             pdf: article.fulltext.hasFiles.pdf || result.filesDownloaded.includes('fulltext.pdf'),
             xml: article.fulltext.hasFiles.xml || result.filesDownloaded.includes('fulltext.xml'),
-            html: article.fulltext.hasFiles.html || result.filesDownloaded.includes('fulltext.html'),
-            markdown: article.fulltext.hasFiles.markdown || result.filesDownloaded.includes('fulltext.md'),
+            html:
+              article.fulltext.hasFiles.html || result.filesDownloaded.includes('fulltext.html'),
+            markdown:
+              article.fulltext.hasFiles.markdown || result.filesDownloaded.includes('fulltext.md'),
           };
           changed = true;
         }

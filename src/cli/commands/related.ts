@@ -159,11 +159,9 @@ export async function resolveSeeds(
   }
 
   // Validate that requested PMIDs exist in the session
-  const missing = options.pmids.filter(pmid => !sessionPmids.has(pmid));
+  const missing = options.pmids.filter((pmid) => !sessionPmids.has(pmid));
   if (missing.length > 0) {
-    throw new Error(
-      `PMIDs not found in session "${options.fromSession}": ${missing.join(', ')}`
-    );
+    throw new Error(`PMIDs not found in session "${options.fromSession}": ${missing.join(', ')}`);
   }
 
   return options.pmids;
@@ -198,9 +196,7 @@ export async function createRelatedSession(
   const yamlFilename = 'pubmed_results.yaml';
   const jsonlPath = join(sessionDir, jsonlFilename);
 
-  const jsonlContent = articles
-    .map((a) => JSON.stringify(a))
-    .join('\n') + '\n';
+  const jsonlContent = articles.map((a) => JSON.stringify(a)).join('\n') + '\n';
   await writeFile(jsonlPath, jsonlContent, 'utf-8');
 
   // Convert to YAML
@@ -241,11 +237,7 @@ export async function createRelatedSession(
   };
 
   // Write session.yaml
-  await writeFile(
-    join(sessionDir, 'session.yaml'),
-    stringifyYaml(sessionFile),
-    'utf-8',
-  );
+  await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(sessionFile), 'utf-8');
 
   return sessionFile;
 }
@@ -268,9 +260,8 @@ export function formatRelatedOutput(data: RelatedOutputData): string {
     const maxDisplay = Math.min(data.articles.length, 10);
     for (let i = 0; i < maxDisplay; i++) {
       const article = data.articles[i]!;
-      const title = article.title.length > 70
-        ? article.title.substring(0, 67) + '...'
-        : article.title;
+      const title =
+        article.title.length > 70 ? article.title.substring(0, 67) + '...' : article.title;
       lines.push(`  ${i + 1}. ${title}`);
     }
     if (data.articles.length > maxDisplay) {

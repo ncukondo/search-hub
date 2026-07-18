@@ -46,7 +46,7 @@ export function isBunVirtualPath(path: string): boolean {
  */
 export function resolveInvocationPath(
   argv1: string | undefined = process.argv[1],
-  execPath: string = process.execPath
+  execPath: string = process.execPath,
 ): string {
   if (!argv1 || isBunVirtualPath(argv1)) return execPath;
   return argv1;

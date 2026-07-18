@@ -7,11 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { join } from 'node:path';
 import { mkdir } from 'node:fs/promises';
-import {
-  setupE2EContext,
-  type E2EContext,
-  createRawQueryFile,
-} from '../../e2e-helpers.js';
+import { setupE2EContext, type E2EContext, createRawQueryFile } from '../../e2e-helpers.js';
 import { resolveQueryFile } from './resolve.js';
 import { writeQueryTemplate } from './init.js';
 import { validateQueryCommand } from './validate.js';
@@ -33,33 +29,50 @@ describe('smart query file resolution E2E', () => {
 
   describe('resolveQueryFile with real filesystem', () => {
     it('resolves exact path', async () => {
-      const filePath = await createRawQueryFile(ctx.tempDir, 'name: test\nquery:\n  - id: b1\n    field: title\n    terms:\n      keywords:\n        - test\n    operator: OR\n');
+      const filePath = await createRawQueryFile(
+        ctx.tempDir,
+        'name: test\nquery:\n  - id: b1\n    field: title\n    terms:\n      keywords:\n        - test\n    operator: OR\n',
+      );
       const resolved = await resolveQueryFile(filePath);
       expect(resolved).toBe(filePath);
     });
 
     it('resolves <name>.yaml in current directory', async () => {
-      await createRawQueryFile(ctx.tempDir, 'name: test\nquery:\n  - id: b1\n    field: title\n    terms:\n      keywords:\n        - test\n    operator: OR\n', 'my-query.yaml');
+      await createRawQueryFile(
+        ctx.tempDir,
+        'name: test\nquery:\n  - id: b1\n    field: title\n    terms:\n      keywords:\n        - test\n    operator: OR\n',
+        'my-query.yaml',
+      );
       const resolved = await resolveQueryFile('my-query');
       expect(resolved).toBe('my-query.yaml');
     });
 
     it('resolves .search-hub/queries/<name>.yaml', async () => {
       await mkdir(join(ctx.tempDir, '.search-hub', 'queries'), { recursive: true });
-      await createRawQueryFile(join(ctx.tempDir, '.search-hub', 'queries'), 'name: test\nquery:\n  - id: b1\n    field: title\n    terms:\n      keywords:\n        - test\n    operator: OR\n', 'wba-pain.yaml');
+      await createRawQueryFile(
+        join(ctx.tempDir, '.search-hub', 'queries'),
+        'name: test\nquery:\n  - id: b1\n    field: title\n    terms:\n      keywords:\n        - test\n    operator: OR\n',
+        'wba-pain.yaml',
+      );
       const resolved = await resolveQueryFile('wba-pain');
       expect(resolved).toBe('.search-hub/queries/wba-pain.yaml');
     });
 
     it('resolves .search-hub/queries/<name>.yml when .yaml does not exist', async () => {
       await mkdir(join(ctx.tempDir, '.search-hub', 'queries'), { recursive: true });
-      await createRawQueryFile(join(ctx.tempDir, '.search-hub', 'queries'), 'name: test\nquery:\n  - id: b1\n    field: title\n    terms:\n      keywords:\n        - test\n    operator: OR\n', 'wba-pain.yml');
+      await createRawQueryFile(
+        join(ctx.tempDir, '.search-hub', 'queries'),
+        'name: test\nquery:\n  - id: b1\n    field: title\n    terms:\n      keywords:\n        - test\n    operator: OR\n',
+        'wba-pain.yml',
+      );
       const resolved = await resolveQueryFile('wba-pain');
       expect(resolved).toBe('.search-hub/queries/wba-pain.yml');
     });
 
     it('throws with helpful error for missing query', async () => {
-      await expect(resolveQueryFile('nonexistent')).rejects.toThrow('Query file not found: "nonexistent"');
+      await expect(resolveQueryFile('nonexistent')).rejects.toThrow(
+        'Query file not found: "nonexistent"',
+      );
       await expect(resolveQueryFile('nonexistent')).rejects.toThrow('query init');
     });
   });

@@ -14,12 +14,7 @@ import type {
   SearchResumeResult,
   QueryAST,
 } from './types';
-import {
-  createProviderError,
-  isProviderError,
-  isRateLimitError,
-  isAuthError,
-} from './types';
+import { createProviderError, isProviderError, isRateLimitError, isAuthError } from './types';
 
 /**
  * Helper to create a minimal QueryAST for testing.
@@ -36,14 +31,7 @@ function createMockQueryAST(name = 'test-query'): QueryAST {
 describe('Provider Types', () => {
   describe('ProviderName', () => {
     it('accepts valid provider names', () => {
-      const validNames: ProviderName[] = [
-        'pubmed',
-        'eric',
-        'arxiv',
-        'scopus',
-        'wos',
-        'embase',
-      ];
+      const validNames: ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopus', 'wos', 'embase'];
       expect(validNames).toHaveLength(6);
     });
   });
@@ -222,11 +210,7 @@ describe('Provider Types', () => {
   describe('Helper functions', () => {
     describe('createProviderError', () => {
       it('creates error with defaults', () => {
-        const error = createProviderError(
-          'NETWORK_ERROR',
-          'Connection failed',
-          'pubmed'
-        );
+        const error = createProviderError('NETWORK_ERROR', 'Connection failed', 'pubmed');
         expect(error.code).toBe('NETWORK_ERROR');
         expect(error.message).toBe('Connection failed');
         expect(error.provider).toBe('pubmed');
@@ -235,12 +219,10 @@ describe('Provider Types', () => {
 
       it('creates error with options', () => {
         const cause = new Error('Original error');
-        const error = createProviderError(
-          'SERVER_ERROR',
-          'Server unavailable',
-          'eric',
-          { retryable: true, cause }
-        );
+        const error = createProviderError('SERVER_ERROR', 'Server unavailable', 'eric', {
+          retryable: true,
+          cause,
+        });
         expect(error.retryable).toBe(true);
         expect(error.cause).toBe(cause);
       });
@@ -248,12 +230,7 @@ describe('Provider Types', () => {
 
     describe('isProviderError', () => {
       it('returns true for valid provider error', () => {
-        const error = createProviderError(
-          'NETWORK_ERROR',
-          'Test',
-          'pubmed',
-          { retryable: true }
-        );
+        const error = createProviderError('NETWORK_ERROR', 'Test', 'pubmed', { retryable: true });
         expect(isProviderError(error)).toBe(true);
       });
 
@@ -288,11 +265,7 @@ describe('Provider Types', () => {
       });
 
       it('returns false for other provider errors', () => {
-        const error = createProviderError(
-          'NETWORK_ERROR',
-          'Test',
-          'pubmed'
-        );
+        const error = createProviderError('NETWORK_ERROR', 'Test', 'pubmed');
         expect(isRateLimitError(error)).toBe(false);
       });
     });
@@ -329,11 +302,7 @@ describe('Provider Types', () => {
       });
 
       it('returns false for other provider errors', () => {
-        const error = createProviderError(
-          'NETWORK_ERROR',
-          'Test',
-          'pubmed'
-        );
+        const error = createProviderError('NETWORK_ERROR', 'Test', 'pubmed');
         expect(isAuthError(error)).toBe(false);
       });
     });

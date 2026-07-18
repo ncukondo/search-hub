@@ -87,7 +87,7 @@ function buildAssetUrl(tag: string, assetName: string): string {
 function errorResult(
   fromVersion: string,
   error: string,
-  extras: { toVersion?: string; url?: string } = {}
+  extras: { toVersion?: string; url?: string } = {},
 ): UpgradeResult {
   return {
     status: 'error',
@@ -122,7 +122,7 @@ interface ResolvedTarget {
 
 async function resolveTarget(
   pinnedVersion: string | undefined,
-  getLatest: () => Promise<ReleaseInfo | null>
+  getLatest: () => Promise<ReleaseInfo | null>,
 ): Promise<ResolvedTarget | { error: string }> {
   if (pinnedVersion) {
     const targetTag = normalizeTag(pinnedVersion);
@@ -143,7 +143,7 @@ async function resolveTarget(
 async function downloadAsset(
   url: string,
   tmpPath: string,
-  fetchFn: typeof globalThis.fetch
+  fetchFn: typeof globalThis.fetch,
 ): Promise<{ error?: string }> {
   let response: Response;
   try {
@@ -185,7 +185,7 @@ async function downloadAsset(
 function atomicReplace(
   tmpPath: string,
   destPath: string,
-  platform: NodeJS.Platform
+  platform: NodeJS.Platform,
 ): { error?: string } {
   try {
     if (platform === 'win32') {
@@ -280,7 +280,7 @@ export async function upgradeBinary(options: UpgradeBinaryOptions): Promise<Upgr
     return errorResult(
       currentVersion,
       `Verification failed: downloaded binary at ${tmpPath} did not report a version. The file has been left in place for inspection.`,
-      { toVersion: targetVersion, url: assetUrl }
+      { toVersion: targetVersion, url: assetUrl },
     );
   }
 

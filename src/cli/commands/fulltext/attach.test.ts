@@ -81,7 +81,11 @@ describe('executeFulltextAttach', () => {
       dirName: 'smith2024-a1b2c3d4',
       doi: '10.1234/test',
       files: {
-        pdf: { filename: 'fulltext.pdf', source: 'manual', retrievedAt: '2024-01-01T00:00:00.000Z' },
+        pdf: {
+          filename: 'fulltext.pdf',
+          source: 'manual',
+          retrievedAt: '2024-01-01T00:00:00.000Z',
+        },
       },
     });
     await createFulltextDir(tempDir, 'smith2024-a1b2c3d4', meta, ['fulltext.pdf']);
@@ -107,7 +111,11 @@ describe('executeFulltextAttach', () => {
       dirName: 'smith2024-a1b2c3d4',
       doi: '10.1234/test',
       files: {
-        pdf: { filename: 'fulltext.pdf', source: 'manual', retrievedAt: '2024-01-01T00:00:00.000Z' },
+        pdf: {
+          filename: 'fulltext.pdf',
+          source: 'manual',
+          retrievedAt: '2024-01-01T00:00:00.000Z',
+        },
       },
     });
     await createFulltextDir(tempDir, 'smith2024-a1b2c3d4', meta, ['fulltext.pdf']);
@@ -134,7 +142,11 @@ describe('executeFulltextAttach', () => {
       dirName: 'a2024-11111111',
       doi: '10.1234/a',
       files: {
-        pdf: { filename: 'fulltext.pdf', source: 'manual', retrievedAt: '2024-01-01T00:00:00.000Z' },
+        pdf: {
+          filename: 'fulltext.pdf',
+          source: 'manual',
+          retrievedAt: '2024-01-01T00:00:00.000Z',
+        },
       },
     });
     await createFulltextDir(tempDir, 'a2024-11111111', metaA, ['fulltext.pdf']);
@@ -144,7 +156,11 @@ describe('executeFulltextAttach', () => {
       dirName: 'b2024-22222222',
       doi: '10.1234/b',
       files: {
-        pdf: { filename: 'fulltext.pdf', source: 'manual', retrievedAt: '2024-01-01T00:00:00.000Z' },
+        pdf: {
+          filename: 'fulltext.pdf',
+          source: 'manual',
+          retrievedAt: '2024-01-01T00:00:00.000Z',
+        },
       },
     });
     await createFulltextDir(tempDir, 'b2024-22222222', metaB, ['fulltext.pdf']);
@@ -171,7 +187,11 @@ describe('executeFulltextAttach', () => {
       dirName: 'direct2024-aabbccdd',
       doi: '10.1234/direct',
       files: {
-        pdf: { filename: 'fulltext.pdf', source: 'manual', retrievedAt: '2024-01-01T00:00:00.000Z' },
+        pdf: {
+          filename: 'fulltext.pdf',
+          source: 'manual',
+          retrievedAt: '2024-01-01T00:00:00.000Z',
+        },
       },
     });
     await createFulltextDir(tempDir, 'direct2024-aabbccdd', meta, ['fulltext.pdf']);

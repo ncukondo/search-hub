@@ -8,11 +8,7 @@ import { readFile, appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ResumeCommandOptions } from './resume.js';
 import type { Config } from '../../config/index.js';
-import type {
-  Provider,
-  TranslatedQuery,
-  SearchState,
-} from '../../providers/base/types.js';
+import type { Provider, TranslatedQuery, SearchState } from '../../providers/base/types.js';
 import { isProviderError } from '../../providers/base/types.js';
 import {
   loadSession,
@@ -56,7 +52,7 @@ export async function executeResume(
   options: ResumeCommandOptions,
   sessionsDir: string,
   config: Config,
-  showProgress = true
+  showProgress = true,
 ): Promise<ResumeExecutionResult> {
   // Load session
   let session;
@@ -75,9 +71,7 @@ export async function executeResume(
 
   // Filter by specific providers if requested
   if (options.providers && options.providers.length > 0) {
-    resumableProviders = resumableProviders.filter((r) =>
-      options.providers!.includes(r.provider)
-    );
+    resumableProviders = resumableProviders.filter((r) => options.providers!.includes(r.provider));
   }
 
   // Filter to only retry strategies if retryFailed is true
@@ -131,7 +125,7 @@ export async function executeResume(
               retryable: false,
             },
           },
-          sessionsDir
+          sessionsDir,
         );
         continue;
       }
@@ -161,7 +155,7 @@ export async function executeResume(
           status: 'in_progress',
           startedAt: new Date().toISOString(),
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Prepare results file path
@@ -196,7 +190,12 @@ export async function executeResume(
           // Write article to JSONL file
           await appendFile(resultsPath, JSON.stringify(article) + '\n', 'utf-8');
 
-          progress?.update(providerName, retrievedCount, totalHits || retrievedCount, 'in_progress');
+          progress?.update(
+            providerName,
+            retrievedCount,
+            totalHits || retrievedCount,
+            'in_progress',
+          );
         }
       } else {
         // Fresh start or retry - use regular search
@@ -210,7 +209,12 @@ export async function executeResume(
           // Write article to JSONL file
           await appendFile(resultsPath, JSON.stringify(article) + '\n', 'utf-8');
 
-          progress?.update(providerName, retrievedCount, totalHits || retrievedCount * 2, 'in_progress');
+          progress?.update(
+            providerName,
+            retrievedCount,
+            totalHits || retrievedCount * 2,
+            'in_progress',
+          );
         }
       }
 
@@ -240,13 +244,14 @@ export async function executeResume(
             resultsYaml: yamlFilename,
           },
         },
-        sessionsDir
+        sessionsDir,
       );
 
       results[providerName] = { hits: totalHits || retrievedCount, retrieved: retrievedCount };
       successCount++;
     } catch (error) {
-      const errorMessage = error instanceof Error
+      const errorMessage =
+        error instanceof Error
           ? error.message
           : isProviderError(error)
             ? error.message
@@ -267,7 +272,7 @@ export async function executeResume(
             retryable: true,
           },
         },
-        sessionsDir
+        sessionsDir,
       );
 
       results[providerName] = { hits: 0, retrieved: 0, error: errorMessage };

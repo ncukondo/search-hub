@@ -125,7 +125,8 @@ export function formatDiff(
 
   // Query changes section (if available and not disabled)
   const shouldShowQueryDiff = options?.queryDiff && !options?.noQueryDiff;
-  const shouldShowPlaceholder = options?.showQueryDiffPlaceholder && !options?.queryDiff && !options?.noQueryDiff;
+  const shouldShowPlaceholder =
+    options?.showQueryDiffPlaceholder && !options?.queryDiff && !options?.noQueryDiff;
 
   if (shouldShowPlaceholder) {
     lines.push('Query changes: (query data not available)');
@@ -287,7 +288,12 @@ function compareBlocks(
   index: number,
   field: FieldType,
 ): BlockDiff {
-  const emptyTerms = { keywords: [] as string[], mesh: [] as string[], emtree: [] as string[], exclude: [] as string[] };
+  const emptyTerms = {
+    keywords: [] as string[],
+    mesh: [] as string[],
+    emtree: [] as string[],
+    exclude: [] as string[],
+  };
   const terms1 = block1 ?? emptyTerms;
   const terms2 = block2 ?? emptyTerms;
 
@@ -356,12 +362,7 @@ export function computeQueryDiff(query1: QueryAST, query2: QueryAST): QueryDiff 
     const block2 = query2.blocks[i];
 
     const field = block2?.field ?? block1?.field ?? 'all';
-    const blockDiff = compareBlocks(
-      block1?.terms,
-      block2?.terms,
-      i,
-      field,
-    );
+    const blockDiff = compareBlocks(block1?.terms, block2?.terms, i, field);
     blocks.push(blockDiff);
   }
 
@@ -479,7 +480,10 @@ export function formatQueryDiff(queryDiff: QueryDiff): string {
       lines.push(`    yearTo: ${oldVal} → ${newVal}`);
     }
 
-    if (queryDiff.filters.languagesAdded.length > 0 || queryDiff.filters.languagesRemoved.length > 0) {
+    if (
+      queryDiff.filters.languagesAdded.length > 0 ||
+      queryDiff.filters.languagesRemoved.length > 0
+    ) {
       lines.push('    languages:');
       for (const lang of queryDiff.filters.languagesAdded) {
         lines.push(`      + ${lang}`);

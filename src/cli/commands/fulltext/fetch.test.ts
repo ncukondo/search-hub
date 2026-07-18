@@ -27,7 +27,9 @@ vi.mock('@ncukondo/academic-fulltext', () => ({
 }));
 
 vi.mock('./convert', () => ({
-  executeFulltextConvert: vi.fn().mockResolvedValue({ success: true, converted: 1, skipped: 0, failed: 0, articles: [] }),
+  executeFulltextConvert: vi
+    .fn()
+    .mockResolvedValue({ success: true, converted: 1, skipped: 0, failed: 0, articles: [] }),
 }));
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -76,14 +78,16 @@ describe('executeFulltextFetch', () => {
     vi.clearAllMocks();
 
     // Default: reviews.yaml with one included article that has fulltext dir
-    const reviewFile = createReviewFile([{
-      title: 'Test Article',
-      doi: '10.1234/test',
-      fulltext: {
-        dirName: 'smith2024-a1b2c3d4',
-        hasFiles: { pdf: false, xml: false, html: false, markdown: false },
+    const reviewFile = createReviewFile([
+      {
+        title: 'Test Article',
+        doi: '10.1234/test',
+        fulltext: {
+          dirName: 'smith2024-a1b2c3d4',
+          hasFiles: { pdf: false, xml: false, html: false, markdown: false },
+        },
       },
-    }]);
+    ]);
     mockReadFile.mockResolvedValue('yaml content');
     mockParseYaml.mockReturnValue(reviewFile);
 
@@ -94,7 +98,6 @@ describe('executeFulltextFetch', () => {
     mockFetchAll.mockResolvedValue([
       { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf'] },
     ]);
-
   });
 
   it('fetches all articles with OA locations', async () => {
@@ -138,22 +141,61 @@ describe('executeFulltextFetch', () => {
   it('returns summary with downloaded, failed, skipped counts', async () => {
     // Setup: 3 articles
     const reviewFile = createReviewFile([
-      { title: 'Art1', doi: '10.1/a', fulltext: { dirName: 'art1-aaaa', hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
-      { title: 'Art2', doi: '10.1/b', fulltext: { dirName: 'art2-bbbb', hasFiles: { pdf: true, xml: false, html: false, markdown: false } } },
-      { title: 'Art3', doi: '10.1/c', fulltext: { dirName: 'art3-cccc', hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
+      {
+        title: 'Art1',
+        doi: '10.1/a',
+        fulltext: {
+          dirName: 'art1-aaaa',
+          hasFiles: { pdf: false, xml: false, html: false, markdown: false },
+        },
+      },
+      {
+        title: 'Art2',
+        doi: '10.1/b',
+        fulltext: {
+          dirName: 'art2-bbbb',
+          hasFiles: { pdf: true, xml: false, html: false, markdown: false },
+        },
+      },
+      {
+        title: 'Art3',
+        doi: '10.1/c',
+        fulltext: {
+          dirName: 'art3-cccc',
+          hasFiles: { pdf: false, xml: false, html: false, markdown: false },
+        },
+      },
     ]);
     mockParseYaml.mockReturnValue(reviewFile);
 
     mockLoadMeta
-      .mockResolvedValueOnce(createMeta({ dirName: 'art1-aaaa', oaStatus: 'open', oaLocations: [
-        { source: 'pmc', url: 'https://pmc/a', urlType: 'pdf', version: 'published' },
-      ] }))
-      .mockResolvedValueOnce(createMeta({ dirName: 'art2-bbbb', oaStatus: 'open', files: {
-        pdf: { filename: 'fulltext.pdf', source: 'pmc', retrievedAt: '2024-01-01' },
-      } }))
-      .mockResolvedValueOnce(createMeta({ dirName: 'art3-cccc', oaStatus: 'open', oaLocations: [
-        { source: 'unpaywall', url: 'https://oa/c', urlType: 'pdf', version: 'published' },
-      ] }));
+      .mockResolvedValueOnce(
+        createMeta({
+          dirName: 'art1-aaaa',
+          oaStatus: 'open',
+          oaLocations: [
+            { source: 'pmc', url: 'https://pmc/a', urlType: 'pdf', version: 'published' },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        createMeta({
+          dirName: 'art2-bbbb',
+          oaStatus: 'open',
+          files: {
+            pdf: { filename: 'fulltext.pdf', source: 'pmc', retrievedAt: '2024-01-01' },
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        createMeta({
+          dirName: 'art3-cccc',
+          oaStatus: 'open',
+          oaLocations: [
+            { source: 'unpaywall', url: 'https://oa/c', urlType: 'pdf', version: 'published' },
+          ],
+        }),
+      );
 
     mockFetchAll.mockResolvedValue([
       { dirName: 'art1-aaaa', status: 'downloaded', filesDownloaded: ['fulltext.pdf'] },
@@ -172,10 +214,12 @@ describe('executeFulltextFetch', () => {
   });
 
   it('skips articles without OA locations', async () => {
-    mockLoadMeta.mockResolvedValue(createMeta({
-      oaStatus: 'closed',
-      oaLocations: [],
-    }));
+    mockLoadMeta.mockResolvedValue(
+      createMeta({
+        oaStatus: 'closed',
+        oaLocations: [],
+      }),
+    );
 
     const result = await executeFulltextFetch({
       sessionId: 'test-session',
@@ -187,11 +231,13 @@ describe('executeFulltextFetch', () => {
   });
 
   it('skips articles that already have PDF', async () => {
-    mockLoadMeta.mockResolvedValue(createMeta({
-      files: {
-        pdf: { filename: 'fulltext.pdf', source: 'manual', retrievedAt: '2024-01-01' },
-      },
-    }));
+    mockLoadMeta.mockResolvedValue(
+      createMeta({
+        files: {
+          pdf: { filename: 'fulltext.pdf', source: 'manual', retrievedAt: '2024-01-01' },
+        },
+      }),
+    );
 
     const result = await executeFulltextFetch({
       sessionId: 'test-session',
@@ -205,7 +251,11 @@ describe('executeFulltextFetch', () => {
   describe('auto-convert XML to Markdown', () => {
     it('auto-converts PMC XML to Markdown by default', async () => {
       mockFetchAll.mockResolvedValue([
-        { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf', 'fulltext.xml'] },
+        {
+          dirName: 'smith2024-a1b2c3d4',
+          status: 'downloaded',
+          filesDownloaded: ['fulltext.pdf', 'fulltext.xml'],
+        },
       ]);
 
       await executeFulltextFetch({
@@ -221,7 +271,11 @@ describe('executeFulltextFetch', () => {
 
     it('skips conversion when --no-convert-markdown is passed', async () => {
       mockFetchAll.mockResolvedValue([
-        { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf', 'fulltext.xml'] },
+        {
+          dirName: 'smith2024-a1b2c3d4',
+          status: 'downloaded',
+          filesDownloaded: ['fulltext.pdf', 'fulltext.xml'],
+        },
       ]);
 
       await executeFulltextFetch({
@@ -250,19 +304,25 @@ describe('executeFulltextFetch', () => {
   describe('reviews.yaml integration', () => {
     it('updates reviews.yaml hasFiles after successful fetch', async () => {
       // The updateReviewsAndIndex re-reads reviews.yaml, so mock second read
-      const reviewFile = createReviewFile([{
-        title: 'Test Article',
-        doi: '10.1234/test',
-        fulltext: {
-          dirName: 'smith2024-a1b2c3d4',
-          hasFiles: { pdf: false, xml: false, html: false, markdown: false },
+      const reviewFile = createReviewFile([
+        {
+          title: 'Test Article',
+          doi: '10.1234/test',
+          fulltext: {
+            dirName: 'smith2024-a1b2c3d4',
+            hasFiles: { pdf: false, xml: false, html: false, markdown: false },
+          },
         },
-      }]);
+      ]);
       // Both reads return the same review file
       mockParseYaml.mockReturnValue(reviewFile);
 
       mockFetchAll.mockResolvedValue([
-        { dirName: 'smith2024-a1b2c3d4', status: 'downloaded', filesDownloaded: ['fulltext.pdf', 'fulltext.xml'] },
+        {
+          dirName: 'smith2024-a1b2c3d4',
+          status: 'downloaded',
+          filesDownloaded: ['fulltext.pdf', 'fulltext.xml'],
+        },
       ]);
 
       await executeFulltextFetch({
@@ -286,18 +346,44 @@ describe('executeFulltextFetch', () => {
 
     it('only updates articles that were fetched, not failed ones', async () => {
       const reviewFile = createReviewFile([
-        { title: 'Art1', doi: '10.1/a', fulltext: { dirName: 'art1-aaaa', hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
-        { title: 'Art2', doi: '10.1/b', fulltext: { dirName: 'art2-bbbb', hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
+        {
+          title: 'Art1',
+          doi: '10.1/a',
+          fulltext: {
+            dirName: 'art1-aaaa',
+            hasFiles: { pdf: false, xml: false, html: false, markdown: false },
+          },
+        },
+        {
+          title: 'Art2',
+          doi: '10.1/b',
+          fulltext: {
+            dirName: 'art2-bbbb',
+            hasFiles: { pdf: false, xml: false, html: false, markdown: false },
+          },
+        },
       ]);
       mockParseYaml.mockReturnValue(reviewFile);
 
       mockLoadMeta
-        .mockResolvedValueOnce(createMeta({ dirName: 'art1-aaaa', oaStatus: 'open', oaLocations: [
-          { source: 'pmc', url: 'https://pmc/a', urlType: 'pdf', version: 'published' },
-        ] }))
-        .mockResolvedValueOnce(createMeta({ dirName: 'art2-bbbb', oaStatus: 'open', oaLocations: [
-          { source: 'unpaywall', url: 'https://oa/b', urlType: 'pdf', version: 'published' },
-        ] }));
+        .mockResolvedValueOnce(
+          createMeta({
+            dirName: 'art1-aaaa',
+            oaStatus: 'open',
+            oaLocations: [
+              { source: 'pmc', url: 'https://pmc/a', urlType: 'pdf', version: 'published' },
+            ],
+          }),
+        )
+        .mockResolvedValueOnce(
+          createMeta({
+            dirName: 'art2-bbbb',
+            oaStatus: 'open',
+            oaLocations: [
+              { source: 'unpaywall', url: 'https://oa/b', urlType: 'pdf', version: 'published' },
+            ],
+          }),
+        );
 
       mockFetchAll.mockResolvedValue([
         { dirName: 'art1-aaaa', status: 'downloaded', filesDownloaded: ['fulltext.pdf'] },
@@ -322,10 +408,12 @@ describe('executeFulltextFetch', () => {
     });
 
     it('does not update reviews.yaml when no articles were downloaded', async () => {
-      mockLoadMeta.mockResolvedValue(createMeta({
-        oaStatus: 'closed',
-        oaLocations: [],
-      }));
+      mockLoadMeta.mockResolvedValue(
+        createMeta({
+          oaStatus: 'closed',
+          oaLocations: [],
+        }),
+      );
 
       mockFetchAll.mockResolvedValue([]);
 

@@ -153,19 +153,14 @@ export class MeSHLookupClient {
         // Filter by rest words when prefix is long enough to be meaningful
         const candidates =
           restWordsPrefix.length >= 4
-            ? firstWordResults.filter((r) =>
-                r.label.toLowerCase().includes(restWordsPrefix)
-              )
+            ? firstWordResults.filter((r) => r.label.toLowerCase().includes(restWordsPrefix))
             : firstWordResults;
 
         if (candidates.length > 0) {
           const ranked = candidates
             .map((s) => ({
               label: s.label,
-              distance: levenshteinDistance(
-                term.toLowerCase(),
-                s.label.toLowerCase()
-              ),
+              distance: levenshteinDistance(term.toLowerCase(), s.label.toLowerCase()),
             }))
             .sort((a, b) => a.distance - b.distance)
             .slice(0, 5)
@@ -189,22 +184,15 @@ export class MeSHLookupClient {
         len--, iterations++
       ) {
         const truncated = firstWord.slice(0, len);
-        const truncResults = await this.fetchLookup(
-          truncated,
-          'startswith',
-          25
-        );
+        const truncResults = await this.fetchLookup(truncated, 'startswith', 25);
         const filtered = truncResults.filter((r) =>
-          r.label.toLowerCase().includes(restWordsPrefix)
+          r.label.toLowerCase().includes(restWordsPrefix),
         );
         if (filtered.length > 0) {
           const ranked = filtered
             .map((s) => ({
               label: s.label,
-              distance: levenshteinDistance(
-                term.toLowerCase(),
-                s.label.toLowerCase()
-              ),
+              distance: levenshteinDistance(term.toLowerCase(), s.label.toLowerCase()),
             }))
             .sort((a, b) => a.distance - b.distance)
             .slice(0, 5)
@@ -222,19 +210,12 @@ export class MeSHLookupClient {
       // 4c. Contains last word + Levenshtein re-ranking
       //     Final fallback for severely misspelled first words
       const lastWord = words[words.length - 1]!;
-      const containsLastResults = await this.fetchLookup(
-        lastWord,
-        'contains',
-        25
-      );
+      const containsLastResults = await this.fetchLookup(lastWord, 'contains', 25);
       if (containsLastResults.length > 0) {
         const ranked = containsLastResults
           .map((s) => ({
             label: s.label,
-            distance: levenshteinDistance(
-              term.toLowerCase(),
-              s.label.toLowerCase()
-            ),
+            distance: levenshteinDistance(term.toLowerCase(), s.label.toLowerCase()),
           }))
           .sort((a, b) => a.distance - b.distance)
           .slice(0, 5)
@@ -268,7 +249,7 @@ export class MeSHLookupClient {
   private async fetchLookup(
     label: string,
     match: 'exact' | 'startswith' | 'contains',
-    limit: number
+    limit: number,
   ): Promise<MeSHApiEntry[]> {
     if (this.rateLimiter) {
       await this.rateLimiter.acquire();
@@ -288,15 +269,12 @@ export class MeSHLookupClient {
         signal: AbortSignal.timeout(this.timeoutMs),
       });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown error';
+      const message = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`MeSH lookup failed: ${message}`);
     }
 
     if (!response.ok) {
-      throw new Error(
-        `MeSH lookup failed: HTTP ${response.status} ${response.statusText}`
-      );
+      throw new Error(`MeSH lookup failed: HTTP ${response.status} ${response.statusText}`);
     }
 
     return (await response.json()) as MeSHApiEntry[];

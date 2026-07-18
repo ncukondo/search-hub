@@ -27,11 +27,7 @@ export function formatInitOutput(result: FulltextInitResult): string {
     lines.push('');
 
     for (const entry of result.entries) {
-      const id = entry.doi
-        ? `DOI: ${entry.doi}`
-        : entry.pmid
-          ? `PMID: ${entry.pmid}`
-          : '';
+      const id = entry.doi ? `DOI: ${entry.doi}` : entry.pmid ? `PMID: ${entry.pmid}` : '';
       lines.push(`  ${entry.dirName}/  ${id ? `(${id})` : ''}`);
     }
 
@@ -73,10 +69,10 @@ export function formatSyncOutput(result: FulltextSyncResult): string {
   lines.push('');
 
   // Count file types
-  const allFiles = result.entries.flatMap(e => e.files);
-  const pdfs = allFiles.filter(f => f === 'fulltext.pdf').length;
-  const mds = allFiles.filter(f => f === 'fulltext.md').length;
-  const xmls = allFiles.filter(f => f === 'fulltext.xml').length;
+  const allFiles = result.entries.flatMap((e) => e.files);
+  const pdfs = allFiles.filter((f) => f === 'fulltext.pdf').length;
+  const mds = allFiles.filter((f) => f === 'fulltext.md').length;
+  const xmls = allFiles.filter((f) => f === 'fulltext.xml').length;
 
   const typeParts: string[] = [];
   if (pdfs > 0) typeParts.push(`${pdfs} PDF${pdfs > 1 ? 's' : ''}`);
@@ -84,8 +80,12 @@ export function formatSyncOutput(result: FulltextSyncResult): string {
   if (xmls > 0) typeParts.push(`${xmls} XML${xmls > 1 ? 's' : ''}`);
 
   lines.push('Summary:');
-  lines.push(`  ${result.synced} file${result.synced === 1 ? '' : 's'} synced (${typeParts.join(', ')})`);
-  lines.push(`  ${result.articlesUpdated} article${result.articlesUpdated === 1 ? '' : 's'} updated`);
+  lines.push(
+    `  ${result.synced} file${result.synced === 1 ? '' : 's'} synced (${typeParts.join(', ')})`,
+  );
+  lines.push(
+    `  ${result.articlesUpdated} article${result.articlesUpdated === 1 ? '' : 's'} updated`,
+  );
 
   return lines.join('\n');
 }

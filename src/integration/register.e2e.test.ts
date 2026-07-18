@@ -24,7 +24,7 @@ const execAsync = promisify(exec);
 async function createTestSession(
   baseDir: string,
   sessionId: string,
-  articles: Partial<Article>[]
+  articles: Partial<Article>[],
 ): Promise<string> {
   const sessionDir = path.join(baseDir, sessionId);
   await fs.mkdir(sessionDir, { recursive: true });
@@ -59,10 +59,7 @@ async function createTestSession(
     },
   };
 
-  await fs.writeFile(
-    path.join(sessionDir, 'session.yaml'),
-    stringifyYaml(session)
-  );
+  await fs.writeFile(path.join(sessionDir, 'session.yaml'), stringifyYaml(session));
 
   // Create results file as JSONL
   const fullArticles: Partial<Article>[] = articles.map((a, i) => {
@@ -123,7 +120,7 @@ describe('register command e2e', () => {
     const cliCmd = getCliCommand();
     const result = await execAsync(
       `${cliCmd} register ${sessionId} --session-dir ${tempDir} --dry-run`,
-      { cwd: path.join(__dirname, '../..') }
+      { cwd: path.join(__dirname, '../..') },
     );
 
     expect(result.stdout).toContain('Would register 3 reference');
@@ -145,7 +142,7 @@ describe('register command e2e', () => {
     const cliCmd = getCliCommand();
     const result = await execAsync(
       `${cliCmd} register ${sessionId} --session-dir ${tempDir} --dry-run`,
-      { cwd: path.join(__dirname, '../..') }
+      { cwd: path.join(__dirname, '../..') },
     );
 
     // arXiv/ERIC-only articles are now registrable
@@ -159,15 +156,12 @@ describe('register command e2e', () => {
   });
 
   it('should handle --dry-run without creating registration.json', async () => {
-    await createTestSession(tempDir, sessionId, [
-      { pmid: '12345678', title: 'Test Article 1' },
-    ]);
+    await createTestSession(tempDir, sessionId, [{ pmid: '12345678', title: 'Test Article 1' }]);
 
     const cliCmd = getCliCommand();
-    await execAsync(
-      `${cliCmd} register ${sessionId} --session-dir ${tempDir} --dry-run`,
-      { cwd: path.join(__dirname, '../..') }
-    );
+    await execAsync(`${cliCmd} register ${sessionId} --session-dir ${tempDir} --dry-run`, {
+      cwd: path.join(__dirname, '../..'),
+    });
 
     const registrationPath = path.join(tempDir, sessionId, 'registration.json');
     let exists = false;
@@ -188,7 +182,7 @@ describe('register command e2e', () => {
     const cliCmd = getCliCommand();
     const result = await execAsync(
       `${cliCmd} register ${sessionId} --session-dir ${tempDir} --dry-run`,
-      { cwd: path.join(__dirname, '../..') }
+      { cwd: path.join(__dirname, '../..') },
     );
 
     // PMID should be used, not DOI
@@ -199,10 +193,9 @@ describe('register command e2e', () => {
   it('should error on non-existent session', async () => {
     const cliCmd = getCliCommand();
     try {
-      await execAsync(
-        `${cliCmd} register nonexistent-session --session-dir ${tempDir} --dry-run`,
-        { cwd: path.join(__dirname, '../..') }
-      );
+      await execAsync(`${cliCmd} register nonexistent-session --session-dir ${tempDir} --dry-run`, {
+        cwd: path.join(__dirname, '../..'),
+      });
       expect.fail('Should have thrown an error');
     } catch (error: unknown) {
       const execError = error as { stderr: string };
@@ -239,15 +232,24 @@ describe('register command e2e', () => {
       query: { file: 'query.yaml', hash: 'testhash123', targets: ['pubmed', 'eric'] },
     };
 
-    await fs.writeFile(
-      path.join(sessionDir, 'session.yaml'),
-      stringifyYaml(session)
-    );
+    await fs.writeFile(path.join(sessionDir, 'session.yaml'), stringifyYaml(session));
 
     // Create result files
     const pubmedArticles = [
-      { pmid: '11111111', title: 'PubMed Article 1', authors: [], source: 'pubmed', retrievedAt: '' },
-      { pmid: '22222222', title: 'PubMed Article 2', authors: [], source: 'pubmed', retrievedAt: '' },
+      {
+        pmid: '11111111',
+        title: 'PubMed Article 1',
+        authors: [],
+        source: 'pubmed',
+        retrievedAt: '',
+      },
+      {
+        pmid: '22222222',
+        title: 'PubMed Article 2',
+        authors: [],
+        source: 'pubmed',
+        retrievedAt: '',
+      },
     ];
     const ericArticles = [
       { ericId: 'ED111111', title: 'ERIC Article 1', authors: [], source: 'eric', retrievedAt: '' },
@@ -256,17 +258,17 @@ describe('register command e2e', () => {
 
     await fs.writeFile(
       path.join(sessionDir, 'pubmed_results.jsonl'),
-      pubmedArticles.map((a) => JSON.stringify(a)).join('\n')
+      pubmedArticles.map((a) => JSON.stringify(a)).join('\n'),
     );
     await fs.writeFile(
       path.join(sessionDir, 'eric_results.jsonl'),
-      ericArticles.map((a) => JSON.stringify(a)).join('\n')
+      ericArticles.map((a) => JSON.stringify(a)).join('\n'),
     );
 
     const cliCmd = getCliCommand();
     const result = await execAsync(
       `${cliCmd} register ${sessionId} --session-dir ${tempDir} --db pubmed --dry-run`,
-      { cwd: path.join(__dirname, '../..') }
+      { cwd: path.join(__dirname, '../..') },
     );
 
     // Should only show PubMed articles
@@ -348,7 +350,7 @@ console.log(JSON.stringify({
           PATH: `${stubDir}:${process.env['PATH']}`,
           REF_STUB_CAPTURE: captureFile,
         },
-      }
+      },
     );
 
     expect(result.stdout).toContain('Registration complete');
@@ -407,13 +409,10 @@ describe('register with real ref command', () => {
     const libraryPath = path.join(tempDir, sessionId, 'references.json');
     const cliCmd = getCliCommand();
 
-    const result = await execAsync(
-      `${cliCmd} register ${sessionId} --session-dir ${tempDir}`,
-      {
-        cwd: path.join(__dirname, '../..'),
-        env: { ...process.env, REFERENCE_MANAGER_LIBRARY: libraryPath },
-      }
-    );
+    const result = await execAsync(`${cliCmd} register ${sessionId} --session-dir ${tempDir}`, {
+      cwd: path.join(__dirname, '../..'),
+      env: { ...process.env, REFERENCE_MANAGER_LIBRARY: libraryPath },
+    });
 
     expect(result.stdout).toContain('Registration complete');
 

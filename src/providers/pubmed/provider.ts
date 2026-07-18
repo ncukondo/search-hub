@@ -55,10 +55,7 @@ export class PubMedProvider extends BaseProvider {
    * Search PubMed and stream results.
    * Uses NCBI history server for efficient pagination of large result sets.
    */
-  async *search(
-    query: TranslatedQuery,
-    options?: SearchOptions
-  ): AsyncIterable<Article> {
+  async *search(query: TranslatedQuery, options?: SearchOptions): AsyncIterable<Article> {
     const maxResults = options?.maxResults;
     const pageSize = options?.pageSize ?? DEFAULT_PAGE_SIZE;
     let retstart = 0;
@@ -68,12 +65,14 @@ export class PubMedProvider extends BaseProvider {
     const pubmedSort = options?.sort ? mapSortField(options.sort) : undefined;
 
     // Initial search with history server enabled
-    const initialResult = await this.withRetry(() => this.client.search(query.native, {
-      retstart: 0,
-      retmax: pageSize,
-      useHistory: true,
-      ...(pubmedSort && { sort: pubmedSort }),
-    }));
+    const initialResult = await this.withRetry(() =>
+      this.client.search(query.native, {
+        retstart: 0,
+        retmax: pageSize,
+        useHistory: true,
+        ...(pubmedSort && { sort: pubmedSort }),
+      }),
+    );
 
     const totalCount = initialResult.count;
     const webenv = initialResult.webenv;
@@ -122,27 +121,30 @@ export class PubMedProvider extends BaseProvider {
         break;
       }
 
-      const remainingToFetch = maxResults !== undefined
-        ? Math.min(pageSize, maxResults - totalRetrieved)
-        : pageSize;
+      const remainingToFetch =
+        maxResults !== undefined ? Math.min(pageSize, maxResults - totalRetrieved) : pageSize;
 
       let articles: Article[];
 
       if (webenv && querykey) {
         // Use history server for efficient pagination
-        articles = await this.withRetry(() => this.client.fetchFromHistory({
-          webenv,
-          querykey,
-          retstart,
-          retmax: remainingToFetch,
-        }));
+        articles = await this.withRetry(() =>
+          this.client.fetchFromHistory({
+            webenv,
+            querykey,
+            retstart,
+            retmax: remainingToFetch,
+          }),
+        );
       } else {
         // Fallback to offset-based pagination
-        const result = await this.withRetry(() => this.client.search(query.native, {
-          retstart,
-          retmax: remainingToFetch,
-          ...(pubmedSort && { sort: pubmedSort }),
-        }));
+        const result = await this.withRetry(() =>
+          this.client.search(query.native, {
+            retstart,
+            retmax: remainingToFetch,
+            ...(pubmedSort && { sort: pubmedSort }),
+          }),
+        );
         articles = await this.withRetry(() => this.client.fetch(result.idlist));
       }
 
@@ -171,7 +173,7 @@ export class PubMedProvider extends BaseProvider {
   private updateState(
     retrievedCount: number,
     retstart: number,
-    providerState: PubMedProviderState
+    providerState: PubMedProviderState,
   ): void {
     if (this.currentState) {
       this.currentState.retrievedCount = retrievedCount;
@@ -237,10 +239,12 @@ export class PubMedProvider extends BaseProvider {
       const retstart = state.retrievedCount;
 
       // Continue from where we left off
-      const result = await this.withRetry(() => this.client.search(query.native, {
-        retstart,
-        retmax: DEFAULT_PAGE_SIZE,
-      }));
+      const result = await this.withRetry(() =>
+        this.client.search(query.native, {
+          retstart,
+          retmax: DEFAULT_PAGE_SIZE,
+        }),
+      );
 
       // Update current state
       this.currentState = {
@@ -270,10 +274,12 @@ export class PubMedProvider extends BaseProvider {
         }
 
         // Fetch next page
-        const nextResult = await this.withRetry(() => this.client.search(query.native, {
-          retstart: totalRetrieved,
-          retmax: DEFAULT_PAGE_SIZE,
-        }));
+        const nextResult = await this.withRetry(() =>
+          this.client.search(query.native, {
+            retstart: totalRetrieved,
+            retmax: DEFAULT_PAGE_SIZE,
+          }),
+        );
 
         currentPmids = nextResult.idlist;
       }
@@ -294,12 +300,14 @@ export class PubMedProvider extends BaseProvider {
       let totalRetrieved = state.retrievedCount;
 
       while (totalRetrieved < state.totalResults) {
-        const articles = await this.withRetry(() => this.client.fetchFromHistory({
-          webenv,
-          querykey,
-          retstart,
-          retmax: DEFAULT_PAGE_SIZE,
-        }));
+        const articles = await this.withRetry(() =>
+          this.client.fetchFromHistory({
+            webenv,
+            querykey,
+            retstart,
+            retmax: DEFAULT_PAGE_SIZE,
+          }),
+        );
 
         if (articles.length === 0) {
           break;

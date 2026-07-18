@@ -4,12 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { Article } from '../providers/base/types.js';
-import {
-  generateCslId,
-  parseDateParts,
-  articleToCslJson,
-  articlesToCslJson,
-} from './csl-json.js';
+import { generateCslId, parseDateParts, articleToCslJson, articlesToCslJson } from './csl-json.js';
 
 // Helper to create test articles
 function createArticle(overrides: Partial<Article> = {}): Article {

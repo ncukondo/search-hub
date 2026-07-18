@@ -8,20 +8,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
-import {
-  formatResultsList,
-  formatResultsJson,
-} from './results.js';
-import {
-  deduplicateArticles,
-  filterArticles,
-  formatIds,
-  formatJsonl,
-} from './export.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
+import { formatResultsList, formatResultsJson } from './results.js';
+import { deduplicateArticles, filterArticles, formatIds, formatJsonl } from './export.js';
 import { filterByQuery } from './query-filter.js';
 import type { Article } from '../../providers/base/types.js';
 
@@ -39,13 +28,17 @@ describe('query filter E2E', () => {
   const testArticles: Article[] = [
     {
       title: 'Deep Learning for Diabetes Prediction',
-      authors: [{ family: 'Smith', given: 'John' }, { family: 'Tanaka', given: 'Yuki' }],
+      authors: [
+        { family: 'Smith', given: 'John' },
+        { family: 'Tanaka', given: 'Yuki' },
+      ],
       pmid: '11111111',
       doi: '10.1001/jama.2023.12345',
       source: 'pubmed',
       publicationDate: '2023-06-15',
       journal: 'The Lancet Digital Health',
-      abstract: 'A randomized controlled trial of deep learning models for diabetes prediction in clinical settings.',
+      abstract:
+        'A randomized controlled trial of deep learning models for diabetes prediction in clinical settings.',
       retrievedAt: new Date().toISOString(),
     },
     {
@@ -217,10 +210,12 @@ describe('query filter E2E', () => {
       const parsed = JSON.parse(jsonOutput);
 
       expect(parsed).toHaveLength(2); // eric + arxiv articles from 2024
-      expect(parsed.every((a: Article) => {
-        const year = a.publicationDate ? parseInt(a.publicationDate.slice(0, 4), 10) : 0;
-        return year === 2024;
-      })).toBe(true);
+      expect(
+        parsed.every((a: Article) => {
+          const year = a.publicationDate ? parseInt(a.publicationDate.slice(0, 4), 10) : 0;
+          return year === 2024;
+        }),
+      ).toBe(true);
     });
   });
 
@@ -255,5 +250,4 @@ describe('query filter E2E', () => {
       expect(parsed.journal).toContain('Lancet');
     });
   });
-
 });

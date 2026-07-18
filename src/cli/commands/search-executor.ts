@@ -19,11 +19,7 @@ import { isProviderError } from '../../providers/base/types.js';
 import type { QueryAST } from '../../query/types.js';
 import { parseQueryString } from '../../query/index.js';
 import { resolveForProvider } from '../../query/resolver.js';
-import {
-  createSession,
-  updateDatabaseStatus,
-  updateSessionStatus,
-} from '../../session/manager.js';
+import { createSession, updateDatabaseStatus, updateSessionStatus } from '../../session/manager.js';
 import { MultiProviderProgress } from '../utils/progress.js';
 import { PubMedProvider } from '../../providers/pubmed/provider.js';
 import type { PubMedConfig } from '../../providers/pubmed/types.js';
@@ -49,7 +45,10 @@ import { convertResultsToYaml, loadResults } from '../../session/results-io.js';
 export interface SearchExecutionResult {
   success: boolean;
   sessionId?: string;
-  results?: Record<string, { hits: number; retrieved: number; error?: string; warnings?: string[] }>;
+  results?: Record<
+    string,
+    { hits: number; retrieved: number; error?: string; warnings?: string[] }
+  >;
   error?: string;
   autoRegisterResult?: RegistrationRecord;
   sessionStatus: 'completed' | 'partial' | 'failed';
@@ -76,10 +75,7 @@ export function isProviderConfigured(name: ProviderName, config: Config): boolea
 /**
  * Create a provider instance for the given provider name.
  */
-export function createProviderInstance(
-  name: ProviderName,
-  config: Config
-): Provider | null {
+export function createProviderInstance(name: ProviderName, config: Config): Provider | null {
   const providerConfig = config.providers[name];
 
   switch (name) {
@@ -88,8 +84,8 @@ export function createProviderInstance(
         const configPath = getConfigDir();
         console.warn(
           `Warning: No email configured for PubMed.\n` +
-          `  → Edit ${configPath}/config.toml and set providers.pubmed.email\n` +
-          `  → Or run: search-hub config providers.pubmed.email "your@email.com"`
+            `  → Edit ${configPath}/config.toml and set providers.pubmed.email\n` +
+            `  → Or run: search-hub config providers.pubmed.email "your@email.com"`,
         );
       }
       const pubmedOpts: PubMedConfig = {
@@ -119,8 +115,8 @@ export function createProviderInstance(
       if (!providerConfig.api_key) {
         console.warn(
           `Warning: Scopus requires an API key. Set providers.scopus.api_key in config.\n` +
-          `  → Get an API key at https://dev.elsevier.com/\n` +
-          `  → Run: search-hub config providers.scopus.api_key "your-key"`
+            `  → Get an API key at https://dev.elsevier.com/\n` +
+            `  → Run: search-hub config providers.scopus.api_key "your-key"`,
         );
         return null;
       }
@@ -144,10 +140,7 @@ export function createProviderInstance(
  * Translate a query AST for a specific provider.
  * Resolves provider-specific blocks/filters before translation.
  */
-function translateQueryForProvider(
-  ast: QueryAST,
-  provider: ProviderName
-): TranslatedQuery {
+function translateQueryForProvider(ast: QueryAST, provider: ProviderName): TranslatedQuery {
   const resolved = resolveForProvider(ast, provider);
   switch (provider) {
     case 'pubmed':
@@ -166,13 +159,8 @@ function translateQueryForProvider(
 /**
  * Get enabled providers from config, optionally filtered by user selection.
  */
-function getEnabledProviders(
-  config: Config,
-  requestedProviders?: ProviderName[]
-): ProviderName[] {
-  const enabledInConfig = IMPLEMENTED_PROVIDERS.filter(
-    (name) => config.providers[name].enabled
-  );
+function getEnabledProviders(config: Config, requestedProviders?: ProviderName[]): ProviderName[] {
+  const enabledInConfig = IMPLEMENTED_PROVIDERS.filter((name) => config.providers[name].enabled);
 
   if (requestedProviders && requestedProviders.length > 0) {
     return requestedProviders.filter((p) => enabledInConfig.includes(p));
@@ -188,7 +176,7 @@ export async function executeSearch(
   options: SearchCommandOptions,
   sessionsDir: string,
   config: Config,
-  showProgress = true
+  showProgress = true,
 ): Promise<SearchExecutionResult> {
   let ast: QueryAST | undefined;
   let queryContent: string;
@@ -255,9 +243,7 @@ export async function executeSearch(
       return true;
     });
     for (const name of skipped) {
-      console.warn(
-        `Skipping ${name}: API key not configured (use --db ${name} to force)`
-      );
+      console.warn(`Skipping ${name}: API key not configured (use --db ${name} to force)`);
     }
   }
 
@@ -296,7 +282,10 @@ export async function executeSearch(
   }
 
   const sessionId = session.id;
-  const results: Record<string, { hits: number; retrieved: number; error?: string; warnings?: string[] }> = {};
+  const results: Record<
+    string,
+    { hits: number; retrieved: number; error?: string; warnings?: string[] }
+  > = {};
 
   // Create progress display if enabled
   let progress: MultiProviderProgress | undefined;
@@ -326,7 +315,7 @@ export async function executeSearch(
               retryable: false,
             },
           },
-          sessionsDir
+          sessionsDir,
         );
         continue;
       }
@@ -355,7 +344,7 @@ export async function executeSearch(
           status: 'in_progress',
           startedAt: new Date().toISOString(),
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Prepare results file path
@@ -415,14 +404,19 @@ export async function executeSearch(
             resultsYaml: yamlFilename,
           },
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Collect warnings if provider supports them
       const providerWarnings = provider.getWarnings?.();
-      results[providerName] = { hits: totalHits, retrieved: retrievedCount, ...(providerWarnings && providerWarnings.length > 0 && { warnings: providerWarnings }) };
+      results[providerName] = {
+        hits: totalHits,
+        retrieved: retrievedCount,
+        ...(providerWarnings && providerWarnings.length > 0 && { warnings: providerWarnings }),
+      };
     } catch (error) {
-      const errorMessage = error instanceof Error
+      const errorMessage =
+        error instanceof Error
           ? error.message
           : isProviderError(error)
             ? error.message
@@ -443,7 +437,7 @@ export async function executeSearch(
             retryable: true,
           },
         },
-        sessionsDir
+        sessionsDir,
       );
 
       results[providerName] = { hits: 0, retrieved: 0, error: errorMessage };
@@ -540,7 +534,7 @@ export async function executeSearch(
  */
 export async function executeCountOnly(
   options: SearchCommandOptions,
-  config: Config
+  config: Config,
 ): Promise<CountResult[]> {
   let ast: QueryAST | undefined;
 
@@ -602,19 +596,19 @@ export async function executeCountOnly(
         const count = await provider.count(translatedQuery);
         return { provider: providerName, count };
       } catch (error) {
-        const errorMessage = error instanceof Error
-          ? error.message
-          : isProviderError(error)
+        const errorMessage =
+          error instanceof Error
             ? error.message
-            : String(error);
+            : isProviderError(error)
+              ? error.message
+              : String(error);
         return { provider: providerName, count: 0, error: errorMessage };
       }
-    })
+    }),
   );
 
   return results;
 }
-
 
 /**
  * Execute preview mode: get counts and first few titles without creating a session.
@@ -622,7 +616,7 @@ export async function executeCountOnly(
 export async function executePreview(
   options: SearchCommandOptions,
   config: Config,
-  maxTitles = 5
+  maxTitles = 5,
 ): Promise<PreviewResult[]> {
   let ast: QueryAST | undefined;
 
@@ -667,7 +661,12 @@ export async function executePreview(
       try {
         const provider = createProviderInstance(providerName, config);
         if (provider === null) {
-          return { provider: providerName, count: 0, titles: [], error: 'Provider configuration incomplete' };
+          return {
+            provider: providerName,
+            count: 0,
+            titles: [],
+            error: 'Provider configuration incomplete',
+          };
         }
 
         // Translate query
@@ -697,14 +696,15 @@ export async function executePreview(
 
         return { provider: providerName, count, titles };
       } catch (error) {
-        const errorMessage = error instanceof Error
-          ? error.message
-          : isProviderError(error)
+        const errorMessage =
+          error instanceof Error
             ? error.message
-            : String(error);
+            : isProviderError(error)
+              ? error.message
+              : String(error);
         return { provider: providerName, count: 0, titles: [], error: errorMessage };
       }
-    })
+    }),
   );
 
   return results;
@@ -716,7 +716,7 @@ export async function executePreview(
 async function loadArticlesFromSession(
   sessionsDir: string,
   sessionId: string,
-  providers: ProviderName[]
+  providers: ProviderName[],
 ): Promise<Article[]> {
   const articles: Article[] = [];
   const sessionDir = join(sessionsDir, sessionId);

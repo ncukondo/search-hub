@@ -400,38 +400,40 @@ describe('resume-executor', () => {
       expect(session.databases.pubmed.status).toBe('completed');
     });
 
-
     it('should extract error message from ProviderError plain objects', async () => {
       // Override PubMed mock to throw a plain ProviderError object (not an Error instance)
       const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
       const mockedPubMed = vi.mocked(PubMedProvider);
       const originalImpl = mockedPubMed.getMockImplementation();
-      mockedPubMed.mockImplementation(() => ({
-        name: 'pubmed',
-        translateQuery: vi.fn().mockReturnValue({
-          native: 'test query',
-          provider: 'pubmed',
-        }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw {
-            code: 'NETWORK_ERROR',
-            message: 'Connection refused to PubMed API',
-            provider: 'pubmed',
-            retryable: true,
-          };
-        }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        resumeSearch: vi.fn().mockImplementation(async function* () {
-          throw {
-            code: 'NETWORK_ERROR',
-            message: 'Connection refused to PubMed API',
-            provider: 'pubmed',
-            retryable: true,
-          };
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedPubMed.mockImplementation(
+        () =>
+          ({
+            name: 'pubmed',
+            translateQuery: vi.fn().mockReturnValue({
+              native: 'test query',
+              provider: 'pubmed',
+            }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw {
+                code: 'NETWORK_ERROR',
+                message: 'Connection refused to PubMed API',
+                provider: 'pubmed',
+                retryable: true,
+              };
+            }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            resumeSearch: vi.fn().mockImplementation(async function* () {
+              throw {
+                code: 'NETWORK_ERROR',
+                message: 'Connection refused to PubMed API',
+                provider: 'pubmed',
+                retryable: true,
+              };
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       // Update session to have failed provider for retry
       const sessionDir = join(sessionsDir, sessionId);
@@ -491,7 +493,9 @@ describe('resume-executor', () => {
 
       expect(updatedSession.databases.pubmed.status).toBe('failed');
       expect(updatedSession.databases.pubmed.error.message).not.toBe('[object Object]');
-      expect(updatedSession.databases.pubmed.error.message).toBe('Connection refused to PubMed API');
+      expect(updatedSession.databases.pubmed.error.message).toBe(
+        'Connection refused to PubMed API',
+      );
     });
 
     it('should mark session as failed when resumed provider throws an error', async () => {
@@ -502,19 +506,22 @@ describe('resume-executor', () => {
       const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
       const mockedPubMed = vi.mocked(PubMedProvider);
       const originalImpl = mockedPubMed.getMockImplementation();
-      mockedPubMed.mockImplementation(() => ({
-        name: 'pubmed',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('API rate limit exceeded');
-        }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        resumeSearch: vi.fn().mockImplementation(async function* () {
-          throw new Error('API rate limit exceeded');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedPubMed.mockImplementation(
+        () =>
+          ({
+            name: 'pubmed',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('API rate limit exceeded');
+            }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            resumeSearch: vi.fn().mockImplementation(async function* () {
+              throw new Error('API rate limit exceeded');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       // Update session to have failed provider for retry
       const sessionDir = join(sessionsDir, sessionId);
@@ -561,17 +568,20 @@ describe('resume-executor', () => {
       // Override PubMed mock to return 0 results (no error)
       const { PubMedProvider } = await import('../../providers/pubmed/provider.js');
       const mockedPubMed = vi.mocked(PubMedProvider);
-      mockedPubMed.mockImplementationOnce(() => ({
-        name: 'pubmed',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
-        search: vi.fn().mockImplementation(async function* () {
-          // Yield nothing - legitimate zero results
-        }),
-        resumeSearch: vi.fn().mockImplementation(async function* () {
-          // Yield nothing - legitimate zero results
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedPubMed.mockImplementationOnce(
+        () =>
+          ({
+            name: 'pubmed',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+            search: vi.fn().mockImplementation(async function* () {
+              // Yield nothing - legitimate zero results
+            }),
+            resumeSearch: vi.fn().mockImplementation(async function* () {
+              // Yield nothing - legitimate zero results
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       // Update session to have failed provider for retry
       const sessionDir = join(sessionsDir, sessionId);
@@ -662,7 +672,13 @@ describe('resume-executor', () => {
     it('should append results to existing results file', async () => {
       // Add existing results
       const resultsPath = join(sessionsDir, sessionId, 'pubmed_results.jsonl');
-      const existingResult = { title: 'Existing', authors: [], pmid: '00001', source: 'pubmed', retrievedAt: new Date().toISOString() };
+      const existingResult = {
+        title: 'Existing',
+        authors: [],
+        pmid: '00001',
+        source: 'pubmed',
+        retrievedAt: new Date().toISOString(),
+      };
       await writeFile(resultsPath, JSON.stringify(existingResult) + '\n', 'utf-8');
 
       const options: ResumeCommandOptions = {
@@ -682,7 +698,13 @@ describe('resume-executor', () => {
     it('should regenerate YAML file after resume completes', async () => {
       // Add existing results
       const resultsPath = join(sessionsDir, sessionId, 'pubmed_results.jsonl');
-      const existingResult = { title: 'Existing', authors: [], pmid: '00001', source: 'pubmed', retrievedAt: new Date().toISOString() };
+      const existingResult = {
+        title: 'Existing',
+        authors: [],
+        pmid: '00001',
+        source: 'pubmed',
+        retrievedAt: new Date().toISOString(),
+      };
       await writeFile(resultsPath, JSON.stringify(existingResult) + '\n', 'utf-8');
 
       const options: ResumeCommandOptions = {
@@ -717,33 +739,39 @@ describe('resume-executor', () => {
       const originalPubMedImpl = mockedPubMed.getMockImplementation();
       const originalEricImpl = mockedEric.getMockImplementation();
 
-      mockedPubMed.mockImplementation(() => ({
-        name: 'pubmed',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('Network request failed');
-        }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        resumeSearch: vi.fn().mockImplementation(async function* () {
-          throw new Error('Network request failed');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedPubMed.mockImplementation(
+        () =>
+          ({
+            name: 'pubmed',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'pubmed' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('Network request failed');
+            }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            resumeSearch: vi.fn().mockImplementation(async function* () {
+              throw new Error('Network request failed');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
-      mockedEric.mockImplementation(() => ({
-        name: 'eric',
-        translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        search: vi.fn().mockImplementation(async function* () {
-          throw new Error('ERIC service unavailable');
-        }),
-        // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
-        resumeSearch: vi.fn().mockImplementation(async function* () {
-          throw new Error('ERIC service unavailable');
-        }),
-        testConnection: vi.fn().mockResolvedValue({ ok: true }),
-      }) as any);
+      mockedEric.mockImplementation(
+        () =>
+          ({
+            name: 'eric',
+            translateQuery: vi.fn().mockReturnValue({ native: 'test query', provider: 'eric' }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            search: vi.fn().mockImplementation(async function* () {
+              throw new Error('ERIC service unavailable');
+            }),
+            // eslint-disable-next-line require-yield -- mock generator that throws immediately to simulate error
+            resumeSearch: vi.fn().mockImplementation(async function* () {
+              throw new Error('ERIC service unavailable');
+            }),
+            testConnection: vi.fn().mockResolvedValue({ ok: true }),
+          }) as any,
+      );
 
       // Set up session with both providers failed
       const sessionDir = join(sessionsDir, sessionId);
@@ -783,8 +811,12 @@ describe('resume-executor', () => {
       const options: ResumeCommandOptions = { sessionId, retryFailed: true };
       const result = await executeResume(options, sessionsDir, config, false);
 
-      if (originalPubMedImpl) { mockedPubMed.mockImplementation(originalPubMedImpl); }
-      if (originalEricImpl) { mockedEric.mockImplementation(originalEricImpl); }
+      if (originalPubMedImpl) {
+        mockedPubMed.mockImplementation(originalPubMedImpl);
+      }
+      if (originalEricImpl) {
+        mockedEric.mockImplementation(originalEricImpl);
+      }
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('All providers failed');

@@ -13,7 +13,7 @@ import {
 
 function createTestArticle(
   overrides: Partial<Article> = {},
-  omit?: ('journal' | 'doi' | 'publicationDate')[]
+  omit?: ('journal' | 'doi' | 'publicationDate')[],
 ): Article {
   const base: Article = {
     title: 'Test Article Title',
@@ -148,9 +148,7 @@ describe('formatResultsList', () => {
   });
 
   it('uses correct numbering with offset', () => {
-    const articles = [
-      createTestArticle({ title: 'Article at position 21' }),
-    ];
+    const articles = [createTestArticle({ title: 'Article at position 21' })];
     const output = formatResultsList(articles, {
       sessionId: 'test-session',
       sessionName: 'test',
@@ -186,9 +184,11 @@ describe('formatResultsList', () => {
   });
 
   it('displays abstract when showAbstract is true', () => {
-    const articles = [createTestArticle({
-      abstract: 'This is a test abstract for the article.',
-    })];
+    const articles = [
+      createTestArticle({
+        abstract: 'This is a test abstract for the article.',
+      }),
+    ];
     const output = formatResultsList(articles, {
       sessionId: 'test-session',
       sessionName: 'test',
@@ -200,9 +200,11 @@ describe('formatResultsList', () => {
   });
 
   it('does not display abstract when showAbstract is false', () => {
-    const articles = [createTestArticle({
-      abstract: 'This is a test abstract.',
-    })];
+    const articles = [
+      createTestArticle({
+        abstract: 'This is a test abstract.',
+      }),
+    ];
     const output = formatResultsList(articles, {
       sessionId: 'test-session',
       sessionName: 'test',
@@ -245,7 +247,7 @@ describe('formatResultsList', () => {
     expect(output).toContain('Abstract:');
     expect(output).toContain('...');
     // Check it's around 300 characters (prefix + content + ellipsis)
-    const abstractLine = output.split('\n').find(line => line.includes('Abstract:'));
+    const abstractLine = output.split('\n').find((line) => line.includes('Abstract:'));
     expect(abstractLine).toBeDefined();
     // "    Abstract: " is 14 chars, plus 297 content chars, plus "..." = 314
     expect(abstractLine!.length).toBeLessThanOrEqual(320);

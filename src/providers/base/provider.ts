@@ -76,10 +76,7 @@ export abstract class BaseProvider implements Provider {
   /**
    * Execute search and return results as async iterable (streaming).
    */
-  abstract search(
-    query: TranslatedQuery,
-    options?: SearchOptions
-  ): AsyncIterable<Article>;
+  abstract search(query: TranslatedQuery, options?: SearchOptions): AsyncIterable<Article>;
 
   /**
    * Get total hit count for a query without downloading results.
@@ -124,7 +121,7 @@ export abstract class BaseProvider implements Provider {
   protected createBaseState(
     query: TranslatedQuery,
     totalResults: number,
-    retrievedCount: number
+    retrievedCount: number,
   ): SearchState {
     return {
       provider: this.name,
@@ -165,7 +162,11 @@ export abstract class BaseProvider implements Provider {
 
         // Calculate wait time
         let waitTime: number;
-        if (isRateLimitError(error) && 'retryAfter' in error && typeof error.retryAfter === 'number') {
+        if (
+          isRateLimitError(error) &&
+          'retryAfter' in error &&
+          typeof error.retryAfter === 'number'
+        ) {
           waitTime = error.retryAfter;
         } else {
           waitTime = currentBackoff;

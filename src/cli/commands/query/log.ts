@@ -17,10 +17,7 @@ export interface LogOutputOptions {
 /**
  * Format log entries for display.
  */
-export function formatLogOutput(
-  entries: LogEntry[],
-  options?: LogOutputOptions,
-): string {
+export function formatLogOutput(entries: LogEntry[], options?: LogOutputOptions): string {
   if (options?.json) {
     return JSON.stringify(entries, null, 2);
   }

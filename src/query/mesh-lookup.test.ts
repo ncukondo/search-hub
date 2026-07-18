@@ -60,10 +60,7 @@ describe('MeSHLookupClient', () => {
 
       expect(result.found).toBe(false);
       expect(result.term).toBe('Diabetes Mellitis');
-      expect(result.suggestions).toEqual([
-        'Diabetes Mellitus',
-        'Diabetes Mellitus, Type 2',
-      ]);
+      expect(result.suggestions).toEqual(['Diabetes Mellitus', 'Diabetes Mellitus, Type 2']);
 
       vi.unstubAllGlobals();
     });
@@ -92,9 +89,7 @@ describe('MeSHLookupClient', () => {
         // contains hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Artificial Intelligence' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Artificial Intelligence' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -135,9 +130,7 @@ describe('MeSHLookupClient', () => {
         // startswith first word hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Drug Therapy' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Drug Therapy' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -202,9 +195,7 @@ describe('MeSHLookupClient', () => {
         // step 2c: N=5 "Artificial Intel" hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Artificial Intelligence' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Artificial Intelligence' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -230,9 +221,7 @@ describe('MeSHLookupClient', () => {
         // startswith full hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Artificial Intelligence' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Artificial Intelligence' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -263,9 +252,7 @@ describe('MeSHLookupClient', () => {
         // contains hit (no step 2c for single word)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Diabetes Mellitus' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Diabetes Mellitus' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -298,9 +285,7 @@ describe('MeSHLookupClient', () => {
         // first-word startswith hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Drug Therapy' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Drug Therapy' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -325,9 +310,7 @@ describe('MeSHLookupClient', () => {
         // truncated startswith "Artificial Intelligence" (len-1) hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Artificial Intelligence' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Artificial Intelligence' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -353,9 +336,7 @@ describe('MeSHLookupClient', () => {
         // startswith full hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Diabetes Mellitus' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Diabetes Mellitus' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -393,9 +374,7 @@ describe('MeSHLookupClient', () => {
         // contains hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Artificial Intelligence' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Artificial Intelligence' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -439,9 +418,7 @@ describe('MeSHLookupClient', () => {
         // startswith hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Diabetes Mellitus' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Diabetes Mellitus' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -571,9 +548,7 @@ describe('MeSHLookupClient', () => {
         // step 4: startsWith("Brest", 25) → "Brestan" (no "neop" match → filtered out)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Brestan' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Brestan' }],
         })
         // step 4b: startsWith("Bres", 25) → includes "Breast Neoplasms"
         .mockResolvedValueOnce({
@@ -789,9 +764,7 @@ describe('MeSHLookupClient', () => {
         // step 4b: startsWith("Bres", 25) → hit
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'x', label: 'Breast Neoplasms' },
-          ],
+          json: async () => [{ resource: 'x', label: 'Breast Neoplasms' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
@@ -806,14 +779,10 @@ describe('MeSHLookupClient', () => {
     });
 
     it('should handle network errors gracefully', async () => {
-      const mockFetch = vi
-        .fn()
-        .mockRejectedValueOnce(new Error('Network error'));
+      const mockFetch = vi.fn().mockRejectedValueOnce(new Error('Network error'));
       vi.stubGlobal('fetch', mockFetch);
 
-      await expect(client.lookupTerm('Diabetes')).rejects.toThrow(
-        'MeSH lookup failed'
-      );
+      await expect(client.lookupTerm('Diabetes')).rejects.toThrow('MeSH lookup failed');
 
       vi.unstubAllGlobals();
     });
@@ -826,9 +795,7 @@ describe('MeSHLookupClient', () => {
       });
       vi.stubGlobal('fetch', mockFetch);
 
-      await expect(client.lookupTerm('Diabetes')).rejects.toThrow(
-        'MeSH lookup failed'
-      );
+      await expect(client.lookupTerm('Diabetes')).rejects.toThrow('MeSH lookup failed');
 
       vi.unstubAllGlobals();
     });
@@ -843,9 +810,7 @@ describe('MeSHLookupClient', () => {
       await client.lookupTerm('Test Term');
 
       const url = new URL(mockFetch.mock.calls[0]![0] as string);
-      expect(url.origin + url.pathname).toBe(
-        'https://id.nlm.nih.gov/mesh/lookup/term'
-      );
+      expect(url.origin + url.pathname).toBe('https://id.nlm.nih.gov/mesh/lookup/term');
       expect(url.searchParams.get('label')).toBe('Test Term');
       expect(url.searchParams.get('match')).toBe('exact');
       expect(url.searchParams.get('limit')).toBe('1');
@@ -871,16 +836,11 @@ describe('MeSHLookupClient', () => {
         // Term 2: suggestions (startswith)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => [
-            { resource: 'y', label: 'Artificial Intelligence' },
-          ],
+          json: async () => [{ resource: 'y', label: 'Artificial Intelligence' }],
         });
       vi.stubGlobal('fetch', mockFetch);
 
-      const results = await client.lookupTerms([
-        'Diabetes Mellitus',
-        'Artificial Inteligence',
-      ]);
+      const results = await client.lookupTerms(['Diabetes Mellitus', 'Artificial Inteligence']);
 
       expect(results).toHaveLength(2);
       expect(results[0]!.found).toBe(true);
@@ -1011,9 +971,7 @@ describe('MeSHLookupClient', () => {
       const mockFetch = vi.fn().mockRejectedValueOnce(abortError);
       vi.stubGlobal('fetch', mockFetch);
 
-      await expect(client.lookupTerm('Test')).rejects.toThrow(
-        'MeSH lookup failed'
-      );
+      await expect(client.lookupTerm('Test')).rejects.toThrow('MeSH lookup failed');
 
       vi.unstubAllGlobals();
     });
@@ -1058,11 +1016,10 @@ describe('MeSHLookupClient', () => {
 
       expect(result.found).toBe(true);
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockCache.set).toHaveBeenCalledWith(
-        'mesh',
-        'Diabetes Mellitus',
-        { term: 'Diabetes Mellitus', found: true }
-      );
+      expect(mockCache.set).toHaveBeenCalledWith('mesh', 'Diabetes Mellitus', {
+        term: 'Diabetes Mellitus',
+        found: true,
+      });
 
       vi.unstubAllGlobals();
     });

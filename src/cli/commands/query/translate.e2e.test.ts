@@ -12,10 +12,7 @@ import {
   createRawQueryFile,
   queryFixtures,
 } from '../../e2e-helpers.js';
-import {
-  translateQueryCommand,
-  formatTranslateResult,
-} from './translate.js';
+import { translateQueryCommand, formatTranslateResult } from './translate.js';
 
 describe('search-hub query translate E2E', () => {
   let ctx: E2EContext;
@@ -176,9 +173,7 @@ describe('search-hub query translate E2E', () => {
       // The multiBlock fixture has year filters
       // Check that at least one translation includes year references
       const translations = Object.values(result.translations!);
-      const hasYearFilter = translations.some(
-        (t) => /2020|2024|year|pubyear|date/i.test(t.native)
-      );
+      const hasYearFilter = translations.some((t) => /2020|2024|year|pubyear|date/i.test(t.native));
       expect(hasYearFilter).toBe(true);
     });
   });
@@ -194,10 +189,7 @@ describe('search-hub query translate E2E', () => {
     });
 
     it('should fail for invalid query file', async () => {
-      const invalidPath = await createRawQueryFile(
-        ctx.tempDir,
-        'not: valid: yaml: query'
-      );
+      const invalidPath = await createRawQueryFile(ctx.tempDir, 'not: valid: yaml: query');
 
       const result = await translateQueryCommand(invalidPath);
 
@@ -281,7 +273,7 @@ query:
         - Medical Education
         - Clinical Experience
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -310,7 +302,7 @@ query:
       eric:
         - Competency Based Education
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -343,7 +335,7 @@ query:
       eric:
         - Medical Education
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -372,7 +364,7 @@ query:
       mesh:
         - "Artificial Intelligence"
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -397,7 +389,7 @@ query:
       mesh:
         - "Artificial Intelligence"
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath);
@@ -427,7 +419,7 @@ query:
       keywords:
         - diabetes
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -455,7 +447,7 @@ query:
         - Diabetes Mellitus
         - Insulin Resistance
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -484,7 +476,7 @@ query:
       emtree:
         - Diabetes Mellitus
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -511,7 +503,7 @@ query:
       emtree:
         - Artificial Intelligence
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath);
@@ -542,7 +534,7 @@ query:
       mesh:
         - Diabetes Mellitus
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -553,7 +545,7 @@ query:
       const arxiv = result.translations!['arxiv'];
       expect(arxiv!.warnings).toBeDefined();
       expect(arxiv!.warnings).toContainEqual(
-        'arXiv: MeSH terms in block 1 ignored (not supported) — keywords still searched'
+        'arXiv: MeSH terms in block 1 ignored (not supported) — keywords still searched',
       );
     });
 
@@ -569,7 +561,7 @@ query:
       mesh:
         - Neoplasms
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -579,7 +571,7 @@ query:
       expect(result.success).toBe(true);
       const scopus = result.translations!['scopus'];
       expect(scopus!.warnings).toContainEqual(
-        'Scopus: block 1 skipped (contains only MeSH terms, not supported)'
+        'Scopus: block 1 skipped (contains only MeSH terms, not supported)',
       );
     });
 
@@ -607,7 +599,7 @@ query:
       emtree:
         - Diabetes Mellitus
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -633,7 +625,7 @@ query:
       mesh:
         - Diabetes Mellitus
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath, {
@@ -658,7 +650,7 @@ query:
       keywords:
         - machine learning
     operator: AND
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath);
@@ -679,7 +671,7 @@ query:
       keywords:
         - artificial intelligence
     operator: AND
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath);
@@ -700,7 +692,7 @@ query:
         - neural network
         - deep learning
     operator: OR
-`
+`,
       );
 
       const result = await translateQueryCommand(queryPath);

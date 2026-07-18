@@ -34,7 +34,6 @@ export async function parseQueryFile(filePath: string): Promise<QueryAST> {
   return parseQueryString(content);
 }
 
-
 /**
  * Detect short keywords (potential acronyms) in a query.
  *

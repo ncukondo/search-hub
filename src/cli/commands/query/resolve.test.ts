@@ -50,28 +50,16 @@ describe('resolveQueryFile', () => {
 
   it('throws error with tried paths when nothing found', async () => {
     mockedFs.stat.mockRejectedValue(new Error('ENOENT'));
-    await expect(resolveQueryFile('wba-pain')).rejects.toThrow(
-      'Query file not found: "wba-pain"'
-    );
-    await expect(resolveQueryFile('wba-pain')).rejects.toThrow(
-      './wba-pain'
-    );
-    await expect(resolveQueryFile('wba-pain')).rejects.toThrow(
-      './wba-pain.yaml'
-    );
-    await expect(resolveQueryFile('wba-pain')).rejects.toThrow(
-      '.search-hub/queries/wba-pain.yaml'
-    );
-    await expect(resolveQueryFile('wba-pain')).rejects.toThrow(
-      'query init'
-    );
+    await expect(resolveQueryFile('wba-pain')).rejects.toThrow('Query file not found: "wba-pain"');
+    await expect(resolveQueryFile('wba-pain')).rejects.toThrow('./wba-pain');
+    await expect(resolveQueryFile('wba-pain')).rejects.toThrow('./wba-pain.yaml');
+    await expect(resolveQueryFile('wba-pain')).rejects.toThrow('.search-hub/queries/wba-pain.yaml');
+    await expect(resolveQueryFile('wba-pain')).rejects.toThrow('query init');
   });
 
   it('throws error when a directory is given', async () => {
     mockedFs.stat.mockResolvedValueOnce({ isFile: () => false } as any);
-    await expect(resolveQueryFile('some-dir')).rejects.toThrow(
-      'not a file'
-    );
+    await expect(resolveQueryFile('some-dir')).rejects.toThrow('not a file');
   });
 
   it('throws NotAFileError (not a generic Error) when path is a directory', async () => {

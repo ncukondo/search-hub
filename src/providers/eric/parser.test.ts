@@ -253,7 +253,9 @@ describe('ERIC Response Parser', () => {
       } catch (error: unknown) {
         const e = error as { code: string; message: string };
         expect(e.code).toBe('QUERY_ERROR');
-        expect(e.message).toContain('ERIC does not support phrase queries without field specification');
+        expect(e.message).toContain(
+          'ERIC does not support phrase queries without field specification',
+        );
         expect(e.message).toContain('title:"your phrase"');
         expect(e.message).toContain('YAML format');
       }

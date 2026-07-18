@@ -27,7 +27,7 @@ function makeFetchStatus(status: number): typeof globalThis.fetch {
       new Response('not found', {
         status,
         headers: { 'content-type': 'text/plain' },
-      })
+      }),
   ) as unknown as typeof globalThis.fetch;
 }
 
@@ -131,7 +131,7 @@ describe('upgradeBinary', () => {
         fetch: fetchFn,
         getLatest,
         verifyBinary: vi.fn(async () => 'search-hub 0.25.0'),
-      })
+      }),
     );
 
     expect(result.status).toBe('success');
@@ -155,7 +155,7 @@ describe('upgradeBinary', () => {
       baseOptions({
         currentVersion: '0.24.0',
         fetch: fetchFn as unknown as typeof globalThis.fetch,
-      })
+      }),
     );
 
     expect(result.status).toBe('already-up-to-date');
@@ -170,13 +170,13 @@ describe('upgradeBinary', () => {
       baseOptions({
         check: true,
         fetch: fetchFn as unknown as typeof globalThis.fetch,
-      })
+      }),
     );
 
     expect(result.status).toBe('guidance');
     expect(result.toVersion).toBe('0.24.0');
     expect(result.url).toBe(
-      'https://github.com/ncukondo/search-hub/releases/download/v0.24.0/search-hub-linux-x64'
+      'https://github.com/ncukondo/search-hub/releases/download/v0.24.0/search-hub-linux-x64',
     );
     expect(fetchFn).not.toHaveBeenCalled();
     // Dest untouched.
@@ -189,7 +189,7 @@ describe('upgradeBinary', () => {
         check: true,
         currentVersion: '0.24.0',
         fetch: vi.fn() as unknown as typeof globalThis.fetch,
-      })
+      }),
     );
 
     expect(result.status).toBe('already-up-to-date');
@@ -200,13 +200,13 @@ describe('upgradeBinary', () => {
     const result = await upgradeBinary(
       baseOptions({
         fetch: makeFetchStatus(404),
-      })
+      }),
     );
 
     expect(result.status).toBe('error');
     expect(result.error).toMatch(/404/);
     expect(result.error).toContain(
-      'https://github.com/ncukondo/search-hub/releases/download/v0.24.0/search-hub-linux-x64'
+      'https://github.com/ncukondo/search-hub/releases/download/v0.24.0/search-hub-linux-x64',
     );
     // Dest untouched on 404.
     expect(readFileSync(destPath, 'utf-8')).toBe('old binary\n');
@@ -216,7 +216,7 @@ describe('upgradeBinary', () => {
     const result = await upgradeBinary(
       baseOptions({
         getLatest: vi.fn(async () => null),
-      })
+      }),
     );
     expect(result.status).toBe('error');
     expect(result.error).toMatch(/latest/i);
@@ -226,7 +226,7 @@ describe('upgradeBinary', () => {
     const result = await upgradeBinary(
       baseOptions({
         verifyBinary: vi.fn(async () => null),
-      })
+      }),
     );
 
     expect(result.status).toBe('error');
@@ -248,7 +248,7 @@ describe('upgradeBinary', () => {
         arch: 'x64',
         fetch: makeFetchBinary(new TextEncoder().encode('new exe')),
         verifyBinary: vi.fn(async () => 'search-hub 0.24.0'),
-      })
+      }),
     );
 
     expect(result.status).toBe('success');
@@ -263,7 +263,7 @@ describe('upgradeBinary', () => {
         fetch: vi.fn(async () => {
           throw new Error('network down');
         }) as unknown as typeof globalThis.fetch,
-      })
+      }),
     );
 
     expect(result.status).toBe('error');

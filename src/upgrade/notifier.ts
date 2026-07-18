@@ -59,7 +59,7 @@ function isSuppressed(
   env: NodeJS.ProcessEnv,
   isTty: boolean,
   noUpdateCheckFlag: boolean,
-  quiet: boolean
+  quiet: boolean,
 ): boolean {
   if (!isTty) return true;
   if (noUpdateCheckFlag) return true;
@@ -76,7 +76,7 @@ function isSuppressed(
  */
 export function maybeStartUpdateCheck(
   command: string,
-  options: NotifierOptions = {}
+  options: NotifierOptions = {},
 ): Promise<void> {
   state = null;
 
@@ -89,8 +89,7 @@ export function maybeStartUpdateCheck(
 
   const currentVersion = options.currentVersion ?? VERSION;
   const output = options.output ?? process.stderr;
-  const getLatest =
-    options.getLatest ?? (() => getLatestVersion({ timeoutMs: CHECK_TIMEOUT_MS }));
+  const getLatest = options.getLatest ?? (() => getLatestVersion({ timeoutMs: CHECK_TIMEOUT_MS }));
 
   const localState: NotifierState = {
     result: null,
@@ -107,7 +106,7 @@ export function maybeStartUpdateCheck(
     },
     () => {
       // Errors are silent; nothing will be printed.
-    }
+    },
   );
 }
 
@@ -186,6 +185,6 @@ export function flushUpdateNotice(): void {
   if (!isNewerVersion(result.latest, currentVersion)) return;
   state.printed = true;
   output.write(
-    `\n>>> New version available: ${currentVersion} -> ${result.latest}\n    Run: search-hub upgrade\n`
+    `\n>>> New version available: ${currentVersion} -> ${result.latest}\n    Run: search-hub upgrade\n`,
   );
 }

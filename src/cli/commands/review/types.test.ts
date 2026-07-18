@@ -584,9 +584,7 @@ describe('classifyStatus', () => {
     it('article with abstract review + abstract reviewer not yet reviewed → incomplete (unchanged)', () => {
       const entry: ArticleEntry = {
         ...baseEntry,
-        reviews: [
-          { reviewer: 'ai:claude', decision: 'include', basis: 'abstract' },
-        ],
+        reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'abstract' }],
       };
       const reviewers: ReviewerRecord[] = [
         { name: 'ai:claude', basis: 'abstract' },
@@ -600,9 +598,7 @@ describe('classifyStatus', () => {
     it('title-only article + fulltext reviewer registered → NOT incomplete', () => {
       const entry: ArticleEntry = {
         ...baseEntry,
-        reviews: [
-          { reviewer: 'ai:claude', decision: 'include', basis: 'title' },
-        ],
+        reviews: [{ reviewer: 'ai:claude', decision: 'include', basis: 'title' }],
       };
       const reviewers: ReviewerRecord[] = [
         { name: 'ai:claude', basis: 'title' },

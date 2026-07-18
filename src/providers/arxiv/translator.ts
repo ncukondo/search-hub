@@ -91,9 +91,7 @@ function translateBlock(block: QueryBlock): { query: string; notClause: string |
   }
 
   // Translate exclude terms
-  const notClause = terms.exclude
-    ? translateExcludeTerms(terms.exclude, field)
-    : null;
+  const notClause = terms.exclude ? translateExcludeTerms(terms.exclude, field) : null;
 
   return { query, notClause };
 }
@@ -123,10 +121,7 @@ function translateTitleAbstract(keywords: string[], operator: Operator): string 
  * Translate exclude terms to ANDNOT clause.
  * arXiv uses ANDNOT instead of NOT.
  */
-function translateExcludeTerms(
-  exclude: string[],
-  field: FieldType
-): string | null {
+function translateExcludeTerms(exclude: string[], field: FieldType): string | null {
   if (exclude.length === 0) {
     return null;
   }

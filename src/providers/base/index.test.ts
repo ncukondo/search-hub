@@ -91,7 +91,7 @@ describe('Module exports', () => {
         provider: 'pubmed',
         query: {
           native: 'test',
-  
+
           provider: 'pubmed',
         },
         totalResults: 100,
@@ -167,7 +167,7 @@ describe('Module exports', () => {
         provider: 'pubmed',
         query: {
           native: 'test',
-  
+
           provider: 'pubmed',
         },
         totalResults: 100,
@@ -184,7 +184,7 @@ describe('Module exports', () => {
         provider: 'pubmed',
         query: {
           native: 'test',
-  
+
           provider: 'pubmed',
         },
         totalResults: 100,
@@ -229,10 +229,14 @@ describe('Module exports', () => {
     it('can register and retrieve provider from registry', () => {
       const registry = createProviderRegistry();
 
-      registry.register('pubmed', (config) => new MockProvider({
-        ...config,
-        name: 'pubmed',
-      }));
+      registry.register(
+        'pubmed',
+        (config) =>
+          new MockProvider({
+            ...config,
+            name: 'pubmed',
+          }),
+      );
 
       expect(registry.has('pubmed')).toBe(true);
       expect(registry.list()).toContain('pubmed');

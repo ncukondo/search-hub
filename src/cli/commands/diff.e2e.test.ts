@@ -12,16 +12,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
-import {
-  computeDiff,
-  computeQueryDiff,
-  formatDiff,
-  formatDiffJson,
-} from './diff.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
+import { computeDiff, computeQueryDiff, formatDiff, formatDiffJson } from './diff.js';
 import { deduplicateArticles } from './export.js';
 import { loadSessionQuery } from './session-utils.js';
 import { getSuggestion } from '../suggestions/rules.js';
@@ -176,11 +168,7 @@ describe('search-hub diff E2E', () => {
       };
 
       const jsonl = providerArticles.map((a) => JSON.stringify(a)).join('\n');
-      await writeFile(
-        join(sessionDir, `${provider}_results.jsonl`),
-        jsonl,
-        'utf-8',
-      );
+      await writeFile(join(sessionDir, `${provider}_results.jsonl`), jsonl, 'utf-8');
       await writeFile(
         join(sessionDir, `${provider}_query.txt`),
         `${provider} query string`,
@@ -206,11 +194,7 @@ describe('search-hub diff E2E', () => {
       },
     };
 
-    await writeFile(
-      join(sessionDir, 'session.yaml'),
-      stringifyYaml(session),
-      'utf-8',
-    );
+    await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
     return id;
   }
@@ -223,11 +207,7 @@ describe('search-hub diff E2E', () => {
   ): Promise<string> {
     const sessionId = await createTestSession(id, articles, providers);
     const sessionDir = join(ctx.sessionsDir, sessionId);
-    await writeFile(
-      join(sessionDir, 'query_common.yaml'),
-      queryYaml,
-      'utf-8',
-    );
+    await writeFile(join(sessionDir, 'query_common.yaml'), queryYaml, 'utf-8');
     return sessionId;
   }
 
@@ -238,14 +218,13 @@ describe('search-hub diff E2E', () => {
     const { readFile } = await import('node:fs/promises');
     const articles: Article[] = [];
     for (const provider of providers) {
-      const resultsPath = join(
-        ctx.sessionsDir,
-        sessionId,
-        `${provider}_results.jsonl`,
-      );
+      const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
       try {
         const content = await readFile(resultsPath, 'utf-8');
-        const lines = content.trim().split('\n').filter((l) => l);
+        const lines = content
+          .trim()
+          .split('\n')
+          .filter((l) => l);
         for (const line of lines) {
           articles.push(JSON.parse(line));
         }
@@ -379,7 +358,12 @@ describe('search-hub diff E2E', () => {
       await createTestSession('with-dups', sessionWithDups, ['pubmed', 'eric', 'arxiv', 'scopus']);
       await createTestSession('wba-genai-v6', session2Articles, ['pubmed']);
 
-      const articles1 = await loadArticlesFromSession('with-dups', ['pubmed', 'eric', 'arxiv', 'scopus']);
+      const articles1 = await loadArticlesFromSession('with-dups', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const articles2 = await loadArticlesFromSession('wba-genai-v6', ['pubmed']);
 
       // Dedup should remove the scopus duplicate
@@ -450,7 +434,12 @@ filters:
 `;
 
     it('should compute query diff between two sessions', async () => {
-      await createTestSessionWithQuery('query-v1', session1Articles, ['pubmed', 'eric', 'arxiv'], queryV1);
+      await createTestSessionWithQuery(
+        'query-v1',
+        session1Articles,
+        ['pubmed', 'eric', 'arxiv'],
+        queryV1,
+      );
       await createTestSessionWithQuery('query-v2', session2Articles, ['pubmed'], queryV2);
 
       const query1 = await loadSessionQuery('query-v1', ctx.sessionsDir);
@@ -477,7 +466,12 @@ filters:
     });
 
     it('should include query diff in formatted output', async () => {
-      await createTestSessionWithQuery('query-v1', session1Articles, ['pubmed', 'eric', 'arxiv'], queryV1);
+      await createTestSessionWithQuery(
+        'query-v1',
+        session1Articles,
+        ['pubmed', 'eric', 'arxiv'],
+        queryV1,
+      );
       await createTestSessionWithQuery('query-v2', session2Articles, ['pubmed'], queryV2);
 
       const query1 = await loadSessionQuery('query-v1', ctx.sessionsDir);
@@ -503,7 +497,12 @@ filters:
     });
 
     it('should include query diff in JSON output', async () => {
-      await createTestSessionWithQuery('query-v1', session1Articles, ['pubmed', 'eric', 'arxiv'], queryV1);
+      await createTestSessionWithQuery(
+        'query-v1',
+        session1Articles,
+        ['pubmed', 'eric', 'arxiv'],
+        queryV1,
+      );
       await createTestSessionWithQuery('query-v2', session2Articles, ['pubmed'], queryV2);
 
       const query1 = await loadSessionQuery('query-v1', ctx.sessionsDir);
@@ -549,7 +548,12 @@ filters:
     });
 
     it('should hide query diff with noQueryDiff option', async () => {
-      await createTestSessionWithQuery('query-v1', session1Articles, ['pubmed', 'eric', 'arxiv'], queryV1);
+      await createTestSessionWithQuery(
+        'query-v1',
+        session1Articles,
+        ['pubmed', 'eric', 'arxiv'],
+        queryV1,
+      );
       await createTestSessionWithQuery('query-v2', session2Articles, ['pubmed'], queryV2);
 
       const query1 = await loadSessionQuery('query-v1', ctx.sessionsDir);
@@ -621,7 +625,11 @@ filters:
       await createTestSession('superset-session', supersetArticles, ['pubmed', 'eric', 'arxiv']);
 
       const articles1 = await loadArticlesFromSession('base-session', ['pubmed', 'eric', 'arxiv']);
-      const articles2 = await loadArticlesFromSession('superset-session', ['pubmed', 'eric', 'arxiv']);
+      const articles2 = await loadArticlesFromSession('superset-session', [
+        'pubmed',
+        'eric',
+        'arxiv',
+      ]);
 
       const dedup1 = deduplicateArticles(articles1);
       const dedup2 = deduplicateArticles(articles2);

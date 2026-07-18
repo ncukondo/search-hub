@@ -32,9 +32,10 @@ export function validateSearchResponse(response: unknown): asserts response is E
       'PARSE_ERROR',
       'ERIC API error: Unexpected response format (response is null/undefined). ' +
         'This may indicate an API change or service issue. ' +
-        'Response received: ' + truncateForError(response),
+        'Response received: ' +
+        truncateForError(response),
       'eric',
-      { retryable: false }
+      { retryable: false },
     );
   }
 
@@ -53,16 +54,13 @@ export function validateSearchResponse(response: unknown): asserts response is E
             'Use field-prefixed queries like: title:"your phrase" OR description:"your phrase". ' +
             'Alternatively, use YAML format which automatically adds field prefixes.',
           'eric',
-          { retryable: false }
+          { retryable: false },
         );
       }
 
-      throw createProviderError(
-        'QUERY_ERROR',
-        `ERIC API error: ${errorMsg}`,
-        'eric',
-        { retryable: false }
-      );
+      throw createProviderError('QUERY_ERROR', `ERIC API error: ${errorMsg}`, 'eric', {
+        retryable: false,
+      });
     }
   }
 
@@ -72,9 +70,10 @@ export function validateSearchResponse(response: unknown): asserts response is E
       'PARSE_ERROR',
       "ERIC API error: Unexpected response format (missing 'response' property). " +
         'This may indicate an API change or service issue. ' +
-        'Response received: ' + truncateForError(response),
+        'Response received: ' +
+        truncateForError(response),
       'eric',
-      { retryable: false }
+      { retryable: false },
     );
   }
 
@@ -86,9 +85,10 @@ export function validateSearchResponse(response: unknown): asserts response is E
       'PARSE_ERROR',
       "ERIC API error: Unexpected response format ('response' is not an object). " +
         'This may indicate an API change or service issue. ' +
-        'Response received: ' + truncateForError(response),
+        'Response received: ' +
+        truncateForError(response),
       'eric',
-      { retryable: false }
+      { retryable: false },
     );
   }
 
@@ -100,9 +100,10 @@ export function validateSearchResponse(response: unknown): asserts response is E
       'PARSE_ERROR',
       "ERIC API error: Unexpected response format (missing 'numFound'). " +
         'This may indicate an API change or service issue. ' +
-        'Response received: ' + truncateForError(response),
+        'Response received: ' +
+        truncateForError(response),
       'eric',
-      { retryable: false }
+      { retryable: false },
     );
   }
 
@@ -112,9 +113,10 @@ export function validateSearchResponse(response: unknown): asserts response is E
       'PARSE_ERROR',
       "ERIC API error: Unexpected response format ('docs' is not an array). " +
         'This may indicate an API change or service issue. ' +
-        'Response received: ' + truncateForError(response),
+        'Response received: ' +
+        truncateForError(response),
       'eric',
-      { retryable: false }
+      { retryable: false },
     );
   }
 }

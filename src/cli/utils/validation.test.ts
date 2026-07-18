@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  isValidProviderName,
-  parseProviderNames,
-  getValidProviders,
-} from './validation';
+import { isValidProviderName, parseProviderNames, getValidProviders } from './validation';
 
 describe('validation', () => {
   describe('isValidProviderName', () => {
@@ -28,11 +24,7 @@ describe('validation', () => {
     });
 
     it('should parse multiple comma-separated providers', () => {
-      expect(parseProviderNames('pubmed,eric,arxiv')).toEqual([
-        'pubmed',
-        'eric',
-        'arxiv',
-      ]);
+      expect(parseProviderNames('pubmed,eric,arxiv')).toEqual(['pubmed', 'eric', 'arxiv']);
     });
 
     it('should trim whitespace around provider names', () => {
@@ -45,19 +37,19 @@ describe('validation', () => {
 
     it('should throw error for invalid provider', () => {
       expect(() => parseProviderNames('invalid')).toThrow(
-        'Invalid provider(s): invalid. Valid: pubmed, eric, arxiv, scopus'
+        'Invalid provider(s): invalid. Valid: pubmed, eric, arxiv, scopus',
       );
     });
 
     it('should list all invalid providers in error message', () => {
       expect(() => parseProviderNames('foo,bar,pubmed')).toThrow(
-        'Invalid provider(s): foo, bar. Valid: pubmed, eric, arxiv, scopus'
+        'Invalid provider(s): foo, bar. Valid: pubmed, eric, arxiv, scopus',
       );
     });
 
     it('should handle mixed valid and invalid providers', () => {
       expect(() => parseProviderNames('pubmed,invalid,eric')).toThrow(
-        'Invalid provider(s): invalid'
+        'Invalid provider(s): invalid',
       );
     });
   });

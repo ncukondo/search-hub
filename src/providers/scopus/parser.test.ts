@@ -49,10 +49,7 @@ describe('Scopus Response Parser', () => {
           'opensearch:totalResults': '2',
           'opensearch:startIndex': '0',
           'opensearch:itemsPerPage': '25',
-          entry: [
-            { 'dc:identifier': 'SCOPUS_ID:1' },
-            { 'dc:identifier': 'SCOPUS_ID:2' },
-          ],
+          entry: [{ 'dc:identifier': 'SCOPUS_ID:1' }, { 'dc:identifier': 'SCOPUS_ID:2' }],
         },
       };
 

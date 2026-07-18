@@ -17,7 +17,7 @@ import { createQueryFile, createSimpleQuery } from './e2e-helpers.js';
 
 const execAsync = promisify(exec);
 
-const skip = !process.env["SEARCH_HUB_PUBMED_API_KEY"];
+const skip = !process.env['SEARCH_HUB_PUBMED_API_KEY'];
 
 /**
  * Get the CLI command path for testing.
@@ -31,7 +31,7 @@ function getCliCommand(): string {
  */
 async function runCli(
   args: string,
-  cwd: string
+  cwd: string,
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const cmd = `${getCliCommand()} ${args}`;
   try {
@@ -95,17 +95,14 @@ enabled = false
 
   it('should complete workflow: validate -> search -> status -> export', async () => {
     // Step 1: Validate query file
-    const validateResult = await runCli(
-      `query validate "${queryPath}"`,
-      projectRoot
-    );
+    const validateResult = await runCli(`query validate "${queryPath}"`, projectRoot);
     expect(validateResult.exitCode).toBe(0);
     expect(validateResult.stdout).toContain('Valid');
 
     // Step 2: Execute search (with max-results to limit API calls)
     const searchResult = await runCli(
       `search "${queryPath}" --db pubmed --max-results 3 -c "${configPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(searchResult.exitCode).toBe(0);
     expect(searchResult.stdout).toContain('Search completed');
@@ -119,7 +116,7 @@ enabled = false
     // Step 3: Check session status
     const statusResult = await runCli(
       `status "${sessionId}" -c "${configPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(statusResult.exitCode).toBe(0);
     expect(statusResult.stdout).toContain(sessionId);
@@ -128,7 +125,7 @@ enabled = false
     const exportPath = join(tempDir, 'export.jsonl');
     const exportResult = await runCli(
       `export "${sessionId}" --format jsonl -o "${exportPath}" -c "${configPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(exportResult.exitCode).toBe(0);
 
@@ -149,7 +146,7 @@ enabled = false
     // Dry-run should complete quickly without actual API calls
     const dryRunResult = await runCli(
       `search "${queryPath}" --dry-run --db pubmed -c "${configPath}"`,
-      projectRoot
+      projectRoot,
     );
     expect(dryRunResult.exitCode).toBe(0);
     expect(dryRunResult.stdout).toContain('Translated queries');
@@ -160,7 +157,7 @@ enabled = false
     // First, run a search to create a session
     const searchResult = await runCli(
       `search "${queryPath}" --db pubmed --max-results 2 -c "${configPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(searchResult.exitCode).toBe(0);
 
@@ -172,7 +169,7 @@ enabled = false
     const jsonPath = join(tempDir, 'export.json');
     const jsonResult = await runCli(
       `export "${sessionId}" --format json -o "${jsonPath}" -c "${configPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(jsonResult.exitCode).toBe(0);
 
@@ -184,23 +181,20 @@ enabled = false
     const idsPath = join(tempDir, 'ids.txt');
     const idsResult = await runCli(
       `export "${sessionId}" --format ids --id-type all -o "${idsPath}" -c "${configPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(idsResult.exitCode).toBe(0);
   }, 60000);
 
   it('should show helpful errors for invalid inputs', async () => {
     // Missing query file
-    const missingFileResult = await runCli(
-      'query validate /nonexistent/query.yaml',
-      projectRoot
-    );
+    const missingFileResult = await runCli('query validate /nonexistent/query.yaml', projectRoot);
     expect(missingFileResult.exitCode).not.toBe(0);
 
     // Invalid session
     const invalidSessionResult = await runCli(
       `status nonexistent-session --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(invalidSessionResult.exitCode).not.toBe(0);
   });
@@ -209,7 +203,7 @@ enabled = false
     // First, run a search to create a session
     const searchResult = await runCli(
       `search "${queryPath}" --db pubmed --max-results 2 -c "${configPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(searchResult.exitCode).toBe(0);
 
@@ -220,7 +214,7 @@ enabled = false
     // Register with dry-run (should not require ref command)
     const registerResult = await runCli(
       `register "${sessionId}" --dry-run -c "${configPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(registerResult.exitCode).toBe(0);
     expect(registerResult.stdout.toLowerCase()).toMatch(/would|dry|reference/i);
@@ -251,7 +245,7 @@ enabled = false
     // Search ERIC with real API
     const searchResult = await runCli(
       `search "${queryPath}" --db eric --max-results 3 -c "${ericConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(searchResult.exitCode).toBe(0);
     expect(searchResult.stdout).toContain('Search completed');
@@ -265,7 +259,7 @@ enabled = false
     const exportPath = join(tempDir, 'eric-export.jsonl');
     const exportResult = await runCli(
       `export "${sessionId}" --format jsonl -o "${exportPath}" -c "${ericConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(exportResult.exitCode).toBe(0);
 
@@ -298,7 +292,7 @@ enabled = false
     // Search arXiv with real API
     const searchResult = await runCli(
       `search "${queryPath}" --db arxiv --max-results 3 -c "${arxivConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(searchResult.exitCode).toBe(0);
     expect(searchResult.stdout).toContain('Search completed');
@@ -312,7 +306,7 @@ enabled = false
     const exportPath = join(tempDir, 'arxiv-export.jsonl');
     const exportResult = await runCli(
       `export "${sessionId}" --format jsonl -o "${exportPath}" -c "${arxivConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(exportResult.exitCode).toBe(0);
 
@@ -347,7 +341,7 @@ enabled = false
     // Search all three providers with real APIs
     const searchResult = await runCli(
       `search "${queryPath}" --db pubmed,eric,arxiv --max-results 2 -c "${multiConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(searchResult.exitCode).toBe(0);
     expect(searchResult.stdout).toContain('Search completed');
@@ -364,7 +358,7 @@ enabled = false
     // Verify status shows all providers
     const statusResult = await runCli(
       `status "${sessionId}" -c "${multiConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(statusResult.exitCode).toBe(0);
 
@@ -372,12 +366,15 @@ enabled = false
     const exportPath = join(tempDir, 'multi-export.jsonl');
     const exportResult = await runCli(
       `export "${sessionId}" --format jsonl -o "${exportPath}" -c "${multiConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(exportResult.exitCode).toBe(0);
 
     const exportContent = await readFile(exportPath, 'utf-8');
-    const lines = exportContent.trim().split('\n').filter(l => l);
+    const lines = exportContent
+      .trim()
+      .split('\n')
+      .filter((l) => l);
     // Should have results from multiple providers
     expect(lines.length).toBeGreaterThan(0);
   }, 120000);
@@ -408,7 +405,7 @@ enabled = false
     // First search with very limited results
     const searchResult = await runCli(
       `search "${queryPath}" --db pubmed --max-results 2 -c "${resumeConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(searchResult.exitCode).toBe(0);
 
@@ -419,21 +416,21 @@ enabled = false
     // Check status before resume
     const statusBefore = await runCli(
       `status "${sessionId}" -c "${resumeConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     expect(statusBefore.exitCode).toBe(0);
 
     // Attempt resume (may say "no providers need resuming" if already complete)
     const resumeResult = await runCli(
       `resume "${sessionId}" -c "${resumeConfigPath}" --session-dir "${sessionsDir}"`,
-      projectRoot
+      projectRoot,
     );
     // Resume should either succeed or indicate nothing to resume
     expect(resumeResult.exitCode).toBe(0);
     expect(
       resumeResult.stdout.toLowerCase().includes('no providers') ||
-      resumeResult.stdout.toLowerCase().includes('resume') ||
-      resumeResult.stdout.toLowerCase().includes('completed')
+        resumeResult.stdout.toLowerCase().includes('resume') ||
+        resumeResult.stdout.toLowerCase().includes('completed'),
     ).toBe(true);
   }, 60000);
 });

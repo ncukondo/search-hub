@@ -233,7 +233,7 @@ providers:
         categories:
           - cs.AI
           - cs.LG
-`
+`,
       );
 
       const ast = await parseQueryFile(filePath);
@@ -268,7 +268,7 @@ providers:
         `
 description: Missing name and empty query
 query: []
-`
+`,
       );
 
       // parseQueryFile should throw

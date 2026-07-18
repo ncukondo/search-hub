@@ -15,15 +15,13 @@ import { resolveForProvider } from '../../../query/resolver.js';
 /**
  * Available translators by provider name.
  */
-const translators: Record<
-  string,
-  (ast: Parameters<typeof translatePubmed>[0]) => TranslatedQuery
-> = {
-  pubmed: translatePubmed,
-  eric: translateEric,
-  arxiv: translateArxiv,
-  scopus: translateScopus,
-};
+const translators: Record<string, (ast: Parameters<typeof translatePubmed>[0]) => TranslatedQuery> =
+  {
+    pubmed: translatePubmed,
+    eric: translateEric,
+    arxiv: translateArxiv,
+    scopus: translateScopus,
+  };
 
 /**
  * Default providers to translate for.
@@ -59,15 +57,14 @@ export interface TranslateResult {
  */
 export async function translateQueryCommand(
   filePath: string,
-  options: TranslateOptions = {}
+  options: TranslateOptions = {},
 ): Promise<TranslateResult> {
   // Read file
   let content: string;
   try {
     content = await readFile(filePath, 'utf-8');
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to read file';
+    const message = error instanceof Error ? error.message : 'Failed to read file';
     return {
       success: false,
       error: message,
@@ -79,8 +76,7 @@ export async function translateQueryCommand(
   try {
     ast = parseQueryString(content);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to parse query file';
+    const message = error instanceof Error ? error.message : 'Failed to parse query file';
     return {
       success: false,
       error: message,
@@ -101,9 +97,7 @@ export async function translateQueryCommand(
         translations[provider] = translator(resolved);
       } catch (error) {
         const message =
-          error instanceof Error
-            ? error.message
-            : `Failed to translate for ${provider}`;
+          error instanceof Error ? error.message : `Failed to translate for ${provider}`;
         return {
           success: false,
           error: `${provider}: ${message}`,
@@ -121,10 +115,7 @@ export async function translateQueryCommand(
 /**
  * Format translation result for display.
  */
-export function formatTranslateResult(
-  result: TranslateResult,
-  filePath: string
-): string {
+export function formatTranslateResult(result: TranslateResult, filePath: string): string {
   if (!result.success) {
     return `✗ Failed to translate: ${filePath}\n  Error: ${result.error}`;
   }

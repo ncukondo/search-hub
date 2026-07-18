@@ -7,7 +7,18 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import type { ReviewFile } from '../review/types.js';
-import { generateCitationKey, generateDirName, createMeta, saveMeta, generateReadme, getFulltextDir, getArticleDir, getMetaPath, getReadmePath, type ArticleFulltextRef } from '@ncukondo/academic-fulltext';
+import {
+  generateCitationKey,
+  generateDirName,
+  createMeta,
+  saveMeta,
+  generateReadme,
+  getFulltextDir,
+  getArticleDir,
+  getMetaPath,
+  getReadmePath,
+  type ArticleFulltextRef,
+} from '@ncukondo/academic-fulltext';
 
 export interface FulltextInitOptions {
   sessionId: string;
@@ -42,9 +53,7 @@ export async function executeFulltextInit(
   const reviewFile = parseYaml(reviewContent) as ReviewFile;
 
   // Filter to included articles
-  const includedArticles = (reviewFile.articles ?? []).filter(
-    (a) => a.finalDecision === 'include',
-  );
+  const includedArticles = (reviewFile.articles ?? []).filter((a) => a.finalDecision === 'include');
 
   // Collect existing dirNames from reviews for skip detection
   const existingDirNames = new Set<string>();

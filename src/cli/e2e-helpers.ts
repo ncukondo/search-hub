@@ -141,10 +141,7 @@ enabled = false
  * Execute CLI command as a subprocess.
  * Returns stdout, stderr, and exit code.
  */
-export async function execCli(
-  args: string[],
-  options: ExecOptions = {}
-): Promise<ExecResult> {
+export async function execCli(args: string[], options: ExecOptions = {}): Promise<ExecResult> {
   const { env = {}, cwd, timeout = 30000, input } = options;
 
   // Path to the CLI entry point (dist/cli/index.js)
@@ -203,7 +200,7 @@ export async function execCli(
 export async function createQueryFile(
   tempDir: string,
   query: QueryAST,
-  filename = 'query.yaml'
+  filename = 'query.yaml',
 ): Promise<string> {
   const filePath = join(tempDir, filename);
 
@@ -233,9 +230,10 @@ export async function createQueryFile(
         publication_types: query.filters.publicationTypes,
       }),
     },
-    ...(query.providers && Object.keys(query.providers).length > 0 && {
-      providers: query.providers,
-    }),
+    ...(query.providers &&
+      Object.keys(query.providers).length > 0 && {
+        providers: query.providers,
+      }),
   };
 
   await writeFile(filePath, YAML.stringify(yamlContent), 'utf-8');
@@ -249,7 +247,7 @@ export async function createQueryFile(
 export async function createRawQueryFile(
   tempDir: string,
   content: string,
-  filename = 'query.yaml'
+  filename = 'query.yaml',
 ): Promise<string> {
   const filePath = join(tempDir, filename);
   await writeFile(filePath, content, 'utf-8');
@@ -263,7 +261,7 @@ export async function createRawQueryFile(
 export async function createConfig(
   tempDir: string,
   config: PartialConfig,
-  filename = 'config.toml'
+  filename = 'config.toml',
 ): Promise<string> {
   const filePath = join(tempDir, filename);
 
@@ -350,7 +348,7 @@ export async function createConfig(
 export async function createRawConfig(
   tempDir: string,
   content: string,
-  filename = 'config.toml'
+  filename = 'config.toml',
 ): Promise<string> {
   const filePath = join(tempDir, filename);
   await writeFile(filePath, content, 'utf-8');

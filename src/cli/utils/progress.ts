@@ -32,7 +32,7 @@ export class MultiProviderProgress {
         barCompleteChar: '\u2588', // █
         barIncompleteChar: '\u2591', // ░
       },
-      Presets.shades_classic
+      Presets.shades_classic,
     );
 
     this.bars = new Map();

@@ -11,7 +11,7 @@ function makeFetchOk(tag: string, url: string): typeof globalThis.fetch {
       new Response(JSON.stringify({ tag_name: tag, html_url: url }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
-      })
+      }),
   ) as unknown as typeof globalThis.fetch;
 }
 
@@ -21,7 +21,7 @@ function makeFetchStatus(status: number): typeof globalThis.fetch {
       new Response('rate limit', {
         status,
         headers: { 'content-type': 'text/plain' },
-      })
+      }),
   ) as unknown as typeof globalThis.fetch;
 }
 
@@ -56,7 +56,7 @@ describe('getLatestVersion', () => {
         checkedAt,
         latest: '0.24.0',
         url: 'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0',
-      })
+      }),
     );
     const fetchFn = vi.fn();
 
@@ -83,11 +83,11 @@ describe('getLatestVersion', () => {
         checkedAt,
         latest: '0.23.0',
         url: 'https://example.com/old',
-      })
+      }),
     );
     const fetchFn = makeFetchOk(
       'v0.24.0',
-      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0'
+      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0',
     );
 
     const result = await getLatestVersion({
@@ -110,7 +110,7 @@ describe('getLatestVersion', () => {
     const now = new Date('2026-07-12T12:00:00Z');
     const fetchFn = makeFetchOk(
       'v1.0.0',
-      'https://github.com/ncukondo/search-hub/releases/tag/v1.0.0'
+      'https://github.com/ncukondo/search-hub/releases/tag/v1.0.0',
     );
 
     const result = await getLatestVersion({
@@ -131,7 +131,7 @@ describe('getLatestVersion', () => {
     const now = new Date('2026-07-12T12:00:00Z');
     const fetchFn = makeFetchOk(
       'v1.0.0',
-      'https://github.com/ncukondo/search-hub/releases/tag/v1.0.0'
+      'https://github.com/ncukondo/search-hub/releases/tag/v1.0.0',
     );
 
     const result = await getLatestVersion({
@@ -148,7 +148,7 @@ describe('getLatestVersion', () => {
     const now = new Date('2026-07-12T12:00:00Z');
     const fetchFn = makeFetchOk(
       'v1.0.0',
-      'https://github.com/ncukondo/search-hub/releases/tag/v1.0.0'
+      'https://github.com/ncukondo/search-hub/releases/tag/v1.0.0',
     );
 
     await getLatestVersion({ cachePath, fetch: fetchFn, now: () => now });
@@ -171,11 +171,11 @@ describe('getLatestVersion', () => {
         checkedAt,
         latest: '0.23.0',
         url: 'https://example.com/old',
-      })
+      }),
     );
     const fetchFn = makeFetchOk(
       'v0.24.0',
-      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0'
+      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0',
     );
 
     const result = await getLatestVersion({
@@ -263,7 +263,7 @@ describe('getLatestVersion', () => {
     const now = new Date('2026-07-12T12:00:00Z');
     const fetchFn = makeFetchOk(
       'v2.5.1',
-      'https://github.com/ncukondo/search-hub/releases/tag/v2.5.1'
+      'https://github.com/ncukondo/search-hub/releases/tag/v2.5.1',
     );
 
     const result = await getLatestVersion({ cachePath, fetch: fetchFn, now: () => now });
@@ -275,7 +275,7 @@ describe('getLatestVersion', () => {
     const now = new Date('2026-07-12T12:00:00Z');
     const fetchFn = makeFetchOk(
       '2.5.1',
-      'https://github.com/ncukondo/search-hub/releases/tag/2.5.1'
+      'https://github.com/ncukondo/search-hub/releases/tag/2.5.1',
     );
 
     const result = await getLatestVersion({ cachePath, fetch: fetchFn, now: () => now });
@@ -296,7 +296,7 @@ describe('getLatestVersion', () => {
         new Response('not json at all', {
           status: 200,
           headers: { 'content-type': 'text/plain' },
-        })
+        }),
     ) as unknown as typeof globalThis.fetch;
 
     const result = await getLatestVersion({ cachePath, fetch: fetchFn, now: () => now });
@@ -310,7 +310,7 @@ describe('getLatestVersion', () => {
     const now = new Date('2026-07-12T12:00:00Z');
     const fetchFn = makeFetchOk(
       'v0.24.0',
-      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0'
+      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0',
     );
 
     await getLatestVersion({ cachePath, fetch: fetchFn, now: () => now, timeoutMs: 3000 });
@@ -324,7 +324,7 @@ describe('getLatestVersion', () => {
     const now = new Date('2026-07-12T12:00:00Z');
     const fetchFn = makeFetchOk(
       'v0.24.0',
-      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0'
+      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0',
     );
 
     await getLatestVersion({ cachePath, fetch: fetchFn, now: () => now });
@@ -343,7 +343,7 @@ describe('getLatestVersion', () => {
           init?.signal?.addEventListener('abort', () => {
             reject(new DOMException('This operation was aborted', 'AbortError'));
           });
-        })
+        }),
     ) as unknown as typeof globalThis.fetch;
 
     const result = await getLatestVersion({
@@ -362,7 +362,7 @@ describe('getLatestVersion', () => {
     writeFileSync(cachePath, '{not valid json');
     const fetchFn = makeFetchOk(
       'v0.24.0',
-      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0'
+      'https://github.com/ncukondo/search-hub/releases/tag/v0.24.0',
     );
 
     const result = await getLatestVersion({ cachePath, fetch: fetchFn, now: () => now });

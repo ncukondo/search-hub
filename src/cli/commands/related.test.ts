@@ -105,10 +105,13 @@ describe('validateRelatedInput', () => {
 
 describe('resolveSeeds', () => {
   it('should return PMIDs directly when no from-session', async () => {
-    const result = await resolveSeeds({
-      pmids: ['12345678', '23456789'],
-      maxResults: 20,
-    }, '');
+    const result = await resolveSeeds(
+      {
+        pmids: ['12345678', '23456789'],
+        maxResults: 20,
+      },
+      '',
+    );
     expect(result).toEqual(['12345678', '23456789']);
   });
 
@@ -138,18 +141,39 @@ describe('resolveSeeds', () => {
 
     // Create results file with articles that have PMIDs
     const articles: Article[] = [
-      { title: 'Article 1', pmid: '11111111', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
-      { title: 'Article 2', pmid: '22222222', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
-      { title: 'Article 3', pmid: '33333333', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
+      {
+        title: 'Article 1',
+        pmid: '11111111',
+        source: 'pubmed',
+        authors: [],
+        retrievedAt: '2026-01-01T00:00:00Z',
+      },
+      {
+        title: 'Article 2',
+        pmid: '22222222',
+        source: 'pubmed',
+        authors: [],
+        retrievedAt: '2026-01-01T00:00:00Z',
+      },
+      {
+        title: 'Article 3',
+        pmid: '33333333',
+        source: 'pubmed',
+        authors: [],
+        retrievedAt: '2026-01-01T00:00:00Z',
+      },
     ];
-    const jsonl = articles.map(a => JSON.stringify(a)).join('\n') + '\n';
+    const jsonl = articles.map((a) => JSON.stringify(a)).join('\n') + '\n';
     await writeFile(join(sessionDir, 'pubmed_results.jsonl'), jsonl);
 
-    const result = await resolveSeeds({
-      pmids: ['11111111', '33333333'],
-      fromSession: sessionId,
-      maxResults: 20,
-    }, sessionsDir);
+    const result = await resolveSeeds(
+      {
+        pmids: ['11111111', '33333333'],
+        fromSession: sessionId,
+        maxResults: 20,
+      },
+      sessionsDir,
+    );
 
     expect(result).toEqual(['11111111', '33333333']);
   });
@@ -178,18 +202,29 @@ describe('resolveSeeds', () => {
     await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session));
 
     const articles: Article[] = [
-      { title: 'Article 1', pmid: '11111111', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
+      {
+        title: 'Article 1',
+        pmid: '11111111',
+        source: 'pubmed',
+        authors: [],
+        retrievedAt: '2026-01-01T00:00:00Z',
+      },
     ];
     await writeFile(
       join(sessionDir, 'pubmed_results.jsonl'),
-      articles.map(a => JSON.stringify(a)).join('\n') + '\n'
+      articles.map((a) => JSON.stringify(a)).join('\n') + '\n',
     );
 
-    await expect(resolveSeeds({
-      pmids: ['99999999'],
-      fromSession: sessionId,
-      maxResults: 20,
-    }, sessionsDir)).rejects.toThrow('99999999');
+    await expect(
+      resolveSeeds(
+        {
+          pmids: ['99999999'],
+          fromSession: sessionId,
+          maxResults: 20,
+        },
+        sessionsDir,
+      ),
+    ).rejects.toThrow('99999999');
   });
 });
 
@@ -245,13 +280,15 @@ describe('createRelatedSession', () => {
     const sessionFile = await createRelatedSession({
       name: 'from-session-related',
       seeds: { ids: ['12345678'], sourceSession: 'original-session' },
-      articles: [{
-        title: 'Related',
-        pmid: '44444444',
-        source: 'pubmed',
-        authors: [],
-        retrievedAt: '2026-02-16T10:00:00Z',
-      }],
+      articles: [
+        {
+          title: 'Related',
+          pmid: '44444444',
+          source: 'pubmed',
+          authors: [],
+          retrievedAt: '2026-02-16T10:00:00Z',
+        },
+      ],
       sessionsDir,
     });
 
@@ -285,7 +322,7 @@ describe('formatRelatedOutput', () => {
     });
 
     expect(output).toContain('related-session-123');
-    expect(output).toContain('2');  // seed count
+    expect(output).toContain('2'); // seed count
     expect(output).toContain('50'); // total related
     expect(output).toContain('20'); // retrieved
     expect(output).toContain('Very Important Related Article');
@@ -299,13 +336,15 @@ describe('formatRelatedOutput', () => {
       seedCount: 1,
       totalRelated: 1,
       retrievedCount: 1,
-      articles: [{
-        title: longTitle,
-        pmid: '11111111',
-        source: 'pubmed',
-        authors: [],
-        retrievedAt: '2026-01-01T00:00:00Z',
-      }],
+      articles: [
+        {
+          title: longTitle,
+          pmid: '11111111',
+          source: 'pubmed',
+          authors: [],
+          retrievedAt: '2026-01-01T00:00:00Z',
+        },
+      ],
     });
 
     // Title should be truncated

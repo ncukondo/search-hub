@@ -2,12 +2,7 @@
  * Scopus-specific types test
  */
 import { describe, it, expect } from 'vitest';
-import type {
-  ScopusDocument,
-  ScopusSearchResponse,
-  ScopusConfig,
-  ScopusAuthor,
-} from './types';
+import type { ScopusDocument, ScopusSearchResponse, ScopusConfig, ScopusAuthor } from './types';
 import type { Article } from '../base/types';
 
 describe('Scopus Types', () => {

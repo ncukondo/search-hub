@@ -6,11 +6,7 @@
  */
 import { access } from 'node:fs/promises';
 import { constants } from 'node:fs';
-import {
-  appendLogEntry,
-  formatTimestamp,
-  type AssessmentLogEntry,
-} from './iteration-log.js';
+import { appendLogEntry, formatTimestamp, type AssessmentLogEntry } from './iteration-log.js';
 
 export interface AssessOptions {
   verdict?: string | undefined;

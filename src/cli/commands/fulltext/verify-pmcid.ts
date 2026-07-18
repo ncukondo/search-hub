@@ -51,7 +51,7 @@ function normalizeTitle(title: string): string {
 /** Fetch the esummary record for a PMC ID. Returns null on any failure. */
 async function fetchPmcRecord(
   pmcid: string,
-  options: VerifyPmcidOptions
+  options: VerifyPmcidOptions,
 ): Promise<EsummaryRecord | null> {
   const numericId = pmcid.replace(/^PMC/i, '');
   const params = new URLSearchParams({ db: 'pmc', id: numericId, retmode: 'json' });
@@ -86,7 +86,7 @@ function findArticleId(record: EsummaryRecord, idtype: string): string | undefin
 export async function verifyPmcid(
   pmcid: string,
   article: PmcidVerifyArticle,
-  options: VerifyPmcidOptions = {}
+  options: VerifyPmcidOptions = {},
 ): Promise<PmcidVerification> {
   const record = await fetchPmcRecord(pmcid, options);
   if (!record) return 'unverified';

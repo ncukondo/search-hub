@@ -91,7 +91,7 @@ describe('upgradeNpmGlobal', () => {
   it('bypasses getLatest when --version is pinned', async () => {
     const getLatest = vi.fn();
     const result = await upgradeNpmGlobal(
-      baseOptions({ check: true, version: 'v0.25.0', getLatest })
+      baseOptions({ check: true, version: 'v0.25.0', getLatest }),
     );
 
     expect(result.status).toBe('guidance');
@@ -102,7 +102,7 @@ describe('upgradeNpmGlobal', () => {
 
   it('surfaces a friendly message when npm is not on PATH (ENOENT)', async () => {
     const runCommand = vi.fn(async () =>
-      defaultRunCommand('search-hub-nonexistent-binary-for-test-xyz', ['--version'])
+      defaultRunCommand('search-hub-nonexistent-binary-for-test-xyz', ['--version']),
     );
     const result = await upgradeNpmGlobal(baseOptions({ yes: true, runCommand }));
 

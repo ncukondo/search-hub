@@ -40,7 +40,7 @@ import { ScopusProvider } from './provider';
  */
 export function registerScopusProvider(
   registry: ProviderRegistry,
-  defaultConfig: ScopusConfig
+  defaultConfig: ScopusConfig,
 ): void {
   registry.register('scopus', (config) => {
     const mergedConfig: ScopusConfig = {

@@ -142,11 +142,7 @@ const MONTH_MAP: Record<string, string> = {
 /**
  * Parse a PubMed date element into ISO format.
  */
-function parseDate(pubDate: {
-  Year?: string;
-  Month?: string;
-  Day?: string;
-}): string | undefined {
+function parseDate(pubDate: { Year?: string; Month?: string; Day?: string }): string | undefined {
   if (!pubDate?.Year) return undefined;
 
   const year = String(pubDate.Year);
@@ -205,7 +201,9 @@ function parseAuthor(authorData: {
  * Parse abstract text which may be structured or simple.
  */
 function parseAbstract(
-  abstractData: { AbstractText?: Array<{ '#text'?: string; '@_Label'?: string } | string> } | undefined
+  abstractData:
+    | { AbstractText?: Array<{ '#text'?: string; '@_Label'?: string } | string> }
+    | undefined,
 ): string | undefined {
   if (!abstractData?.AbstractText) return undefined;
 
@@ -227,9 +225,7 @@ function parseAbstract(
   }
 
   // Simple abstract
-  return texts
-    .map((t) => cleanXmlText(typeof t === 'string' ? t : t['#text'] ?? ''))
-    .join(' ');
+  return texts.map((t) => cleanXmlText(typeof t === 'string' ? t : (t['#text'] ?? ''))).join(' ');
 }
 
 /**
@@ -237,7 +233,7 @@ function parseAbstract(
  */
 function getArticleId(
   idList: Array<{ '#text'?: string; '@_IdType'?: string }> | undefined,
-  idType: string
+  idType: string,
 ): string | undefined {
   if (!idList) return undefined;
   const found = idList.find((id) => id['@_IdType'] === idType);
@@ -284,13 +280,13 @@ function parsePubMedArticle(articleData: {
   // Extract PMID (can be object with #text or direct value)
   const pmidData = citation.PMID;
   const pmid =
-    typeof pmidData === 'object'
-      ? String(pmidData['#text'] ?? '')
-      : String(pmidData ?? '');
+    typeof pmidData === 'object' ? String(pmidData['#text'] ?? '') : String(pmidData ?? '');
 
   // Parse authors
   const authorList = articleContent.AuthorList?.Author ?? [];
-  const authors: Author[] = authorList.map((a: unknown) => parseAuthor(a as Parameters<typeof parseAuthor>[0]));
+  const authors: Author[] = authorList.map((a: unknown) =>
+    parseAuthor(a as Parameters<typeof parseAuthor>[0]),
+  );
 
   // Parse MeSH terms
   const meshList = citation.MeshHeadingList?.MeshHeading ?? [];
@@ -318,7 +314,9 @@ function parsePubMedArticle(articleData: {
       : undefined;
 
   // Get article IDs
-  const articleIdList = articleData.PubmedData?.ArticleIdList?.ArticleId as Array<{ '#text'?: string; '@_IdType'?: string }> | undefined;
+  const articleIdList = articleData.PubmedData?.ArticleIdList?.ArticleId as
+    | Array<{ '#text'?: string; '@_IdType'?: string }>
+    | undefined;
   const doi = getArticleId(articleIdList, 'doi');
   const pmc = getArticleId(articleIdList, 'pmc');
 
@@ -373,12 +371,9 @@ export function parseEFetchResponse(xml: string): EFetchResult {
 
   const articles = articleSet
     .map((article: unknown) =>
-      parsePubMedArticle(article as Parameters<typeof parsePubMedArticle>[0])
+      parsePubMedArticle(article as Parameters<typeof parsePubMedArticle>[0]),
     )
-    .filter(
-      (article: PubMedArticle | null): article is PubMedArticle =>
-        article !== null
-    );
+    .filter((article: PubMedArticle | null): article is PubMedArticle => article !== null);
 
   return { articles };
 }
@@ -399,11 +394,12 @@ export function parseELinkResponse(xml: string): ELinkResponse[] {
 
     // Find the pubmed_pubmed LinkSetDb (primary related articles)
     const linkSetDbs = (linkSet['LinkSetDb'] ?? []) as Record<string, unknown>[];
-    const pubmedLinks = linkSetDbs.find(
-      (db) => db['LinkName'] === 'pubmed_pubmed'
-    );
+    const pubmedLinks = linkSetDbs.find((db) => db['LinkName'] === 'pubmed_pubmed');
 
-    const links = (pubmedLinks?.['Link'] ?? []) as { Id: string | number; Score: string | number }[];
+    const links = (pubmedLinks?.['Link'] ?? []) as {
+      Id: string | number;
+      Score: string | number;
+    }[];
 
     const relatedIds = links
       .map((link) => ({

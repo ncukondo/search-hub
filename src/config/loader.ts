@@ -4,7 +4,13 @@ import { parse as parseToml, stringify as stringifyToml } from '@iarna/toml';
 import { ConfigSchema, type Config } from './schema.js';
 import { getDefaultConfig } from './defaults.js';
 import { applyEnvVars } from './env.js';
-import { getDefaultConfigPath, getDefaultSessionsDir, getLocalConfigPath, getLocalSessionsDir, isInsideProject } from './paths.js';
+import {
+  getDefaultConfigPath,
+  getDefaultSessionsDir,
+  getLocalConfigPath,
+  getLocalSessionsDir,
+  isInsideProject,
+} from './paths.js';
 import { deepMerge, type DeepPartial } from '../utils/deep-merge.js';
 import { expandPath } from '../utils/path.js';
 
@@ -56,7 +62,7 @@ export async function loadTomlFile(path: string): Promise<RawConfig> {
     return parseToml(content) as RawConfig;
   } catch (error) {
     throw new Error(
-      `Invalid TOML in ${path}: ${error instanceof Error ? error.message : String(error)}`
+      `Invalid TOML in ${path}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
@@ -113,9 +119,7 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Confi
 
   // 8. Resolve empty session.directory based on project context
   if (!config.session.directory) {
-    const inProject = projectDir
-      ? await isInsideProject(projectDir)
-      : false;
+    const inProject = projectDir ? await isInsideProject(projectDir) : false;
     config.session.directory = inProject
       ? getLocalSessionsDir(projectDir)
       : getDefaultSessionsDir();
@@ -148,14 +152,8 @@ interface TomlMap {
  * @param options - Save options
  * @throws Error if config is invalid or file write fails
  */
-export async function saveConfig(
-  config: Config,
-  options: SaveConfigOptions = {}
-): Promise<void> {
-  const {
-    path = getDefaultConfigPath(),
-    createDir = true,
-  } = options;
+export async function saveConfig(config: Config, options: SaveConfigOptions = {}): Promise<void> {
+  const { path = getDefaultConfigPath(), createDir = true } = options;
 
   // Validate config before saving
   ConfigSchema.parse(config);

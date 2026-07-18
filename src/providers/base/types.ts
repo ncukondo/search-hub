@@ -11,13 +11,7 @@ export type { QueryAST, ResolvedAST };
 /**
  * Supported provider names.
  */
-export type ProviderName =
-  | 'pubmed'
-  | 'eric'
-  | 'arxiv'
-  | 'scopus'
-  | 'wos'
-  | 'embase';
+export type ProviderName = 'pubmed' | 'eric' | 'arxiv' | 'scopus' | 'wos' | 'embase';
 
 /**
  * Author information.
@@ -114,10 +108,7 @@ export interface Provider {
   /**
    * Execute search and return results as async iterable (streaming).
    */
-  search(
-    query: TranslatedQuery,
-    options?: SearchOptions
-  ): AsyncIterable<Article>;
+  search(query: TranslatedQuery, options?: SearchOptions): AsyncIterable<Article>;
 
   /**
    * Get total hit count for a query without downloading results.
@@ -193,7 +184,7 @@ export function createProviderError(
   code: ProviderErrorCode,
   message: string,
   provider: ProviderName,
-  options?: { retryable?: boolean; cause?: unknown }
+  options?: { retryable?: boolean; cause?: unknown },
 ): ProviderError {
   return {
     code,
@@ -233,7 +224,9 @@ export function isRateLimitError(error: unknown): error is RateLimitError {
 export function isAuthError(error: unknown): error is AuthError {
   return (
     isProviderError(error) &&
-    (error.code === 'API_KEY_MISSING' || error.code === 'API_KEY_INVALID' || error.code === 'ACCESS_DENIED')
+    (error.code === 'API_KEY_MISSING' ||
+      error.code === 'API_KEY_INVALID' ||
+      error.code === 'ACCESS_DENIED')
   );
 }
 

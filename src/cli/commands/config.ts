@@ -21,10 +21,7 @@ export interface ConfigResult {
  * @example
  * getNestedValue({ a: { b: 1 } }, 'a.b') // returns 1
  */
-export function getNestedValue(
-  obj: Record<string, unknown>,
-  path: string
-): unknown {
+export function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   const keys = path.split('.');
   let current: unknown = obj;
 
@@ -47,11 +44,7 @@ export function getNestedValue(
  * @example
  * setNestedValue({ a: { b: 1 } }, 'a.b', 2) // modifies obj to { a: { b: 2 } }
  */
-export function setNestedValue(
-  obj: Record<string, unknown>,
-  path: string,
-  value: unknown
-): void {
+export function setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): void {
   const keys = path.split('.');
   let current = obj;
 
@@ -72,7 +65,7 @@ export function setNestedValue(
  */
 export function flattenObject(
   obj: Record<string, unknown>,
-  prefix = ''
+  prefix = '',
 ): Array<{ key: string; value: unknown }> {
   const result: Array<{ key: string; value: unknown }> = [];
 
@@ -80,9 +73,7 @@ export function flattenObject(
     const fullKey = prefix ? `${prefix}.${key}` : key;
 
     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-      result.push(
-        ...flattenObject(value as Record<string, unknown>, fullKey)
-      );
+      result.push(...flattenObject(value as Record<string, unknown>, fullKey));
     } else {
       result.push({ key: fullKey, value });
     }
@@ -119,10 +110,7 @@ export function viewConfig(config: Config): string {
  * View a specific configuration key.
  */
 export function viewConfigKey(config: Config, key: string): ConfigResult {
-  const value = getNestedValue(
-    config as unknown as Record<string, unknown>,
-    key
-  );
+  const value = getNestedValue(config as unknown as Record<string, unknown>, key);
 
   if (value === undefined) {
     return {
@@ -159,11 +147,7 @@ export function parseValue(value: string, existingValue: unknown): unknown {
  * Set a configuration key to a new value.
  * Only allows setting keys that already exist in the configuration.
  */
-export function setConfigKey(
-  config: Config,
-  key: string,
-  value: string
-): ConfigResult {
+export function setConfigKey(config: Config, key: string, value: string): ConfigResult {
   if (!key) {
     return {
       success: false,
@@ -171,10 +155,7 @@ export function setConfigKey(
     };
   }
 
-  const existingValue = getNestedValue(
-    config as unknown as Record<string, unknown>,
-    key
-  );
+  const existingValue = getNestedValue(config as unknown as Record<string, unknown>, key);
 
   // Reject unknown keys
   if (existingValue === undefined) {
@@ -186,11 +167,7 @@ export function setConfigKey(
 
   const parsedValue = parseValue(value, existingValue);
 
-  setNestedValue(
-    config as unknown as Record<string, unknown>,
-    key,
-    parsedValue
-  );
+  setNestedValue(config as unknown as Record<string, unknown>, key, parsedValue);
 
   return {
     success: true,
@@ -236,10 +213,7 @@ const SECRET_KEY_SUFFIXES = ['api_key', 'inst_token', 'email'];
  * Check if writing a key to local config should trigger a warning.
  * Returns warning message or null.
  */
-export function checkSecretKeyWarning(
-  key: string,
-  scope: 'global' | 'local'
-): string | null {
+export function checkSecretKeyWarning(key: string, scope: 'global' | 'local'): string | null {
   if (scope !== 'local') return null;
   const lastPart = key.split('.').pop() ?? '';
   if (SECRET_KEY_SUFFIXES.includes(lastPart)) {
@@ -252,12 +226,7 @@ export function checkSecretKeyWarning(
  * Format a config value with its origin information.
  * Format: <origin>\t<path>\t<key> = <value>
  */
-export function formatShowOrigin(
-  key: string,
-  value: string,
-  origin: string,
-  path: string
-): string {
+export function formatShowOrigin(key: string, value: string, origin: string, path: string): string {
   return `${origin}\t${path}\t${key} = ${value}`;
 }
 
@@ -271,7 +240,7 @@ export function viewConfigAllOrigins(
   localConfig: Record<string, unknown>,
   localPath: string,
   globalConfig: Record<string, unknown>,
-  globalPath: string
+  globalPath: string,
 ): string {
   const flattened = flattenObject(merged as unknown as Record<string, unknown>);
   const lines = flattened.map(({ key, value }) => {
@@ -300,13 +269,9 @@ export function viewConfigAllOrigins(
 /**
  * View config values from a partial (filtered) config object.
  */
-export function viewConfigFiltered(
-  partial: Record<string, unknown>
-): string {
+export function viewConfigFiltered(partial: Record<string, unknown>): string {
   const flattened = flattenObject(partial);
-  return flattened
-    .map(({ key, value }) => `${key} = ${formatValue(value)}`)
-    .join('\n');
+  return flattened.map(({ key, value }) => `${key} = ${formatValue(value)}`).join('\n');
 }
 
 /**

@@ -110,7 +110,10 @@ describe('query init', () => {
     it('should write to .search-hub/queries/<sanitized-title>.yaml by default', async () => {
       const result = await writeQueryTemplate({ title: 'WBA pain', cwd: tempDir });
       expect(result.success).toBe(true);
-      const content = await readFile(join(tempDir, '.search-hub', 'queries', 'wba-pain.yaml'), 'utf-8');
+      const content = await readFile(
+        join(tempDir, '.search-hub', 'queries', 'wba-pain.yaml'),
+        'utf-8',
+      );
       expect(content).toContain('name: "WBA pain"');
     });
 

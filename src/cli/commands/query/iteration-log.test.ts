@@ -27,9 +27,7 @@ afterEach(async () => {
 
 describe('getLogFilePath', () => {
   it('should return .search-log.yaml path for a query file', () => {
-    expect(getLogFilePath('/path/to/my-search.yaml')).toBe(
-      '/path/to/my-search.search-log.yaml'
-    );
+    expect(getLogFilePath('/path/to/my-search.yaml')).toBe('/path/to/my-search.search-log.yaml');
   });
 
   it('should handle query files in current directory', () => {
@@ -37,9 +35,7 @@ describe('getLogFilePath', () => {
   });
 
   it('should handle .yml extension', () => {
-    expect(getLogFilePath('/path/to/query.yml')).toBe(
-      '/path/to/query.search-log.yaml'
-    );
+    expect(getLogFilePath('/path/to/query.yml')).toBe('/path/to/query.search-log.yaml');
   });
 });
 
@@ -174,11 +170,7 @@ describe('readLogEntries', () => {
   it('should return empty array for log file with only comments', async () => {
     const queryFile = join(testDir, 'my-search.yaml');
     const logPath = getLogFilePath(queryFile);
-    await writeFile(
-      logPath,
-      '# Search iteration log\n# Empty\n',
-      'utf-8'
-    );
+    await writeFile(logPath, '# Search iteration log\n# Empty\n', 'utf-8');
 
     const entries = await readLogEntries(queryFile);
     expect(entries).toEqual([]);

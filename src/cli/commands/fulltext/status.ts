@@ -68,9 +68,7 @@ export async function executeFulltextStatus(
   const reviewFile = parseYaml(content) as ReviewFile;
 
   // Filter to included articles
-  const included = (reviewFile.articles ?? []).filter(
-    (a) => a.finalDecision === 'include',
-  );
+  const included = (reviewFile.articles ?? []).filter((a) => a.finalDecision === 'include');
 
   const result: FulltextStatusResult = {
     totalIncluded: included.length,

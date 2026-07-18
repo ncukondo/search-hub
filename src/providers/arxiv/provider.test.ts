@@ -328,7 +328,7 @@ describe('ArxivProvider', () => {
       expect(articles).toHaveLength(10);
       expect(mockClient.search).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ start: 10 })
+        expect.objectContaining({ start: 10 }),
       );
     });
   });
@@ -351,7 +351,9 @@ describe('ArxivProvider', () => {
 
   describe('count', () => {
     it('should return total hit count using minimal search', async () => {
-      const mockClientInstance = vi.mocked(ArxivClient).mock.results[0]?.value as { search: ReturnType<typeof vi.fn> };
+      const mockClientInstance = vi.mocked(ArxivClient).mock.results[0]?.value as {
+        search: ReturnType<typeof vi.fn>;
+      };
       mockClientInstance.search.mockResolvedValueOnce({
         totalResults: 150,
         startIndex: 0,
@@ -363,14 +365,16 @@ describe('ArxivProvider', () => {
       const count = await provider.count(query);
 
       expect(count).toBe(150);
-      expect(mockClientInstance.search).toHaveBeenCalledWith(
-        query.native,
-        { start: 0, maxResults: 1 }
-      );
+      expect(mockClientInstance.search).toHaveBeenCalledWith(query.native, {
+        start: 0,
+        maxResults: 1,
+      });
     });
 
     it('should return 0 for queries with no results', async () => {
-      const mockClientInstance = vi.mocked(ArxivClient).mock.results[0]?.value as { search: ReturnType<typeof vi.fn> };
+      const mockClientInstance = vi.mocked(ArxivClient).mock.results[0]?.value as {
+        search: ReturnType<typeof vi.fn>;
+      };
       mockClientInstance.search.mockResolvedValueOnce({
         totalResults: 0,
         startIndex: 0,

@@ -9,11 +9,7 @@
  * via the yaml-language-server $schema comment.
  */
 import * as z from 'zod';
-import {
-  fieldTypeSchema,
-  operatorSchema,
-  publicationTypeFilterSchema,
-} from './validator.js';
+import { fieldTypeSchema, operatorSchema, publicationTypeFilterSchema } from './validator.js';
 
 /** Filters input schema (without transform) */
 const filtersInputSchema = z

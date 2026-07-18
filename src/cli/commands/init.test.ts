@@ -9,7 +9,10 @@ describe('init command', () => {
   let testDir: string;
 
   beforeEach(async () => {
-    testDir = join(tmpdir(), `search-hub-init-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    testDir = join(
+      tmpdir(),
+      `search-hub-init-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
     await mkdir(testDir, { recursive: true });
   });
 
@@ -165,14 +168,14 @@ describe('init command', () => {
       const result = await init({ directory: testDir });
 
       expect(result.hints).toBeDefined();
-      expect(result.hints!.some(h => h.includes('--global'))).toBe(true);
+      expect(result.hints!.some((h) => h.includes('--global'))).toBe(true);
     });
 
     it('local init includes hint about .env and search-hub config --env-vars', async () => {
       const result = await init({ directory: testDir });
 
       expect(result.hints).toBeDefined();
-      expect(result.hints!.some(h => h.includes('.env') || h.includes('--env-vars'))).toBe(true);
+      expect(result.hints!.some((h) => h.includes('.env') || h.includes('--env-vars'))).toBe(true);
     });
 
     it('global init includes recommended search-hub config --global commands', async () => {
@@ -180,7 +183,7 @@ describe('init command', () => {
       const result = await init({ global: true, configDir: globalConfigDir });
 
       expect(result.hints).toBeDefined();
-      expect(result.hints!.some(h => h.includes('config') && h.includes('--global'))).toBe(true);
+      expect(result.hints!.some((h) => h.includes('config') && h.includes('--global'))).toBe(true);
     });
   });
 });

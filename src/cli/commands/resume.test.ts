@@ -120,11 +120,7 @@ describe('resume command', () => {
         { provider: 'eric', strategy: 'fresh' },
       ]);
 
-      const result = await getResumableProvidersForCommand(
-        '20240115_test_abc123',
-        '/sessions',
-        {}
-      );
+      const result = await getResumableProvidersForCommand('20240115_test_abc123', '/sessions', {});
 
       expect(result.success).toBe(true);
       expect(result.providers).toHaveLength(2);
@@ -150,11 +146,9 @@ describe('resume command', () => {
         { provider: 'eric', strategy: 'fresh' },
       ]);
 
-      const result = await getResumableProvidersForCommand(
-        '20240115_test_abc123',
-        '/sessions',
-        { providers: ['eric'] }
-      );
+      const result = await getResumableProvidersForCommand('20240115_test_abc123', '/sessions', {
+        providers: ['eric'],
+      });
 
       expect(result.success).toBe(true);
       expect(result.providers).toHaveLength(1);
@@ -179,15 +173,11 @@ describe('resume command', () => {
       });
 
       vi.mocked(loadSession).mockResolvedValue(mockSession);
-      vi.mocked(getResumableProviders).mockReturnValue([
-        { provider: 'pubmed', strategy: 'retry' },
-      ]);
+      vi.mocked(getResumableProviders).mockReturnValue([{ provider: 'pubmed', strategy: 'retry' }]);
 
-      const result = await getResumableProvidersForCommand(
-        '20240115_test_abc123',
-        '/sessions',
-        { retryFailed: true }
-      );
+      const result = await getResumableProvidersForCommand('20240115_test_abc123', '/sessions', {
+        retryFailed: true,
+      });
 
       expect(result.success).toBe(true);
       expect(result.providers).toHaveLength(1);
@@ -197,11 +187,7 @@ describe('resume command', () => {
     it('should return error for non-existent session', async () => {
       vi.mocked(loadSession).mockRejectedValue(new Error('Session not found'));
 
-      const result = await getResumableProvidersForCommand(
-        'invalid-session',
-        '/sessions',
-        {}
-      );
+      const result = await getResumableProvidersForCommand('invalid-session', '/sessions', {});
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
@@ -228,7 +214,7 @@ describe('resume command', () => {
       const result = await getResumableProvidersForCommand(
         '20260208_merged_abc123',
         '/sessions',
-        {}
+        {},
       );
 
       expect(result.success).toBe(false);
@@ -249,11 +235,7 @@ describe('resume command', () => {
       vi.mocked(loadSession).mockResolvedValue(mockSession);
       vi.mocked(getResumableProviders).mockReturnValue([]);
 
-      const result = await getResumableProvidersForCommand(
-        '20240115_test_abc123',
-        '/sessions',
-        {}
-      );
+      const result = await getResumableProvidersForCommand('20240115_test_abc123', '/sessions', {});
 
       expect(result.success).toBe(true);
       expect(result.providers).toHaveLength(0);

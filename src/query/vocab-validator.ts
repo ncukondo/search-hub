@@ -56,7 +56,7 @@ export function extractControlledVocabTerms(ast: QueryAST): VocabTerm[] {
   const seen = new Set<string>();
   const terms: VocabTerm[] = [];
 
-  const vocabFields: { key: keyof typeof ast.blocks[0]['terms']; vocab: VocabType }[] = [
+  const vocabFields: { key: keyof (typeof ast.blocks)[0]['terms']; vocab: VocabType }[] = [
     { key: 'mesh', vocab: 'mesh' },
     { key: 'eric', vocab: 'eric' },
     { key: 'emtree', vocab: 'emtree' },
@@ -92,7 +92,7 @@ export interface CountVocabValidator {
 async function mapWithConcurrency<T, R>(
   items: T[],
   concurrency: number,
-  fn: (item: T) => Promise<R>
+  fn: (item: T) => Promise<R>,
 ): Promise<R[]> {
   const results: R[] = [];
   let index = 0;
@@ -103,9 +103,7 @@ async function mapWithConcurrency<T, R>(
       if (item !== undefined) results[i] = await fn(item);
     }
   }
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, items.length) }, () => worker())
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
   return results;
 }
 
@@ -122,7 +120,7 @@ async function mapWithConcurrency<T, R>(
 export async function validateControlledVocab(
   ast: QueryAST,
   meshClient: MeSHLookupClient,
-  options?: { countValidators?: CountVocabValidator[] }
+  options?: { countValidators?: CountVocabValidator[] },
 ): Promise<VocabValidationResult> {
   const terms = extractControlledVocabTerms(ast);
 
@@ -151,28 +149,32 @@ export async function validateControlledVocab(
   const CONCURRENCY = 3;
 
   // Validate MeSH terms
-  const meshTask = mapWithConcurrency(meshTerms, CONCURRENCY, async (vocabTerm): Promise<TermOutcome> => {
-    let result: MeSHLookupResult;
-    try {
-      result = await meshClient.lookupTerm(vocabTerm.term);
-    } catch (err) {
-      return {
-        kind: 'error',
-        error: {
-          term: vocabTerm.term,
-          vocabulary: vocabTerm.vocabulary,
-          error: err instanceof Error ? err.message : String(err),
-        },
+  const meshTask = mapWithConcurrency(
+    meshTerms,
+    CONCURRENCY,
+    async (vocabTerm): Promise<TermOutcome> => {
+      let result: MeSHLookupResult;
+      try {
+        result = await meshClient.lookupTerm(vocabTerm.term);
+      } catch (err) {
+        return {
+          kind: 'error',
+          error: {
+            term: vocabTerm.term,
+            vocabulary: vocabTerm.vocabulary,
+            error: err instanceof Error ? err.message : String(err),
+          },
+        };
+      }
+      const termResult: VocabTermResult = {
+        term: vocabTerm.term,
+        vocabulary: vocabTerm.vocabulary,
+        found: result.found,
+        ...(result.suggestions ? { suggestions: result.suggestions } : {}),
       };
-    }
-    const termResult: VocabTermResult = {
-      term: vocabTerm.term,
-      vocabulary: vocabTerm.vocabulary,
-      found: result.found,
-      ...(result.suggestions ? { suggestions: result.suggestions } : {}),
-    };
-    return { kind: result.found ? 'valid' : 'invalid', result: termResult };
-  });
+      return { kind: result.found ? 'valid' : 'invalid', result: termResult };
+    },
+  );
 
   // Validate count-based vocab groups in parallel
   const countTasks = [...countGroups.entries()].map(([vocabType, groupTerms]) => {
@@ -237,7 +239,7 @@ function createCountValidator(
   provider: Provider,
   buildQuery: (term: string) => string,
   providerName: ProviderName,
-  options?: { cache?: VocabCache }
+  options?: { cache?: VocabCache },
 ): CountVocabValidator {
   return {
     vocabulary,
@@ -264,14 +266,14 @@ function createCountValidator(
 
 export function createEricCountValidator(
   provider: Provider,
-  options?: { cache?: VocabCache }
+  options?: { cache?: VocabCache },
 ): CountVocabValidator {
   return createCountValidator('eric', provider, buildEricCountQuery, 'eric', options);
 }
 
 export function createEmtreeCountValidator(
   provider: Provider,
-  options?: { cache?: VocabCache }
+  options?: { cache?: VocabCache },
 ): CountVocabValidator {
   return createCountValidator('emtree', provider, buildEmtreeCountQuery, 'scopus', options);
 }

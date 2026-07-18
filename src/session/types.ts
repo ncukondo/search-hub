@@ -14,22 +14,12 @@ export type { ProviderName };
 /**
  * Overall session status.
  */
-export type SessionStatus =
-  | 'created'
-  | 'running'
-  | 'completed'
-  | 'partial'
-  | 'failed';
+export type SessionStatus = 'created' | 'running' | 'completed' | 'partial' | 'failed';
 
 /**
  * Status for individual database searches.
  */
-export type DatabaseStatusType =
-  | 'pending'
-  | 'in_progress'
-  | 'completed'
-  | 'failed'
-  | 'skipped';
+export type DatabaseStatusType = 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped';
 
 /**
  * Pagination state for resumable searches.

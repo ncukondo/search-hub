@@ -144,8 +144,9 @@ describe('PubMed Module Exports', () => {
     });
 
     it('can register PubMedProvider in a registry', () => {
-      registry.register('pubmed', (config) =>
-        new PubMedProvider({ email: 'test@example.com', ...config })
+      registry.register(
+        'pubmed',
+        (config) => new PubMedProvider({ email: 'test@example.com', ...config }),
       );
 
       expect(registry.has('pubmed')).toBe(true);
@@ -153,11 +154,13 @@ describe('PubMed Module Exports', () => {
     });
 
     it('can get PubMedProvider instance from registry', () => {
-      registry.register('pubmed', (config) =>
-        new PubMedProvider({
-          email: 'test@example.com',
-          ...config,
-        })
+      registry.register(
+        'pubmed',
+        (config) =>
+          new PubMedProvider({
+            email: 'test@example.com',
+            ...config,
+          }),
       );
 
       const provider = registry.get('pubmed');

@@ -70,14 +70,14 @@ describe('Fulltext Init + Sync E2E', () => {
     const sessionDir = join(sessionsDir, sessionId);
     const fulltextDir = join(sessionDir, 'fulltext');
     const dirs = await readdir(fulltextDir, { withFileTypes: true });
-    expect(dirs.filter(d => d.isDirectory())).toHaveLength(2);
+    expect(dirs.filter((d) => d.isDirectory())).toHaveLength(2);
 
     // Verify reviews.yaml updated
     const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
     const reviewFile = parseYaml(await readFile(reviewsPath, 'utf-8')) as ReviewFile;
-    const includedWithFulltext = reviewFile.articles.filter(a => a.fulltext);
+    const includedWithFulltext = reviewFile.articles.filter((a) => a.fulltext);
     expect(includedWithFulltext).toHaveLength(2);
-    const excludedArticle = reviewFile.articles.find(a => a.doi === '10.9999/excluded');
+    const excludedArticle = reviewFile.articles.find((a) => a.doi === '10.9999/excluded');
     expect(excludedArticle?.fulltext).toBeUndefined();
 
     // Step 2: User manually copies PDFs
@@ -85,7 +85,10 @@ describe('Fulltext Init + Sync E2E', () => {
     const dir2 = initResult.entries[1]!.dirName;
     await writeFile(join(fulltextDir, dir1, 'fulltext.pdf'), 'fake-pdf-content-for-ml-review');
     await writeFile(join(fulltextDir, dir2, 'fulltext.pdf'), 'fake-pdf-content-for-dl');
-    await writeFile(join(fulltextDir, dir2, 'fulltext.md'), '# Deep Learning Analysis\n\nContent here...');
+    await writeFile(
+      join(fulltextDir, dir2, 'fulltext.md'),
+      '# Deep Learning Analysis\n\nContent here...',
+    );
 
     // Step 3: Sync
     const syncResult = await executeFulltextSync({ sessionId, sessionsDir });
@@ -111,9 +114,9 @@ describe('Fulltext Init + Sync E2E', () => {
 
     // Verify reviews.yaml updated with hasFiles
     const updatedReview = parseYaml(await readFile(reviewsPath, 'utf-8')) as ReviewFile;
-    const article1 = updatedReview.articles.find(a => a.fulltext?.dirName === dir1);
+    const article1 = updatedReview.articles.find((a) => a.fulltext?.dirName === dir1);
     expect(article1?.fulltext?.hasFiles.pdf).toBe(true);
-    const article2 = updatedReview.articles.find(a => a.fulltext?.dirName === dir2);
+    const article2 = updatedReview.articles.find((a) => a.fulltext?.dirName === dir2);
     expect(article2?.fulltext?.hasFiles.pdf).toBe(true);
     expect(article2?.fulltext?.hasFiles.markdown).toBe(true);
   });
@@ -200,13 +203,13 @@ describe('Fulltext Init + Sync E2E', () => {
 
     // After sync: article A should have hasFiles.pdf=true
     review = parseYaml(await readFile(reviewsPath, 'utf-8')) as ReviewFile;
-    const articleA = review.articles.find(a => a.fulltext?.dirName === dirA);
+    const articleA = review.articles.find((a) => a.fulltext?.dirName === dirA);
     expect(articleA?.fulltext?.hasFiles.pdf).toBe(true);
     expect(articleA?.fulltext?.hasFiles.markdown).toBe(false);
 
     // Article B should still have hasFiles.pdf=false
     const dirB = initResult.entries[1]!.dirName;
-    const articleB = review.articles.find(a => a.fulltext?.dirName === dirB);
+    const articleB = review.articles.find((a) => a.fulltext?.dirName === dirB);
     expect(articleB?.fulltext?.hasFiles.pdf).toBe(false);
   });
 });

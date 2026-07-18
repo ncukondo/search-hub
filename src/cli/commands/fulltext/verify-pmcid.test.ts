@@ -31,8 +31,8 @@ function esummaryResponse(record: {
 }
 
 function mockFetchJson(body: unknown): typeof fetch {
-  return vi.fn(async () =>
-    new Response(JSON.stringify(body), { status: 200 })
+  return vi.fn(
+    async () => new Response(JSON.stringify(body), { status: 200 }),
   ) as unknown as typeof fetch;
 }
 
@@ -47,7 +47,7 @@ describe('verifyPmcid', () => {
           'A Log-Level Data-Driven Precision Education Tool for Pediatrics Trainees: Human-Centered Development and Validation Study.',
         pmid: '41730172',
         doi: '10.2196/79952',
-      })
+      }),
     );
 
     const result = await verifyPmcid(
@@ -58,7 +58,7 @@ describe('verifyPmcid', () => {
         title:
           'Harnessing the Power of Big Data to Improve Graduate Medical Education: Big Idea or Bust?',
       },
-      { fetchFn }
+      { fetchFn },
     );
 
     expect(result).toBe('mismatch');
@@ -71,13 +71,13 @@ describe('verifyPmcid', () => {
         title: 'Some Article',
         pmid: '11111111',
         doi: '10.1234/example',
-      })
+      }),
     );
 
     const result = await verifyPmcid(
       'PMC123456',
       { doi: '10.1234/example', pmid: '11111111', title: 'Some Article' },
-      { fetchFn }
+      { fetchFn },
     );
 
     expect(result).toBe('match');
@@ -85,27 +85,25 @@ describe('verifyPmcid', () => {
 
   it('matches DOI case-insensitively and ignores url prefixes', async () => {
     const fetchFn = mockFetchJson(
-      esummaryResponse({ uid: '123456', doi: '10.1097/acm.0000000000002209' })
+      esummaryResponse({ uid: '123456', doi: '10.1097/acm.0000000000002209' }),
     );
 
     const result = await verifyPmcid(
       'PMC123456',
       { doi: 'https://doi.org/10.1097/ACM.0000000000002209' },
-      { fetchFn }
+      { fetchFn },
     );
 
     expect(result).toBe('match');
   });
 
   it('falls back to PMID comparison when the PMC record has no DOI', async () => {
-    const fetchFn = mockFetchJson(
-      esummaryResponse({ uid: '123456', pmid: '29538103' })
-    );
+    const fetchFn = mockFetchJson(esummaryResponse({ uid: '123456', pmid: '29538103' }));
 
     const result = await verifyPmcid(
       'PMC123456',
       { doi: '10.1097/ACM.0000000000002209', pmid: '29538103' },
-      { fetchFn }
+      { fetchFn },
     );
 
     expect(result).toBe('match');
@@ -115,8 +113,9 @@ describe('verifyPmcid', () => {
     const fetchFn = mockFetchJson(
       esummaryResponse({
         uid: '123456',
-        title: 'Harnessing the power of big data to improve graduate medical education: big idea or bust?',
-      })
+        title:
+          'Harnessing the power of big data to improve graduate medical education: big idea or bust?',
+      }),
     );
 
     const result = await verifyPmcid(
@@ -125,7 +124,7 @@ describe('verifyPmcid', () => {
         title:
           'Harnessing the Power of Big Data to Improve Graduate Medical Education: Big Idea or Bust?',
       },
-      { fetchFn }
+      { fetchFn },
     );
 
     expect(result).toBe('match');
@@ -133,13 +132,13 @@ describe('verifyPmcid', () => {
 
   it('returns mismatch when only titles are comparable and they differ', async () => {
     const fetchFn = mockFetchJson(
-      esummaryResponse({ uid: '123456', title: 'A Completely Different Paper' })
+      esummaryResponse({ uid: '123456', title: 'A Completely Different Paper' }),
     );
 
     const result = await verifyPmcid(
       'PMC123456',
       { title: 'Harnessing the Power of Big Data' },
-      { fetchFn }
+      { fetchFn },
     );
 
     expect(result).toBe('mismatch');
@@ -154,15 +153,11 @@ describe('verifyPmcid', () => {
   });
 
   it('returns unverified when the esummary request fails', async () => {
-    const fetchFn = vi.fn(async () =>
-      new Response('server error', { status: 500 })
+    const fetchFn = vi.fn(
+      async () => new Response('server error', { status: 500 }),
     ) as unknown as typeof fetch;
 
-    const result = await verifyPmcid(
-      'PMC123456',
-      { doi: '10.1234/example' },
-      { fetchFn }
-    );
+    const result = await verifyPmcid('PMC123456', { doi: '10.1234/example' }, { fetchFn });
 
     expect(result).toBe('unverified');
   });
@@ -172,25 +167,15 @@ describe('verifyPmcid', () => {
       throw new Error('network down');
     }) as unknown as typeof fetch;
 
-    const result = await verifyPmcid(
-      'PMC123456',
-      { doi: '10.1234/example' },
-      { fetchFn }
-    );
+    const result = await verifyPmcid('PMC123456', { doi: '10.1234/example' }, { fetchFn });
 
     expect(result).toBe('unverified');
   });
 
   it('accepts a bare numeric PMCID', async () => {
-    const fetchFn = mockFetchJson(
-      esummaryResponse({ uid: '123456', doi: '10.1234/example' })
-    );
+    const fetchFn = mockFetchJson(esummaryResponse({ uid: '123456', doi: '10.1234/example' }));
 
-    const result = await verifyPmcid(
-      '123456',
-      { doi: '10.1234/example' },
-      { fetchFn }
-    );
+    const result = await verifyPmcid('123456', { doi: '10.1234/example' }, { fetchFn });
 
     expect(result).toBe('match');
     const calledUrl = String(vi.mocked(fetchFn).mock.calls[0]?.[0]);
@@ -199,14 +184,12 @@ describe('verifyPmcid', () => {
   });
 
   it('passes tool and email params to the esummary request', async () => {
-    const fetchFn = mockFetchJson(
-      esummaryResponse({ uid: '123456', doi: '10.1234/example' })
-    );
+    const fetchFn = mockFetchJson(esummaryResponse({ uid: '123456', doi: '10.1234/example' }));
 
     await verifyPmcid(
       'PMC123456',
       { doi: '10.1234/example' },
-      { fetchFn, ncbiTool: 'search-hub', ncbiEmail: 'test@example.com' }
+      { fetchFn, ncbiTool: 'search-hub', ncbiEmail: 'test@example.com' },
     );
 
     const calledUrl = String(vi.mocked(fetchFn).mock.calls[0]?.[0]);

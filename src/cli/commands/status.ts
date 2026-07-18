@@ -54,13 +54,11 @@ export interface SessionListResult {
 
 export async function listSessionsForDisplay(
   sessionsDir: string,
-  options: ListOptions
+  options: ListOptions,
 ): Promise<SessionListResult> {
   const summaries = await listSessions(sessionsDir);
 
-  const filtered = options.all
-    ? summaries
-    : summaries.filter((s) => s.status !== 'completed');
+  const filtered = options.all ? summaries : summaries.filter((s) => s.status !== 'completed');
 
   const sessions = filtered.map((s) => ({
     id: s.id,
@@ -80,7 +78,7 @@ export async function listSessionsForDisplay(
 
 export async function getSessionDetails(
   sessionId: string,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<{ success: boolean; session?: SessionDetails; error?: string }> {
   try {
     const session = await loadSession(sessionId, sessionsDir);
@@ -142,7 +140,7 @@ export async function getSessionDetails(
 export async function computeDeduplicationStats(
   sessionId: string,
   sessionsDir: string,
-  session: { databases: Record<string, { files?: { results?: string } } | undefined> }
+  session: { databases: Record<string, { files?: { results?: string } } | undefined> },
 ): Promise<{ uniqueArticles: number; duplicatesRemoved: number }> {
   const articles: import('../../providers/base/types.js').Article[] = [];
   const sessionDir = join(sessionsDir, sessionId);
@@ -163,10 +161,7 @@ export async function computeDeduplicationStats(
   };
 }
 
-export function formatSessionList(
-  result: SessionListResult,
-  options: FormatOptions
-): string {
+export function formatSessionList(result: SessionListResult, options: FormatOptions): string {
   if (options.json) {
     return JSON.stringify(result.sessions, null, 2);
   }
@@ -194,16 +189,15 @@ export function formatSessionList(
   if (!result.showingAll && result.totalCount > result.filteredCount) {
     const hiddenCount = result.totalCount - result.filteredCount;
     lines.push('');
-    lines.push(`(${hiddenCount} completed session${hiddenCount === 1 ? '' : 's'} hidden, use --all to show)`);
+    lines.push(
+      `(${hiddenCount} completed session${hiddenCount === 1 ? '' : 's'} hidden, use --all to show)`,
+    );
   }
 
   return lines.join('\n');
 }
 
-export function formatSessionDetails(
-  details: SessionDetails,
-  options: FormatOptions
-): string {
+export function formatSessionDetails(details: SessionDetails, options: FormatOptions): string {
   if (options.json) {
     return JSON.stringify(details, null, 2);
   }
@@ -221,7 +215,9 @@ export function formatSessionDetails(
   lines.push(`Updated: ${new Date(details.updatedAt).toLocaleString()}`);
   lines.push('');
   if (details.duplicatesRemoved !== undefined && details.duplicatesRemoved > 0) {
-    lines.push(`Total: ${details.totalRetrieved} raw / ${details.uniqueArticles} unique (${details.duplicatesRemoved} duplicates)`);
+    lines.push(
+      `Total: ${details.totalRetrieved} raw / ${details.uniqueArticles} unique (${details.duplicatesRemoved} duplicates)`,
+    );
   } else {
     lines.push(`Total: ${details.totalRetrieved}/${details.totalHits} results`);
   }

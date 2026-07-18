@@ -12,10 +12,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
 import {
   parseResumeOptions,
   validateResumeInput,
@@ -127,15 +124,18 @@ describe('search-hub resume E2E', () => {
     options: {
       name?: string;
       status?: 'pending' | 'in_progress' | 'completed' | 'partial' | 'failed';
-      databases?: Record<string, {
-        status: string;
-        totalHits?: number;
-        retrievedCount?: number;
-        files?: { query: string; results: string };
-        error?: { code: string; message: string; retryable?: boolean };
-        pagination?: { cursor?: string; pageNumber?: number };
-      }>;
-    } = {}
+      databases?: Record<
+        string,
+        {
+          status: string;
+          totalHits?: number;
+          retrievedCount?: number;
+          files?: { query: string; results: string };
+          error?: { code: string; message: string; retryable?: boolean };
+          pagination?: { cursor?: string; pageNumber?: number };
+        }
+      >;
+    } = {},
   ): Promise<string> {
     const sessionDir = join(ctx.sessionsDir, id);
     await mkdir(sessionDir, { recursive: true });
@@ -176,11 +176,7 @@ describe('search-hub resume E2E', () => {
       },
     };
 
-    await writeFile(
-      join(sessionDir, 'session.yaml'),
-      stringifyYaml(session),
-      'utf-8'
-    );
+    await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
     // Create query files for each database
     for (const [provider, dbStatus] of Object.entries(databases)) {
@@ -188,16 +184,12 @@ describe('search-hub resume E2E', () => {
         await writeFile(
           join(sessionDir, dbStatus.files.query),
           `${provider} native query string`,
-          'utf-8'
+          'utf-8',
         );
       }
       if (dbStatus.files?.results) {
         // Create empty results file
-        await writeFile(
-          join(sessionDir, dbStatus.files.results),
-          '',
-          'utf-8'
-        );
+        await writeFile(join(sessionDir, dbStatus.files.results), '', 'utf-8');
       }
     }
 
@@ -263,7 +255,7 @@ describe('search-hub resume E2E', () => {
       const result = await getResumableProvidersForCommand(
         'session-in-progress',
         ctx.sessionsDir,
-        {}
+        {},
       );
 
       expect(result.success).toBe(true);
@@ -294,7 +286,7 @@ describe('search-hub resume E2E', () => {
       const result = await getResumableProvidersForCommand(
         'session-with-failure',
         ctx.sessionsDir,
-        { retryFailed: true }
+        { retryFailed: true },
       );
 
       expect(result.success).toBe(true);
@@ -305,7 +297,7 @@ describe('search-hub resume E2E', () => {
       const result = await getResumableProvidersForCommand(
         'nonexistent-session',
         ctx.sessionsDir,
-        {}
+        {},
       );
 
       expect(result.success).toBe(false);
@@ -331,11 +323,9 @@ describe('search-hub resume E2E', () => {
         },
       });
 
-      const result = await getResumableProvidersForCommand(
-        'session-multi-db',
-        ctx.sessionsDir,
-        { providers: ['pubmed'] }
-      );
+      const result = await getResumableProvidersForCommand('session-multi-db', ctx.sessionsDir, {
+        providers: ['pubmed'],
+      });
 
       expect(result.success).toBe(true);
       expect(result.providers!.length).toBe(1);
@@ -364,7 +354,7 @@ describe('search-hub resume E2E', () => {
         { sessionId: 'session-to-resume' },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -398,7 +388,7 @@ describe('search-hub resume E2E', () => {
         { sessionId: 'session-multi-resume', providers: ['pubmed'] },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -435,7 +425,7 @@ describe('search-hub resume E2E', () => {
         { sessionId: 'session-retry-failed', retryFailed: true },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -452,7 +442,7 @@ describe('search-hub resume E2E', () => {
         { sessionId: 'nonexistent-session-id' },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(false);
@@ -479,7 +469,7 @@ describe('search-hub resume E2E', () => {
         { sessionId: 'session-completed' },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       // Should succeed but with 0 resumed (nothing to resume)
@@ -522,7 +512,7 @@ describe('search-hub resume E2E', () => {
         { sessionId: 'workflow-session' },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       expect(result.success).toBe(true);
@@ -559,7 +549,7 @@ describe('search-hub resume E2E', () => {
         { sessionId: 'all-failed-session', retryFailed: true },
         ctx.sessionsDir,
         config,
-        false
+        false,
       );
 
       // Both providers should be retried

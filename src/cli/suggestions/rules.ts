@@ -1,5 +1,8 @@
 import type { SuggestionContext, SuggestionResult, SuggestionRule } from './types.js';
-import { computeBatchContinuation, generateReviewNextSteps } from '../commands/review/next-steps.js';
+import {
+  computeBatchContinuation,
+  generateReviewNextSteps,
+} from '../commands/review/next-steps.js';
 
 // Phase 1: Query Preparation rules
 
@@ -39,13 +42,17 @@ const queryValidateRule: SuggestionRule = (ctx) => {
 
   const next = [
     { command: `search-hub search ${file} --dry-run`, description: 'Check DB translations' },
-    { command: `search-hub search ${file} --preview`, description: 'Preview hit counts + sample titles' },
+    {
+      command: `search-hub search ${file} --preview`,
+      description: 'Preview hit counts + sample titles',
+    },
   ];
 
   if (ctx.hasSchemaLink === false) {
     return {
-      tip: 'Tip: Start from a template to get $schema support and usage examples:\n'
-         + '     search-hub query init "<title>"',
+      tip:
+        'Tip: Start from a template to get $schema support and usage examples:\n' +
+        '     search-hub query init "<title>"',
       next,
       seeAlso: [],
     };
@@ -59,7 +66,10 @@ const queryTranslateRule: SuggestionRule = (ctx) => {
   const file = ctx.queryFile ?? '<query-file>';
   return {
     next: [
-      { command: `search-hub search ${file} --preview`, description: 'Preview hit counts + sample titles' },
+      {
+        command: `search-hub search ${file} --preview`,
+        description: 'Preview hit counts + sample titles',
+      },
       { command: `search-hub search ${file}`, description: 'Execute search' },
     ],
     seeAlso: [],
@@ -102,7 +112,10 @@ function searchCompletionSuggestion(ctx: SuggestionContext): SuggestionResult | 
     case 'failed':
       return {
         next: [
-          { command: `search-hub resume ${sid} --retry-failed`, description: 'Retry all databases' },
+          {
+            command: `search-hub resume ${sid} --retry-failed`,
+            description: 'Retry all databases',
+          },
           { command: `search-hub status ${sid}`, description: 'View error details' },
         ],
         seeAlso: [],
@@ -117,7 +130,10 @@ const searchDryRunRule: SuggestionRule = (ctx) => {
   const file = ctx.queryFile ?? '<query-file>';
   return {
     next: [
-      { command: `search-hub search ${file} --preview`, description: 'Preview hit counts + sample titles' },
+      {
+        command: `search-hub search ${file} --preview`,
+        description: 'Preview hit counts + sample titles',
+      },
       { command: `search-hub search ${file}`, description: 'Execute search' },
     ],
     seeAlso: [],
@@ -129,7 +145,10 @@ const searchPreviewRule: SuggestionRule = (ctx) => {
   const file = ctx.queryFile ?? '<query-file>';
   return {
     next: [
-      { command: `search-hub query assess ${file} --verdict <verdict>`, description: 'Record assessment' },
+      {
+        command: `search-hub query assess ${file} --verdict <verdict>`,
+        description: 'Record assessment',
+      },
       { command: `search-hub search ${file}`, description: 'Execute full search' },
     ],
     seeAlso: [],
@@ -143,11 +162,12 @@ const searchCountOnlyRule: SuggestionRule = (ctx) => {
     next: [
       { command: `$EDITOR ${file}`, description: 'Edit query to refine' },
       { command: `search-hub search ${file} --count-only`, description: 'Re-check counts' },
-      { command: `search-hub query assess ${file} --verdict refine`, description: 'Record assessment' },
+      {
+        command: `search-hub query assess ${file} --verdict refine`,
+        description: 'Record assessment',
+      },
     ],
-    seeAlso: [
-      { command: `search-hub search ${file}`, description: 'Execute full search' },
-    ],
+    seeAlso: [{ command: `search-hub search ${file}`, description: 'Execute full search' }],
   };
 };
 
@@ -159,7 +179,10 @@ const searchDirectQueryRule: SuggestionRule = (ctx) => {
     next: base.next,
     seeAlso: [
       ...base.seeAlso,
-      { command: 'search-hub query init "<title>"', description: 'Save as YAML for reproducibility' },
+      {
+        command: 'search-hub query init "<title>"',
+        description: 'Save as YAML for reproducibility',
+      },
     ],
   };
 };
@@ -193,7 +216,12 @@ const statusRule: SuggestionRule = (ctx) => {
       };
     case 'failed':
       return {
-        next: [{ command: `search-hub resume ${sid} --retry-failed`, description: 'Retry all databases' }],
+        next: [
+          {
+            command: `search-hub resume ${sid} --retry-failed`,
+            description: 'Retry all databases',
+          },
+        ],
         seeAlso: [],
       };
     default:
@@ -208,12 +236,22 @@ function resultReviewSuggestion(ctx: SuggestionContext): SuggestionResult {
   const sid = ctx.sessionId ?? '<session-id>';
   if (ctx.hasReviews === true) {
     return {
-      next: [{ command: `search-hub review status --session ${sid}`, description: 'Check review progress' }],
+      next: [
+        {
+          command: `search-hub review status --session ${sid}`,
+          description: 'Check review progress',
+        },
+      ],
       seeAlso: [],
     };
   }
   return {
-    next: [{ command: `search-hub review init --session ${sid}`, description: 'Start systematic review' }],
+    next: [
+      {
+        command: `search-hub review init --session ${sid}`,
+        description: 'Start systematic review',
+      },
+    ],
     seeAlso: [],
   };
 }
@@ -234,8 +272,12 @@ const diffRule: SuggestionRule = (ctx) => {
   const seeAlso: SuggestionResult['seeAlso'] = [];
 
   // Suggest merge when both sessions have unique articles
-  if (ctx.diffAddedCount !== undefined && ctx.diffAddedCount > 0 &&
-      ctx.diffRemovedCount !== undefined && ctx.diffRemovedCount > 0) {
+  if (
+    ctx.diffAddedCount !== undefined &&
+    ctx.diffAddedCount > 0 &&
+    ctx.diffRemovedCount !== undefined &&
+    ctx.diffRemovedCount > 0
+  ) {
     const sid1 = ctx.diffSession1Id ?? '<session-id-1>';
     seeAlso.push({
       command: `search-hub merge ${sid1} ${sid}`,
@@ -440,12 +482,8 @@ const queryAssessRule: SuggestionRule = (ctx) => {
   if (ctx.command !== 'query assess') return null;
   const file = ctx.queryFile ?? '<query-file>';
   return {
-    next: [
-      { command: `search-hub query log ${file}`, description: 'View iteration history' },
-    ],
-    seeAlso: [
-      { command: `$EDITOR ${file}`, description: 'Edit query and re-run count' },
-    ],
+    next: [{ command: `search-hub query log ${file}`, description: 'View iteration history' }],
+    seeAlso: [{ command: `$EDITOR ${file}`, description: 'Edit query and re-run count' }],
   };
 };
 

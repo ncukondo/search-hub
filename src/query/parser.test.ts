@@ -166,8 +166,15 @@ providers:
         'Letter',
       ]);
       expect(result.providers?.arxiv?.replaces?.['population']?.field).toBe('all');
-      expect(result.providers?.arxiv?.adds?.filters?.categories).toEqual(['cs.AI', 'cs.LG', 'q-bio']);
-      expect(result.providers?.scopus?.adds?.filters?.sourceTypes).toEqual(['journal', 'conference']);
+      expect(result.providers?.arxiv?.adds?.filters?.categories).toEqual([
+        'cs.AI',
+        'cs.LG',
+        'q-bio',
+      ]);
+      expect(result.providers?.scopus?.adds?.filters?.sourceTypes).toEqual([
+        'journal',
+        'conference',
+      ]);
     });
 
     it('should throw for invalid YAML syntax', () => {
@@ -261,8 +268,15 @@ query:
 `;
       const result = parseQueryString(yaml);
       expect(result.name).toBe('epa_query');
-      expect(result.blocks[0]!.terms.keywords).toEqual(['EPA', 'entrustable professional activities']);
-      expect(result.blocks[0]!.terms.exclude).toEqual(['environmental protection', 'pollution', 'agency']);
+      expect(result.blocks[0]!.terms.keywords).toEqual([
+        'EPA',
+        'entrustable professional activities',
+      ]);
+      expect(result.blocks[0]!.terms.exclude).toEqual([
+        'environmental protection',
+        'pollution',
+        'agency',
+      ]);
     });
 
     it('should parse query with exclude and mesh terms', () => {
@@ -364,7 +378,10 @@ query:
       expect(result.blocks[0]!.terms.keywords).toEqual(['medical education']);
       expect(result.blocks[0]!.terms.mesh).toEqual(['Education, Medical']);
       expect(result.blocks[0]!.terms.emtree).toEqual(['medical education']);
-      expect(result.blocks[0]!.terms.eric).toEqual(['Medical Education', 'Competency Based Education']);
+      expect(result.blocks[0]!.terms.eric).toEqual([
+        'Medical Education',
+        'Competency Based Education',
+      ]);
       expect(result.blocks[0]!.terms.exclude).toEqual(['veterinary']);
     });
 
@@ -407,7 +424,7 @@ query:
       keywords:
         - test
     operator: AND
-`
+`,
       );
 
       const result = await parseQueryFile(filePath);
@@ -505,7 +522,7 @@ providers:
           - cs.LG
           - cs.CL
           - q-bio.QM
-`
+`,
       );
 
       const result = await parseQueryFile(filePath);

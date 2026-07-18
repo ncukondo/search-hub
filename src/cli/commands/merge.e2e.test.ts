@@ -15,10 +15,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml, parse as parseYaml } from 'yaml';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
 import {
   mergeArticles,
   validateMergeSources,
@@ -187,14 +184,22 @@ describe('search-hub merge E2E', () => {
   describe('full merge workflow', () => {
     it('should merge two sessions with deduplication', async () => {
       // Create two sessions with overlapping articles
-      await createTestSession(ctx.sessionsDir, 'session-v4', 'wba-v4', new Map([
-        ['pubmed', pubmedArticles],
-        ['scopus', scopusArticles],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-v4',
+        'wba-v4',
+        new Map([
+          ['pubmed', pubmedArticles],
+          ['scopus', scopusArticles],
+        ]),
+      );
 
-      await createTestSession(ctx.sessionsDir, 'session-v9', 'wba-v9', new Map([
-        ['pubmed', session2PubmedArticles],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-v9',
+        'wba-v9',
+        new Map([['pubmed', session2PubmedArticles]]),
+      );
 
       // Load sessions
       const sessionV4 = await loadSession('session-v4', ctx.sessionsDir);
@@ -265,13 +270,19 @@ describe('search-hub merge E2E', () => {
     });
 
     it('should keep richer metadata when deduplicating', async () => {
-      await createTestSession(ctx.sessionsDir, 'session-v4', 'wba-v4', new Map([
-        ['pubmed', pubmedArticles],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-v4',
+        'wba-v4',
+        new Map([['pubmed', pubmedArticles]]),
+      );
 
-      await createTestSession(ctx.sessionsDir, 'session-v9', 'wba-v9', new Map([
-        ['pubmed', session2PubmedArticles],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-v9',
+        'wba-v9',
+        new Map([['pubmed', session2PubmedArticles]]),
+      );
 
       const sessionV4 = await loadSession('session-v4', ctx.sessionsDir);
       const sessionV9 = await loadSession('session-v9', ctx.sessionsDir);
@@ -279,10 +290,12 @@ describe('search-hub merge E2E', () => {
       const articlesV4 = await loadSessionArticles(sessionV4, 'session-v4', ctx.sessionsDir);
       const articlesV9 = await loadSessionArticles(sessionV9, 'session-v9', ctx.sessionsDir);
 
-      const result = mergeArticles(new Map([
-        ['session-v4', articlesV4],
-        ['session-v9', articlesV9],
-      ]));
+      const result = mergeArticles(
+        new Map([
+          ['session-v4', articlesV4],
+          ['session-v9', articlesV9],
+        ]),
+      );
 
       // Article with pmid:22222222 exists in both, but v9 has abstract
       const mlArticle = result.articles.find((a) => a.pmid === '22222222');
@@ -293,12 +306,18 @@ describe('search-hub merge E2E', () => {
 
   describe('merged session detection', () => {
     it('should reject merged sessions as merge sources', async () => {
-      await createTestSession(ctx.sessionsDir, 'session-a', 'a', new Map([
-        ['pubmed', [pubmedArticles[0]!]],
-      ]));
-      await createTestSession(ctx.sessionsDir, 'session-b', 'b', new Map([
-        ['pubmed', [pubmedArticles[1]!]],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-a',
+        'a',
+        new Map([['pubmed', [pubmedArticles[0]!]]]),
+      );
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-b',
+        'b',
+        new Map([['pubmed', [pubmedArticles[1]!]]]),
+      );
 
       // Create a merged session
       const mergedSession = await createMergedSession({
@@ -348,9 +367,12 @@ describe('search-hub merge E2E', () => {
       };
       await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(partialSession), 'utf-8');
 
-      await createTestSession(ctx.sessionsDir, 'good-session', 'good', new Map([
-        ['pubmed', [pubmedArticles[0]!]],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'good-session',
+        'good',
+        new Map([['pubmed', [pubmedArticles[0]!]]]),
+      );
 
       const sessions = new Map<string, SessionFile>([
         ['partial-session', partialSession],
@@ -366,27 +388,32 @@ describe('search-hub merge E2E', () => {
 
   describe('resume rejection', () => {
     it('should reject resume on merged session', async () => {
-      await createTestSession(ctx.sessionsDir, 'session-a', 'a', new Map([
-        ['pubmed', [pubmedArticles[0]!]],
-      ]));
-      await createTestSession(ctx.sessionsDir, 'session-b', 'b', new Map([
-        ['pubmed', [pubmedArticles[1]!]],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-a',
+        'a',
+        new Map([['pubmed', [pubmedArticles[0]!]]]),
+      );
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-b',
+        'b',
+        new Map([['pubmed', [pubmedArticles[1]!]]]),
+      );
 
       const merged = await createMergedSession({
         name: 'merged-ab',
-        sources: [{ id: 'session-a', name: 'a' }, { id: 'session-b', name: 'b' }],
+        sources: [
+          { id: 'session-a', name: 'a' },
+          { id: 'session-b', name: 'b' },
+        ],
         byProvider: new Map([['pubmed', [pubmedArticles[0]!, pubmedArticles[1]!]]]),
         totalRetrieved: 2,
         sessionsDir: ctx.sessionsDir,
         sourceSessionIds: ['session-a', 'session-b'],
       });
 
-      const result = await getResumableProvidersForCommand(
-        merged.id,
-        ctx.sessionsDir,
-        {},
-      );
+      const result = await getResumableProvidersForCommand(merged.id, ctx.sessionsDir, {});
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('merged session');
@@ -395,12 +422,18 @@ describe('search-hub merge E2E', () => {
 
   describe('dry-run mode', () => {
     it('should show merge preview without creating session', async () => {
-      await createTestSession(ctx.sessionsDir, 'session-a', 'a', new Map([
-        ['pubmed', pubmedArticles],
-      ]));
-      await createTestSession(ctx.sessionsDir, 'session-b', 'b', new Map([
-        ['pubmed', session2PubmedArticles],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-a',
+        'a',
+        new Map([['pubmed', pubmedArticles]]),
+      );
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-b',
+        'b',
+        new Map([['pubmed', session2PubmedArticles]]),
+      );
 
       const sessionA = await loadSession('session-a', ctx.sessionsDir);
       const sessionB = await loadSession('session-b', ctx.sessionsDir);
@@ -408,10 +441,12 @@ describe('search-hub merge E2E', () => {
       const articlesA = await loadSessionArticles(sessionA, 'session-a', ctx.sessionsDir);
       const articlesB = await loadSessionArticles(sessionB, 'session-b', ctx.sessionsDir);
 
-      const result = mergeArticles(new Map([
-        ['session-a', articlesA],
-        ['session-b', articlesB],
-      ]));
+      const result = mergeArticles(
+        new Map([
+          ['session-a', articlesA],
+          ['session-b', articlesB],
+        ]),
+      );
 
       const output = formatMergeOutput({
         sessionId: '(dry-run)',
@@ -434,12 +469,18 @@ describe('search-hub merge E2E', () => {
 
   describe('JSON output', () => {
     it('should produce valid JSON with merge stats', async () => {
-      await createTestSession(ctx.sessionsDir, 'session-a', 'a', new Map([
-        ['pubmed', pubmedArticles],
-      ]));
-      await createTestSession(ctx.sessionsDir, 'session-b', 'b', new Map([
-        ['pubmed', session2PubmedArticles],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-a',
+        'a',
+        new Map([['pubmed', pubmedArticles]]),
+      );
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-b',
+        'b',
+        new Map([['pubmed', session2PubmedArticles]]),
+      );
 
       const sessionA = await loadSession('session-a', ctx.sessionsDir);
       const sessionB = await loadSession('session-b', ctx.sessionsDir);
@@ -447,10 +488,12 @@ describe('search-hub merge E2E', () => {
       const articlesA = await loadSessionArticles(sessionA, 'session-a', ctx.sessionsDir);
       const articlesB = await loadSessionArticles(sessionB, 'session-b', ctx.sessionsDir);
 
-      const result = mergeArticles(new Map([
-        ['session-a', articlesA],
-        ['session-b', articlesB],
-      ]));
+      const result = mergeArticles(
+        new Map([
+          ['session-a', articlesA],
+          ['session-b', articlesB],
+        ]),
+      );
 
       const json = formatMergeJson({
         sessionId: 'test-session',
@@ -475,15 +518,28 @@ describe('search-hub merge E2E', () => {
 
   describe('three-session merge', () => {
     it('should merge three sessions correctly', async () => {
-      await createTestSession(ctx.sessionsDir, 'session-a', 'a', new Map([
-        ['pubmed', [pubmedArticles[0]!]],
-      ]));
-      await createTestSession(ctx.sessionsDir, 'session-b', 'b', new Map([
-        ['pubmed', [pubmedArticles[1]!, pubmedArticles[0]!]], // has duplicate with session-a
-      ]));
-      await createTestSession(ctx.sessionsDir, 'session-c', 'c', new Map([
-        ['pubmed', [pubmedArticles[2]!, pubmedArticles[1]!]], // has duplicate with session-b
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-a',
+        'a',
+        new Map([['pubmed', [pubmedArticles[0]!]]]),
+      );
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-b',
+        'b',
+        new Map([
+          ['pubmed', [pubmedArticles[1]!, pubmedArticles[0]!]], // has duplicate with session-a
+        ]),
+      );
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-c',
+        'c',
+        new Map([
+          ['pubmed', [pubmedArticles[2]!, pubmedArticles[1]!]], // has duplicate with session-b
+        ]),
+      );
 
       const sessions = ['session-a', 'session-b', 'session-c'];
       const sessionArticlesMap = new Map<string, Article[]>();
@@ -504,27 +560,36 @@ describe('search-hub merge E2E', () => {
 
   describe('merged session file structure', () => {
     it('should produce correct session.yaml for merged sessions', async () => {
-      await createTestSession(ctx.sessionsDir, 'session-a', 'a', new Map([
-        ['pubmed', [pubmedArticles[0]!]],
-      ]));
-      await createTestSession(ctx.sessionsDir, 'session-b', 'b', new Map([
-        ['pubmed', [pubmedArticles[1]!]],
-      ]));
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-a',
+        'a',
+        new Map([['pubmed', [pubmedArticles[0]!]]]),
+      );
+      await createTestSession(
+        ctx.sessionsDir,
+        'session-b',
+        'b',
+        new Map([['pubmed', [pubmedArticles[1]!]]]),
+      );
 
       const merged = await createMergedSession({
         name: 'test-merged',
-        sources: [{ id: 'session-a', name: 'a' }, { id: 'session-b', name: 'b' }],
-        byProvider: new Map([['pubmed', [pubmedArticles[0]!, pubmedArticles[1]!]]]) as Map<any, Article[]>,
+        sources: [
+          { id: 'session-a', name: 'a' },
+          { id: 'session-b', name: 'b' },
+        ],
+        byProvider: new Map([['pubmed', [pubmedArticles[0]!, pubmedArticles[1]!]]]) as Map<
+          any,
+          Article[]
+        >,
         totalRetrieved: 2,
         sessionsDir: ctx.sessionsDir,
         sourceSessionIds: ['session-a', 'session-b'],
       });
 
       // Read and parse the session.yaml
-      const sessionYaml = await readFile(
-        join(ctx.sessionsDir, merged.id, 'session.yaml'),
-        'utf-8',
-      );
+      const sessionYaml = await readFile(join(ctx.sessionsDir, merged.id, 'session.yaml'), 'utf-8');
       const parsed = parseYaml(sessionYaml) as SessionFile;
 
       expect(parsed.type).toBe('merge');

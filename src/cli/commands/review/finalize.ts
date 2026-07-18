@@ -37,7 +37,7 @@ function createEmptySkippedByStatus(): Record<ReviewStatus, number> {
  */
 export async function executeReviewFinalize(
   options: ReviewFinalizeOptions,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<ReviewFinalizeResult> {
   const sessionDir = join(sessionsDir, options.sessionId);
   const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
@@ -101,7 +101,7 @@ export async function executeReviewFinalize(
  */
 export function formatFinalizeOutput(
   result: ReviewFinalizeResult,
-  options?: { dryRun?: boolean; decision?: 'include' | 'exclude' }
+  options?: { dryRun?: boolean; decision?: 'include' | 'exclude' },
 ): string {
   const lines: string[] = [];
 
@@ -111,7 +111,9 @@ export function formatFinalizeOutput(
   }
 
   const total = result.includedCount + result.excludedCount;
-  lines.push(`Finalized ${total} articles (${result.includedCount} include, ${result.excludedCount} exclude)`);
+  lines.push(
+    `Finalized ${total} articles (${result.includedCount} include, ${result.excludedCount} exclude)`,
+  );
 
   // Build skipped summary (only non-zero, non-agreed statuses)
   const skippedParts: string[] = [];

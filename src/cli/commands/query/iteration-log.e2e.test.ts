@@ -41,7 +41,8 @@ describe('query iteration log E2E', () => {
   it('should complete the full iteration lifecycle', async () => {
     // 1. Create a query file
     const queryFile = join(testDir, 'my-search.yaml');
-    const queryContent = 'name: diabetes-search\nquery:\n  - field: title_abstract\n    terms:\n      keywords: ["diabetes", "mellitus"]\n    operator: AND\n';
+    const queryContent =
+      'name: diabetes-search\nquery:\n  - field: title_abstract\n    terms:\n      keywords: ["diabetes", "mellitus"]\n    operator: AND\n';
     await writeFile(queryFile, queryContent, 'utf-8');
 
     // 2. Simulate search --count-only (auto-log)
@@ -104,9 +105,7 @@ describe('query iteration log E2E', () => {
 
     // Add count entry
     const hash = computeQueryHash('name: test\n');
-    await appendLogEntry(queryFile, buildCountLogEntry(hash, [
-      { provider: 'pubmed', count: 100 },
-    ]));
+    await appendLogEntry(queryFile, buildCountLogEntry(hash, [{ provider: 'pubmed', count: 100 }]));
 
     // Add assessment
     await executeQueryAssess(queryFile, { verdict: 'good', precision: '~60%' });
@@ -130,18 +129,14 @@ describe('query iteration log E2E', () => {
     const v1Content = 'name: v1\n';
     await writeFile(queryFile, v1Content, 'utf-8');
     const h1 = computeQueryHash(v1Content);
-    await appendLogEntry(queryFile, buildCountLogEntry(h1, [
-      { provider: 'pubmed', count: 10000 },
-    ]));
+    await appendLogEntry(queryFile, buildCountLogEntry(h1, [{ provider: 'pubmed', count: 10000 }]));
     await executeQueryAssess(queryFile, { verdict: 'reject', comment: 'Too few results' });
 
     // Iteration 2 — modify query
     const v2Content = 'name: v2\n';
     await writeFile(queryFile, v2Content, 'utf-8');
     const h2 = computeQueryHash(v2Content);
-    await appendLogEntry(queryFile, buildCountLogEntry(h2, [
-      { provider: 'pubmed', count: 50000 },
-    ]));
+    await appendLogEntry(queryFile, buildCountLogEntry(h2, [{ provider: 'pubmed', count: 50000 }]));
     await executeQueryAssess(queryFile, { verdict: 'good', precision: '~55%' });
 
     // Verify all entries preserved

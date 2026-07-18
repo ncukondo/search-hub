@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { computeBatchContinuation, generateReviewNextSteps, type ReviewNextStepsContext } from './next-steps.js';
+import {
+  computeBatchContinuation,
+  generateReviewNextSteps,
+  type ReviewNextStepsContext,
+} from './next-steps.js';
 import type { ReviewStatusResult } from './status.js';
 
 function makeStatusResult(overrides: Partial<ReviewStatusResult> = {}): ReviewStatusResult {
@@ -156,7 +160,7 @@ describe('generateReviewNextSteps', () => {
       expect(result).not.toBeNull();
       // Should have main suggestion + batch continuation in seeAlso
       expect(result!.seeAlso.length).toBeGreaterThanOrEqual(1);
-      const batchSuggestion = result!.seeAlso.find(s => s.command.includes('--offset'));
+      const batchSuggestion = result!.seeAlso.find((s) => s.command.includes('--offset'));
       expect(batchSuggestion).toBeDefined();
       expect(batchSuggestion!.command).toContain('--offset 20');
       expect(batchSuggestion!.command).toContain('--limit 20');
@@ -177,7 +181,7 @@ describe('generateReviewNextSteps', () => {
       const result = generateReviewNextSteps(ctx);
       expect(result).not.toBeNull();
       // No batch continuation in seeAlso
-      const batchSuggestion = result!.seeAlso.find(s => s.command.includes('--offset'));
+      const batchSuggestion = result!.seeAlso.find((s) => s.command.includes('--offset'));
       expect(batchSuggestion).toBeUndefined();
     });
   });

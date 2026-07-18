@@ -19,7 +19,7 @@ const BULK_IMPORT_FILE = '_bulk_import.json';
  */
 export async function saveRegistrationRecord(
   sessionDir: string,
-  record: RegistrationRecord
+  record: RegistrationRecord,
 ): Promise<void> {
   await fs.mkdir(sessionDir, { recursive: true });
   const filePath = path.join(sessionDir, REGISTRATION_FILE);
@@ -32,7 +32,7 @@ export async function saveRegistrationRecord(
  * Throws if file exists but is invalid.
  */
 export async function loadRegistrationRecord(
-  sessionDir: string
+  sessionDir: string,
 ): Promise<RegistrationRecord | null> {
   const filePath = path.join(sessionDir, REGISTRATION_FILE);
   try {
@@ -68,13 +68,7 @@ export interface RegisterOptions {
  * only articles with none of these are counted as noId and skipped.
  */
 function hasIdentifier(article: Article): boolean {
-  return !!(
-    article.pmid ||
-    article.doi ||
-    article.arxivId ||
-    article.scopusId ||
-    article.ericId
-  );
+  return !!(article.pmid || article.doi || article.arxivId || article.scopusId || article.ericId);
 }
 
 /**
@@ -90,14 +84,15 @@ function hasIdentifier(article: Article): boolean {
  */
 export async function registerArticles(
   articles: Article[],
-  options: RegisterOptions
+  options: RegisterOptions,
 ): Promise<RegistrationRecord> {
-  const { sessionId, sessionDir, withAbstracts, noAttachFulltext, onProgress, onAttachProgress } = options;
+  const { sessionId, sessionDir, withAbstracts, noAttachFulltext, onProgress, onAttachProgress } =
+    options;
   const libraryPath = path.join(sessionDir, 'references.json');
 
   if (withAbstracts) {
     console.warn(
-      'Note: abstracts are now always included in bulk import. --with-abstracts flag is no longer needed.'
+      'Note: abstracts are now always included in bulk import. --with-abstracts flag is no longer needed.',
     );
   }
 

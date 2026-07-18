@@ -103,15 +103,8 @@ describe('VocabCache', () => {
 
       await cache.save();
 
-      expect(fs.mkdir).toHaveBeenCalledWith(
-        path.dirname(testCachePath),
-        { recursive: true }
-      );
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        testCachePath,
-        expect.any(String),
-        'utf-8'
-      );
+      expect(fs.mkdir).toHaveBeenCalledWith(path.dirname(testCachePath), { recursive: true });
+      expect(fs.writeFile).toHaveBeenCalledWith(testCachePath, expect.any(String), 'utf-8');
 
       // Verify the written JSON is valid and contains the entry
       const writtenJson = vi.mocked(fs.writeFile).mock.calls[0]![1] as string;
@@ -125,10 +118,7 @@ describe('VocabCache', () => {
 
       await cache.save();
 
-      expect(fs.mkdir).toHaveBeenCalledWith(
-        path.dirname(testCachePath),
-        { recursive: true }
-      );
+      expect(fs.mkdir).toHaveBeenCalledWith(path.dirname(testCachePath), { recursive: true });
     });
   });
 });

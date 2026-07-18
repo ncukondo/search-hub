@@ -5,7 +5,14 @@
 import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir, copyFile, access } from 'node:fs/promises';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { classifyStatus, type ReviewFile, type ArticleEntry, type ReviewStatus, type ReviewBasis, type ReviewMode } from './types.js';
+import {
+  classifyStatus,
+  type ReviewFile,
+  type ArticleEntry,
+  type ReviewStatus,
+  type ReviewBasis,
+  type ReviewMode,
+} from './types.js';
 
 export type SortOption = 'year' | 'title' | 'random' | 'none';
 
@@ -25,7 +32,6 @@ export interface ReviewExtractOptions {
   /** When true, outputs final decision format with reviewHistory and finalDecision fields. */
   finalize?: boolean;
 }
-
 
 export interface ReviewExtractResult {
   outputPath: string;
@@ -236,7 +242,7 @@ export function validateName(name: string): void {
  */
 export async function executeReviewExtract(
   options: ReviewExtractOptions,
-  sessionsDir: string
+  sessionsDir: string,
 ): Promise<ReviewExtractResult> {
   validateName(options.name);
 
@@ -294,13 +300,13 @@ export async function executeReviewExtract(
     const decisionComment = getDecisionInlineComment(options.basis, mode);
     let yamlWithComments = yamlContent.replace(
       /^(\s*-?\s*)decision: uncertain$/gm,
-      `$1decision: uncertain          ${decisionComment}`
+      `$1decision: uncertain          ${decisionComment}`,
     );
 
     // Add comment field inline guidance
     yamlWithComments = yamlWithComments.replace(
       /^(\s*)comment: ""$/gm,
-      '$1comment: ""                  # reason for decision'
+      '$1comment: ""                  # reason for decision',
     );
 
     const guidanceComment = getBasisGuidanceComment(options.basis, mode);
@@ -318,13 +324,13 @@ export async function executeReviewExtract(
     // Replace finalDecision: null with a commented placeholder for user guidance
     let yamlWithComments = yamlContent.replace(
       /^(\s*)finalDecision: null$/gm,
-      '$1finalDecision: # include / exclude'
+      '$1finalDecision: # include / exclude',
     );
 
     // Add reviews array inline guidance
     yamlWithComments = yamlWithComments.replace(
       /^(\s*)reviews: \[\]$/gm,
-      '$1reviews: []                  # add new reviews here'
+      '$1reviews: []                  # add new reviews here',
     );
 
     const guidanceComment = getFinalDecisionGuidanceComment();

@@ -9,10 +9,7 @@ import { translateQuery } from './translator';
 /**
  * Helper to create a minimal ResolvedAST for testing.
  */
-function createResolvedAST(
-  blocks: QueryBlock[],
-  filters: Filters = {}
-): ResolvedAST {
+function createResolvedAST(blocks: QueryBlock[], filters: Filters = {}): ResolvedAST {
   return {
     name: 'test-query',
     blocks,
@@ -141,7 +138,7 @@ describe('PubMed Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.native).toBe(
-        '(diabetes[tiab] OR T2DM[tiab] OR "Diabetes Mellitus, Type 2"[mh])'
+        '(diabetes[tiab] OR T2DM[tiab] OR "Diabetes Mellitus, Type 2"[mh])',
       );
     });
   });
@@ -192,9 +189,7 @@ describe('PubMed Query Translator', () => {
       ]);
 
       const result = translateQuery(ast);
-      expect(result.native).toBe(
-        '(diabetes[tiab]) AND (AI[tiab] OR "machine learning"[tiab])'
-      );
+      expect(result.native).toBe('(diabetes[tiab]) AND (AI[tiab] OR "machine learning"[tiab])');
     });
   });
 
@@ -253,7 +248,7 @@ describe('PubMed Query Translator', () => {
             operator: 'OR',
           },
         ],
-        { yearFrom: 2020 }
+        { yearFrom: 2020 },
       );
 
       const result = translateQuery(ast);
@@ -270,7 +265,7 @@ describe('PubMed Query Translator', () => {
             operator: 'OR',
           },
         ],
-        { yearTo: 2024 }
+        { yearTo: 2024 },
       );
 
       const result = translateQuery(ast);
@@ -287,7 +282,7 @@ describe('PubMed Query Translator', () => {
             operator: 'OR',
           },
         ],
-        { yearFrom: 2020, yearTo: 2024 }
+        { yearFrom: 2020, yearTo: 2024 },
       );
 
       const result = translateQuery(ast);
@@ -306,7 +301,7 @@ describe('PubMed Query Translator', () => {
             operator: 'OR',
           },
         ],
-        { languages: ['en'] }
+        { languages: ['en'] },
       );
 
       const result = translateQuery(ast);
@@ -323,7 +318,7 @@ describe('PubMed Query Translator', () => {
             operator: 'OR',
           },
         ],
-        { languages: ['en', 'ja'] }
+        { languages: ['en', 'ja'] },
       );
 
       const result = translateQuery(ast);
@@ -346,7 +341,7 @@ describe('PubMed Query Translator', () => {
           publicationTypes: {
             exclude: ['Review', 'Meta-Analysis'],
           },
-        }
+        },
       );
 
       const result = translateQuery(ast);
@@ -369,7 +364,7 @@ describe('PubMed Query Translator', () => {
           publicationTypes: {
             exclude: ['Comment'],
           },
-        }
+        },
       );
 
       const result = translateQuery(ast);
@@ -392,7 +387,7 @@ describe('PubMed Query Translator', () => {
             include: ['Journal Article'],
             exclude: ['Review', 'Comment'],
           },
-        }
+        },
       );
 
       const result = translateQuery(ast);
@@ -415,13 +410,11 @@ describe('PubMed Query Translator', () => {
           publicationTypes: {
             include: ['Journal Article', 'Clinical Trial'],
           },
-        }
+        },
       );
 
       const result = translateQuery(ast);
-      expect(result.native).toContain(
-        '("journal article"[pt] OR "clinical trial"[pt])'
-      );
+      expect(result.native).toContain('("journal article"[pt] OR "clinical trial"[pt])');
     });
   });
 
@@ -441,7 +434,7 @@ describe('PubMed Query Translator', () => {
           publicationTypes: {
             exclude: ['Comment', 'Letter'],
           },
-        }
+        },
       );
 
       const result = translateQuery(ast);
@@ -502,7 +495,9 @@ describe('PubMed Query Translator', () => {
       ]);
 
       const result = translateQuery(ast);
-      expect(result.native).toContain('NOT ("environmental protection"[tiab] OR pollution[tiab] OR agency[tiab])');
+      expect(result.native).toContain(
+        'NOT ("environmental protection"[tiab] OR pollution[tiab] OR agency[tiab])',
+      );
     });
 
     it('should translate exclude terms with same field qualifier as keywords', () => {
@@ -577,7 +572,7 @@ describe('PubMed Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.native).toBe(
-        '("Artificial Intelligence"[mh]) AND (diabetes[tiab] OR T2DM[tiab])'
+        '("Artificial Intelligence"[mh]) AND (diabetes[tiab] OR T2DM[tiab])',
       );
     });
   });
@@ -600,7 +595,7 @@ describe('PubMed Query Translator', () => {
     it('should handle exclude-only query without leading space', () => {
       const ast = createResolvedAST(
         [], // no query blocks
-        { publicationTypes: { exclude: ['Review'] } }
+        { publicationTypes: { exclude: ['Review'] } },
       );
       const result = translateQuery(ast);
       expect(result.native).toBe('NOT review[pt]');
@@ -633,7 +628,7 @@ describe('PubMed Query Translator', () => {
           publicationTypes: {
             exclude: ['Review'],
           },
-        }
+        },
       );
 
       const result = translateQuery(ast);
@@ -665,7 +660,7 @@ describe('PubMed Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.warnings).toContainEqual(
-        'PubMed: block 1 skipped (contains only Emtree terms, not supported)'
+        'PubMed: block 1 skipped (contains only Emtree terms, not supported)',
       );
     });
 

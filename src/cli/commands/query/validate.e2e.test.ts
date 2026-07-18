@@ -86,7 +86,7 @@ filters:
   languages:
     - en
     - de
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -98,10 +98,7 @@ filters:
 
   describe('validate - invalid query file shows errors', () => {
     it('should fail for missing name field', async () => {
-      const queryPath = await createRawQueryFile(
-        ctx.tempDir,
-        invalidQueryFixtures.missingName
-      );
+      const queryPath = await createRawQueryFile(ctx.tempDir, invalidQueryFixtures.missingName);
 
       const result = await validateQueryCommand(queryPath);
 
@@ -114,10 +111,7 @@ filters:
     });
 
     it('should fail for invalid field type', async () => {
-      const queryPath = await createRawQueryFile(
-        ctx.tempDir,
-        invalidQueryFixtures.invalidField
-      );
+      const queryPath = await createRawQueryFile(ctx.tempDir, invalidQueryFixtures.invalidField);
 
       const result = await validateQueryCommand(queryPath);
 
@@ -126,10 +120,7 @@ filters:
     });
 
     it('should fail for empty keywords', async () => {
-      const queryPath = await createRawQueryFile(
-        ctx.tempDir,
-        invalidQueryFixtures.emptyKeywords
-      );
+      const queryPath = await createRawQueryFile(ctx.tempDir, invalidQueryFixtures.emptyKeywords);
 
       const result = await validateQueryCommand(queryPath);
 
@@ -138,10 +129,7 @@ filters:
     });
 
     it('should fail for malformed YAML', async () => {
-      const queryPath = await createRawQueryFile(
-        ctx.tempDir,
-        invalidQueryFixtures.malformedYaml
-      );
+      const queryPath = await createRawQueryFile(ctx.tempDir, invalidQueryFixtures.malformedYaml);
 
       const result = await validateQueryCommand(queryPath);
 
@@ -172,7 +160,7 @@ query:
     operator: AND
 filters:
   year_from: "invalid"
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -210,7 +198,7 @@ query:
       keywords:
         - test
     operator: AND
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -233,7 +221,7 @@ query:
     terms:
       keywords: "not an array"
     operator: AND
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -254,7 +242,7 @@ query:
       keywords:
         - test
     operator: INVALID
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -321,7 +309,7 @@ query:
       keywords:
         - single
     operator: OR
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -343,7 +331,7 @@ query:
       keywords:
         - test
     operator: AND
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -369,7 +357,7 @@ providers:
     adds:
       filters:
         year_from: 2022
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -395,14 +383,14 @@ query:
         - "Diabetes Mellitus"
         - "Diabetes Mellitus, Type 2"
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(
         new Map([
           ['Diabetes Mellitus', { found: true }],
           ['Diabetes Mellitus, Type 2', { found: true }],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
@@ -427,7 +415,7 @@ query:
       mesh:
         - "Diabetes Mellitis"
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(
@@ -436,13 +424,10 @@ query:
             'Diabetes Mellitis',
             {
               found: false,
-              suggestions: [
-                'Diabetes Mellitus',
-                'Diabetes Mellitus, Type 2',
-              ],
+              suggestions: ['Diabetes Mellitus', 'Diabetes Mellitus, Type 2'],
             },
           ],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
@@ -450,9 +435,7 @@ query:
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
       expect(result.vocabResult!.invalid).toHaveLength(1);
-      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
-        'Diabetes Mellitus'
-      );
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain('Diabetes Mellitus');
     });
 
     it('should format vocab validation output correctly', async () => {
@@ -470,14 +453,14 @@ query:
         - "Artificial Intelligence"
         - "Not A Real Term"
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(
         new Map([
           ['Artificial Intelligence', { found: true }],
           ['Not A Real Term', { found: false, suggestions: ['Artificial Intelligence'] }],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
@@ -496,7 +479,7 @@ query:
         ctx.tempDir,
         `
 query: not_valid
-`
+`,
       );
 
       const client = createMockMeSHClient(new Map());
@@ -519,7 +502,7 @@ query:
       keywords:
         - diabetes
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(new Map());
@@ -545,14 +528,14 @@ query:
         - "Diabetes Mellitus"
         - "Not A Real Term"
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(
         new Map([
           ['Diabetes Mellitus', { found: true }],
           ['Not A Real Term', { found: false }],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
@@ -575,12 +558,10 @@ query:
       mesh:
         - "Diabetes Mellitus"
     operator: OR
-`
+`,
       );
 
-      const client = createMockMeSHClient(
-        new Map([['Diabetes Mellitus', { found: true }]])
-      );
+      const client = createMockMeSHClient(new Map([['Diabetes Mellitus', { found: true }]]));
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
 
@@ -598,11 +579,13 @@ query:
 
       // Simulate what the CLI action does
       let output = formatValidateResult(result, queryPath);
-      const suggestion = formatSuggestion(getSuggestion({
-        command: 'query validate',
-        queryFile: queryPath,
-        validationSuccess: result.success,
-      }));
+      const suggestion = formatSuggestion(
+        getSuggestion({
+          command: 'query validate',
+          queryFile: queryPath,
+          validationSuccess: result.success,
+        }),
+      );
       if (suggestion) output += '\n' + suggestion;
 
       expect(output).toContain('--dry-run');
@@ -611,20 +594,19 @@ query:
     });
 
     it('should show $EDITOR suggestion after failed validation with --no-vocab', async () => {
-      const queryPath = await createRawQueryFile(
-        ctx.tempDir,
-        invalidQueryFixtures.missingName
-      );
+      const queryPath = await createRawQueryFile(ctx.tempDir, invalidQueryFixtures.missingName);
       const result = await validateQueryCommand(queryPath, { noVocab: true });
 
       expect(result.success).toBe(false);
 
       let output = formatValidateResult(result, queryPath);
-      const suggestion = formatSuggestion(getSuggestion({
-        command: 'query validate',
-        queryFile: queryPath,
-        validationSuccess: result.success,
-      }));
+      const suggestion = formatSuggestion(
+        getSuggestion({
+          command: 'query validate',
+          queryFile: queryPath,
+          validationSuccess: result.success,
+        }),
+      );
       if (suggestion) output += '\n' + suggestion;
 
       expect(output).toContain('$EDITOR');
@@ -639,11 +621,13 @@ query:
 
       // When --quiet is set, the CLI skips all output including suggestions
       // Verify that suggestion is non-empty (so quiet suppression is meaningful)
-      const suggestion = formatSuggestion(getSuggestion({
-        command: 'query validate',
-        queryFile: queryPath,
-        validationSuccess: result.success,
-      }));
+      const suggestion = formatSuggestion(
+        getSuggestion({
+          command: 'query validate',
+          queryFile: queryPath,
+          validationSuccess: result.success,
+        }),
+      );
       expect(suggestion.length).toBeGreaterThan(0);
 
       // The quiet path should produce no output at all - this is gated by
@@ -666,12 +650,10 @@ query:
       mesh:
         - "Diabetes Mellitus"
     operator: OR
-`
+`,
       );
 
-      const client = createMockMeSHClient(
-        new Map([['Diabetes Mellitus', { found: true }]])
-      );
+      const client = createMockMeSHClient(new Map([['Diabetes Mellitus', { found: true }]]));
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
 
@@ -682,11 +664,13 @@ query:
       if (result.vocabResult) {
         output += formatVocabValidationOutput(result.vocabResult);
       }
-      const suggestion = formatSuggestion(getSuggestion({
-        command: 'query validate',
-        queryFile: queryPath,
-        validationSuccess: result.success && !hasVocabErrors(result),
-      }));
+      const suggestion = formatSuggestion(
+        getSuggestion({
+          command: 'query validate',
+          queryFile: queryPath,
+          validationSuccess: result.success && !hasVocabErrors(result),
+        }),
+      );
       if (suggestion) output += '\n' + suggestion;
 
       expect(output).toContain('--dry-run');
@@ -707,12 +691,10 @@ query:
       mesh:
         - "Not A Real Term"
     operator: OR
-`
+`,
       );
 
-      const client = createMockMeSHClient(
-        new Map([['Not A Real Term', { found: false }]])
-      );
+      const client = createMockMeSHClient(new Map([['Not A Real Term', { found: false }]]));
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
 
@@ -723,11 +705,13 @@ query:
       if (result.vocabResult) {
         output += formatVocabValidationOutput(result.vocabResult);
       }
-      const suggestion = formatSuggestion(getSuggestion({
-        command: 'query validate',
-        queryFile: queryPath,
-        validationSuccess: result.success && !hasVocabErrors(result),
-      }));
+      const suggestion = formatSuggestion(
+        getSuggestion({
+          command: 'query validate',
+          queryFile: queryPath,
+          validationSuccess: result.success && !hasVocabErrors(result),
+        }),
+      );
       if (suggestion) output += '\n' + suggestion;
 
       expect(output).toContain('$EDITOR');
@@ -748,7 +732,7 @@ query:
       mesh:
         - "Artificial Intelligence"
     operator: OR
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -770,7 +754,7 @@ query:
       eric:
         - "Medical Education"
     operator: OR
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -792,7 +776,7 @@ query:
       exclude:
         - "animal"
     operator: OR
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -822,7 +806,7 @@ query:
         - diabetes
         - T2DM
     operator: OR
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
@@ -849,14 +833,14 @@ query:
         - "Diabetes Mellitus"
         - "Diabetes Mellitus, Type 2"
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(
         new Map([
           ['Diabetes Mellitus', { found: true }],
           ['Diabetes Mellitus, Type 2', { found: true }],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
@@ -881,7 +865,7 @@ query:
       mesh:
         - "Artificial Intelligencee"
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(
@@ -893,7 +877,7 @@ query:
               suggestions: ['Artificial Intelligence'],
             },
           ],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
@@ -901,9 +885,7 @@ query:
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
       expect(result.vocabResult!.invalid).toHaveLength(1);
-      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
-        'Artificial Intelligence'
-      );
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain('Artificial Intelligence');
 
       const output = formatVocabValidationOutput(result.vocabResult!);
       expect(output).toContain('✗ mesh: "Artificial Intelligencee"');
@@ -924,7 +906,7 @@ query:
       mesh:
         - "Artificial Inteligence"
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(
@@ -936,7 +918,7 @@ query:
               suggestions: ['Artificial Intelligence'],
             },
           ],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
@@ -944,9 +926,7 @@ query:
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
       expect(result.vocabResult!.invalid).toHaveLength(1);
-      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
-        'Artificial Intelligence'
-      );
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain('Artificial Intelligence');
 
       const output = formatVocabValidationOutput(result.vocabResult!);
       expect(output).toContain('✗ mesh: "Artificial Inteligence"');
@@ -967,7 +947,7 @@ query:
       mesh:
         - "Brest Neoplasms"
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(
@@ -979,7 +959,7 @@ query:
               suggestions: ['Breast Neoplasms'],
             },
           ],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
@@ -987,9 +967,7 @@ query:
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
       expect(result.vocabResult!.invalid).toHaveLength(1);
-      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
-        'Breast Neoplasms'
-      );
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain('Breast Neoplasms');
 
       const output = formatVocabValidationOutput(result.vocabResult!);
       expect(output).toContain('✗ mesh: "Brest Neoplasms"');
@@ -1010,7 +988,7 @@ query:
       mesh:
         - "Diabetse Mellitus"
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(
@@ -1022,7 +1000,7 @@ query:
               suggestions: ['Diabetes Mellitus'],
             },
           ],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand(queryPath, { meshClient: client });
@@ -1030,9 +1008,7 @@ query:
       expect(result.success).toBe(true);
       expect(result.vocabResult).toBeDefined();
       expect(result.vocabResult!.invalid).toHaveLength(1);
-      expect(result.vocabResult!.invalid[0]!.suggestions).toContain(
-        'Diabetes Mellitus'
-      );
+      expect(result.vocabResult!.invalid[0]!.suggestions).toContain('Diabetes Mellitus');
 
       const output = formatVocabValidationOutput(result.vocabResult!);
       expect(output).toContain('✗ mesh: "Diabetse Mellitus"');
@@ -1053,12 +1029,10 @@ query:
       mesh:
         - "Diabetes Mellitus"
     operator: OR
-`
+`,
       );
 
-      const client = createMockMeSHClient(
-        new Map([['Diabetes Mellitus', { found: true }]])
-      );
+      const client = createMockMeSHClient(new Map([['Diabetes Mellitus', { found: true }]]));
 
       const result = await validateQueryCommand(queryPath, {
         meshClient: client,
@@ -1082,7 +1056,7 @@ query:
         - diabetes
         - insulin
     operator: OR
-`
+`,
       );
 
       const client = createMockMeSHClient(new Map());
@@ -1107,11 +1081,13 @@ query:
       mesh:
         - "Diabetes Mellitus"
     operator: OR
-`
+`,
       );
 
       const client = {
-        lookupTerm: async () => { throw new Error('Network timeout'); },
+        lookupTerm: async () => {
+          throw new Error('Network timeout');
+        },
         lookupTerms: async () => [],
       } as unknown as import('../../../query/mesh-lookup.js').MeSHLookupClient;
 
@@ -1128,9 +1104,14 @@ query:
     it('should include Next: suggestion in CLI stdout for valid query with --no-vocab', async () => {
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
 
-      const result = await execCli(
-        ['query', 'validate', queryPath, '--no-vocab', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'query',
+        'validate',
+        queryPath,
+        '--no-vocab',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('Next:');
@@ -1138,14 +1119,16 @@ query:
     });
 
     it('should include Next: suggestion in CLI stdout for invalid query with --no-vocab', async () => {
-      const queryPath = await createRawQueryFile(
-        ctx.tempDir,
-        invalidQueryFixtures.missingName
-      );
+      const queryPath = await createRawQueryFile(ctx.tempDir, invalidQueryFixtures.missingName);
 
-      const result = await execCli(
-        ['query', 'validate', queryPath, '--no-vocab', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'query',
+        'validate',
+        queryPath,
+        '--no-vocab',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).not.toBe(0);
       expect(result.stdout).toContain('Next:');
@@ -1155,9 +1138,15 @@ query:
     it('should suppress suggestion in CLI stdout with --quiet', async () => {
       const queryPath = await createQueryFile(ctx.tempDir, queryFixtures.simple);
 
-      const result = await execCli(
-        ['query', 'validate', queryPath, '--no-vocab', '--quiet', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'query',
+        'validate',
+        queryPath,
+        '--no-vocab',
+        '--quiet',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).not.toContain('Next:');
@@ -1185,7 +1174,7 @@ query:
       keywords:
         - test
     operator: OR
-`
+`,
       );
 
       const hasSchema = await detectSchemaLink(queryPath);
@@ -1200,12 +1189,14 @@ query:
       expect(result.success).toBe(true);
 
       const hasSchema = await detectSchemaLink(outputPath);
-      const suggestion = formatSuggestion(getSuggestion({
-        command: 'query validate',
-        queryFile: outputPath,
-        validationSuccess: result.success,
-        hasSchemaLink: hasSchema,
-      }));
+      const suggestion = formatSuggestion(
+        getSuggestion({
+          command: 'query validate',
+          queryFile: outputPath,
+          validationSuccess: result.success,
+          hasSchemaLink: hasSchema,
+        }),
+      );
 
       // Should NOT contain query init since schema is present
       expect(suggestion).not.toContain('query init');
@@ -1223,19 +1214,21 @@ query:
       keywords:
         - test
     operator: OR
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath);
       expect(result.success).toBe(true);
 
       const hasSchema = await detectSchemaLink(queryPath);
-      const suggestion = formatSuggestion(getSuggestion({
-        command: 'query validate',
-        queryFile: queryPath,
-        validationSuccess: result.success,
-        hasSchemaLink: hasSchema,
-      }));
+      const suggestion = formatSuggestion(
+        getSuggestion({
+          command: 'query validate',
+          queryFile: queryPath,
+          validationSuccess: result.success,
+          hasSchemaLink: hasSchema,
+        }),
+      );
 
       // Should contain Tip with query init recommendation
       expect(suggestion).toContain('Tip:');
@@ -1245,21 +1238,20 @@ query:
     });
 
     it('should show Or section with query init for invalid file without $schema (failure)', async () => {
-      const queryPath = await createRawQueryFile(
-        ctx.tempDir,
-        invalidQueryFixtures.missingName
-      );
+      const queryPath = await createRawQueryFile(ctx.tempDir, invalidQueryFixtures.missingName);
 
       const result = await validateQueryCommand(queryPath);
       expect(result.success).toBe(false);
 
       const hasSchema = await detectSchemaLink(queryPath);
-      const suggestion = formatSuggestion(getSuggestion({
-        command: 'query validate',
-        queryFile: queryPath,
-        validationSuccess: result.success,
-        hasSchemaLink: hasSchema,
-      }));
+      const suggestion = formatSuggestion(
+        getSuggestion({
+          command: 'query validate',
+          queryFile: queryPath,
+          validationSuccess: result.success,
+          hasSchemaLink: hasSchema,
+        }),
+      );
 
       // Should contain Or section with query init
       expect(suggestion).toContain('Or create');
@@ -1280,12 +1272,17 @@ query:
       keywords:
         - test
     operator: OR
-`
+`,
       );
 
-      const result = await execCli(
-        ['query', 'validate', queryPath, '--no-vocab', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'query',
+        'validate',
+        queryPath,
+        '--no-vocab',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('Tip:');
@@ -1295,14 +1292,16 @@ query:
     });
 
     it('should show Or section in CLI stdout for invalid file without $schema', async () => {
-      const queryPath = await createRawQueryFile(
-        ctx.tempDir,
-        invalidQueryFixtures.missingName
-      );
+      const queryPath = await createRawQueryFile(ctx.tempDir, invalidQueryFixtures.missingName);
 
-      const result = await execCli(
-        ['query', 'validate', queryPath, '--no-vocab', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'query',
+        'validate',
+        queryPath,
+        '--no-vocab',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).not.toBe(0);
       expect(result.stdout).toContain('Or create');
@@ -1315,9 +1314,14 @@ query:
       const outputPath = join(ctx.tempDir, 'cli-with-schema.yaml');
       await writeQueryTemplate({ title: 'test', output: outputPath });
 
-      const result = await execCli(
-        ['query', 'validate', outputPath, '--no-vocab', '--config', ctx.configPath],
-      );
+      const result = await execCli([
+        'query',
+        'validate',
+        outputPath,
+        '--no-vocab',
+        '--config',
+        ctx.configPath,
+      ]);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).not.toContain('query init');
@@ -1340,7 +1344,7 @@ query:
         - "Medical Education"
         - "Medcial Education"
     operator: OR
-`
+`,
       );
 
       const meshClient = createMockMeSHClient(new Map());
@@ -1381,7 +1385,7 @@ query:
         - "diabetes mellitus"
         - "diabetis mellitus"
     operator: OR
-`
+`,
       );
 
       const meshClient = createMockMeSHClient(new Map());
@@ -1416,7 +1420,7 @@ query:
         - "Medical Education"
         - "Medcial Education"
     operator: OR
-`
+`,
       );
 
       const meshClient = createMockMeSHClient(new Map());
@@ -1458,12 +1462,10 @@ query:
       emtree:
         - "diabetes mellitus"
     operator: OR
-`
+`,
       );
 
-      const meshClient = createMockMeSHClient(
-        new Map([['Diabetes Mellitus', { found: true }]])
-      );
+      const meshClient = createMockMeSHClient(new Map([['Diabetes Mellitus', { found: true }]]));
       const ericValidator: CountVocabValidator = {
         vocabulary: 'eric',
         countTerm: vi.fn(async () => 50),
@@ -1500,7 +1502,7 @@ query:
       eric:
         - "Medical Education"
     operator: OR
-`
+`,
       );
 
       const result = await validateQueryCommand(queryPath, { noVocab: true });
@@ -1522,7 +1524,7 @@ query:
         - "Valid Term"
         - "Error Term"
     operator: OR
-`
+`,
       );
 
       const meshClient = createMockMeSHClient(new Map());

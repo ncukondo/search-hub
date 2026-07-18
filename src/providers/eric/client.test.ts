@@ -214,9 +214,7 @@ describe('ERIC Client', () => {
         throw new DOMException('Aborted', 'AbortError');
       });
 
-      await expect(
-        client.search('test', { signal: controller.signal })
-      ).rejects.toMatchObject({
+      await expect(client.search('test', { signal: controller.signal })).rejects.toMatchObject({
         code: 'TIMEOUT',
         message: expect.stringContaining('timed out or was aborted'),
         provider: 'eric',
@@ -355,7 +353,7 @@ describe('ERIC Client', () => {
         json: () => Promise.resolve({}),
       });
 
-      const error = await client.search('test').catch(e => e);
+      const error = await client.search('test').catch((e) => e);
 
       // Error should follow expected format: what happened + potential causes + response
       expect(error.message).toMatch(/ERIC API error: Unexpected response format/);

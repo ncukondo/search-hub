@@ -29,36 +29,31 @@ describe('ref-cli', () => {
 
   describe('checkRefAvailable', () => {
     it('returns true when ref command exists', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback
-      ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
-        if (callback) {
-          callback(null, 'ref 1.0.0', '');
-        }
-      });
+      mockExecFn.mockImplementation(
+        (_cmd: string, optsOrCallback: Record<string, unknown> | ExecCallback) => {
+          const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
+          if (callback) {
+            callback(null, 'ref 1.0.0', '');
+          }
+        },
+      );
 
       const result = await checkRefAvailable();
       expect(result).toBe(true);
-      expect(mockExecFn).toHaveBeenCalledWith(
-        'ref --version',
-        expect.any(Function)
-      );
+      expect(mockExecFn).toHaveBeenCalledWith('ref --version', expect.any(Function));
     });
 
     it('returns false when ref command does not exist', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback
-      ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
-        if (callback) {
-          const error = new Error('command not found: ref') as ExecException;
-          error.code = 127;
-          callback(error, '', '');
-        }
-      });
+      mockExecFn.mockImplementation(
+        (_cmd: string, optsOrCallback: Record<string, unknown> | ExecCallback) => {
+          const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
+          if (callback) {
+            const error = new Error('command not found: ref') as ExecException;
+            error.code = 127;
+            callback(error, '', '');
+          }
+        },
+      );
 
       const result = await checkRefAvailable();
       expect(result).toBe(false);
@@ -67,36 +62,31 @@ describe('ref-cli', () => {
 
   describe('checkNpmAvailable', () => {
     it('returns true when npm command exists', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback
-      ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
-        if (callback) {
-          callback(null, '10.0.0', '');
-        }
-      });
+      mockExecFn.mockImplementation(
+        (_cmd: string, optsOrCallback: Record<string, unknown> | ExecCallback) => {
+          const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
+          if (callback) {
+            callback(null, '10.0.0', '');
+          }
+        },
+      );
 
       const result = await checkNpmAvailable();
       expect(result).toBe(true);
-      expect(mockExecFn).toHaveBeenCalledWith(
-        'npm --version',
-        expect.any(Function)
-      );
+      expect(mockExecFn).toHaveBeenCalledWith('npm --version', expect.any(Function));
     });
 
     it('returns false when npm command does not exist', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback
-      ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
-        if (callback) {
-          const error = new Error('command not found: npm') as ExecException;
-          error.code = 127;
-          callback(error, '', '');
-        }
-      });
+      mockExecFn.mockImplementation(
+        (_cmd: string, optsOrCallback: Record<string, unknown> | ExecCallback) => {
+          const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
+          if (callback) {
+            const error = new Error('command not found: npm') as ExecException;
+            error.code = 127;
+            callback(error, '', '');
+          }
+        },
+      );
 
       const result = await checkNpmAvailable();
       expect(result).toBe(false);
@@ -105,33 +95,31 @@ describe('ref-cli', () => {
 
   describe('installRefManager', () => {
     it('executes npm install command', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback
-      ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
-        if (callback) {
-          callback(null, 'added 1 package', '');
-        }
-      });
+      mockExecFn.mockImplementation(
+        (_cmd: string, optsOrCallback: Record<string, unknown> | ExecCallback) => {
+          const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
+          if (callback) {
+            callback(null, 'added 1 package', '');
+          }
+        },
+      );
 
       await installRefManager();
       expect(mockExecFn).toHaveBeenCalledWith(
         'npm i -g @ncukondo/reference-manager',
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
     it('throws RefCliError when installation fails', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        optsOrCallback: Record<string, unknown> | ExecCallback
-      ) => {
-        const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
-        if (callback) {
-          callback(new Error('Permission denied') as ExecException, '', 'Permission denied');
-        }
-      });
+      mockExecFn.mockImplementation(
+        (_cmd: string, optsOrCallback: Record<string, unknown> | ExecCallback) => {
+          const callback = typeof optsOrCallback === 'function' ? optsOrCallback : undefined;
+          if (callback) {
+            callback(new Error('Permission denied') as ExecException, '', 'Permission denied');
+          }
+        },
+      );
 
       await expect(installRefManager()).rejects.toThrow(RefCliError);
     });
@@ -146,10 +134,7 @@ describe('ref-cli', () => {
         failed: [],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, JSON.stringify(mockOutput), '');
       });
 
@@ -157,7 +142,7 @@ describe('ref-cli', () => {
       expect(result).toEqual(mockOutput);
       expect(mockExecFn).toHaveBeenCalledWith(
         'ref add "pmid:12345678" -o json',
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -169,10 +154,7 @@ describe('ref-cli', () => {
         failed: [],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, JSON.stringify(mockOutput), '');
       });
 
@@ -181,15 +163,12 @@ describe('ref-cli', () => {
 
       expect(mockExecFn).toHaveBeenCalledWith(
         'ref --library "/path/to/library.json" add "10.1234/test" -o json',
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
     it('throws RefCliError when ref add fails', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(new Error('Network error') as ExecException, '', 'Network error');
       });
 
@@ -197,10 +176,7 @@ describe('ref-cli', () => {
     });
 
     it('throws RefCliError when output is not valid JSON', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, 'not valid json', '');
       });
 
@@ -215,17 +191,14 @@ describe('ref-cli', () => {
         failed: [],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, JSON.stringify(mockOutput), '');
       });
 
       await refAdd('10.1234/test$pecial');
       expect(mockExecFn).toHaveBeenCalledWith(
         expect.stringContaining('ref add'),
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -238,10 +211,7 @@ describe('ref-cli', () => {
         failed: [{ source: '10.9999/nonexistent', reason: 'fetch_error', error: 'Not found' }],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         // Simulate exit code 1 with valid JSON output
         const error = new Error('Command failed') as ExecException;
         error.code = 1;
@@ -262,10 +232,7 @@ describe('ref-cli', () => {
         failed: [],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, JSON.stringify(mockOutput), '');
       });
 
@@ -277,14 +244,18 @@ describe('ref-cli', () => {
       const mockOutput = {
         summary: { total: 1, added: 0, skipped: 1, failed: 0 },
         added: [],
-        skipped: [{ source: '10.1234/test', existingId: 'test2024', duplicateType: 'doi', reason: 'duplicate' }],
+        skipped: [
+          {
+            source: '10.1234/test',
+            existingId: 'test2024',
+            duplicateType: 'doi',
+            reason: 'duplicate',
+          },
+        ],
         failed: [],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, JSON.stringify(mockOutput), '');
       });
 
@@ -293,10 +264,7 @@ describe('ref-cli', () => {
     });
 
     it('throws RefCliError when no stdout and exec error', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(new Error('Command not found') as ExecException, '', 'ref: command not found');
       });
 
@@ -306,25 +274,19 @@ describe('ref-cli', () => {
 
   describe('refUpdate', () => {
     it('executes ref update with field and value', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, '', '');
       });
 
       await refUpdate('smith2024', 'abstract', 'This is an abstract.');
       expect(mockExecFn).toHaveBeenCalledWith(
         expect.stringMatching(/ref update "smith2024" --set "abstract=This is an abstract\."/),
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
     it('escapes special characters in value', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, '', '');
       });
 
@@ -333,10 +295,7 @@ describe('ref-cli', () => {
     });
 
     it('throws RefCliError when update fails', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(new Error('Entry not found') as ExecException, '', 'Entry not found');
       });
 
@@ -353,26 +312,17 @@ describe('ref-cli', () => {
         author: [{ family: 'Smith', given: 'John' }],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, JSON.stringify(mockEntry), '');
       });
 
       const result = await refExport('smith2024');
       expect(result).toEqual(mockEntry);
-      expect(mockExecFn).toHaveBeenCalledWith(
-        'ref export "smith2024"',
-        expect.any(Function)
-      );
+      expect(mockExecFn).toHaveBeenCalledWith('ref export "smith2024"', expect.any(Function));
     });
 
     it('throws RefCliError when export fails', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(new Error('Entry not found') as ExecException, '', '');
       });
 
@@ -392,10 +342,7 @@ describe('ref-cli', () => {
         failed: [],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, JSON.stringify(mockOutput), '');
       });
 
@@ -403,7 +350,7 @@ describe('ref-cli', () => {
       expect(result).toEqual(mockOutput);
       expect(mockExecFn).toHaveBeenCalledWith(
         'ref add -i json "/path/to/import.json" -o json',
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -415,10 +362,7 @@ describe('ref-cli', () => {
         failed: [],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, JSON.stringify(mockOutput), '');
       });
 
@@ -427,7 +371,7 @@ describe('ref-cli', () => {
 
       expect(mockExecFn).toHaveBeenCalledWith(
         'ref --library "/path/to/library.json" add -i json "/path/to/import.json" -o json',
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
@@ -439,10 +383,7 @@ describe('ref-cli', () => {
         failed: [{ source: 'bad-2024', reason: 'fetch_error', error: 'Not found' }],
       };
 
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, JSON.stringify(mockOutput), '');
       });
 
@@ -454,10 +395,7 @@ describe('ref-cli', () => {
     });
 
     it('throws RefCliError when ref add fails', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(new Error('Command failed') as ExecException, '', 'Error');
       });
 
@@ -467,96 +405,88 @@ describe('ref-cli', () => {
 
   describe('refFulltextAttach', () => {
     it('calls correct ref fulltext attach command', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, 'Attached fulltext.pdf to smith2024', '');
       });
 
       await refFulltextAttach('smith2024', '/path/to/fulltext.pdf');
       expect(mockExecFn).toHaveBeenCalledWith(
         'ref fulltext attach "smith2024" "/path/to/fulltext.pdf"',
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
     it('passes library path option correctly', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, 'Attached', '');
       });
 
-      await refFulltextAttach('smith2024', '/path/to/fulltext.pdf', { libraryPath: '/path/to/library.json' });
+      await refFulltextAttach('smith2024', '/path/to/fulltext.pdf', {
+        libraryPath: '/path/to/library.json',
+      });
       expect(mockExecFn).toHaveBeenCalledWith(
         'ref --library "/path/to/library.json" fulltext attach "smith2024" "/path/to/fulltext.pdf"',
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
     it('handles success response', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, 'Attached fulltext.pdf to smith2024', '');
       });
 
-      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf')).resolves.toBeUndefined();
+      await expect(
+        refFulltextAttach('smith2024', '/path/to/fulltext.pdf'),
+      ).resolves.toBeUndefined();
     });
 
     it('handles "file already attached" as success (idempotent)', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         // ref CLI returns exit code 0 with a message about already attached
         callback(null, 'File already attached', '');
       });
 
-      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf')).resolves.toBeUndefined();
+      await expect(
+        refFulltextAttach('smith2024', '/path/to/fulltext.pdf'),
+      ).resolves.toBeUndefined();
     });
 
     it('throws RefCliError when ref not found', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(new Error('Entry not found') as ExecException, '', 'Entry not found: smith2024');
       });
 
-      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf'))
-        .rejects.toThrow(RefCliError);
-      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf'))
-        .rejects.toThrow(/ref fulltext attach failed/);
+      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf')).rejects.toThrow(
+        RefCliError,
+      );
+      await expect(refFulltextAttach('smith2024', '/path/to/fulltext.pdf')).rejects.toThrow(
+        /ref fulltext attach failed/,
+      );
     });
 
     it('throws RefCliError when file not found', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
-        callback(new Error('File not found') as ExecException, '', 'File not found: /path/to/missing.pdf');
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
+        callback(
+          new Error('File not found') as ExecException,
+          '',
+          'File not found: /path/to/missing.pdf',
+        );
       });
 
-      await expect(refFulltextAttach('smith2024', '/path/to/missing.pdf'))
-        .rejects.toThrow(RefCliError);
+      await expect(refFulltextAttach('smith2024', '/path/to/missing.pdf')).rejects.toThrow(
+        RefCliError,
+      );
     });
 
     it('escapes special characters in arguments', async () => {
-      mockExecFn.mockImplementation((
-        _cmd: string,
-        callback: ExecCallback
-      ) => {
+      mockExecFn.mockImplementation((_cmd: string, callback: ExecCallback) => {
         callback(null, 'Attached', '');
       });
 
       await refFulltextAttach('smith"2024', '/path/with "quotes"/file.pdf');
       expect(mockExecFn).toHaveBeenCalledWith(
         expect.stringContaining('ref fulltext attach'),
-        expect.any(Function)
+        expect.any(Function),
       );
     });
   });

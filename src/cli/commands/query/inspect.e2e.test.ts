@@ -12,10 +12,7 @@ import {
   createRawQueryFile,
   queryFixtures,
 } from '../../e2e-helpers.js';
-import {
-  inspectQueryCommand,
-  formatInspectOutput,
-} from './inspect.js';
+import { inspectQueryCommand, formatInspectOutput } from './inspect.js';
 
 describe('search-hub query inspect E2E', () => {
   let ctx: E2EContext;
@@ -89,7 +86,7 @@ providers:
         source_types:
           - journal
           - conference proceeding
-`
+`,
       );
 
       const result = await inspectQueryCommand(queryPath);
@@ -210,10 +207,7 @@ providers:
     });
 
     it('should fail for invalid query file', async () => {
-      const invalidPath = await createRawQueryFile(
-        ctx.tempDir,
-        'not: valid: yaml: query'
-      );
+      const invalidPath = await createRawQueryFile(ctx.tempDir, 'not: valid: yaml: query');
 
       const result = await inspectQueryCommand(invalidPath);
 

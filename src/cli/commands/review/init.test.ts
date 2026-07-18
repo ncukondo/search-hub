@@ -57,7 +57,13 @@ summary:
 
   it('creates reviews.yaml inside .internal/ directory', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'Article 1',
+        authors: [],
+        pmid: '111',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     const options: ReviewInitOptions = { sessionId };
@@ -75,8 +81,20 @@ summary:
 
   it('generates reviews.yaml with correct structure', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
-      JSON.stringify({ title: 'Article 2', authors: [], pmid: '222', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'Article 1',
+        authors: [],
+        pmid: '111',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
+      JSON.stringify({
+        title: 'Article 2',
+        authors: [],
+        pmid: '222',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     const options: ReviewInitOptions = { sessionId };
@@ -106,7 +124,13 @@ summary:
 
   it('references local schema path (./review.schema.json) in YAML comment', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'Article', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'Article',
+        authors: [],
+        pmid: '111',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     const options: ReviewInitOptions = { sessionId };
@@ -122,7 +146,13 @@ summary:
 
   it('generates schema file to .internal/ alongside reviews.yaml', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'Article', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'Article',
+        authors: [],
+        pmid: '111',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     const options: ReviewInitOptions = { sessionId };
@@ -139,7 +169,13 @@ summary:
 
   it('fails if reviews.yaml already exists (without --force)', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'Article', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'Article',
+        authors: [],
+        pmid: '111',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     // Create existing .internal/reviews.yaml
@@ -154,7 +190,13 @@ summary:
 
   it('overwrites reviews.yaml when --force is used', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'New Article', authors: [], pmid: '999', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'New Article',
+        authors: [],
+        pmid: '999',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     // Create existing .internal/reviews.yaml
@@ -207,11 +249,27 @@ summary:
     await writeFile(join(sessionDir, 'session.yaml'), sessionYaml);
 
     // Same article from two providers (shared DOI)
-    await writeFile(join(sessionDir, 'pubmed_results.jsonl'),
-      JSON.stringify({ title: 'Shared Article', authors: [], pmid: '111', doi: '10.1234/shared', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' })
+    await writeFile(
+      join(sessionDir, 'pubmed_results.jsonl'),
+      JSON.stringify({
+        title: 'Shared Article',
+        authors: [],
+        pmid: '111',
+        doi: '10.1234/shared',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     );
-    await writeFile(join(sessionDir, 'scopus_results.jsonl'),
-      JSON.stringify({ title: 'Shared Article', authors: [], scopusId: 'S222', doi: '10.1234/shared', source: 'scopus', retrievedAt: '2024-01-01T00:00:00Z' })
+    await writeFile(
+      join(sessionDir, 'scopus_results.jsonl'),
+      JSON.stringify({
+        title: 'Shared Article',
+        authors: [],
+        scopusId: 'S222',
+        doi: '10.1234/shared',
+        source: 'scopus',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     );
 
     const options: ReviewInitOptions = { sessionId };
@@ -229,7 +287,14 @@ summary:
 
   it('extracts year from publicationDate', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'Article', authors: [], pmid: '111', publicationDate: '2023-06-15', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'Article',
+        authors: [],
+        pmid: '111',
+        publicationDate: '2023-06-15',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     const options: ReviewInitOptions = { sessionId };
@@ -244,7 +309,13 @@ summary:
 
   it('saves mode: picking to reviews.yaml when --mode picking is specified', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'Article 1',
+        authors: [],
+        pmid: '111',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     const options: ReviewInitOptions = { sessionId, mode: 'picking' };
@@ -259,7 +330,13 @@ summary:
 
   it('saves mode: screening to reviews.yaml when --mode screening is specified', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'Article 1',
+        authors: [],
+        pmid: '111',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     const options: ReviewInitOptions = { sessionId, mode: 'screening' };
@@ -274,7 +351,13 @@ summary:
 
   it('defaults to screening mode when --mode is not specified', async () => {
     await setupSession('pubmed', [
-      JSON.stringify({ title: 'Article 1', authors: [], pmid: '111', source: 'pubmed', retrievedAt: '2024-01-01T00:00:00Z' }),
+      JSON.stringify({
+        title: 'Article 1',
+        authors: [],
+        pmid: '111',
+        source: 'pubmed',
+        retrievedAt: '2024-01-01T00:00:00Z',
+      }),
     ]);
 
     const options: ReviewInitOptions = { sessionId };
@@ -292,10 +375,13 @@ summary:
     await setupSession('pubmed', [
       JSON.stringify({
         title: 'Article',
-        authors: [{ family: 'Smith', given: 'John' }, { family: 'Doe', given: 'Jane' }],
+        authors: [
+          { family: 'Smith', given: 'John' },
+          { family: 'Doe', given: 'Jane' },
+        ],
         pmid: '111',
         source: 'pubmed',
-        retrievedAt: '2024-01-01T00:00:00Z'
+        retrievedAt: '2024-01-01T00:00:00Z',
       }),
     ]);
 

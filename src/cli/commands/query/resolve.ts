@@ -70,11 +70,12 @@ export async function resolveQueryFile(arg: string): Promise<string> {
   }
 
   // 5. Error
-  const tried = [`./${arg}`, ...candidates.map(c => `./${c}`)];
+  const tried = [`./${arg}`, ...candidates.map((c) => `./${c}`)];
   throw new Error(
     `Query file not found: "${arg}"\n` +
-    `  Tried:\n` +
-    tried.map(p => `    ${p}`).join('\n') + '\n' +
-    `  Create a new query: search-hub query init "${arg}"`
+      `  Tried:\n` +
+      tried.map((p) => `    ${p}`).join('\n') +
+      '\n' +
+      `  Create a new query: search-hub query init "${arg}"`,
   );
 }

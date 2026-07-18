@@ -48,7 +48,7 @@ export interface ValidationResult {
  */
 export function parseRegisterOptions(
   sessionId: string,
-  options: CommandLineOptions
+  options: CommandLineOptions,
 ): RegisterCommandOptions {
   const result: RegisterCommandOptions = {
     sessionId,
@@ -157,15 +157,12 @@ export function formatDryRunOutput(articles: Article[]): string {
   const lines: string[] = [];
 
   // Summary
-  lines.push(
-    `Would register ${withId.length} reference${withId.length !== 1 ? 's' : ''}:`
-  );
+  lines.push(`Would register ${withId.length} reference${withId.length !== 1 ? 's' : ''}:`);
 
   // List articles with IDs
   for (const { id, article } of withId) {
-    const title = article.title.length > 60
-      ? article.title.substring(0, 57) + '...'
-      : article.title;
+    const title =
+      article.title.length > 60 ? article.title.substring(0, 57) + '...' : article.title;
     lines.push(`  - ${id}: ${title}`);
   }
 
@@ -173,16 +170,15 @@ export function formatDryRunOutput(articles: Article[]): string {
   if (withoutId.length > 0) {
     lines.push('');
     lines.push(
-      `${withoutId.length} article${withoutId.length !== 1 ? 's' : ''} will be skipped (no identifier):`
+      `${withoutId.length} article${withoutId.length !== 1 ? 's' : ''} will be skipped (no identifier):`,
     );
 
     const maxDisplay = 10;
     const displayed = withoutId.slice(0, maxDisplay);
 
     for (const article of displayed) {
-      const truncatedTitle = article.title.length > 50
-        ? article.title.substring(0, 50) + '...'
-        : article.title;
+      const truncatedTitle =
+        article.title.length > 50 ? article.title.substring(0, 50) + '...' : article.title;
 
       lines.push(`  - "${truncatedTitle}" (source: ${article.source})`);
     }
@@ -235,7 +231,10 @@ async function loadReviewFile(sessionId: string, sessionsDir: string): Promise<R
  * Get review summary (counts) for a session.
  * Throws if reviews.yaml does not exist.
  */
-export async function getReviewSummary(sessionId: string, sessionsDir: string): Promise<ReviewSummary> {
+export async function getReviewSummary(
+  sessionId: string,
+  sessionsDir: string,
+): Promise<ReviewSummary> {
   const reviewFile = await loadReviewFile(sessionId, sessionsDir);
   const articles = reviewFile.articles ?? [];
 
@@ -321,7 +320,7 @@ function authorLookupKeys(ref: {
  */
 async function buildAuthorLookup(
   sessionDir: string,
-  providers: Iterable<ProviderName>
+  providers: Iterable<ProviderName>,
 ): Promise<Map<string, Author[]>> {
   const lookup = new Map<string, Author[]>();
 
@@ -373,7 +372,10 @@ function resolveAuthors(entry: ArticleEntry, lookup: Map<string, Author[]>): Aut
  *
  * @throws Error if mergedFrom is missing or empty (indicates legacy review file)
  */
-export async function getIncludedArticles(sessionId: string, sessionsDir: string): Promise<Article[]> {
+export async function getIncludedArticles(
+  sessionId: string,
+  sessionsDir: string,
+): Promise<Article[]> {
   const reviewFile = await loadReviewFile(sessionId, sessionsDir);
   const articles = reviewFile.articles ?? [];
 
@@ -389,44 +391,43 @@ export async function getIncludedArticles(sessionId: string, sessionsDir: string
   }
   const authorLookup = await buildAuthorLookup(join(sessionsDir, sessionId), providers);
 
-  return included
-    .map((entry): Article => {
-      // Validate mergedFrom exists
-      if (!entry.mergedFrom) {
-        throw new Error(
-          `Article "${entry.title}" has mergedFrom missing. ` +
-            `This may be a legacy review file created before source tracking was fixed. ` +
-            `Please re-run 'review init' to regenerate the review file with source tracking.`
-        );
-      }
-      if (entry.mergedFrom.length === 0) {
-        throw new Error(
-          `Article "${entry.title}" has empty mergedFrom array. ` +
-            `This is an invalid state - please re-run 'review init' to regenerate.`
-        );
-      }
+  return included.map((entry): Article => {
+    // Validate mergedFrom exists
+    if (!entry.mergedFrom) {
+      throw new Error(
+        `Article "${entry.title}" has mergedFrom missing. ` +
+          `This may be a legacy review file created before source tracking was fixed. ` +
+          `Please re-run 'review init' to regenerate the review file with source tracking.`,
+      );
+    }
+    if (entry.mergedFrom.length === 0) {
+      throw new Error(
+        `Article "${entry.title}" has empty mergedFrom array. ` +
+          `This is an invalid state - please re-run 'review init' to regenerate.`,
+      );
+    }
 
-      const authors = resolveAuthors(entry, authorLookup);
+    const authors = resolveAuthors(entry, authorLookup);
 
-      // Get source from the first entry in mergedFrom
-      const source = entry.mergedFrom[0]!.source as ProviderName;
+    // Get source from the first entry in mergedFrom
+    const source = entry.mergedFrom[0]!.source as ProviderName;
 
-      const article: Article = {
-        title: entry.title,
-        authors,
-        source,
-        retrievedAt: new Date().toISOString(),
-      };
-      // Only set optional fields if they have values
-      if (entry.doi) article.doi = entry.doi;
-      if (entry.pmid) article.pmid = entry.pmid;
-      if (entry.scopusId) article.scopusId = entry.scopusId;
-      if (entry.arxivId) article.arxivId = entry.arxivId;
-      if (entry.ericId) article.ericId = entry.ericId;
-      if (entry.abstract) article.abstract = entry.abstract;
-      if (entry.year) article.publicationDate = entry.year;
-      return article;
-    });
+    const article: Article = {
+      title: entry.title,
+      authors,
+      source,
+      retrievedAt: new Date().toISOString(),
+    };
+    // Only set optional fields if they have values
+    if (entry.doi) article.doi = entry.doi;
+    if (entry.pmid) article.pmid = entry.pmid;
+    if (entry.scopusId) article.scopusId = entry.scopusId;
+    if (entry.arxivId) article.arxivId = entry.arxivId;
+    if (entry.ericId) article.ericId = entry.ericId;
+    if (entry.abstract) article.abstract = entry.abstract;
+    if (entry.year) article.publicationDate = entry.year;
+    return article;
+  });
 }
 
 /**
@@ -465,7 +466,6 @@ Registering ${summary.included} included articles...
 Proceed? [Y/n]`;
 }
 
-
 /**
  * Format library path display for CLI output.
  */
@@ -493,7 +493,7 @@ export function formatIgnoringReviewsNote(total: number): string {
  */
 export async function confirmPrompt(
   input: NodeJS.ReadableStream = process.stdin,
-  output: NodeJS.WritableStream = process.stdout
+  output: NodeJS.WritableStream = process.stdout,
 ): Promise<boolean> {
   const rl = createInterface({
     input,

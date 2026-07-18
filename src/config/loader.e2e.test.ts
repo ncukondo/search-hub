@@ -34,7 +34,7 @@ level = "debug"
 [providers.pubmed]
 api_key = "global-key"
 rate_limit = 5
-`
+`,
     );
     await writeFile(
       join(searchHubDir, 'config.toml'),
@@ -44,7 +44,7 @@ level = "warn"
 
 [providers.pubmed]
 rate_limit = 10
-`
+`,
     );
 
     const config = await loadConfig({
@@ -96,7 +96,7 @@ rate_limit = 10
       `
 [log]
 level = "debug"
-`
+`,
     );
 
     const config = await loadConfig({

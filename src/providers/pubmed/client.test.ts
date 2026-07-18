@@ -378,7 +378,6 @@ describe('PubMedClient', () => {
       });
     });
 
-
     it('throws server error on HTTP 5xx with retry', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -755,5 +754,4 @@ describe('PubMedClient', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
-
 });

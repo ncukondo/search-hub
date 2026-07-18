@@ -52,7 +52,7 @@ export interface DryRunOutputOptions {
 
 export function parseSearchOptions(
   queryFile: string | undefined,
-  options: CommandLineOptions
+  options: CommandLineOptions,
 ): SearchCommandOptions {
   const result: SearchCommandOptions = {};
 
@@ -140,7 +140,7 @@ export function validateSearchInput(options: SearchCommandOptions): ValidationRe
  */
 export async function testProviderConnections(
   providers: ProviderName[],
-  config: Config
+  config: Config,
 ): Promise<Record<string, ConnectionTestResult>> {
   const results: Record<string, ConnectionTestResult> = {};
   await Promise.all(
@@ -151,7 +151,7 @@ export async function testProviderConnections(
         return;
       }
       results[name] = await provider.testConnection();
-    })
+    }),
   );
   return results;
 }
@@ -162,7 +162,7 @@ export async function testProviderConnections(
 export function formatProviderReadiness(
   providers: ProviderName[],
   config: Config,
-  connectionResults?: Record<string, ConnectionTestResult>
+  connectionResults?: Record<string, ConnectionTestResult>,
 ): string {
   const lines: string[] = [];
   lines.push('Provider readiness:');
@@ -179,7 +179,7 @@ export function formatProviderReadiness(
 function getProviderStatus(
   provider: ProviderName,
   providerConfig: { email?: string; api_key?: string },
-  connectionResult?: ConnectionTestResult
+  connectionResult?: ConnectionTestResult,
 ): { ready: boolean; message: string } {
   switch (provider) {
     case 'pubmed': {
@@ -187,9 +187,19 @@ function getProviderStatus(
         return { ready: false, message: `not ready (${connectionResult.error})` };
       }
       if (!providerConfig.email) {
-        return { ready: true, message: connectionResult ? 'ready (verified, email: not configured (recommended))' : 'ready (email: not configured (recommended))' };
+        return {
+          ready: true,
+          message: connectionResult
+            ? 'ready (verified, email: not configured (recommended))'
+            : 'ready (email: not configured (recommended))',
+        };
       }
-      return { ready: true, message: connectionResult ? 'ready (verified, email: configured)' : 'ready (email: configured)' };
+      return {
+        ready: true,
+        message: connectionResult
+          ? 'ready (verified, email: configured)'
+          : 'ready (email: configured)',
+      };
     }
     case 'scopus': {
       if (!providerConfig.api_key) {
@@ -223,7 +233,9 @@ export function formatQueryDiagnostics(translations: TranslationResult[]): strin
         warnings.push('  ⚠ pubmed: query uses NOT operator (ensure correct syntax for exclusions)');
       }
       if (/\*\[(?:mh|mesh)\]/i.test(t.query)) {
-        warnings.push('  ⚠ pubmed: wildcard in MeSH term — PubMed does not support wildcards in MeSH fields');
+        warnings.push(
+          '  ⚠ pubmed: wildcard in MeSH term — PubMed does not support wildcards in MeSH fields',
+        );
       }
     }
   }
@@ -245,7 +257,6 @@ export interface CountResult {
   error?: string;
 }
 
-
 /**
  * Preview result for a single provider
  */
@@ -259,10 +270,7 @@ export interface PreviewResult {
 /**
  * Format count-only output for display.
  */
-export function formatCountOnlyOutput(
-  counts: CountResult[],
-  queryLabel?: string
-): string {
+export function formatCountOnlyOutput(counts: CountResult[], queryLabel?: string): string {
   const label = queryLabel ?? 'direct-query';
   const lines: string[] = [];
 
@@ -289,19 +297,15 @@ export function formatCountOnlyOutput(
   const separatorLen = maxNameLen + 14;
   lines.push(`  ${'─'.repeat(separatorLen)}`);
   const totalStr = String(total).padStart(6);
-  lines.push(`  ${('total:').padEnd(maxNameLen)} ${totalStr} hits (before deduplication)`);
+  lines.push(`  ${'total:'.padEnd(maxNameLen)} ${totalStr} hits (before deduplication)`);
 
   return lines.join('\n');
 }
 
-
 /**
  * Format preview output showing counts and sample titles.
  */
-export function formatPreviewOutput(
-  results: PreviewResult[],
-  queryLabel?: string
-): string {
+export function formatPreviewOutput(results: PreviewResult[], queryLabel?: string): string {
   const label = queryLabel ?? 'direct-query';
   const lines: string[] = [];
 
@@ -336,14 +340,14 @@ export function formatPreviewOutput(
   const separatorLen = maxNameLen + 14;
   lines.push(`  ${'─'.repeat(separatorLen)}`);
   const totalStr = String(total).padStart(6);
-  lines.push(`  ${('total:').padEnd(maxNameLen)} ${totalStr} hits (before deduplication)`);
+  lines.push(`  ${'total:'.padEnd(maxNameLen)} ${totalStr} hits (before deduplication)`);
 
   return lines.join('\n');
 }
 
 export async function formatDryRunOutput(
   translations: TranslationResult[],
-  options?: DryRunOutputOptions
+  options?: DryRunOutputOptions,
 ): Promise<string> {
   if (translations.length === 0) {
     return 'No translations available.';
@@ -373,7 +377,6 @@ export async function formatDryRunOutput(
   }
   return sections.join('\n');
 }
-
 
 /**
  * Format warning for short keywords that may cause noisy results.

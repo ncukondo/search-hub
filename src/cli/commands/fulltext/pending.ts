@@ -33,17 +33,11 @@ export interface FulltextPendingResult {
 /**
  * Check if an article has any fulltext files by reading its meta.json.
  */
-async function hasFulltextFiles(
-  sessionDir: string,
-  dirName: string,
-): Promise<boolean> {
+async function hasFulltextFiles(sessionDir: string, dirName: string): Promise<boolean> {
   try {
     const metaPath = getMetaPath(sessionDir, dirName);
     const meta = await loadMeta(metaPath);
-    return (
-      meta.files.pdf !== undefined ||
-      meta.files.markdown !== undefined
-    );
+    return meta.files.pdf !== undefined || meta.files.markdown !== undefined;
   } catch {
     return false;
   }
@@ -94,9 +88,8 @@ export function formatExportFile(articles: PendingArticle[]): string {
 
   for (const article of articles) {
     const identifier = article.dirName ?? article.title;
-    const header = identifier === article.title
-      ? `# ${article.title}`
-      : `# ${identifier} - ${article.title}`;
+    const header =
+      identifier === article.title ? `# ${article.title}` : `# ${identifier} - ${article.title}`;
     const lines: string[] = [header];
 
     // Publisher URL (DOI link) first
@@ -132,9 +125,7 @@ export async function executeFulltextPending(
   const reviewFile = parseYaml(content) as ReviewFile;
 
   // Filter to included articles
-  const included = (reviewFile.articles ?? []).filter(
-    (a) => a.finalDecision === 'include',
-  );
+  const included = (reviewFile.articles ?? []).filter((a) => a.finalDecision === 'include');
 
   const articles: PendingArticle[] = [];
 

@@ -54,7 +54,7 @@ export interface ScopusRawEntry {
   author?: Array<{
     authname?: string;
     authid?: string;
-    'afid'?: Array<{ $?: string }>;
+    afid?: Array<{ $?: string }>;
   }>;
 }
 

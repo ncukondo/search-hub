@@ -5,7 +5,14 @@ import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
 import type { Article } from '../../providers/base/types.js';
 import type { SessionFile } from '../../session/types.js';
-import { mergeArticles, copySourceProvenance, createMergedSession, formatMergeOutput, formatMergeJson, validateMergeSources } from './merge.js';
+import {
+  mergeArticles,
+  copySourceProvenance,
+  createMergedSession,
+  formatMergeOutput,
+  formatMergeJson,
+  validateMergeSources,
+} from './merge.js';
 
 const makeArticle = (overrides: Partial<Article> & Pick<Article, 'title' | 'source'>): Article => ({
   authors: [{ family: 'Test', given: 'Author' }],
@@ -16,12 +23,8 @@ const makeArticle = (overrides: Partial<Article> & Pick<Article, 'title' | 'sour
 describe('mergeArticles', () => {
   it('should merge articles from multiple sessions', () => {
     const sessionArticles: Map<string, Article[]> = new Map([
-      ['session-a', [
-        makeArticle({ doi: '10.1234/a1', title: 'Article A1', source: 'pubmed' }),
-      ]],
-      ['session-b', [
-        makeArticle({ doi: '10.1234/b1', title: 'Article B1', source: 'pubmed' }),
-      ]],
+      ['session-a', [makeArticle({ doi: '10.1234/a1', title: 'Article A1', source: 'pubmed' })]],
+      ['session-b', [makeArticle({ doi: '10.1234/b1', title: 'Article B1', source: 'pubmed' })]],
     ]);
 
     const result = mergeArticles(sessionArticles);
@@ -34,12 +37,14 @@ describe('mergeArticles', () => {
 
   it('should deduplicate articles by DOI (case-insensitive)', () => {
     const sessionArticles: Map<string, Article[]> = new Map([
-      ['session-a', [
-        makeArticle({ doi: '10.1234/SAME', title: 'Article Same', source: 'pubmed' }),
-      ]],
-      ['session-b', [
-        makeArticle({ doi: '10.1234/same', title: 'Article Same (copy)', source: 'scopus' }),
-      ]],
+      [
+        'session-a',
+        [makeArticle({ doi: '10.1234/SAME', title: 'Article Same', source: 'pubmed' })],
+      ],
+      [
+        'session-b',
+        [makeArticle({ doi: '10.1234/same', title: 'Article Same (copy)', source: 'scopus' })],
+      ],
     ]);
 
     const result = mergeArticles(sessionArticles);
@@ -52,12 +57,11 @@ describe('mergeArticles', () => {
 
   it('should deduplicate articles by PMID', () => {
     const sessionArticles: Map<string, Article[]> = new Map([
-      ['session-a', [
-        makeArticle({ pmid: '12345678', title: 'Article A', source: 'pubmed' }),
-      ]],
-      ['session-b', [
-        makeArticle({ pmid: '12345678', title: 'Article A (other)', source: 'pubmed' }),
-      ]],
+      ['session-a', [makeArticle({ pmid: '12345678', title: 'Article A', source: 'pubmed' })]],
+      [
+        'session-b',
+        [makeArticle({ pmid: '12345678', title: 'Article A (other)', source: 'pubmed' })],
+      ],
     ]);
 
     const result = mergeArticles(sessionArticles);
@@ -68,23 +72,29 @@ describe('mergeArticles', () => {
 
   it('should keep richer metadata when deduplicating', () => {
     const sessionArticles: Map<string, Article[]> = new Map([
-      ['session-a', [
-        makeArticle({
-          doi: '10.1234/a1',
-          title: 'Sparse Article',
-          source: 'pubmed',
-        }),
-      ]],
-      ['session-b', [
-        makeArticle({
-          doi: '10.1234/a1',
-          title: 'Rich Article',
-          source: 'scopus',
-          abstract: 'This article has an abstract',
-          journal: 'Test Journal',
-          volume: '1',
-        }),
-      ]],
+      [
+        'session-a',
+        [
+          makeArticle({
+            doi: '10.1234/a1',
+            title: 'Sparse Article',
+            source: 'pubmed',
+          }),
+        ],
+      ],
+      [
+        'session-b',
+        [
+          makeArticle({
+            doi: '10.1234/a1',
+            title: 'Rich Article',
+            source: 'scopus',
+            abstract: 'This article has an abstract',
+            journal: 'Test Journal',
+            volume: '1',
+          }),
+        ],
+      ],
     ]);
 
     const result = mergeArticles(sessionArticles);
@@ -96,12 +106,8 @@ describe('mergeArticles', () => {
 
   it('should keep articles without identifiers', () => {
     const sessionArticles: Map<string, Article[]> = new Map([
-      ['session-a', [
-        makeArticle({ title: 'No ID Article A', source: 'pubmed' }),
-      ]],
-      ['session-b', [
-        makeArticle({ title: 'No ID Article B', source: 'scopus' }),
-      ]],
+      ['session-a', [makeArticle({ title: 'No ID Article A', source: 'pubmed' })]],
+      ['session-b', [makeArticle({ title: 'No ID Article B', source: 'scopus' })]],
     ]);
 
     const result = mergeArticles(sessionArticles);
@@ -112,13 +118,17 @@ describe('mergeArticles', () => {
 
   it('should group merged articles by provider', () => {
     const sessionArticles: Map<string, Article[]> = new Map([
-      ['session-a', [
-        makeArticle({ doi: '10.1234/a1', title: 'PubMed Article', source: 'pubmed' }),
-        makeArticle({ doi: '10.1234/a2', title: 'Scopus Article', source: 'scopus' }),
-      ]],
-      ['session-b', [
-        makeArticle({ doi: '10.1234/b1', title: 'Another PubMed', source: 'pubmed' }),
-      ]],
+      [
+        'session-a',
+        [
+          makeArticle({ doi: '10.1234/a1', title: 'PubMed Article', source: 'pubmed' }),
+          makeArticle({ doi: '10.1234/a2', title: 'Scopus Article', source: 'scopus' }),
+        ],
+      ],
+      [
+        'session-b',
+        [makeArticle({ doi: '10.1234/b1', title: 'Another PubMed', source: 'pubmed' })],
+      ],
     ]);
 
     const result = mergeArticles(sessionArticles);
@@ -129,17 +139,21 @@ describe('mergeArticles', () => {
 
   it('should handle three or more sessions', () => {
     const sessionArticles: Map<string, Article[]> = new Map([
-      ['session-a', [
-        makeArticle({ doi: '10.1234/a1', title: 'Article A', source: 'pubmed' }),
-      ]],
-      ['session-b', [
-        makeArticle({ doi: '10.1234/b1', title: 'Article B', source: 'pubmed' }),
-        makeArticle({ doi: '10.1234/a1', title: 'Article A dup', source: 'pubmed' }),
-      ]],
-      ['session-c', [
-        makeArticle({ doi: '10.1234/c1', title: 'Article C', source: 'pubmed' }),
-        makeArticle({ doi: '10.1234/b1', title: 'Article B dup', source: 'pubmed' }),
-      ]],
+      ['session-a', [makeArticle({ doi: '10.1234/a1', title: 'Article A', source: 'pubmed' })]],
+      [
+        'session-b',
+        [
+          makeArticle({ doi: '10.1234/b1', title: 'Article B', source: 'pubmed' }),
+          makeArticle({ doi: '10.1234/a1', title: 'Article A dup', source: 'pubmed' }),
+        ],
+      ],
+      [
+        'session-c',
+        [
+          makeArticle({ doi: '10.1234/c1', title: 'Article C', source: 'pubmed' }),
+          makeArticle({ doi: '10.1234/b1', title: 'Article B dup', source: 'pubmed' }),
+        ],
+      ],
     ]);
 
     const result = mergeArticles(sessionArticles);
@@ -151,14 +165,20 @@ describe('mergeArticles', () => {
 
   it('should track per-session stats', () => {
     const sessionArticles: Map<string, Article[]> = new Map([
-      ['session-a', [
-        makeArticle({ doi: '10.1234/a1', title: 'Article A', source: 'pubmed' }),
-        makeArticle({ doi: '10.1234/a2', title: 'Article A2', source: 'pubmed' }),
-      ]],
-      ['session-b', [
-        makeArticle({ doi: '10.1234/a1', title: 'Article A dup', source: 'pubmed' }),
-        makeArticle({ doi: '10.1234/b1', title: 'Article B', source: 'pubmed' }),
-      ]],
+      [
+        'session-a',
+        [
+          makeArticle({ doi: '10.1234/a1', title: 'Article A', source: 'pubmed' }),
+          makeArticle({ doi: '10.1234/a2', title: 'Article A2', source: 'pubmed' }),
+        ],
+      ],
+      [
+        'session-b',
+        [
+          makeArticle({ doi: '10.1234/a1', title: 'Article A dup', source: 'pubmed' }),
+          makeArticle({ doi: '10.1234/b1', title: 'Article B', source: 'pubmed' }),
+        ],
+      ],
     ]);
 
     const result = mergeArticles(sessionArticles);
@@ -168,7 +188,9 @@ describe('mergeArticles', () => {
   });
 });
 
-function makeSession(overrides: Partial<SessionFile> & Pick<SessionFile, 'id' | 'name'>): SessionFile {
+function makeSession(
+  overrides: Partial<SessionFile> & Pick<SessionFile, 'id' | 'name'>,
+): SessionFile {
   return {
     version: 1,
     createdAt: '2026-02-08T10:00:00Z',
@@ -223,15 +245,18 @@ describe('copySourceProvenance', () => {
 describe('validateMergeSources', () => {
   it('should reject merged sessions as sources', () => {
     const sessions = new Map<string, SessionFile>([
-      ['merged-session', makeSession({
-        id: 'merged-session',
-        name: 'merged',
-        type: 'merge',
-        sources: [
-          { id: 'session-a', name: 'a' },
-          { id: 'session-b', name: 'b' },
-        ],
-      })],
+      [
+        'merged-session',
+        makeSession({
+          id: 'merged-session',
+          name: 'merged',
+          type: 'merge',
+          sources: [
+            { id: 'session-a', name: 'a' },
+            { id: 'session-b', name: 'b' },
+          ],
+        }),
+      ],
       ['session-c', makeSession({ id: 'session-c', name: 'c' })],
     ]);
 
@@ -246,11 +271,14 @@ describe('validateMergeSources', () => {
 
   it('should reject sessions that are not completed', () => {
     const sessions = new Map<string, SessionFile>([
-      ['session-a', makeSession({
-        id: 'session-a',
-        name: 'a',
-        summary: { totalHits: 10, totalRetrieved: 5, status: 'partial' },
-      })],
+      [
+        'session-a',
+        makeSession({
+          id: 'session-a',
+          name: 'a',
+          summary: { totalHits: 10, totalRetrieved: 5, status: 'partial' },
+        }),
+      ],
       ['session-b', makeSession({ id: 'session-b', name: 'b' })],
     ]);
 
@@ -286,9 +314,7 @@ describe('createMergedSession', () => {
       makeArticle({ doi: '10.1234/b1', title: 'Article B', source: 'pubmed' }),
     ];
 
-    const byProvider = new Map<string, Article[]>([
-      ['pubmed', articles],
-    ]);
+    const byProvider = new Map<string, Article[]>([['pubmed', articles]]);
 
     const sources = [
       { id: 'session-a', name: 'a' },
@@ -334,7 +360,10 @@ describe('formatMergeOutput', () => {
         { id: 'session-a', name: 'a', count: 5 },
         { id: 'session-b', name: 'b', count: 5 },
       ],
-      byProvider: new Map([['pubmed', 5], ['scopus', 3]]),
+      byProvider: new Map([
+        ['pubmed', 5],
+        ['scopus', 3],
+      ]),
     });
 
     expect(output).toContain('merged-123');
@@ -356,7 +385,10 @@ describe('formatMergeJson', () => {
         { id: 'session-a', name: 'a', count: 5 },
         { id: 'session-b', name: 'b', count: 5 },
       ],
-      byProvider: new Map([['pubmed', 5], ['scopus', 3]]),
+      byProvider: new Map([
+        ['pubmed', 5],
+        ['scopus', 3],
+      ]),
     });
 
     const parsed = JSON.parse(json);

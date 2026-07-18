@@ -157,13 +157,18 @@ describe('executeFulltextInit', () => {
     const reviewsPath = join(sessionDir, '.internal', 'reviews.yaml');
     const reviewFile = parseYaml(await readFile(reviewsPath, 'utf-8')) as ReviewFile;
 
-    const includedArticle = reviewFile.articles.find(a => a.doi === '10.1234/included');
+    const includedArticle = reviewFile.articles.find((a) => a.doi === '10.1234/included');
     expect(includedArticle?.fulltext).toBeDefined();
     expect(includedArticle?.fulltext?.dirName).toMatch(/^[a-z0-9]+-[a-f0-9]{8}$/);
-    expect(includedArticle?.fulltext?.hasFiles).toEqual({ pdf: false, xml: false, html: false, markdown: false });
+    expect(includedArticle?.fulltext?.hasFiles).toEqual({
+      pdf: false,
+      xml: false,
+      html: false,
+      markdown: false,
+    });
 
     // Excluded article should NOT have fulltext reference
-    const excludedArticle = reviewFile.articles.find(a => a.doi === '10.1234/excluded');
+    const excludedArticle = reviewFile.articles.find((a) => a.doi === '10.1234/excluded');
     expect(excludedArticle?.fulltext).toBeUndefined();
   });
 
@@ -226,7 +231,7 @@ describe('executeFulltextInit', () => {
     const result = await executeFulltextInit({ sessionId, sessionsDir });
 
     expect(result.created).toBe(2);
-    const keys = result.entries.map(e => e.citationKey);
+    const keys = result.entries.map((e) => e.citationKey);
     expect(keys).toContain('smith2024');
     expect(keys).toContain('smith2024a');
   });
@@ -235,8 +240,6 @@ describe('executeFulltextInit', () => {
     const sessionDir = join(sessionsDir, sessionId);
     await mkdir(sessionDir, { recursive: true });
 
-    await expect(
-      executeFulltextInit({ sessionId, sessionsDir }),
-    ).rejects.toThrow();
+    await expect(executeFulltextInit({ sessionId, sessionsDir })).rejects.toThrow();
   });
 });

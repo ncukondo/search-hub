@@ -77,14 +77,17 @@ describe('executeReviewExport', () => {
 
       const result = await executeReviewExport(
         { sessionId, only: 'included', output: outputPath, format: 'yaml' },
-        sessionsDir
+        sessionsDir,
       );
 
       expect(result.exportedCount).toBe(2);
       const content = await readFile(outputPath, 'utf-8');
       const exported = parseYaml(content) as { articles: ArticleEntry[] };
       expect(exported.articles).toHaveLength(2);
-      expect(exported.articles.map((a) => a.title)).toEqual(['Included Article 1', 'Included Article 2']);
+      expect(exported.articles.map((a) => a.title)).toEqual([
+        'Included Article 1',
+        'Included Article 2',
+      ]);
     });
   });
 
@@ -95,7 +98,7 @@ describe('executeReviewExport', () => {
 
       const result = await executeReviewExport(
         { sessionId, only: 'excluded', output: outputPath, format: 'yaml' },
-        sessionsDir
+        sessionsDir,
       );
 
       expect(result.exportedCount).toBe(1);
@@ -113,7 +116,7 @@ describe('executeReviewExport', () => {
 
       await executeReviewExport(
         { sessionId, only: 'included', output: outputPath, format: 'yaml' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(outputPath, 'utf-8');
@@ -127,7 +130,7 @@ describe('executeReviewExport', () => {
 
       await executeReviewExport(
         { sessionId, only: 'included', output: outputPath, format: 'json' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(outputPath, 'utf-8');
@@ -141,7 +144,7 @@ describe('executeReviewExport', () => {
 
       await executeReviewExport(
         { sessionId, only: 'included', output: outputPath, format: 'jsonl' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(outputPath, 'utf-8');
@@ -159,7 +162,7 @@ describe('executeReviewExport', () => {
 
       await executeReviewExport(
         { sessionId, only: 'included', output: outputPath, format: 'json' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(outputPath, 'utf-8');
@@ -179,7 +182,7 @@ describe('executeReviewExport', () => {
 
       await executeReviewExport(
         { sessionId, only: 'included', output: outputPath, format: 'json' },
-        sessionsDir
+        sessionsDir,
       );
 
       const content = await readFile(outputPath, 'utf-8');
@@ -196,7 +199,7 @@ describe('executeReviewExport', () => {
 
     await executeReviewExport(
       { sessionId, only: 'included', output: outputPath, format: 'yaml' },
-      sessionsDir
+      sessionsDir,
     );
 
     const content = await readFile(outputPath, 'utf-8');
@@ -209,7 +212,10 @@ describe('executeReviewExport', () => {
     const outputPath = join(tempDir, 'output', 'export.yaml');
 
     await expect(
-      executeReviewExport({ sessionId, only: 'included', output: outputPath, format: 'yaml' }, sessionsDir)
+      executeReviewExport(
+        { sessionId, only: 'included', output: outputPath, format: 'yaml' },
+        sessionsDir,
+      ),
     ).rejects.toThrow();
   });
 
@@ -219,7 +225,7 @@ describe('executeReviewExport', () => {
 
     const result = await executeReviewExport(
       { sessionId, only: 'included', output: outputPath, format: 'yaml' },
-      sessionsDir
+      sessionsDir,
     );
 
     expect(result.exportedCount).toBe(0);

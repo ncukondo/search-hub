@@ -385,9 +385,13 @@ describe('search-hub config E2E', () => {
 
     it('should override global value with local value', async () => {
       // Create global config
-      const globalConfigPath = await createConfig(ctx.tempDir, {
-        log: { level: 'warn' },
-      }, 'global-config.toml');
+      const globalConfigPath = await createConfig(
+        ctx.tempDir,
+        {
+          log: { level: 'warn' },
+        },
+        'global-config.toml',
+      );
 
       // Create local config
       const projectDir = join(ctx.tempDir, 'project');
@@ -405,12 +409,14 @@ describe('search-hub config E2E', () => {
 
     it('should resolve scope correctly based on flags and project context', () => {
       // Default inside project -> local
-      expect(resolveWriteScope({ global: false, local: false, insideProject: true }))
-        .toEqual({ scope: 'local' });
+      expect(resolveWriteScope({ global: false, local: false, insideProject: true })).toEqual({
+        scope: 'local',
+      });
 
       // Default outside project -> global
-      expect(resolveWriteScope({ global: false, local: false, insideProject: false }))
-        .toEqual({ scope: 'global' });
+      expect(resolveWriteScope({ global: false, local: false, insideProject: false })).toEqual({
+        scope: 'global',
+      });
 
       // --local outside project -> error
       const result = resolveWriteScope({ global: false, local: true, insideProject: false });
@@ -428,7 +434,7 @@ describe('search-hub config E2E', () => {
         'providers.pubmed.api_key',
         'my-key',
         'global',
-        '/home/.config/search-hub/config.toml'
+        '/home/.config/search-hub/config.toml',
       );
       expect(output).toContain('global');
       expect(output).toContain('providers.pubmed.api_key = my-key');
@@ -436,12 +442,7 @@ describe('search-hub config E2E', () => {
     });
 
     it('should show local origin correctly', () => {
-      const output = formatShowOrigin(
-        'output.color',
-        'false',
-        'local',
-        '.search-hub/config.toml'
-      );
+      const output = formatShowOrigin('output.color', 'false', 'local', '.search-hub/config.toml');
       expect(output).toContain('local');
       expect(output).toContain('output.color = false');
     });
@@ -451,7 +452,7 @@ describe('search-hub config E2E', () => {
         'providers.pubmed.api_key',
         'env-value',
         'env',
-        'SEARCH_HUB_PUBMED_API_KEY'
+        'SEARCH_HUB_PUBMED_API_KEY',
       );
       expect(output).toContain('env');
       expect(output).toContain('SEARCH_HUB_PUBMED_API_KEY');
@@ -515,10 +516,14 @@ describe('search-hub config E2E', () => {
 
   describe('config --list with scope filter E2E', () => {
     it('should show only global config values', async () => {
-      const globalConfigPath = await createConfig(ctx.tempDir, {
-        log: { level: 'warn' },
-        output: { color: false },
-      }, 'global-only.toml');
+      const globalConfigPath = await createConfig(
+        ctx.tempDir,
+        {
+          log: { level: 'warn' },
+          output: { color: false },
+        },
+        'global-only.toml',
+      );
 
       const globalConfig = await loadTomlFile(globalConfigPath);
       const output = viewConfigFiltered(globalConfig as Record<string, unknown>);
@@ -540,9 +545,13 @@ describe('search-hub config E2E', () => {
     });
 
     it('should show merged config by default', async () => {
-      const globalConfigPath = await createConfig(ctx.tempDir, {
-        log: { level: 'warn' },
-      }, 'merged-global.toml');
+      const globalConfigPath = await createConfig(
+        ctx.tempDir,
+        {
+          log: { level: 'warn' },
+        },
+        'merged-global.toml',
+      );
 
       const config = await loadConfig({
         globalConfigPath,
@@ -572,9 +581,13 @@ describe('search-hub config E2E', () => {
 
   describe('config list --show-origin E2E', () => {
     it('should show origin for all keys in merged config', async () => {
-      const globalConfigPath = await createConfig(ctx.tempDir, {
-        log: { level: 'warn' },
-      }, 'origin-global.toml');
+      const globalConfigPath = await createConfig(
+        ctx.tempDir,
+        {
+          log: { level: 'warn' },
+        },
+        'origin-global.toml',
+      );
 
       const config = await loadConfig({
         globalConfigPath,
@@ -588,7 +601,7 @@ describe('search-hub config E2E', () => {
         {} as Record<string, unknown>,
         '',
         globalConfig as Record<string, unknown>,
-        globalConfigPath
+        globalConfigPath,
       );
 
       // Global-overridden key should show global origin
@@ -610,7 +623,7 @@ describe('search-hub config E2E', () => {
         localConfig as Record<string, unknown>,
         '.search-hub/config.toml',
         {} as Record<string, unknown>,
-        ''
+        '',
       );
 
       expect(output).toContain('local');
@@ -630,7 +643,7 @@ describe('search-hub config E2E', () => {
           {} as Record<string, unknown>,
           '',
           {} as Record<string, unknown>,
-          ''
+          '',
         );
 
         expect(output).toContain('env');

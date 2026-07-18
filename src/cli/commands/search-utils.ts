@@ -6,13 +6,14 @@
  * Build a detailed error message listing per-provider failures.
  */
 export function buildFailureErrorMessage(
-  results: Record<string, { hits: number; retrieved: number; error?: string }>
+  results: Record<string, { hits: number; retrieved: number; error?: string }>,
 ): string {
   const errorLines = Object.entries(results)
     .filter(([, r]) => r.error)
     .map(([provider, r]) => `  ${provider}: ${r.error}`);
 
-  const suggestedActions = '\n\nSuggested actions:\n' +
+  const suggestedActions =
+    '\n\nSuggested actions:\n' +
     '  → Run with --dry-run to inspect translated queries\n' +
     '  → Check provider configuration: search-hub config\n' +
     '  → Use --db <provider> to test a single provider';
@@ -29,7 +30,7 @@ export function buildFailureErrorMessage(
  * Used when --strict mode is enabled.
  */
 export function buildPartialErrorMessage(
-  results: Record<string, { hits: number; retrieved: number; error?: string }>
+  results: Record<string, { hits: number; retrieved: number; error?: string }>,
 ): string {
   const failedLines = Object.entries(results)
     .filter(([, r]) => r.error)
@@ -57,7 +58,7 @@ export function buildPartialErrorMessage(
  * Format verbose per-provider details for CLI output.
  */
 export function formatVerboseProviderDetails(
-  results: Record<string, { hits: number; retrieved: number; error?: string; warnings?: string[] }>
+  results: Record<string, { hits: number; retrieved: number; error?: string; warnings?: string[] }>,
 ): string {
   const lines: string[] = ['\nPer-provider details:'];
   for (const [provider, stats] of Object.entries(results)) {

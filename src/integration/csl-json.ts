@@ -40,10 +40,7 @@ export interface CslJsonItem {
  * - Duplicate resolution is handled by `articlesToCslJson()` at the batch level.
  */
 export function generateCslId(article: Article): string {
-  const authorPart =
-    article.authors.length > 0
-      ? article.authors[0]!.family.toLowerCase()
-      : 'anon';
+  const authorPart = article.authors.length > 0 ? article.authors[0]!.family.toLowerCase() : 'anon';
 
   const yearPart = extractYear(article.publicationDate);
 
@@ -68,9 +65,7 @@ function extractYear(date: string | undefined): string {
  * - `"2024"` → `[[2024]]`
  * - `undefined` or `""` → `undefined`
  */
-export function parseDateParts(
-  date: string | undefined
-): number[][] | undefined {
+export function parseDateParts(date: string | undefined): number[][] | undefined {
   if (!date) return undefined;
 
   const parts = date.split('-').map(Number);

@@ -8,7 +8,7 @@ import type { MeSHLookupClient } from '../mesh-lookup.js';
  * @returns A mock MeSHLookupClient
  */
 export function createMockMeSHClient(
-  results: Map<string, { found: boolean; suggestions?: string[] }>
+  results: Map<string, { found: boolean; suggestions?: string[] }>,
 ): MeSHLookupClient {
   return {
     lookupTerm: vi.fn(async (term: string) => {

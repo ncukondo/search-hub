@@ -18,11 +18,7 @@ export const ENV_VAR_MAP: Record<string, string> = {
 /**
  * Set a value at a dot-separated path in an object.
  */
-function setPath(
-  obj: Record<string, unknown>,
-  path: string,
-  value: string
-): void {
+function setPath(obj: Record<string, unknown>, path: string, value: string): void {
   const parts = path.split('.');
   let current = obj;
 

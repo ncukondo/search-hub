@@ -38,14 +38,13 @@ export interface ValidateResult {
  * @returns The parsed AST on success, or a ValidateResult with errors on failure.
  */
 async function parseQueryFile(
-  filePath: string
+  filePath: string,
 ): Promise<{ ast: QueryAST } | { result: ValidateResult }> {
   let content: string;
   try {
     content = await readFile(filePath, 'utf-8');
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to read file';
+    const message = error instanceof Error ? error.message : 'Failed to read file';
     return { result: { success: false, errors: [message] } };
   }
 
@@ -65,8 +64,7 @@ async function parseQueryFile(
       return { result: { success: false, errors: [error.message] } };
     }
 
-    const message =
-      error instanceof Error ? error.message : 'Unknown validation error';
+    const message = error instanceof Error ? error.message : 'Unknown validation error';
     return { result: { success: false, errors: [message] } };
   }
 }
@@ -83,7 +81,7 @@ export async function validateQueryCommand(
     meshClient?: MeSHLookupClient;
     noVocab?: boolean;
     countValidators?: CountVocabValidator[];
-  }
+  },
 ): Promise<ValidateResult> {
   const parsed = await parseQueryFile(filePath);
 
@@ -104,7 +102,7 @@ export async function validateQueryCommand(
       result.vocabResult = await validateControlledVocab(
         parsed.ast,
         options.meshClient,
-        options.countValidators ? { countValidators: options.countValidators } : undefined
+        options.countValidators ? { countValidators: options.countValidators } : undefined,
       );
     }
   }
@@ -115,10 +113,7 @@ export async function validateQueryCommand(
 /**
  * Format validation result for display.
  */
-export function formatValidateResult(
-  result: ValidateResult,
-  filePath: string
-): string {
+export function formatValidateResult(result: ValidateResult, filePath: string): string {
   if (result.success) {
     const lines = [
       `✓ Valid query file: ${filePath}`,
@@ -161,14 +156,8 @@ export async function detectSchemaLink(filePath: string): Promise<boolean> {
 /**
  * Format controlled vocabulary validation results for display.
  */
-export function formatVocabValidationOutput(
-  result: VocabValidationResult
-): string {
-  if (
-    result.valid.length === 0 &&
-    result.invalid.length === 0 &&
-    result.errors.length === 0
-  ) {
+export function formatVocabValidationOutput(result: VocabValidationResult): string {
+  if (result.valid.length === 0 && result.invalid.length === 0 && result.errors.length === 0) {
     return '';
   }
 
@@ -181,9 +170,7 @@ export function formatVocabValidationOutput(
   for (const item of result.invalid) {
     lines.push(`  ✗ ${item.vocabulary}: "${item.term}" — not found`);
     if (item.suggestions && item.suggestions.length > 0) {
-      lines.push(
-        `    Did you mean: ${item.suggestions.map((s) => `"${s}"`).join(', ')}`
-      );
+      lines.push(`    Did you mean: ${item.suggestions.map((s) => `"${s}"`).join(', ')}`);
     }
   }
 

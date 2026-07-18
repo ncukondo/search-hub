@@ -43,9 +43,7 @@ export async function loadFulltextEntries(fulltextDir: string): Promise<ArticleE
   let dirNames: string[];
   try {
     const dirEntries = await readdir(fulltextDir, { withFileTypes: true });
-    dirNames = dirEntries
-      .filter((e) => e.isDirectory())
-      .map((e) => e.name);
+    dirNames = dirEntries.filter((e) => e.isDirectory()).map((e) => e.name);
   } catch {
     return [];
   }

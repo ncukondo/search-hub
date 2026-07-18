@@ -80,10 +80,7 @@ describe('executeFulltextConvert', () => {
   it('converts all XML files in session', async () => {
     await setupSession(tmpDir, 'test-session');
 
-    const result = await executeFulltextConvert(
-      { sessionId: 'test-session' },
-      tmpDir,
-    );
+    const result = await executeFulltextConvert({ sessionId: 'test-session' }, tmpDir);
 
     expect(result.success).toBe(true);
     expect(result.converted).toBe(1);
@@ -131,10 +128,7 @@ describe('executeFulltextConvert', () => {
     const mdPath = join(fulltextDir, 'smith2024-a1b2c3d4', 'fulltext.md');
     await writeFile(mdPath, '# Already converted\n', 'utf-8');
 
-    const result = await executeFulltextConvert(
-      { sessionId: 'test-session' },
-      tmpDir,
-    );
+    const result = await executeFulltextConvert({ sessionId: 'test-session' }, tmpDir);
 
     expect(result.success).toBe(true);
     expect(result.converted).toBe(0);
@@ -144,10 +138,7 @@ describe('executeFulltextConvert', () => {
   it('shows progress and summary', async () => {
     await setupSession(tmpDir, 'test-session');
 
-    const result = await executeFulltextConvert(
-      { sessionId: 'test-session' },
-      tmpDir,
-    );
+    const result = await executeFulltextConvert({ sessionId: 'test-session' }, tmpDir);
 
     expect(result.success).toBe(true);
     expect(result.articles).toHaveLength(1);

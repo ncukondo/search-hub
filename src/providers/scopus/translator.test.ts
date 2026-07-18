@@ -392,7 +392,7 @@ describe('Scopus Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.native).toBe(
-        'TITLE-ABS-KEY(EPA OR "entrustable professional activities") AND NOT TITLE-ABS-KEY("environmental protection")'
+        'TITLE-ABS-KEY(EPA OR "entrustable professional activities") AND NOT TITLE-ABS-KEY("environmental protection")',
       );
     });
 
@@ -415,7 +415,7 @@ describe('Scopus Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.native).toBe(
-        'TITLE-ABS-KEY(EPA) AND NOT TITLE-ABS-KEY("environmental protection" OR pollution OR agency)'
+        'TITLE-ABS-KEY(EPA) AND NOT TITLE-ABS-KEY("environmental protection" OR pollution OR agency)',
       );
     });
 
@@ -459,7 +459,7 @@ describe('Scopus Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.native).toBe(
-        'TITLE-ABS-KEY(diabetes) AND NOT TITLE-ABS-KEY(mice OR rats) AND PUBYEAR > 2019 AND LANGUAGE(english)'
+        'TITLE-ABS-KEY(diabetes) AND NOT TITLE-ABS-KEY(mice OR rats) AND PUBYEAR > 2019 AND LANGUAGE(english)',
       );
     });
   });
@@ -520,7 +520,7 @@ describe('Scopus Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.native).toBe(
-        'TITLE-ABS-KEY(diabetes OR T2DM) OR INDEXTERMS("Diabetes Mellitus")'
+        'TITLE-ABS-KEY(diabetes OR T2DM) OR INDEXTERMS("Diabetes Mellitus")',
       );
     });
 
@@ -605,7 +605,7 @@ describe('Scopus Query Translator', () => {
 
       const result = translateQuery(ast);
       expect(result.warnings).toContainEqual(
-        'Scopus: MeSH terms in block 1 ignored (not supported) — keywords still searched'
+        'Scopus: MeSH terms in block 1 ignored (not supported) — keywords still searched',
       );
     });
 
@@ -677,7 +677,7 @@ describe('Scopus Query Translator', () => {
       expect(result.native).toBe(
         'TITLE-ABS-KEY(diabetes OR T2DM OR "type 2 diabetes") AND ' +
           'TITLE-ABS-KEY("machine learning" OR "artificial intelligence") AND ' +
-          'PUBYEAR > 2019 AND PUBYEAR < 2025 AND LANGUAGE(english) AND SRCTYPE(j)'
+          'PUBYEAR > 2019 AND PUBYEAR < 2025 AND LANGUAGE(english) AND SRCTYPE(j)',
       );
     });
   });

@@ -11,14 +11,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
-import {
-  formatResultsList,
-  formatResultsJson,
-} from './results.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
+import { formatResultsList, formatResultsJson } from './results.js';
 import { deduplicateArticles } from './export.js';
 import type { Article } from '../../providers/base/types.js';
 
@@ -42,7 +36,8 @@ describe('search-hub results E2E', () => {
       source: 'pubmed',
       publicationDate: '2024-03-15',
       journal: 'BMC medical education',
-      abstract: 'This comprehensive review examines the application of artificial intelligence in medical education, analyzing current implementations and future directions for AI-assisted learning in healthcare training programs.',
+      abstract:
+        'This comprehensive review examines the application of artificial intelligence in medical education, analyzing current implementations and future directions for AI-assisted learning in healthcare training programs.',
       retrievedAt: new Date().toISOString(),
     },
     {
@@ -53,7 +48,8 @@ describe('search-hub results E2E', () => {
       source: 'pubmed',
       publicationDate: '2024-06-01',
       journal: 'BMC medical education',
-      abstract: 'We present a systematic analysis of machine learning applications in healthcare settings, with emphasis on diagnostic accuracy and clinical decision support systems.',
+      abstract:
+        'We present a systematic analysis of machine learning applications in healthcare settings, with emphasis on diagnostic accuracy and clinical decision support systems.',
       retrievedAt: new Date().toISOString(),
     },
     {
@@ -75,7 +71,8 @@ describe('search-hub results E2E', () => {
       source: 'eric',
       publicationDate: '2023-11-20',
       journal: 'Academic medicine',
-      abstract: 'This study explores the integration of educational technology tools in medical training curricula.',
+      abstract:
+        'This study explores the integration of educational technology tools in medical training curricula.',
       retrievedAt: new Date().toISOString(),
     },
     {
@@ -131,11 +128,7 @@ describe('search-hub results E2E', () => {
       };
 
       const jsonl = providerArticles.map((a) => JSON.stringify(a)).join('\n');
-      await writeFile(
-        join(sessionDir, `${provider}_results.jsonl`),
-        jsonl,
-        'utf-8',
-      );
+      await writeFile(join(sessionDir, `${provider}_results.jsonl`), jsonl, 'utf-8');
       await writeFile(
         join(sessionDir, `${provider}_query.txt`),
         `${provider} query string`,
@@ -161,11 +154,7 @@ describe('search-hub results E2E', () => {
       },
     };
 
-    await writeFile(
-      join(sessionDir, 'session.yaml'),
-      stringifyYaml(session),
-      'utf-8',
-    );
+    await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
     return id;
   }
@@ -176,14 +165,13 @@ describe('search-hub results E2E', () => {
   ): Promise<Article[]> {
     const articles: Article[] = [];
     for (const provider of providers) {
-      const resultsPath = join(
-        ctx.sessionsDir,
-        sessionId,
-        `${provider}_results.jsonl`,
-      );
+      const resultsPath = join(ctx.sessionsDir, sessionId, `${provider}_results.jsonl`);
       try {
         const content = await readFile(resultsPath, 'utf-8');
-        const lines = content.trim().split('\n').filter((l) => l);
+        const lines = content
+          .trim()
+          .split('\n')
+          .filter((l) => l);
         for (const line of lines) {
           articles.push(JSON.parse(line));
         }
@@ -196,16 +184,19 @@ describe('search-hub results E2E', () => {
 
   describe('results command with real session data', () => {
     it('should produce human-readable output listing articles', async () => {
-      await createTestSession(
-        'results-e2e-human',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('results-e2e-human', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-human',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('results-e2e-human', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const dedupResult = deduplicateArticles(allArticles);
       const output = formatResultsList(dedupResult.articles, {
         sessionId: 'results-e2e-human',
@@ -226,16 +217,19 @@ describe('search-hub results E2E', () => {
     });
 
     it('should produce parseable JSON with --json flag', async () => {
-      await createTestSession(
-        'results-e2e-json',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('results-e2e-json', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-json',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('results-e2e-json', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const dedupResult = deduplicateArticles(allArticles);
       const jsonOutput = formatResultsJson(dedupResult.articles);
 
@@ -248,16 +242,19 @@ describe('search-hub results E2E', () => {
     });
 
     it('should support pagination with limit option', async () => {
-      await createTestSession(
-        'results-e2e-limit',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('results-e2e-limit', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-limit',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('results-e2e-limit', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const dedupResult = deduplicateArticles(allArticles);
       const limited = dedupResult.articles.slice(0, 2);
       const output = formatResultsList(limited, {
@@ -274,16 +271,19 @@ describe('search-hub results E2E', () => {
     });
 
     it('should support pagination with offset option', async () => {
-      await createTestSession(
-        'results-e2e-offset',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('results-e2e-offset', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-offset',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('results-e2e-offset', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const dedupResult = deduplicateArticles(allArticles);
       const offset = 2;
       const offsetArticles = dedupResult.articles.slice(offset, offset + 2);
@@ -300,16 +300,19 @@ describe('search-hub results E2E', () => {
     });
 
     it('should deduplicate articles by DOI', async () => {
-      await createTestSession(
-        'results-e2e-dedup',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('results-e2e-dedup', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-dedup',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('results-e2e-dedup', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
       expect(allArticles).toHaveLength(6);
 
@@ -328,16 +331,19 @@ describe('search-hub results E2E', () => {
     });
 
     it('should display abstracts when --abstract flag is set', async () => {
-      await createTestSession(
-        'results-e2e-abstract',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('results-e2e-abstract', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-abstract',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('results-e2e-abstract', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const dedupResult = deduplicateArticles(allArticles);
       const output = formatResultsList(dedupResult.articles, {
         sessionId: 'results-e2e-abstract',
@@ -348,23 +354,28 @@ describe('search-hub results E2E', () => {
 
       // Should contain abstracts
       expect(output).toContain('Abstract:');
-      expect(output).toContain('comprehensive review examines the application of artificial intelligence');
+      expect(output).toContain(
+        'comprehensive review examines the application of artificial intelligence',
+      );
       expect(output).toContain('systematic analysis of machine learning');
       // Should show placeholder for missing abstract
       expect(output).toContain('(No abstract available)');
     });
 
     it('should truncate long abstracts with --abstract-length', async () => {
-      await createTestSession(
-        'results-e2e-abstract-length',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('results-e2e-abstract-length', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-abstract-length',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('results-e2e-abstract-length', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const dedupResult = deduplicateArticles(allArticles);
       const output = formatResultsList(dedupResult.articles, {
         sessionId: 'results-e2e-abstract-length',
@@ -381,16 +392,19 @@ describe('search-hub results E2E', () => {
     });
 
     it('should not display abstracts when --abstract flag is not set', async () => {
-      await createTestSession(
-        'results-e2e-no-abstract',
-        sampleArticles,
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      await createTestSession('results-e2e-no-abstract', sampleArticles, [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
 
-      const allArticles = await loadArticlesFromSession(
-        'results-e2e-no-abstract',
-        ['pubmed', 'eric', 'arxiv', 'scopus'],
-      );
+      const allArticles = await loadArticlesFromSession('results-e2e-no-abstract', [
+        'pubmed',
+        'eric',
+        'arxiv',
+        'scopus',
+      ]);
       const dedupResult = deduplicateArticles(allArticles);
       const output = formatResultsList(dedupResult.articles, {
         sessionId: 'results-e2e-no-abstract',

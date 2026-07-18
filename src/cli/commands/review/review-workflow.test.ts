@@ -118,7 +118,7 @@ summary:
     // Step 4: Extract - Create batch for review (uses --name)
     const extractResult = await executeReviewExtract(
       { sessionId, filter: ['pending'], limit: 5, name: 'batch1', reviewer: 'human:admin' },
-      sessionsDir
+      sessionsDir,
     );
     expect(extractResult.extractedCount).toBe(5);
 
@@ -176,10 +176,7 @@ summary:
     await writeFile(extractResult.outputPath, editedContent);
 
     // Step 6: Merge - Combine reviewed articles back (uses --name)
-    const mergeResult = await executeReviewMerge(
-      { sessionId, name: 'batch1' },
-      sessionsDir
-    );
+    const mergeResult = await executeReviewMerge({ sessionId, name: 'batch1' }, sessionsDir);
     expect(mergeResult.reviewsAdded).toBe(5); // 1+1+2+1+0
     expect(mergeResult.decisionsSet).toBe(2); // Two finalDecisions set
 
@@ -197,7 +194,7 @@ summary:
     const exportPath = join(tempDir, 'output', 'included.yaml');
     const exportResult = await executeReviewExport(
       { sessionId, only: 'included', output: exportPath, format: 'yaml' },
-      sessionsDir
+      sessionsDir,
     );
     expect(exportResult.exportedCount).toBe(1);
 
@@ -217,7 +214,7 @@ summary:
     // Extract with schema (uses --name)
     const extractResult = await executeReviewExtract(
       { sessionId, filter: ['pending'], limit: 3, name: 'schema-test', reviewer: 'human:admin' },
-      sessionsDir
+      sessionsDir,
     );
 
     // Verify schema reference is present and points to adjacent file
@@ -225,7 +222,13 @@ summary:
     expect(content).toMatch(/^# yaml-language-server: \$schema=\.\/review\.schema\.json/);
 
     // Verify schema file was copied alongside
-    const schemaPath = join(sessionsDir, sessionId, 'for-review', 'schema-test', 'review.schema.json');
+    const schemaPath = join(
+      sessionsDir,
+      sessionId,
+      'for-review',
+      'schema-test',
+      'review.schema.json',
+    );
     await access(schemaPath);
     const schemaContent = await readFile(schemaPath, 'utf-8');
     expect(schemaContent).toContain('json-schema.org');
@@ -239,8 +242,15 @@ summary:
 
     // First cycle: Extract → Edit → Merge
     const extract1 = await executeReviewExtract(
-      { sessionId, filter: ['pending'], offset: 0, limit: 3, name: 'cycle1', reviewer: 'human:admin' },
-      sessionsDir
+      {
+        sessionId,
+        filter: ['pending'],
+        offset: 0,
+        limit: 3,
+        name: 'cycle1',
+        reviewer: 'human:admin',
+      },
+      sessionsDir,
     );
 
     const batch1Content = await readFile(extract1.outputPath, 'utf-8');
@@ -257,8 +267,15 @@ summary:
 
     // Second cycle: Another reviewer
     const extract2 = await executeReviewExtract(
-      { sessionId, filter: ['pending'], offset: 0, limit: 3, name: 'cycle2', reviewer: 'human:admin' },
-      sessionsDir
+      {
+        sessionId,
+        filter: ['pending'],
+        offset: 0,
+        limit: 3,
+        name: 'cycle2',
+        reviewer: 'human:admin',
+      },
+      sessionsDir,
     );
 
     const batch2Content = await readFile(extract2.outputPath, 'utf-8');
@@ -282,7 +299,10 @@ summary:
     expect(status.pending).toBe(8);
 
     // Verify the first article has the review from cycle 1
-    const finalReviews = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
+    const finalReviews = await readFile(
+      join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+      'utf-8',
+    );
     const finalFile = parseYaml(finalReviews) as ReviewFile;
     const article1 = finalFile.articles[0];
     expect(article1!.reviews).toHaveLength(1); // reviewer1's review
@@ -296,7 +316,7 @@ summary:
 
     const extractResult = await executeReviewExtract(
       { sessionId, filter: ['pending'], limit: 2, name: 'dryrun-test', reviewer: 'human:admin' },
-      sessionsDir
+      sessionsDir,
     );
 
     // Edit batch
@@ -314,7 +334,7 @@ summary:
     // Dry-run merge
     const dryRunResult = await executeReviewMerge(
       { sessionId, name: 'dryrun-test', dryRun: true },
-      sessionsDir
+      sessionsDir,
     );
     expect(dryRunResult.reviewsAdded).toBe(1);
     expect(dryRunResult.decisionsSet).toBe(1);
@@ -382,7 +402,7 @@ summary:
     ];
     await writeFile(
       join(sessionDir, 'pubmed_results.jsonl'),
-      pubmedArticles.map((a) => JSON.stringify(a)).join('\n')
+      pubmedArticles.map((a) => JSON.stringify(a)).join('\n'),
     );
 
     const scopusArticles = [
@@ -404,7 +424,7 @@ summary:
     ];
     await writeFile(
       join(sessionDir, 'scopus_results.jsonl'),
-      scopusArticles.map((a) => JSON.stringify(a)).join('\n')
+      scopusArticles.map((a) => JSON.stringify(a)).join('\n'),
     );
 
     // Step 1: Init review - should deduplicate and track mergedFrom
@@ -481,11 +501,17 @@ summary:
           limit: 5,
           name: 'title-screening',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Verify output is in for-review/title-screening/
-      const expectedPath = join(sessionsDir, sessionId, 'for-review', 'title-screening', 'review.yaml');
+      const expectedPath = join(
+        sessionsDir,
+        sessionId,
+        'for-review',
+        'title-screening',
+        'review.yaml',
+      );
       expect(extractResult.outputPath).toBe(expectedPath);
 
       // Verify ReviewFile screening format
@@ -530,7 +556,7 @@ summary:
       // Step 4: Merge screening file back to master (uses --name)
       const mergeResult = await executeReviewMerge(
         { sessionId, name: 'title-screening' },
-        sessionsDir
+        sessionsDir,
       );
       expect(mergeResult.reviewsAdded).toBe(5); // All articles merged (default is uncertain, not null)
       expect(mergeResult.warnings).toHaveLength(0);
@@ -541,7 +567,9 @@ summary:
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
 
       // Find reviewed articles by DOI
-      const article1 = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[0]!));
+      const article1 = reviewFile.articles.find(
+        (a) => a.doi === getArticleId(screeningFile.articles[0]!),
+      );
       expect(article1!.reviews).toHaveLength(1);
       expect(article1!.reviews[0]!.reviewer).toBe('ai:claude');
       expect(article1!.reviews[0]!.decision).toBe('include');
@@ -549,11 +577,15 @@ summary:
       expect(article1!.reviews[0]!.timestamp).toBeDefined();
       expect(article1!.reviews[0]!.comment).toBe('Relevant to research');
 
-      const article2 = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[1]!));
+      const article2 = reviewFile.articles.find(
+        (a) => a.doi === getArticleId(screeningFile.articles[1]!),
+      );
       expect(article2!.reviews[0]!.decision).toBe('exclude');
       expect(article2!.reviews[0]!.basis).toBe('title');
 
-      const article3 = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[2]!));
+      const article3 = reviewFile.articles.find(
+        (a) => a.doi === getArticleId(screeningFile.articles[2]!),
+      );
       expect(article3!.reviews[0]!.decision).toBe('uncertain');
     });
 
@@ -572,7 +604,7 @@ summary:
           reviewer: 'ai:gpt-4o',
           name: 'title-screening',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Mark all as uncertain (need abstract review)
@@ -603,7 +635,7 @@ summary:
           reviewer: 'ai:claude',
           name: 'abstract-screening',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Verify abstract is included
@@ -634,12 +666,12 @@ summary:
       // Verify reviews have different bases
       const finalReviewsContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const finalReviews = parseYaml(finalReviewsContent) as ReviewFile;
 
       const articleWithTwoReviews = finalReviews.articles.find(
-        (a) => a.doi === getArticleId(phase2File.articles[0]!)
+        (a) => a.doi === getArticleId(phase2File.articles[0]!),
       );
       expect(articleWithTwoReviews!.reviews).toHaveLength(2);
 
@@ -669,7 +701,7 @@ summary:
           limit: 3,
           name: 'reviewer-reg-test',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       const screeningContent = await readFile(extractResult.outputPath, 'utf-8');
@@ -686,7 +718,7 @@ summary:
 
       const reviewsContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       expect(reviewFile.reviewers).toEqual([{ name: 'ai:claude', basis: 'title' }]);
@@ -706,7 +738,7 @@ summary:
           limit: 5,
           name: 'phase1-reg',
         },
-        sessionsDir
+        sessionsDir,
       );
       const phase1Content = await readFile(phase1Extract.outputPath, 'utf-8');
       const phase1File = parseYaml(phase1Content) as ReviewFile;
@@ -727,7 +759,7 @@ summary:
           reviewer: 'ai:claude',
           name: 'phase2-reg',
         },
-        sessionsDir
+        sessionsDir,
       );
       const phase2Content = await readFile(phase2Extract.outputPath, 'utf-8');
       const phase2File = parseYaml(phase2Content) as ReviewFile;
@@ -741,7 +773,7 @@ summary:
 
       const reviewsContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       expect(reviewFile.reviewers).toHaveLength(2);
@@ -765,7 +797,7 @@ summary:
           limit: 3,
           name: 'no-dup-1',
         },
-        sessionsDir
+        sessionsDir,
       );
       const sf1 = parseYaml(await readFile(extract1.outputPath, 'utf-8')) as ReviewFile;
       await executeReviewMark({
@@ -786,7 +818,7 @@ summary:
           limit: 3,
           name: 'no-dup-2',
         },
-        sessionsDir
+        sessionsDir,
       );
       const sf2 = parseYaml(await readFile(extract2.outputPath, 'utf-8')) as ReviewFile;
       await executeReviewMark({
@@ -799,7 +831,7 @@ summary:
 
       const reviewsContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       // Same reviewer+basis should appear only once
@@ -822,7 +854,7 @@ summary:
           limit: 3,
           name: 'internal-flow',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Verify the file is inside the session directory
@@ -845,7 +877,7 @@ summary:
       // Merge using name (not file path)
       const mergeResult = await executeReviewMerge(
         { sessionId, name: 'internal-flow' },
-        sessionsDir
+        sessionsDir,
       );
 
       expect(mergeResult.reviewsAdded).toBe(3);
@@ -854,7 +886,7 @@ summary:
       // Verify reviews were merged to master
       const reviewsContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       const reviewedArticles = reviewFile.articles.filter((a) => (a.reviews ?? []).length > 0);
@@ -878,7 +910,7 @@ summary:
           reviewer: 'ai:gpt-4o',
           name: 'reviewer1-title',
         },
-        sessionsDir
+        sessionsDir,
       );
       const phase1Content = await readFile(phase1Extract.outputPath, 'utf-8');
       const phase1File = parseYaml(phase1Content) as ReviewFile;
@@ -905,7 +937,7 @@ summary:
           limit: 3, // Only review 3 of 10
           name: 'reviewer2-partial',
         },
-        sessionsDir
+        sessionsDir,
       );
       const phase2Content = await readFile(phase2Extract.outputPath, 'utf-8');
       const phase2File = parseYaml(phase2Content) as ReviewFile;
@@ -948,7 +980,7 @@ summary:
           limit: 5,
           name: 'r1-screen',
         },
-        sessionsDir
+        sessionsDir,
       );
       const r1Content = await readFile(r1Extract.outputPath, 'utf-8');
       const r1File = parseYaml(r1Content) as ReviewFile;
@@ -981,7 +1013,7 @@ summary:
           limit: 5,
           name: 'r2-screen',
         },
-        sessionsDir
+        sessionsDir,
       );
       const r2Content = await readFile(r2Extract.outputPath, 'utf-8');
       const r2File = parseYaml(r2Content) as ReviewFile;
@@ -1068,15 +1100,12 @@ summary:
       // Also verify list filtering works
       const agreedIncludeList = await executeReviewList(
         { sessionId, filter: 'agreed-include' },
-        sessionsDir
+        sessionsDir,
       );
       expect(agreedIncludeList.articles).toHaveLength(1);
       expect(agreedIncludeList.articles[0]!.status).toBe('agreed-include');
 
-      const dividedList = await executeReviewList(
-        { sessionId, filter: 'divided' },
-        sessionsDir
-      );
+      const dividedList = await executeReviewList({ sessionId, filter: 'divided' }, sessionsDir);
       expect(dividedList.articles).toHaveLength(1);
     });
   });
@@ -1095,7 +1124,7 @@ summary:
           reviewer: 'ai:claude',
           name: 'mark-by-exception',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Verify all articles default to 'uncertain'
@@ -1124,7 +1153,7 @@ summary:
       // Merge
       const mergeResult = await executeReviewMerge(
         { sessionId, name: 'mark-by-exception' },
-        sessionsDir
+        sessionsDir,
       );
 
       // All 10 articles should be merged (uncertain is a valid decision, not null)
@@ -1133,18 +1162,22 @@ summary:
       // Verify reviews were created for all articles
       const reviewsContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
 
       // Check that excluded articles have 'exclude' review
-      const excludedArticle = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[0]!));
+      const excludedArticle = reviewFile.articles.find(
+        (a) => a.doi === getArticleId(screeningFile.articles[0]!),
+      );
       expect(excludedArticle!.reviews).toHaveLength(1);
       expect(excludedArticle!.reviews[0]!.decision).toBe('exclude');
       expect(excludedArticle!.reviews[0]!.comment).toBe('Off topic');
 
       // Check that uncertain articles have 'uncertain' review
-      const uncertainArticle = reviewFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[1]!));
+      const uncertainArticle = reviewFile.articles.find(
+        (a) => a.doi === getArticleId(screeningFile.articles[1]!),
+      );
       expect(uncertainArticle!.reviews).toHaveLength(1);
       expect(uncertainArticle!.reviews[0]!.decision).toBe('uncertain');
 
@@ -1170,7 +1203,7 @@ summary:
           limit: 5,
           name: 'ai-screening',
         },
-        sessionsDir
+        sessionsDir,
       );
       const aiScreening = parseYaml(await readFile(aiExtract.outputPath, 'utf-8')) as ReviewFile;
       // AI marks: 3 include, 2 exclude
@@ -1192,7 +1225,7 @@ summary:
           reviewer: 'human:responsible-person',
           name: 'rp-confirmation',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Verify ReviewFile format with reviewHistory
@@ -1243,7 +1276,7 @@ summary:
       // Merge the RP review
       const mergeResult = await executeReviewMerge(
         { sessionId, name: 'rp-confirmation' },
-        sessionsDir
+        sessionsDir,
       );
       expect(mergeResult.reviewsAdded).toBe(3); // Only 3 articles have new reviews
       expect(mergeResult.decisionsSet).toBe(3); // 3 finalDecisions set
@@ -1251,7 +1284,7 @@ summary:
       // Verify final state
       const finalContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const finalFile = parseYaml(finalContent) as ReviewFile;
 
@@ -1281,8 +1314,14 @@ summary:
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
 
       // Simulate fulltext init having attached fulltext refs
-      reviewFile.articles[0]!.fulltext = { dirName: '2024-smith-machine-learning', hasFiles: { pdf: true, xml: false, html: false, markdown: false } };
-      reviewFile.articles[1]!.fulltext = { dirName: '2023-jones-deep-learning', hasFiles: { pdf: true, xml: false, html: false, markdown: false } };
+      reviewFile.articles[0]!.fulltext = {
+        dirName: '2024-smith-machine-learning',
+        hasFiles: { pdf: true, xml: false, html: false, markdown: false },
+      };
+      reviewFile.articles[1]!.fulltext = {
+        dirName: '2023-jones-deep-learning',
+        hasFiles: { pdf: true, xml: false, html: false, markdown: false },
+      };
       // Article 2 has no fulltext (not all articles have PDFs)
       await writeFile(reviewsPath, stringifyYaml(reviewFile));
 
@@ -1296,7 +1335,7 @@ summary:
           limit: 3,
           name: 'fulltext-screening',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       const screeningContent = await readFile(extractResult.outputPath, 'utf-8');
@@ -1305,11 +1344,17 @@ summary:
       expect(screeningFile.articles).toHaveLength(3);
 
       // Article 0: has fulltext and abstract
-      expect(screeningFile.articles[0]!.fulltext).toEqual({ dirName: '2024-smith-machine-learning', hasFiles: { pdf: true, xml: false, html: false, markdown: false } });
+      expect(screeningFile.articles[0]!.fulltext).toEqual({
+        dirName: '2024-smith-machine-learning',
+        hasFiles: { pdf: true, xml: false, html: false, markdown: false },
+      });
       expect(screeningFile.articles[0]!.abstract).toBeDefined();
 
       // Article 1: has fulltext and abstract
-      expect(screeningFile.articles[1]!.fulltext).toEqual({ dirName: '2023-jones-deep-learning', hasFiles: { pdf: true, xml: false, html: false, markdown: false } });
+      expect(screeningFile.articles[1]!.fulltext).toEqual({
+        dirName: '2023-jones-deep-learning',
+        hasFiles: { pdf: true, xml: false, html: false, markdown: false },
+      });
       expect(screeningFile.articles[1]!.abstract).toBeDefined();
 
       // Article 2: no fulltext ref
@@ -1328,7 +1373,9 @@ summary:
       // Verify merged review has fulltext basis
       const finalContent = await readFile(reviewsPath, 'utf-8');
       const finalFile = parseYaml(finalContent) as ReviewFile;
-      const reviewedArticle = finalFile.articles.find((a) => a.doi === getArticleId(screeningFile.articles[0]!));
+      const reviewedArticle = finalFile.articles.find(
+        (a) => a.doi === getArticleId(screeningFile.articles[0]!),
+      );
       expect(reviewedArticle!.reviews).toHaveLength(1);
       expect(reviewedArticle!.reviews[0]!.basis).toBe('fulltext');
       expect(reviewedArticle!.reviews[0]!.decision).toBe('include');
@@ -1349,7 +1396,7 @@ summary:
           reviewer: 'ai:claude',
           name: 'finalize-e2e',
         },
-        sessionsDir
+        sessionsDir,
       );
       const screeningContent = await readFile(extractResult.outputPath, 'utf-8');
       const screeningFile = parseYaml(screeningContent) as ReviewFile;
@@ -1378,7 +1425,7 @@ summary:
       // Verify finalDecisions were set in reviews.yaml
       const reviewsContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
 
@@ -1404,7 +1451,7 @@ summary:
           limit: 5,
           name: 'r1-finalize',
         },
-        sessionsDir
+        sessionsDir,
       );
       const r1Content = await readFile(r1Extract.outputPath, 'utf-8');
       const r1File = parseYaml(r1Content) as ReviewFile;
@@ -1427,7 +1474,7 @@ summary:
           limit: 5,
           name: 'r2-finalize',
         },
-        sessionsDir
+        sessionsDir,
       );
       const r2Content = await readFile(r2Extract.outputPath, 'utf-8');
       const r2File = parseYaml(r2Content) as ReviewFile;
@@ -1461,7 +1508,7 @@ summary:
           reviewer: 'ai:claude',
           name: 'dryrun-finalize',
         },
-        sessionsDir
+        sessionsDir,
       );
       const screeningContent2 = await readFile(extractResult.outputPath, 'utf-8');
       const screeningFile2 = parseYaml(screeningContent2) as ReviewFile;
@@ -1475,17 +1522,14 @@ summary:
       await executeReviewMerge({ sessionId, name: 'dryrun-finalize' }, sessionsDir);
 
       // Dry-run finalize
-      const dryResult = await executeReviewFinalize(
-        { sessionId, dryRun: true },
-        sessionsDir
-      );
+      const dryResult = await executeReviewFinalize({ sessionId, dryRun: true }, sessionsDir);
       expect(dryResult.includedCount).toBe(10);
       expect(dryResult.excludedCount).toBe(0);
 
       // Verify NO changes were made
       const reviewsContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
@@ -1506,7 +1550,7 @@ summary:
           limit: 5,
           name: 'min-rev-finalize',
         },
-        sessionsDir
+        sessionsDir,
       );
       const screeningContent3 = await readFile(extractResult.outputPath, 'utf-8');
       const screeningFile3 = parseYaml(screeningContent3) as ReviewFile;
@@ -1520,10 +1564,7 @@ summary:
       await executeReviewMerge({ sessionId, name: 'min-rev-finalize' }, sessionsDir);
 
       // Finalize with min-reviewers 2
-      const result = await executeReviewFinalize(
-        { sessionId, minReviewers: 2 },
-        sessionsDir
-      );
+      const result = await executeReviewFinalize({ sessionId, minReviewers: 2 }, sessionsDir);
       expect(result.includedCount).toBe(0);
       expect(result.excludedCount).toBe(0);
       expect(result.skippedByStatus['agreed-include']).toBe(5);
@@ -1543,7 +1584,7 @@ summary:
           limit: 5,
           name: 'idem-finalize',
         },
-        sessionsDir
+        sessionsDir,
       );
       const screeningContent4 = await readFile(extractResult.outputPath, 'utf-8');
       const screeningFile4 = parseYaml(screeningContent4) as ReviewFile;
@@ -1571,7 +1612,7 @@ summary:
       // Verify data is unchanged
       const reviewsContent = await readFile(
         join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
-        'utf-8'
+        'utf-8',
       );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
@@ -1586,8 +1627,14 @@ summary:
 
       // Single reviewer marks: first 4 include, next 4 exclude, last 2 uncertain
       const extractResult = await executeReviewExtract(
-        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-exc' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'decision-exc',
+        },
+        sessionsDir,
       );
       const content = await readFile(extractResult.outputPath, 'utf-8');
       const file = parseYaml(content) as ReviewFile;
@@ -1596,7 +1643,11 @@ summary:
         if (i < 4) decision = 'include';
         else if (i < 8) decision = 'exclude';
         else decision = 'uncertain';
-        await executeReviewMark({ file: extractResult.outputPath, id: getArticleId(file.articles[i]!), decision });
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: getArticleId(file.articles[i]!),
+          decision,
+        });
       }
       await executeReviewMerge({ sessionId, name: 'decision-exc' }, sessionsDir);
 
@@ -1608,7 +1659,10 @@ summary:
       expect(result.skippedByStatus['all-uncertain']).toBe(2);
 
       // Verify only exclude articles have finalDecision
-      const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8',
+      );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
       expect(finalized).toHaveLength(4);
@@ -1628,8 +1682,14 @@ summary:
 
       // Single reviewer marks: first 3 include, next 5 exclude, last 2 uncertain
       const extractResult = await executeReviewExtract(
-        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-inc' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'decision-inc',
+        },
+        sessionsDir,
       );
       const content = await readFile(extractResult.outputPath, 'utf-8');
       const file = parseYaml(content) as ReviewFile;
@@ -1638,7 +1698,11 @@ summary:
         if (i < 3) decision = 'include';
         else if (i < 8) decision = 'exclude';
         else decision = 'uncertain';
-        await executeReviewMark({ file: extractResult.outputPath, id: getArticleId(file.articles[i]!), decision });
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: getArticleId(file.articles[i]!),
+          decision,
+        });
       }
       await executeReviewMerge({ sessionId, name: 'decision-inc' }, sessionsDir);
 
@@ -1650,7 +1714,10 @@ summary:
       expect(result.skippedByStatus['all-uncertain']).toBe(2);
 
       // Verify only include articles have finalDecision
-      const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8',
+      );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
       expect(finalized).toHaveLength(3);
@@ -1665,8 +1732,14 @@ summary:
 
       // Mark: first 4 include, next 4 exclude, last 2 uncertain
       const extractResult = await executeReviewExtract(
-        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-seq' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'decision-seq',
+        },
+        sessionsDir,
       );
       const content = await readFile(extractResult.outputPath, 'utf-8');
       const file = parseYaml(content) as ReviewFile;
@@ -1675,7 +1748,11 @@ summary:
         if (i < 4) decision = 'include';
         else if (i < 8) decision = 'exclude';
         else decision = 'uncertain';
-        await executeReviewMark({ file: extractResult.outputPath, id: getArticleId(file.articles[i]!), decision });
+        await executeReviewMark({
+          file: extractResult.outputPath,
+          id: getArticleId(file.articles[i]!),
+          decision,
+        });
       }
       await executeReviewMerge({ sessionId, name: 'decision-seq' }, sessionsDir);
 
@@ -1690,7 +1767,10 @@ summary:
       expect(r2.excludedCount).toBe(0);
 
       // Verify all 8 consensus articles are finalized
-      const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8',
+      );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
       expect(finalized).toHaveLength(8);
@@ -1701,8 +1781,14 @@ summary:
       await executeReviewInit({ sessionId }, sessionsDir);
 
       const extractResult = await executeReviewExtract(
-        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-dry' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'decision-dry',
+        },
+        sessionsDir,
       );
       const content = await readFile(extractResult.outputPath, 'utf-8');
       const file = parseYaml(content) as ReviewFile;
@@ -1718,14 +1804,17 @@ summary:
       // Dry-run with --decision exclude
       const result = await executeReviewFinalize(
         { sessionId, decision: 'exclude', dryRun: true },
-        sessionsDir
+        sessionsDir,
       );
       expect(result.excludedCount).toBe(5);
       expect(result.includedCount).toBe(0);
       expect(result.skippedByStatus['agreed-include']).toBe(5);
 
       // Verify NO changes were made
-      const reviewsContent = await readFile(join(sessionsDir, sessionId, '.internal', 'reviews.yaml'), 'utf-8');
+      const reviewsContent = await readFile(
+        join(sessionsDir, sessionId, '.internal', 'reviews.yaml'),
+        'utf-8',
+      );
       const reviewFile = parseYaml(reviewsContent) as ReviewFile;
       const finalized = reviewFile.articles.filter((a) => a.finalDecision !== undefined);
       expect(finalized).toHaveLength(0);
@@ -1737,8 +1826,14 @@ summary:
 
       // Reviewer 1 (title basis): all 10 articles, first 5 include, last 5 exclude
       const r1 = await executeReviewExtract(
-        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'decision-minrev-r1' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'decision-minrev-r1',
+        },
+        sessionsDir,
       );
       const r1Content = await readFile(r1.outputPath, 'utf-8');
       const r1File = parseYaml(r1Content) as ReviewFile;
@@ -1754,8 +1849,15 @@ summary:
       // Reviewer 2 (abstract basis): only first 3 include articles at abstract level
       // Using abstract basis means unreviewed articles at title level remain agreed (not incomplete)
       const r2 = await executeReviewExtract(
-        { sessionId, filter: ['agreed-include'], basis: 'abstract', reviewer: 'ai:gpt-4o', limit: 3, name: 'decision-minrev-r2' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['agreed-include'],
+          basis: 'abstract',
+          reviewer: 'ai:gpt-4o',
+          limit: 3,
+          name: 'decision-minrev-r2',
+        },
+        sessionsDir,
       );
       const r2Content = await readFile(r2.outputPath, 'utf-8');
       const r2File = parseYaml(r2Content) as ReviewFile;
@@ -1774,7 +1876,7 @@ summary:
       // Articles 5-9: agreed-exclude → skipped by decision filter
       const result = await executeReviewFinalize(
         { sessionId, decision: 'include', minReviewers: 2 },
-        sessionsDir
+        sessionsDir,
       );
       expect(result.includedCount).toBe(3);
       expect(result.excludedCount).toBe(0);
@@ -1801,7 +1903,7 @@ summary:
       // 2. After title screening → agreed articles → suggests finalize
       const extractResult = await executeReviewExtract(
         { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'ns-title' },
-        sessionsDir
+        sessionsDir,
       );
       const nsContent = await readFile(extractResult.outputPath, 'utf-8');
       const nsFile = parseYaml(nsContent) as ReviewFile;
@@ -1835,8 +1937,14 @@ summary:
 
       // Title screening: mark all as uncertain
       const extractResult = await executeReviewExtract(
-        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', name: 'ns-title-unc' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          name: 'ns-title-unc',
+        },
+        sessionsDir,
       );
       const nsUncContent = await readFile(extractResult.outputPath, 'utf-8');
       const nsUncFile = parseYaml(nsUncContent) as ReviewFile;
@@ -1864,8 +1972,16 @@ summary:
       await executeReviewInit({ sessionId }, sessionsDir);
 
       const extractResult = await executeReviewExtract(
-        { sessionId, filter: ['pending'], basis: 'title', reviewer: 'ai:claude', limit: 3, offset: 0, name: 'batch-1' },
-        sessionsDir
+        {
+          sessionId,
+          filter: ['pending'],
+          basis: 'title',
+          reviewer: 'ai:claude',
+          limit: 3,
+          offset: 0,
+          name: 'batch-1',
+        },
+        sessionsDir,
       );
 
       const status = await executeReviewStatus({ sessionId }, sessionsDir);
@@ -1880,7 +1996,7 @@ summary:
       });
       expect(steps).not.toBeNull();
       // Should have batch continuation in seeAlso
-      const batchSuggestion = steps!.seeAlso.find(s => s.command.includes('--offset'));
+      const batchSuggestion = steps!.seeAlso.find((s) => s.command.includes('--offset'));
       expect(batchSuggestion).toBeDefined();
       expect(batchSuggestion!.command).toContain('--offset 3');
       expect(batchSuggestion!.command).toContain('--limit 3');
@@ -1902,7 +2018,7 @@ summary:
           reviewer: 'ai:claude',
           name: 'multi-stage-title',
         },
-        sessionsDir
+        sessionsDir,
       );
       const titleContent = await readFile(titleExtract.outputPath, 'utf-8');
       const titleFile = parseYaml(titleContent) as ReviewFile;
@@ -1931,7 +2047,7 @@ summary:
           reviewer: 'ai:claude',
           name: 'multi-stage-abstract',
         },
-        sessionsDir
+        sessionsDir,
       );
       const abstractContent = await readFile(abstractExtract.outputPath, 'utf-8');
       const abstractFile = parseYaml(abstractContent) as ReviewFile;
@@ -1982,7 +2098,7 @@ summary:
           reviewer: 'ai:gpt-4o',
           name: 'r1-title',
         },
-        sessionsDir
+        sessionsDir,
       );
       const r1Content = await readFile(r1Extract.outputPath, 'utf-8');
       const r1File = parseYaml(r1Content) as ReviewFile;
@@ -2006,7 +2122,7 @@ summary:
           reviewer: 'ai:claude',
           name: 'r2-abstract',
         },
-        sessionsDir
+        sessionsDir,
       );
       const r2Content = await readFile(r2Extract.outputPath, 'utf-8');
       const r2File = parseYaml(r2Content) as ReviewFile;
@@ -2060,7 +2176,7 @@ summary:
           reviewer: 'ai:claude',
           name: 'task92-title',
         },
-        sessionsDir
+        sessionsDir,
       );
       const titleContent = await readFile(titleExtract.outputPath, 'utf-8');
       const titleFile = parseYaml(titleContent) as ReviewFile;
@@ -2091,7 +2207,7 @@ summary:
           reviewer: 'ai:gpt-4o',
           name: 'task92-abstract',
         },
-        sessionsDir
+        sessionsDir,
       );
       const abstractContent = await readFile(abstractExtract.outputPath, 'utf-8');
       const abstractFile = parseYaml(abstractContent) as ReviewFile;
@@ -2150,7 +2266,7 @@ summary:
           reviewer: 'human:me',
           name: 'title-pick',
         },
-        sessionsDir
+        sessionsDir,
       );
 
       // Verify title extract shows picking-mode comments
@@ -2194,11 +2310,19 @@ summary:
 
       // Extract and review only title, picking some
       const titleExtract = await executeReviewExtract(
-        { sessionId, basis: 'title', filter: ['pending'], reviewer: 'human:me', name: 'title-pick-2' },
-        sessionsDir
+        {
+          sessionId,
+          basis: 'title',
+          filter: ['pending'],
+          reviewer: 'human:me',
+          name: 'title-pick-2',
+        },
+        sessionsDir,
       );
 
-      const extractedFile = parseYaml(await readFile(titleExtract.outputPath, 'utf-8')) as ReviewFile;
+      const extractedFile = parseYaml(
+        await readFile(titleExtract.outputPath, 'utf-8'),
+      ) as ReviewFile;
       // Only pick first 2
       extractedFile.articles[0]!.reviews[0]!.decision = 'include';
       extractedFile.articles[1]!.reviews[0]!.decision = 'include';

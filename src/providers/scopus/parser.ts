@@ -63,7 +63,7 @@ export function parseSearchResponse(json: unknown): ScopusSearchResponse {
   if (!parseResult.success) {
     // Build warning message from Zod errors
     const issues = parseResult.error.issues
-      .map(issue => `${issue.path.join('.')}: ${issue.message}`)
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
       .join('; ');
     const warning = `Scopus API response parse failed: ${issues}`;
 
@@ -114,7 +114,7 @@ export function parseDocument(entry: ScopusRawEntry): ScopusDocument {
   let authors: ScopusAuthor[];
 
   if (entry.author && entry.author.length > 0) {
-    authors = entry.author.map(a => {
+    authors = entry.author.map((a) => {
       const parsed = parseAuthorName(a.authname || '');
       const author: ScopusAuthor = {
         family: parsed.family,

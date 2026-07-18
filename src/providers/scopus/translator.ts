@@ -129,16 +129,14 @@ function translateFilters(filters: Filters): string[] {
 
   // Language filter
   if (filters.languages && filters.languages.length > 0) {
-    const languages = filters.languages
-      .map(code => LANGUAGE_MAP[code] || code)
-      .join(' OR ');
+    const languages = filters.languages.map((code) => LANGUAGE_MAP[code] || code).join(' OR ');
     parts.push(`LANGUAGE(${languages})`);
   }
 
   // Source type filter (now from resolved filters)
   if (filters.sourceTypes && filters.sourceTypes.length > 0) {
     const sourceTypes = filters.sourceTypes
-      .map(type => SOURCE_TYPE_MAP[type] || type)
+      .map((type) => SOURCE_TYPE_MAP[type] || type)
       .join(' OR ');
     parts.push(`SRCTYPE(${sourceTypes})`);
   }
@@ -154,12 +152,8 @@ export function translateQuery(resolved: ResolvedAST): TranslatedQuery {
   const blockResults = resolved.blocks.map(translateBlock);
 
   // Collect query parts (filter empty blocks) and NOT clauses
-  const blockParts = blockResults
-    .map((r) => r.query)
-    .filter((s) => s.length > 0);
-  const notClauses = blockResults
-    .map((r) => r.notClause)
-    .filter((s): s is string => s !== null);
+  const blockParts = blockResults.map((r) => r.query).filter((s) => s.length > 0);
+  const notClauses = blockResults.map((r) => r.notClause).filter((s): s is string => s !== null);
 
   // Translate filters (sourceTypes now in resolved.filters)
   const filterParts = translateFilters(resolved.filters);

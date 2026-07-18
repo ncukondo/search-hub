@@ -94,7 +94,7 @@ export function formatUpgradeResult(result: UpgradeResult): string {
 function buildBinaryOptions(
   options: UpgradeCommandOptions,
   argv1: string,
-  currentVersion: string
+  currentVersion: string,
 ): UpgradeBinaryOptions {
   const destPath = resolveDestPath(argv1, options.installDir);
   const out: UpgradeBinaryOptions = { destPath, currentVersion };
@@ -105,7 +105,7 @@ function buildBinaryOptions(
 
 function buildNpmOptions(
   options: UpgradeCommandOptions,
-  currentVersion: string
+  currentVersion: string,
 ): UpgradeNpmOptions {
   const out: UpgradeNpmOptions = { currentVersion };
   if (options.check !== undefined) out.check = options.check;
@@ -116,7 +116,7 @@ function buildNpmOptions(
 
 export async function runUpgrade(
   options: UpgradeCommandOptions,
-  deps: RunUpgradeDeps = {}
+  deps: RunUpgradeDeps = {},
 ): Promise<RunUpgradeResult> {
   // resolveInvocationPath handles the Bun-compiled binary case where
   // process.argv[1] is a virtual bunfs path (see src/upgrade/detect.ts).
@@ -152,7 +152,9 @@ export function registerUpgradeCommand(program: Command): void {
     .option('--version <tag>', 'Pin to a specific release tag (e.g. v0.23.1)')
     .option('-y, --yes', 'Skip confirmation prompts (applies to npm-global strategy)')
     .option('--install-dir <path>', 'Override install directory for the single-binary strategy')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Exit codes:
   0  Already up to date, or upgrade completed successfully
   1  Upgrade failed (network, permissions, verification)
@@ -162,7 +164,8 @@ Examples:
   $ search-hub upgrade                   # Upgrade to the latest release
   $ search-hub upgrade --check           # Report current vs. latest only
   $ search-hub upgrade --version v0.23.1 # Pin to a specific release
-  $ search-hub upgrade -y                # npm-global: run npm without prompting`)
+  $ search-hub upgrade -y                # npm-global: run npm without prompting`,
+    )
     .action(async (options: UpgradeCommandOptions) => {
       const result = await runUpgrade(options);
       process.exitCode = result.exitCode;

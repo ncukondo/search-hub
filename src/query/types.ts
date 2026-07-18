@@ -13,13 +13,7 @@ export type { ProviderName };
  * Field types for query targeting.
  * Maps to database-specific field syntax in each provider.
  */
-export type FieldType =
-  | 'title'
-  | 'abstract'
-  | 'title_abstract'
-  | 'author'
-  | 'keyword'
-  | 'all';
+export type FieldType = 'title' | 'abstract' | 'title_abstract' | 'author' | 'keyword' | 'all';
 
 /**
  * Operator for combining terms within a block.
@@ -92,9 +86,11 @@ export interface ProviderSection {
   /** Block replacements keyed by block id */
   replaces?: Record<string, Omit<QueryBlock, 'id'>> | undefined;
   /** Additional filters to merge with defaults */
-  adds?: {
-    filters?: Partial<Filters> | undefined;
-  } | undefined;
+  adds?:
+    | {
+        filters?: Partial<Filters> | undefined;
+      }
+    | undefined;
 }
 
 /**

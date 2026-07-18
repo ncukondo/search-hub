@@ -15,8 +15,16 @@ export type QueryToken =
   | { type: 'field'; field: string; value: string };
 
 const KNOWN_FIELDS = new Set([
-  'title', 'abstract', 'author', 'journal',
-  'year', 'doi', 'pmid', 'arxiv', 'scopus', 'eric',
+  'title',
+  'abstract',
+  'author',
+  'journal',
+  'year',
+  'doi',
+  'pmid',
+  'arxiv',
+  'scopus',
+  'eric',
   'source',
 ]);
 
@@ -122,8 +130,9 @@ function matchYearToken(article: Article, value: string): boolean {
 
 function matchSingleToken(article: Article, token: QueryToken): boolean {
   if (token.type === 'text') {
-    return matchSubstring(article.title, token.value) ||
-           matchSubstring(article.abstract, token.value);
+    return (
+      matchSubstring(article.title, token.value) || matchSubstring(article.abstract, token.value)
+    );
   }
 
   switch (token.field) {
@@ -133,7 +142,7 @@ function matchSingleToken(article: Article, token: QueryToken): boolean {
       return matchSubstring(article.abstract, token.value);
     case 'author':
       return article.authors.some(
-        (a) => matchSubstring(a.family, token.value) || matchSubstring(a.given, token.value)
+        (a) => matchSubstring(a.family, token.value) || matchSubstring(a.given, token.value),
       );
     case 'journal':
       return matchSubstring(article.journal, token.value);

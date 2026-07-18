@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { computeDiff, formatDiff, formatDiffJson, computeQueryDiff, formatQueryDiff, type DiffResult, type QueryDiff } from './diff.js';
+import {
+  computeDiff,
+  formatDiff,
+  formatDiffJson,
+  computeQueryDiff,
+  formatQueryDiff,
+  type DiffResult,
+  type QueryDiff,
+} from './diff.js';
 import type { Article } from '../../providers/base/types.js';
 import type { QueryAST, QueryBlock } from '../../query/types.js';
 
@@ -204,12 +212,8 @@ describe('computeDiff', () => {
   });
 
   it('should handle articles without identifiers', () => {
-    const session1: Article[] = [
-      makeArticle({ title: 'No ID Article', source: 'pubmed' }),
-    ];
-    const session2: Article[] = [
-      makeArticle({ title: 'No ID Article', source: 'pubmed' }),
-    ];
+    const session1: Article[] = [makeArticle({ title: 'No ID Article', source: 'pubmed' })];
+    const session2: Article[] = [makeArticle({ title: 'No ID Article', source: 'pubmed' })];
 
     const result = computeDiff(session1, session2);
 
@@ -245,17 +249,47 @@ const sampleDiff: DiffResult = {
   session1Count: 5,
   session2Count: 4,
   added: [
-    makeArticle({ doi: '10.1234/new1', title: 'Newly Added Article', source: 'pubmed', publicationDate: '2026-01-15' }),
-    makeArticle({ doi: '10.1234/new2', title: 'Another New Article', source: 'eric', publicationDate: '2025-06-01' }),
+    makeArticle({
+      doi: '10.1234/new1',
+      title: 'Newly Added Article',
+      source: 'pubmed',
+      publicationDate: '2026-01-15',
+    }),
+    makeArticle({
+      doi: '10.1234/new2',
+      title: 'Another New Article',
+      source: 'eric',
+      publicationDate: '2025-06-01',
+    }),
   ],
   removed: [
-    makeArticle({ doi: '10.1234/old1', title: 'Removed Article One', source: 'pubmed', publicationDate: '2024-03-20' }),
-    makeArticle({ doi: '10.1234/old2', title: 'Removed Article Two', source: 'arxiv', publicationDate: '2023-11-05' }),
+    makeArticle({
+      doi: '10.1234/old1',
+      title: 'Removed Article One',
+      source: 'pubmed',
+      publicationDate: '2024-03-20',
+    }),
+    makeArticle({
+      doi: '10.1234/old2',
+      title: 'Removed Article Two',
+      source: 'arxiv',
+      publicationDate: '2023-11-05',
+    }),
     makeArticle({ doi: '10.1234/old3', title: 'Removed Article Three', source: 'scopus' }),
   ],
   common: [
-    makeArticle({ doi: '10.1234/c1', title: 'Common Article One', source: 'pubmed', publicationDate: '2024-06-01' }),
-    makeArticle({ doi: '10.1234/c2', title: 'Common Article Two', source: 'eric', publicationDate: '2025-01-10' }),
+    makeArticle({
+      doi: '10.1234/c1',
+      title: 'Common Article One',
+      source: 'pubmed',
+      publicationDate: '2024-06-01',
+    }),
+    makeArticle({
+      doi: '10.1234/c2',
+      title: 'Common Article Two',
+      source: 'eric',
+      publicationDate: '2025-01-10',
+    }),
   ],
 };
 
@@ -420,7 +454,9 @@ describe('formatDiffJson', () => {
 });
 
 // Helper to create minimal QueryAST
-const createQueryAST = (overrides: Partial<QueryAST> & { blocks?: QueryBlock[] } = {}): QueryAST => ({
+const createQueryAST = (
+  overrides: Partial<QueryAST> & { blocks?: QueryBlock[] } = {},
+): QueryAST => ({
   name: 'test-query',
   blocks: [],
   filters: {},
@@ -432,7 +468,7 @@ const createQueryAST = (overrides: Partial<QueryAST> & { blocks?: QueryBlock[] }
 const createBlock = (
   field: QueryBlock['field'],
   keywords: string[],
-  options: { id?: string; mesh?: string[]; emtree?: string[]; exclude?: string[] } = {}
+  options: { id?: string; mesh?: string[]; emtree?: string[]; exclude?: string[] } = {},
 ): QueryBlock => ({
   id: options.id ?? 'block-1',
   field,
@@ -497,7 +533,9 @@ describe('computeQueryDiff', () => {
       blocks: [createBlock('title_abstract', ['diabetes'], { mesh: ['Diabetes Mellitus'] })],
     });
     const query2 = createQueryAST({
-      blocks: [createBlock('title_abstract', ['diabetes'], { mesh: ['Diabetes Mellitus', 'Insulin'] })],
+      blocks: [
+        createBlock('title_abstract', ['diabetes'], { mesh: ['Diabetes Mellitus', 'Insulin'] }),
+      ],
     });
 
     const result = computeQueryDiff(query1, query2);
@@ -898,7 +936,9 @@ describe('formatDiffJson with queryDiff', () => {
   };
 
   it('should include queryDiff in JSON output when provided', () => {
-    const output = formatDiffJson(sampleDiff, 'v1', 'v2', undefined, { queryDiff: sampleQueryDiff });
+    const output = formatDiffJson(sampleDiff, 'v1', 'v2', undefined, {
+      queryDiff: sampleQueryDiff,
+    });
     const parsed = JSON.parse(output);
 
     expect(parsed.queryDiff).toBeDefined();

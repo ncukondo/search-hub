@@ -11,10 +11,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { stringify as stringifyYaml, parse as parseYaml } from 'yaml';
-import {
-  setupE2EContext,
-  type E2EContext,
-} from '../e2e-helpers.js';
+import { setupE2EContext, type E2EContext } from '../e2e-helpers.js';
 import {
   parseRelatedOptions,
   validateRelatedInput,
@@ -54,7 +51,10 @@ const relatedArticles: Article[] = [
   },
   {
     title: 'Deep Learning in Medical Imaging: A Review',
-    authors: [{ family: 'Garcia', given: 'Carlos' }, { family: 'Wang', given: 'Li' }],
+    authors: [
+      { family: 'Garcia', given: 'Carlos' },
+      { family: 'Wang', given: 'Li' },
+    ],
     pmid: '66666666',
     source: 'pubmed',
     publicationDate: '2024-11-01',
@@ -102,7 +102,7 @@ async function createSourceSession(
   await writeFile(join(sessionDir, 'session.yaml'), stringifyYaml(session), 'utf-8');
 
   // Write results JSONL
-  const jsonl = articles.map(a => JSON.stringify(a)).join('\n') + '\n';
+  const jsonl = articles.map((a) => JSON.stringify(a)).join('\n') + '\n';
   await writeFile(join(sessionDir, 'pubmed_results.jsonl'), jsonl, 'utf-8');
 
   return session;
@@ -169,17 +169,38 @@ describe('related command E2E', () => {
   describe('seed resolution from session', () => {
     it('should resolve all PMIDs from a source session', async () => {
       const sourceArticles: Article[] = [
-        { title: 'Art 1', pmid: '11111111', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
-        { title: 'Art 2', pmid: '22222222', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
-        { title: 'Art 3', pmid: '33333333', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
+        {
+          title: 'Art 1',
+          pmid: '11111111',
+          source: 'pubmed',
+          authors: [],
+          retrievedAt: '2026-01-01T00:00:00Z',
+        },
+        {
+          title: 'Art 2',
+          pmid: '22222222',
+          source: 'pubmed',
+          authors: [],
+          retrievedAt: '2026-01-01T00:00:00Z',
+        },
+        {
+          title: 'Art 3',
+          pmid: '33333333',
+          source: 'pubmed',
+          authors: [],
+          retrievedAt: '2026-01-01T00:00:00Z',
+        },
       ];
       await createSourceSession(ctx.sessionsDir, 'source-session', sourceArticles);
 
-      const seeds = await resolveSeeds({
-        pmids: [],
-        fromSession: 'source-session',
-        maxResults: 20,
-      }, ctx.sessionsDir);
+      const seeds = await resolveSeeds(
+        {
+          pmids: [],
+          fromSession: 'source-session',
+          maxResults: 20,
+        },
+        ctx.sessionsDir,
+      );
 
       expect(seeds).toHaveLength(3);
       expect(seeds).toContain('11111111');
@@ -189,27 +210,53 @@ describe('related command E2E', () => {
 
     it('should filter PMIDs by --pmid option', async () => {
       const sourceArticles: Article[] = [
-        { title: 'Art 1', pmid: '11111111', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
-        { title: 'Art 2', pmid: '22222222', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
-        { title: 'Art 3', pmid: '33333333', source: 'pubmed', authors: [], retrievedAt: '2026-01-01T00:00:00Z' },
+        {
+          title: 'Art 1',
+          pmid: '11111111',
+          source: 'pubmed',
+          authors: [],
+          retrievedAt: '2026-01-01T00:00:00Z',
+        },
+        {
+          title: 'Art 2',
+          pmid: '22222222',
+          source: 'pubmed',
+          authors: [],
+          retrievedAt: '2026-01-01T00:00:00Z',
+        },
+        {
+          title: 'Art 3',
+          pmid: '33333333',
+          source: 'pubmed',
+          authors: [],
+          retrievedAt: '2026-01-01T00:00:00Z',
+        },
       ];
       await createSourceSession(ctx.sessionsDir, 'source-session', sourceArticles);
 
-      const seeds = await resolveSeeds({
-        pmids: ['11111111', '33333333'],
-        fromSession: 'source-session',
-        maxResults: 20,
-      }, ctx.sessionsDir);
+      const seeds = await resolveSeeds(
+        {
+          pmids: ['11111111', '33333333'],
+          fromSession: 'source-session',
+          maxResults: 20,
+        },
+        ctx.sessionsDir,
+      );
 
       expect(seeds).toEqual(['11111111', '33333333']);
     });
 
     it('should error when session does not exist', async () => {
-      await expect(resolveSeeds({
-        pmids: [],
-        fromSession: 'nonexistent-session',
-        maxResults: 20,
-      }, ctx.sessionsDir)).rejects.toThrow('Session not found');
+      await expect(
+        resolveSeeds(
+          {
+            pmids: [],
+            fromSession: 'nonexistent-session',
+            maxResults: 20,
+          },
+          ctx.sessionsDir,
+        ),
+      ).rejects.toThrow('Session not found');
     });
   });
 
@@ -308,10 +355,10 @@ describe('related command E2E', () => {
 
   describe('input validation', () => {
     it('should validate complete options', () => {
-      const parsed = parseRelatedOptions(
-        ['12345678', '23456789'],
-        { name: 'my-related', maxResults: '50' }
-      );
+      const parsed = parseRelatedOptions(['12345678', '23456789'], {
+        name: 'my-related',
+        maxResults: '50',
+      });
       expect(parsed.pmids).toEqual(['12345678', '23456789']);
       expect(parsed.name).toBe('my-related');
       expect(parsed.maxResults).toBe(50);

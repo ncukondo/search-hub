@@ -36,11 +36,11 @@ describe('detectInstallMethod', () => {
       'search-hub',
       'dist',
       'cli',
-      'index.js'
+      'index.js',
     );
     mkdirSync(
       join(testDir, 'usr', 'lib', 'node_modules', '@ncukondo', 'search-hub', 'dist', 'cli'),
-      { recursive: true }
+      { recursive: true },
     );
     writeFileSync(binPath, '#!/usr/bin/env node\n');
 
@@ -77,7 +77,7 @@ describe('detectInstallMethod', () => {
       '@ncukondo',
       'search-hub',
       'dist',
-      'cli'
+      'cli',
     );
     mkdirSync(npxDir, { recursive: true });
     const npxPath = join(npxDir, 'index.js');
@@ -142,7 +142,7 @@ describe('detectInstallMethod', () => {
     expect(detectInstallMethod(nonexistent)).toBe('binary');
   });
 
-  it("resolves via execPath when argv1 is a Bun virtual path (compiled binary in ~/.local/bin)", () => {
+  it('resolves via execPath when argv1 is a Bun virtual path (compiled binary in ~/.local/bin)', () => {
     // In a Bun-compiled binary, process.argv[1] is a virtual bunfs path; the
     // real on-disk location is process.execPath.
     const binDir = join(testDir, 'home', 'user', '.local', 'bin');
@@ -183,19 +183,19 @@ describe('isBunVirtualPath', () => {
 describe('resolveInvocationPath', () => {
   it('returns argv1 for a regular node invocation', () => {
     expect(resolveInvocationPath('/usr/lib/node_modules/x/cli.js', '/usr/bin/node')).toBe(
-      '/usr/lib/node_modules/x/cli.js'
+      '/usr/lib/node_modules/x/cli.js',
     );
   });
 
   it('returns execPath when argv1 is a Bun virtual path', () => {
     expect(resolveInvocationPath('/$bunfs/root/search-hub', '/home/u/.local/bin/search-hub')).toBe(
-      '/home/u/.local/bin/search-hub'
+      '/home/u/.local/bin/search-hub',
     );
   });
 
   it('returns execPath when argv1 is empty (no script argument)', () => {
     expect(resolveInvocationPath('', '/home/u/.local/bin/search-hub')).toBe(
-      '/home/u/.local/bin/search-hub'
+      '/home/u/.local/bin/search-hub',
     );
   });
 });

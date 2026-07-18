@@ -35,8 +35,8 @@ function makeGitHubApiFetch(tag: string): typeof globalThis.fetch {
           tag_name: tag,
           html_url: `https://github.com/ncukondo/search-hub/releases/tag/${tag}`,
         }),
-        { status: 200, headers: { 'content-type': 'application/json' } }
-      )
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
   ) as unknown as typeof globalThis.fetch;
 }
 
@@ -78,14 +78,14 @@ describe('upgrade e2e', () => {
           }),
         stdout,
         stderr,
-      }
+      },
     );
 
     expect(result.exitCode).toBe(0);
     expect(result.result?.status).toBe('guidance');
     expect(result.result?.toVersion).toBe('9.9.9');
     expect(output()).toContain(
-      'https://github.com/ncukondo/search-hub/releases/download/v9.9.9/search-hub-linux-x64'
+      'https://github.com/ncukondo/search-hub/releases/download/v9.9.9/search-hub-linux-x64',
     );
     // The check wrote the cache; a second run must not hit the network again.
     expect(existsSync(cachePath)).toBe(true);
@@ -109,7 +109,7 @@ describe('upgrade e2e', () => {
         new Response(new TextEncoder().encode(newBinary), {
           status: 200,
           headers: { 'content-type': 'application/octet-stream' },
-        })
+        }),
     ) as unknown as typeof globalThis.fetch;
 
     const result = await upgradeBinary({
@@ -137,7 +137,7 @@ describe('upgrade e2e', () => {
         checkedAt: new Date().toISOString(),
         latest: '9.9.9',
         url: 'https://github.com/ncukondo/search-hub/releases/tag/v9.9.9',
-      })
+      }),
     );
     const networkFetch = vi.fn(async () => {
       throw new Error('network must not be hit when cache is fresh');

@@ -165,12 +165,9 @@ describe('MockProvider', () => {
 
   describe('simulates errors', () => {
     it('throws configured error on search', async () => {
-      const error = createProviderError(
-        'NETWORK_ERROR',
-        'Simulated network error',
-        'pubmed',
-        { retryable: true }
-      );
+      const error = createProviderError('NETWORK_ERROR', 'Simulated network error', 'pubmed', {
+        retryable: true,
+      });
 
       const provider = new MockProvider({ searchError: error });
       const query: TranslatedQuery = {
@@ -210,12 +207,9 @@ describe('MockProvider', () => {
     });
 
     it('throws auth error', async () => {
-      const authError = createProviderError(
-        'API_KEY_INVALID',
-        'Invalid API key',
-        'scopus',
-        { retryable: false }
-      );
+      const authError = createProviderError('API_KEY_INVALID', 'Invalid API key', 'scopus', {
+        retryable: false,
+      });
 
       const provider = new MockProvider({
         name: 'scopus',

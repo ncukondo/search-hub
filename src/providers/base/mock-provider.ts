@@ -103,10 +103,7 @@ export class MockProvider extends BaseProvider {
     }));
   }
 
-  async *search(
-    _query: TranslatedQuery,
-    options?: SearchOptions
-  ): AsyncIterable<Article> {
+  async *search(_query: TranslatedQuery, options?: SearchOptions): AsyncIterable<Article> {
     // Throw configured error if set
     if (this.searchError !== null) {
       throw this.searchError;

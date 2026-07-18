@@ -61,16 +61,11 @@ describe('query translate command', () => {
 
       expect(result.success).toBe(true);
       expect(result.translations).toBeDefined();
-      expect(Object.keys(result.translations!).sort()).toEqual([
-        'pubmed',
-        'scopus',
-      ]);
+      expect(Object.keys(result.translations!).sort()).toEqual(['pubmed', 'scopus']);
     });
 
     it('should return error for file read failure', async () => {
-      vi.mocked(fs.readFile).mockRejectedValue(
-        new Error('ENOENT: no such file or directory')
-      );
+      vi.mocked(fs.readFile).mockRejectedValue(new Error('ENOENT: no such file or directory'));
 
       const result = await translateQueryCommand('/path/to/nonexistent.yaml');
 

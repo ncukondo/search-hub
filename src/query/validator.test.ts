@@ -76,7 +76,7 @@ describe('Query Validator Schemas', () => {
 
     it('should reject block with no term types at all', () => {
       expect(() => termBlockSchema.parse({})).toThrow(
-        /At least one of keywords, mesh, emtree, or eric is required/
+        /At least one of keywords, mesh, emtree, or eric is required/,
       );
     });
 
@@ -88,10 +88,8 @@ describe('Query Validator Schemas', () => {
     });
 
     it('should reject block with only exclude (no searchable terms)', () => {
-      expect(() =>
-        termBlockSchema.parse({ exclude: ['animal'] })
-      ).toThrow(
-        /At least one of keywords, mesh, emtree, or eric is required/
+      expect(() => termBlockSchema.parse({ exclude: ['animal'] })).toThrow(
+        /At least one of keywords, mesh, emtree, or eric is required/,
       );
     });
 
@@ -119,7 +117,7 @@ describe('Query Validator Schemas', () => {
         termBlockSchema.parse({
           keywords: ['test'],
           exclude: 'not an array',
-        })
+        }),
       ).toThrow();
     });
 
@@ -128,7 +126,7 @@ describe('Query Validator Schemas', () => {
         termBlockSchema.parse({
           keywords: ['test'],
           exclude: [123, 456],
-        })
+        }),
       ).toThrow();
     });
 
@@ -160,7 +158,7 @@ describe('Query Validator Schemas', () => {
         termBlockSchema.parse({
           keywords: ['test'],
           eric: 'not an array',
-        })
+        }),
       ).toThrow();
     });
 
@@ -169,7 +167,7 @@ describe('Query Validator Schemas', () => {
         termBlockSchema.parse({
           keywords: ['test'],
           eric: [123, 456],
-        })
+        }),
       ).toThrow();
     });
   });
@@ -203,7 +201,7 @@ describe('Query Validator Schemas', () => {
           field: 'title',
           terms: { keywords: ['test'] },
           operator: 'XOR',
-        })
+        }),
       ).toThrow();
     });
 
@@ -213,7 +211,7 @@ describe('Query Validator Schemas', () => {
           field: 'title',
           terms: { keywords: ['test'] },
           operator: 'OR',
-        })
+        }),
       ).toThrow();
     });
 
@@ -224,7 +222,7 @@ describe('Query Validator Schemas', () => {
           field: 'title',
           terms: { keywords: ['test'] },
           operator: 'OR',
-        })
+        }),
       ).toThrow();
     });
 
@@ -234,7 +232,7 @@ describe('Query Validator Schemas', () => {
           id: 'test',
           field: 'title',
           terms: { keywords: ['test'] },
-        })
+        }),
       ).toThrow();
 
       expect(() =>
@@ -242,7 +240,7 @@ describe('Query Validator Schemas', () => {
           id: 'test',
           terms: { keywords: ['test'] },
           operator: 'OR',
-        })
+        }),
       ).toThrow();
     });
   });
@@ -458,7 +456,9 @@ describe('Query Validator Schemas', () => {
           },
         },
       });
-      expect(result.providers?.pubmed?.adds?.filters?.publicationTypes?.exclude).toEqual(['Review']);
+      expect(result.providers?.pubmed?.adds?.filters?.publicationTypes?.exclude).toEqual([
+        'Review',
+      ]);
       expect(result.providers?.arxiv?.adds?.filters?.categories).toEqual(['cs.AI']);
       expect(result.providers?.arxiv?.replaces?.['population']?.field).toBe('all');
     });
@@ -478,7 +478,7 @@ describe('Query Validator Schemas', () => {
           overrides: {
             pubmed: { filters: {} },
           },
-        })
+        }),
       ).toThrow(/overrides.*no longer supported.*providers/i);
     });
 
@@ -493,7 +493,7 @@ describe('Query Validator Schemas', () => {
               operator: 'OR',
             },
           ],
-        })
+        }),
       ).toThrow();
     });
 
@@ -520,7 +520,7 @@ describe('Query Validator Schemas', () => {
               },
             },
           },
-        })
+        }),
       ).toThrow(/replaces keys must reference existing block ids/);
     });
 
@@ -535,7 +535,7 @@ describe('Query Validator Schemas', () => {
               operator: 'OR',
             },
           ],
-        })
+        }),
       ).toThrow();
     });
 
@@ -543,7 +543,7 @@ describe('Query Validator Schemas', () => {
       expect(() =>
         queryFileSchema.parse({
           name: 'test_query',
-        })
+        }),
       ).toThrow();
     });
 
@@ -552,7 +552,7 @@ describe('Query Validator Schemas', () => {
         queryFileSchema.parse({
           name: 'test_query',
           query: [],
-        })
+        }),
       ).toThrow();
     });
 
@@ -574,7 +574,12 @@ describe('Query Validator Schemas', () => {
             id: 'intervention',
             field: 'title_abstract',
             terms: {
-              keywords: ['artificial intelligence', 'machine learning', 'deep learning', 'neural network'],
+              keywords: [
+                'artificial intelligence',
+                'machine learning',
+                'deep learning',
+                'neural network',
+              ],
               mesh: ['Artificial Intelligence', 'Machine Learning', 'Deep Learning'],
             },
             operator: 'OR',

@@ -79,9 +79,7 @@ describe('query validate command', () => {
     });
 
     it('should return error when file does not exist', async () => {
-      vi.mocked(fs.readFile).mockRejectedValue(
-        new Error('ENOENT: no such file or directory')
-      );
+      vi.mocked(fs.readFile).mockRejectedValue(new Error('ENOENT: no such file or directory'));
 
       const result = await validateQueryCommand('/path/to/nonexistent.yaml');
 
@@ -129,7 +127,7 @@ query:
         new Map([
           ['Diabetes Mellitus', { found: true }],
           ['Not A Real Term', { found: false, suggestions: ['Diabetes'] }],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand('/path/to/query.yaml', {
@@ -158,9 +156,7 @@ query:
     it('should skip vocab validation when noVocab option is set', async () => {
       vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
 
-      const client = createMockMeSHClient(
-        new Map([['Diabetes Mellitus', { found: true }]])
-      );
+      const client = createMockMeSHClient(new Map([['Diabetes Mellitus', { found: true }]]));
 
       const result = await validateQueryCommand('/path/to/query.yaml', {
         meshClient: client,
@@ -210,7 +206,8 @@ query:
       vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
 
       const client = {
-        lookupTerm: vi.fn()
+        lookupTerm: vi
+          .fn()
           .mockResolvedValueOnce({ term: 'Diabetes Mellitus', found: true })
           .mockRejectedValueOnce(new Error('Timeout')),
         lookupTerms: vi.fn(),
@@ -230,7 +227,8 @@ query:
       vi.mocked(fs.readFile).mockResolvedValue(yamlWithMesh);
 
       const client = {
-        lookupTerm: vi.fn()
+        lookupTerm: vi
+          .fn()
           .mockResolvedValueOnce({ term: 'Diabetes Mellitus', found: true })
           .mockRejectedValueOnce(new Error('Network error')),
         lookupTerms: vi.fn(),
@@ -268,7 +266,7 @@ query:
         new Map([
           ['Diabetes Mellitus', { found: true }],
           ['Not A Real Term', { found: false, suggestions: ['Diabetes'] }],
-        ])
+        ]),
       );
 
       const result = await validateQueryCommand('/path/to/query.yaml', { meshClient: client });
@@ -280,9 +278,7 @@ query:
     });
 
     it('should return file read errors without attempting vocab validation', async () => {
-      vi.mocked(fs.readFile).mockRejectedValue(
-        new Error('ENOENT: no such file')
-      );
+      vi.mocked(fs.readFile).mockRejectedValue(new Error('ENOENT: no such file'));
 
       const client = createMockMeSHClient(new Map());
 
@@ -356,8 +352,7 @@ query:
 
   describe('detectSchemaLink', () => {
     it('should return true when $schema link is present', async () => {
-      const yamlWithSchema =
-        '# yaml-language-server: $schema=./query.schema.json\n' + validYaml;
+      const yamlWithSchema = '# yaml-language-server: $schema=./query.schema.json\n' + validYaml;
       vi.mocked(fs.readFile).mockResolvedValue(yamlWithSchema);
       const result = await detectSchemaLink('/path/to/query.yaml');
       expect(result).toBe(true);
@@ -478,9 +473,7 @@ query:
     it('should validate mixed vocabulary types together', async () => {
       vi.mocked(fs.readFile).mockResolvedValue(yamlWithMixed);
 
-      const meshClient = createMockMeSHClient(
-        new Map([['Diabetes Mellitus', { found: true }]])
-      );
+      const meshClient = createMockMeSHClient(new Map([['Diabetes Mellitus', { found: true }]]));
       const ericValidator = {
         vocabulary: 'eric' as const,
         countTerm: vi.fn(async () => 50),
@@ -553,9 +546,7 @@ query:
     it('should format invalid terms without suggestions', () => {
       const output = formatVocabValidationOutput({
         valid: [],
-        invalid: [
-          { term: 'Xyz', vocabulary: 'mesh', found: false },
-        ],
+        invalid: [{ term: 'Xyz', vocabulary: 'mesh', found: false }],
         errors: [],
       });
 

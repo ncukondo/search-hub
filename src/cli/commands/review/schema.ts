@@ -15,9 +15,13 @@ export const reviewBasisSchema = z.enum(['title', 'abstract', 'fulltext']);
 
 export const reviewSchema = z
   .object({
-    reviewer: z.string().describe("Reviewer identifier (e.g., 'gpt-4o', 'claude-sonnet', 'human:tanaka')"),
+    reviewer: z
+      .string()
+      .describe("Reviewer identifier (e.g., 'gpt-4o', 'claude-sonnet', 'human:tanaka')"),
     decision: reviewDecisionSchema.describe('Assessment decision').optional(),
-    basis: reviewBasisSchema.describe('Basis of the decision (what information was used)').optional(),
+    basis: reviewBasisSchema
+      .describe('Basis of the decision (what information was used)')
+      .optional(),
     comment: z.string().describe('Optional comment or reason').optional(),
     timestamp: z.string().datetime().describe('ISO 8601 timestamp').optional(),
   })
@@ -64,10 +68,16 @@ export const articleEntrySchema = z
     year: z.string().describe('Publication year').optional(),
     abstract: z.string().describe('Article abstract').optional(),
     // Deduplication tracking
-    mergedFrom: z.array(mergedSourceSchema).describe('Sources this article was merged from during deduplication').optional(),
+    mergedFrom: z
+      .array(mergedSourceSchema)
+      .describe('Sources this article was merged from during deduplication')
+      .optional(),
     // Review data
     reviews: z.array(reviewSchema).describe('List of assessments'),
-    reviewHistory: z.array(reviewSchema).describe('Historical reviews (only in extracted ReviewFiles, never in master file)').optional(),
+    reviewHistory: z
+      .array(reviewSchema)
+      .describe('Historical reviews (only in extracted ReviewFiles, never in master file)')
+      .optional(),
     finalDecision: z
       .union([z.literal('include'), z.literal('exclude'), z.null()])
       .describe('Final inclusion/exclusion decision (null in extracted files)')
@@ -84,19 +94,26 @@ export const reviewerRecordSchema = z
     basis: reviewBasisSchema.describe('Basis level at which the reviewer participated'),
   })
   .strict()
-  .describe('Record of a reviewer\'s participation at a specific basis level');
+  .describe("Record of a reviewer's participation at a specific basis level");
 
 export const reviewModeSchema = z.enum(['screening', 'picking']);
 
 export const reviewFileSchema = z
   .object({
     sessionId: z.string().describe('Session identifier'),
-    mode: reviewModeSchema.describe('Review mode: screening (exclusion-based) or picking (inclusion-based)').optional(),
+    mode: reviewModeSchema
+      .describe('Review mode: screening (exclusion-based) or picking (inclusion-based)')
+      .optional(),
     criteria: z.string().describe('Path to inclusion criteria file').optional(),
     reviewer: z.string().describe('Reviewer identifier (only in extracted ReviewFiles)').optional(),
-    basis: reviewBasisSchema.describe('Basis level for screening (only in extracted ReviewFiles)').optional(),
+    basis: reviewBasisSchema
+      .describe('Basis level for screening (only in extracted ReviewFiles)')
+      .optional(),
     articles: z.array(articleEntrySchema).describe('List of articles with review data'),
-    reviewers: z.array(reviewerRecordSchema).describe('Registry of reviewers who participated at each basis level').optional(),
+    reviewers: z
+      .array(reviewerRecordSchema)
+      .describe('Registry of reviewers who participated at each basis level')
+      .optional(),
   })
   .strict()
   .describe('Schema for article review workflow tracking');

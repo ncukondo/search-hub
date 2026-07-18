@@ -68,7 +68,13 @@ describe('executeFulltextSync', () => {
     const meta = makeMeta(dirName, { doi: '10.1234/test' });
     await setupArticleDir(sessionDir, dirName, meta);
     await setupReviews(sessionDir, [
-      { title: meta.title, doi: '10.1234/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
+      {
+        title: meta.title,
+        doi: '10.1234/test',
+        reviews: [],
+        finalDecision: 'include',
+        fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } },
+      },
     ]);
 
     // Add a PDF file
@@ -87,7 +93,13 @@ describe('executeFulltextSync', () => {
     const meta = makeMeta(dirName, { doi: '10.5678/test' });
     await setupArticleDir(sessionDir, dirName, meta);
     await setupReviews(sessionDir, [
-      { title: meta.title, doi: '10.5678/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
+      {
+        title: meta.title,
+        doi: '10.5678/test',
+        reviews: [],
+        finalDecision: 'include',
+        fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } },
+      },
     ]);
 
     // Add a markdown file
@@ -105,7 +117,13 @@ describe('executeFulltextSync', () => {
     const meta = makeMeta(dirName, { doi: '10.9876/test' });
     await setupArticleDir(sessionDir, dirName, meta);
     await setupReviews(sessionDir, [
-      { title: meta.title, doi: '10.9876/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
+      {
+        title: meta.title,
+        doi: '10.9876/test',
+        reviews: [],
+        finalDecision: 'include',
+        fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } },
+      },
     ]);
 
     // Add an XML file
@@ -144,7 +162,13 @@ describe('executeFulltextSync', () => {
     const meta = makeMeta(dirName, { doi: '10.1234/test' });
     await setupArticleDir(sessionDir, dirName, meta);
     await setupReviews(sessionDir, [
-      { title: meta.title, doi: '10.1234/test', reviews: [], finalDecision: 'include', fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } } },
+      {
+        title: meta.title,
+        doi: '10.1234/test',
+        reviews: [],
+        finalDecision: 'include',
+        fulltext: { dirName, hasFiles: { pdf: false, xml: false, html: false, markdown: false } },
+      },
     ]);
 
     // Add a PDF
@@ -166,7 +190,12 @@ describe('executeFulltextSync', () => {
     const dirName = 'smith2024-a1b2c3d4';
     const meta = makeMeta(dirName, {
       files: {
-        pdf: { filename: 'fulltext.pdf', source: 'manual', retrievedAt: '2024-01-01T00:00:00Z', size: 100 },
+        pdf: {
+          filename: 'fulltext.pdf',
+          source: 'manual',
+          retrievedAt: '2024-01-01T00:00:00Z',
+          size: 100,
+        },
       },
     });
     await setupArticleDir(sessionDir, dirName, meta);
@@ -214,7 +243,7 @@ describe('executeFulltextSync', () => {
     const result = await executeFulltextSync({ sessionId, sessionsDir });
 
     expect(result.synced).toBe(2);
-    const files = result.entries.flatMap(e => e.files);
+    const files = result.entries.flatMap((e) => e.files);
     expect(files).toContain('fulltext.pdf');
     expect(files).toContain('fulltext.md');
   });

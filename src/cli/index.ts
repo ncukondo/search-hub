@@ -44,17 +44,9 @@ import {
   type CountVocabValidator,
 } from '../query/vocab-validator.js';
 import { createProviderInstance } from './commands/search-executor.js';
-import {
-  translateQueryCommand,
-  formatTranslateResult,
-} from './commands/query/translate.js';
-import {
-  inspectQueryCommand,
-  formatInspectOutput,
-} from './commands/query/inspect.js';
-import {
-  writeQueryTemplate,
-} from './commands/query/init.js';
+import { translateQueryCommand, formatTranslateResult } from './commands/query/translate.js';
+import { inspectQueryCommand, formatInspectOutput } from './commands/query/inspect.js';
+import { writeQueryTemplate } from './commands/query/init.js';
 import { resolveQueryFile } from './commands/query/resolve.js';
 import type { ProviderName } from '../providers/base/types.js';
 import {
@@ -90,11 +82,7 @@ import {
   deduplicateArticles,
   type JsonExportMetadata,
 } from './commands/export.js';
-import {
-  computeSummary,
-  formatSummary,
-  formatSummaryJson,
-} from './commands/summary.js';
+import { computeSummary, formatSummary, formatSummaryJson } from './commands/summary.js';
 import {
   parseResultsOptions,
   validateResultsInput,
@@ -132,10 +120,7 @@ import {
   formatRelatedOutput,
 } from './commands/related.js';
 
-import {
-  executeReviewInit,
-  type ReviewInitOptions,
-} from './commands/review/init.js';
+import { executeReviewInit, type ReviewInitOptions } from './commands/review/init.js';
 import {
   executeReviewStatus,
   formatStatusOutput,
@@ -157,10 +142,7 @@ import {
   formatMergeOutput,
   type ReviewMergeOptions,
 } from './commands/review/merge.js';
-import {
-  executeReviewMark,
-  type ReviewMarkOptions,
-} from './commands/review/mark.js';
+import { executeReviewMark, type ReviewMarkOptions } from './commands/review/mark.js';
 import {
   executeReviewExport,
   formatExportOutput,
@@ -222,7 +204,12 @@ import { fileURLToPath } from 'node:url';
 import { getSessionsDir } from './utils/sessions-dir.js';
 import { expandPath } from '../utils/path.js';
 import { loadSessionArticles, loadSessionQuery } from './commands/session-utils.js';
-import { parseIdentifierFile, checkCoverage, formatCheckResult, formatCheckResultJson } from './commands/check.js';
+import {
+  parseIdentifierFile,
+  checkCoverage,
+  formatCheckResult,
+  formatCheckResultJson,
+} from './commands/check.js';
 import { PubMedClient } from '../providers/pubmed/client.js';
 import type { PubMedConfig } from '../providers/pubmed/types.js';
 
@@ -251,16 +238,16 @@ export function createProgram(): Command {
   program
     .name('search-hub')
     .version(VERSION)
-    .description(
-      'CLI tool for systematic literature searching across multiple academic databases'
-    )
+    .description('CLI tool for systematic literature searching across multiple academic databases')
     .option('-c, --config <path>', 'path to config file')
     .option('--session-dir <path>', 'path to session directory')
     .option('-v, --verbose', 'enable verbose output', false)
     .option('--quiet', 'suppress all output except errors', false)
     .option('--no-color', 'disable color output')
     .option('--no-update-check', 'disable the update-version check')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Workflow:
   1. query init → edit → validate / --dry-run        Query preparation
   2. search --preview → search                       Preview & execute
@@ -274,7 +261,8 @@ Quick Start:
   $ search-hub query init "my search"            # Create query template
   $ search-hub search my-search --count-only     # Check hit counts
   $ search-hub search my-search                  # Execute search
-  $ search-hub results <session>                 # Review titles`);
+  $ search-hub results <session>                 # Review titles`,
+    );
 
   // Register init command
   program
@@ -282,11 +270,14 @@ Quick Start:
     .description('Initialize search-hub project (local) or global config')
     .option('-f, --force', 'overwrite existing configuration', false)
     .option('-g, --global', 'initialize global config instead of local project', false)
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub init                 # Create .search-hub/ in current directory
   $ search-hub init --global        # Create global config (~/.config/search-hub/)
-  $ search-hub init --force         # Overwrite existing configuration`)
+  $ search-hub init --force         # Overwrite existing configuration`,
+    )
     .action(async (options: { force: boolean; global: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -307,10 +298,7 @@ Examples:
         process.exitCode = result.success ? EXIT_CODES.SUCCESS : EXIT_CODES.CONFIG_ERROR;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.GENERAL_ERROR;
       }
@@ -328,7 +316,9 @@ Examples:
     .option('--list', 'List all config values (default when no key given)')
     .option('--env-vars', 'Show environment variable mappings')
     .option('--force', 'Force write even for secret keys in local scope')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub config                                     # Show all config
   $ search-hub config providers.pubmed                    # Show PubMed config
@@ -336,165 +326,246 @@ Examples:
   $ search-hub config --local output.color false          # Set in project config
   $ search-hub config --show-origin providers.pubmed.api_key # Show value origin
   $ search-hub config --list --global                     # Show only global values
-  $ search-hub config --env-vars                          # Show env var mappings`)
-    .action(async (key: string | undefined, value: string | undefined, cmdOpts: {
-      global?: boolean;
-      local?: boolean;
-      showOrigin?: boolean;
-      list?: boolean;
-      envVars?: boolean;
-      force?: boolean;
-    }) => {
-      const globalOpts = program.opts() as GlobalOptions;
-      try {
-        // Handle --env-vars flag
-        if (cmdOpts.envVars) {
-          if (!globalOpts.quiet) {
-            console.log(formatEnvVars());
-          }
-          process.exitCode = EXIT_CODES.SUCCESS;
-          return;
-        }
-
-        const inProject = await isInsideProject();
-
-        // Handle --list with scope filter
-        if (cmdOpts.list || (!key && !value)) {
-          if (cmdOpts.global && cmdOpts.local) {
+  $ search-hub config --env-vars                          # Show env var mappings`,
+    )
+    .action(
+      async (
+        key: string | undefined,
+        value: string | undefined,
+        cmdOpts: {
+          global?: boolean;
+          local?: boolean;
+          showOrigin?: boolean;
+          list?: boolean;
+          envVars?: boolean;
+          force?: boolean;
+        },
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          // Handle --env-vars flag
+          if (cmdOpts.envVars) {
             if (!globalOpts.quiet) {
-              console.error('Error: --global and --local are mutually exclusive');
+              console.log(formatEnvVars());
             }
-            process.exitCode = EXIT_CODES.CONFIG_ERROR;
+            process.exitCode = EXIT_CODES.SUCCESS;
             return;
           }
 
-          if (cmdOpts.showOrigin && !cmdOpts.global && !cmdOpts.local) {
-            // Show all keys with origin information
-            let config;
-            try {
-              config = await loadConfig(
-                globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
-              );
-            } catch {
-              config = getDefaultConfig();
-            }
-            const globalPath = expandPath(getDefaultConfigPath());
-            const globalCfg = await loadTomlFile(globalPath);
-            const localPath = inProject ? getLocalConfigPath() : '';
-            const localCfg = inProject ? await loadTomlFile(localPath) : {};
-            if (!globalOpts.quiet) {
-              console.log(viewConfigAllOrigins(
-                config,
-                ENV_VAR_MAP,
-                localCfg as Record<string, unknown>,
-                localPath,
-                globalCfg as Record<string, unknown>,
-                globalPath
-              ));
-            }
-          } else if (cmdOpts.global) {
-            const globalConfig = await loadTomlFile(expandPath(getDefaultConfigPath()));
-            if (!globalOpts.quiet) {
-              const output = viewConfigFiltered(globalConfig as Record<string, unknown>);
-              console.log(output || '(no global config values set)');
-            }
-          } else if (cmdOpts.local) {
-            if (!inProject) {
+          const inProject = await isInsideProject();
+
+          // Handle --list with scope filter
+          if (cmdOpts.list || (!key && !value)) {
+            if (cmdOpts.global && cmdOpts.local) {
               if (!globalOpts.quiet) {
-                console.error('Error: --local requires a project directory (.search-hub/). Run "search-hub init" first.');
+                console.error('Error: --global and --local are mutually exclusive');
               }
               process.exitCode = EXIT_CODES.CONFIG_ERROR;
               return;
             }
-            const localConfig = await loadTomlFile(getLocalConfigPath());
-            if (!globalOpts.quiet) {
-              const output = viewConfigFiltered(localConfig as Record<string, unknown>);
-              console.log(output || '(no local config values set)');
-            }
-          } else {
-            // Default: show merged config
-            let config;
-            try {
-              config = await loadConfig(
-                globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
-              );
-            } catch {
-              config = getDefaultConfig();
-            }
-            if (!globalOpts.quiet) {
-              console.log(viewConfig(config));
-            }
-          }
-          process.exitCode = EXIT_CODES.SUCCESS;
-          return;
-        }
 
-        // Load merged config
-        let config;
-        try {
-          config = await loadConfig(
-            globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
-          );
-        } catch {
-          config = getDefaultConfig();
-        }
-
-        if (key && !value) {
-          // View specific key (with optional --show-origin)
-          if (cmdOpts.showOrigin) {
-            // Check env vars first
-            const envEntry = Object.entries(ENV_VAR_MAP).find(([, path]) => path === key);
-            if (envEntry && process.env[envEntry[0]] !== undefined) {
-              if (!globalOpts.quiet) {
-                console.log(formatShowOrigin(key, process.env[envEntry[0]]!, 'env', envEntry[0]));
+            if (cmdOpts.showOrigin && !cmdOpts.global && !cmdOpts.local) {
+              // Show all keys with origin information
+              let config;
+              try {
+                config = await loadConfig(
+                  globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
+                );
+              } catch {
+                config = getDefaultConfig();
               }
-              process.exitCode = EXIT_CODES.SUCCESS;
-              return;
-            }
-
-            // Check local config
-            if (inProject) {
-              const localConfig = await loadTomlFile(getLocalConfigPath());
-              const localVal = getNestedValue(localConfig as Record<string, unknown>, key);
-              if (localVal !== undefined) {
+              const globalPath = expandPath(getDefaultConfigPath());
+              const globalCfg = await loadTomlFile(globalPath);
+              const localPath = inProject ? getLocalConfigPath() : '';
+              const localCfg = inProject ? await loadTomlFile(localPath) : {};
+              if (!globalOpts.quiet) {
+                console.log(
+                  viewConfigAllOrigins(
+                    config,
+                    ENV_VAR_MAP,
+                    localCfg as Record<string, unknown>,
+                    localPath,
+                    globalCfg as Record<string, unknown>,
+                    globalPath,
+                  ),
+                );
+              }
+            } else if (cmdOpts.global) {
+              const globalConfig = await loadTomlFile(expandPath(getDefaultConfigPath()));
+              if (!globalOpts.quiet) {
+                const output = viewConfigFiltered(globalConfig as Record<string, unknown>);
+                console.log(output || '(no global config values set)');
+              }
+            } else if (cmdOpts.local) {
+              if (!inProject) {
                 if (!globalOpts.quiet) {
-                  console.log(formatShowOrigin(key, String(localVal), 'local', getLocalConfigPath()));
+                  console.error(
+                    'Error: --local requires a project directory (.search-hub/). Run "search-hub init" first.',
+                  );
+                }
+                process.exitCode = EXIT_CODES.CONFIG_ERROR;
+                return;
+              }
+              const localConfig = await loadTomlFile(getLocalConfigPath());
+              if (!globalOpts.quiet) {
+                const output = viewConfigFiltered(localConfig as Record<string, unknown>);
+                console.log(output || '(no local config values set)');
+              }
+            } else {
+              // Default: show merged config
+              let config;
+              try {
+                config = await loadConfig(
+                  globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
+                );
+              } catch {
+                config = getDefaultConfig();
+              }
+              if (!globalOpts.quiet) {
+                console.log(viewConfig(config));
+              }
+            }
+            process.exitCode = EXIT_CODES.SUCCESS;
+            return;
+          }
+
+          // Load merged config
+          let config;
+          try {
+            config = await loadConfig(
+              globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
+            );
+          } catch {
+            config = getDefaultConfig();
+          }
+
+          if (key && !value) {
+            // View specific key (with optional --show-origin)
+            if (cmdOpts.showOrigin) {
+              // Check env vars first
+              const envEntry = Object.entries(ENV_VAR_MAP).find(([, path]) => path === key);
+              if (envEntry && process.env[envEntry[0]] !== undefined) {
+                if (!globalOpts.quiet) {
+                  console.log(formatShowOrigin(key, process.env[envEntry[0]]!, 'env', envEntry[0]));
                 }
                 process.exitCode = EXIT_CODES.SUCCESS;
                 return;
               }
-            }
 
-            // Check global config
-            const globalConfigPath = expandPath(getDefaultConfigPath());
-            const globalConfig = await loadTomlFile(globalConfigPath);
-            const globalVal = getNestedValue(globalConfig as Record<string, unknown>, key);
-            if (globalVal !== undefined) {
-              if (!globalOpts.quiet) {
-                console.log(formatShowOrigin(key, String(globalVal), 'global', globalConfigPath));
+              // Check local config
+              if (inProject) {
+                const localConfig = await loadTomlFile(getLocalConfigPath());
+                const localVal = getNestedValue(localConfig as Record<string, unknown>, key);
+                if (localVal !== undefined) {
+                  if (!globalOpts.quiet) {
+                    console.log(
+                      formatShowOrigin(key, String(localVal), 'local', getLocalConfigPath()),
+                    );
+                  }
+                  process.exitCode = EXIT_CODES.SUCCESS;
+                  return;
+                }
               }
-              process.exitCode = EXIT_CODES.SUCCESS;
-              return;
-            }
 
-            // Must be default
-            const mergedVal = getNestedValue(config as unknown as Record<string, unknown>, key);
-            if (mergedVal !== undefined) {
-              if (!globalOpts.quiet) {
-                console.log(formatShowOrigin(key, String(mergedVal), 'default', ''));
+              // Check global config
+              const globalConfigPath = expandPath(getDefaultConfigPath());
+              const globalConfig = await loadTomlFile(globalConfigPath);
+              const globalVal = getNestedValue(globalConfig as Record<string, unknown>, key);
+              if (globalVal !== undefined) {
+                if (!globalOpts.quiet) {
+                  console.log(formatShowOrigin(key, String(globalVal), 'global', globalConfigPath));
+                }
+                process.exitCode = EXIT_CODES.SUCCESS;
+                return;
+              }
+
+              // Must be default
+              const mergedVal = getNestedValue(config as unknown as Record<string, unknown>, key);
+              if (mergedVal !== undefined) {
+                if (!globalOpts.quiet) {
+                  console.log(formatShowOrigin(key, String(mergedVal), 'default', ''));
+                }
+              } else {
+                if (!globalOpts.quiet) {
+                  console.error(`Error: Key "${key}" not found in configuration`);
+                }
+                process.exitCode = EXIT_CODES.CONFIG_ERROR;
+                return;
               }
             } else {
+              const result = viewConfigKey(config, key);
+              if (result.success) {
+                if (!globalOpts.quiet) {
+                  console.log(result.value);
+                }
+              } else {
+                if (!globalOpts.quiet) {
+                  console.error(`Error: ${result.error}`);
+                }
+                process.exitCode = EXIT_CODES.CONFIG_ERROR;
+                return;
+              }
+            }
+          } else if (key && value) {
+            // Set key value — resolve scope
+            const scopeResult = resolveWriteScope({
+              global: !!cmdOpts.global,
+              local: !!cmdOpts.local,
+              insideProject: inProject,
+            });
+
+            if (scopeResult.scope === 'error') {
               if (!globalOpts.quiet) {
-                console.error(`Error: Key "${key}" not found in configuration`);
+                console.error(`Error: ${scopeResult.error}`);
               }
               process.exitCode = EXIT_CODES.CONFIG_ERROR;
               return;
             }
-          } else {
-            const result = viewConfigKey(config, key);
-            if (result.success) {
+
+            // Block secret key writes to local scope unless --force
+            const warning = checkSecretKeyWarning(key, scopeResult.scope);
+            if (warning && !cmdOpts.force) {
               if (!globalOpts.quiet) {
-                console.log(result.value);
+                console.error(`Error: ${warning} Use --force to override.`);
+              }
+              process.exitCode = EXIT_CODES.CONFIG_ERROR;
+              return;
+            }
+
+            const result = setConfigKey(config, key, value);
+            if (result.success) {
+              // Determine save path based on scope
+              let configPath: string;
+              if (globalOpts.config) {
+                configPath = expandPath(globalOpts.config);
+              } else if (scopeResult.scope === 'local') {
+                configPath = expandPath(getLocalConfigPath());
+              } else {
+                configPath = expandPath(getDefaultConfigPath());
+              }
+
+              // For scoped writes, load existing file, apply change, and save
+              try {
+                const existing = await loadTomlFile(configPath);
+                const existingValue = getNestedValue(
+                  config as unknown as Record<string, unknown>,
+                  key,
+                );
+                const parsedValue = parseValue(value, existingValue);
+                setNestedValue(existing as Record<string, unknown>, key, parsedValue);
+                await saveConfig(existing as Config, { path: configPath });
+                if (!globalOpts.quiet) {
+                  console.log(`Set ${key} = ${result.value}`);
+                  console.log(`Saved to ${configPath}`);
+                }
+              } catch (saveError) {
+                if (!globalOpts.quiet) {
+                  console.error(
+                    `Error saving config: ${saveError instanceof Error ? saveError.message : saveError}`,
+                  );
+                }
+                process.exitCode = EXIT_CODES.CONFIG_ERROR;
+                return;
               }
             } else {
               if (!globalOpts.quiet) {
@@ -504,92 +575,23 @@ Examples:
               return;
             }
           }
-        } else if (key && value) {
-          // Set key value — resolve scope
-          const scopeResult = resolveWriteScope({
-            global: !!cmdOpts.global,
-            local: !!cmdOpts.local,
-            insideProject: inProject,
-          });
-
-          if (scopeResult.scope === 'error') {
-            if (!globalOpts.quiet) {
-              console.error(`Error: ${scopeResult.error}`);
-            }
-            process.exitCode = EXIT_CODES.CONFIG_ERROR;
-            return;
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
-
-          // Block secret key writes to local scope unless --force
-          const warning = checkSecretKeyWarning(key, scopeResult.scope);
-          if (warning && !cmdOpts.force) {
-            if (!globalOpts.quiet) {
-              console.error(`Error: ${warning} Use --force to override.`);
-            }
-            process.exitCode = EXIT_CODES.CONFIG_ERROR;
-            return;
-          }
-
-          const result = setConfigKey(config, key, value);
-          if (result.success) {
-            // Determine save path based on scope
-            let configPath: string;
-            if (globalOpts.config) {
-              configPath = expandPath(globalOpts.config);
-            } else if (scopeResult.scope === 'local') {
-              configPath = expandPath(getLocalConfigPath());
-            } else {
-              configPath = expandPath(getDefaultConfigPath());
-            }
-
-            // For scoped writes, load existing file, apply change, and save
-            try {
-              const existing = await loadTomlFile(configPath);
-              const existingValue = getNestedValue(
-                config as unknown as Record<string, unknown>,
-                key
-              );
-              const parsedValue = parseValue(value, existingValue);
-              setNestedValue(existing as Record<string, unknown>, key, parsedValue);
-              await saveConfig(existing as Config, { path: configPath });
-              if (!globalOpts.quiet) {
-                console.log(`Set ${key} = ${result.value}`);
-                console.log(`Saved to ${configPath}`);
-              }
-            } catch (saveError) {
-              if (!globalOpts.quiet) {
-                console.error(
-                  `Error saving config: ${saveError instanceof Error ? saveError.message : saveError}`
-                );
-              }
-              process.exitCode = EXIT_CODES.CONFIG_ERROR;
-              return;
-            }
-          } else {
-            if (!globalOpts.quiet) {
-              console.error(`Error: ${result.error}`);
-            }
-            process.exitCode = EXIT_CODES.CONFIG_ERROR;
-            return;
-          }
+          process.exitCode = EXIT_CODES.CONFIG_ERROR;
         }
-        process.exitCode = EXIT_CODES.SUCCESS;
-      } catch (error) {
-        if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error
-          );
-        }
-        process.exitCode = EXIT_CODES.CONFIG_ERROR;
-      }
-    });
+      },
+    );
 
   // Register query command group
   const queryCommand = program
     .command('query')
     .description('Query file utilities')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Query YAML format (minimal):
   name: my_search
   query:
@@ -598,7 +600,8 @@ Query YAML format (minimal):
         keywords: ["term1", "term2"]
       operator: OR
 
-Use "search-hub query init" to generate a template.`);
+Use "search-hub query init" to generate a template.`,
+    );
 
   queryCommand
     .command('validate')
@@ -606,11 +609,14 @@ Use "search-hub query init" to generate a template.`);
     .argument('<file>', 'path to query YAML file')
     .option('--no-vocab', 'skip controlled vocabulary validation')
     .option('--no-cache', 'skip vocabulary lookup cache')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub query validate ./diabetes-ai.yaml
   $ search-hub query validate ./diabetes-ai.yaml --no-vocab   # Skip MeSH check
-  $ search-hub query validate ./diabetes-ai.yaml --no-cache   # Ignore cache`)
+  $ search-hub query validate ./diabetes-ai.yaml --no-cache   # Ignore cache`,
+    )
     .action(async (fileArg: string, opts: { vocab?: boolean; cache?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -631,18 +637,18 @@ Examples:
 
           if (!globalOpts.quiet) {
             let output = formatValidateResult(result, file);
-            const suggestion = formatSuggestion(getSuggestion({
-              command: 'query validate',
-              queryFile: file,
-              validationSuccess: result.success,
-              hasSchemaLink: hasSchema,
-            }));
+            const suggestion = formatSuggestion(
+              getSuggestion({
+                command: 'query validate',
+                queryFile: file,
+                validationSuccess: result.success,
+                hasSchemaLink: hasSchema,
+              }),
+            );
             if (suggestion) output += '\n' + suggestion;
             console.log(output);
           }
-          process.exitCode = !result.success
-            ? EXIT_CODES.QUERY_ERROR
-            : EXIT_CODES.SUCCESS;
+          process.exitCode = !result.success ? EXIT_CODES.QUERY_ERROR : EXIT_CODES.SUCCESS;
           return;
         }
 
@@ -657,7 +663,7 @@ Examples:
         let config: Config | undefined;
         try {
           config = await loadConfig(
-            globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
+            globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
           );
         } catch {
           // Config not available — skip count validators
@@ -667,14 +673,14 @@ Examples:
           const ericProvider = createProviderInstance('eric', config);
           if (ericProvider) {
             countValidators.push(
-              createEricCountValidator(ericProvider, cache ? { cache } : undefined)
+              createEricCountValidator(ericProvider, cache ? { cache } : undefined),
             );
           }
 
           const scopusProvider = createProviderInstance('scopus', config);
           if (scopusProvider) {
             countValidators.push(
-              createEmtreeCountValidator(scopusProvider, cache ? { cache } : undefined)
+              createEmtreeCountValidator(scopusProvider, cache ? { cache } : undefined),
             );
           }
         }
@@ -693,25 +699,22 @@ Examples:
           if (result.vocabResult) {
             output += formatVocabValidationOutput(result.vocabResult);
           }
-          const suggestion = formatSuggestion(getSuggestion({
-            command: 'query validate',
-            queryFile: file,
-            validationSuccess: result.success && !hasVocabErrors(result),
-            hasSchemaLink: hasSchema,
-          }));
+          const suggestion = formatSuggestion(
+            getSuggestion({
+              command: 'query validate',
+              queryFile: file,
+              validationSuccess: result.success && !hasVocabErrors(result),
+              hasSchemaLink: hasSchema,
+            }),
+          );
           if (suggestion) output += '\n' + suggestion;
           console.log(output);
         }
         process.exitCode =
-          !result.success || hasVocabErrors(result)
-            ? EXIT_CODES.QUERY_ERROR
-            : EXIT_CODES.SUCCESS;
+          !result.success || hasVocabErrors(result) ? EXIT_CODES.QUERY_ERROR : EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.QUERY_ERROR;
       }
@@ -722,30 +725,26 @@ Examples:
     .description('Show translated queries for each database')
     .argument('<file>', 'path to query YAML file')
     .option('--db <provider>', 'show translation for specific provider only')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub query translate ./diabetes-ai.yaml            # All databases
-  $ search-hub query translate ./diabetes-ai.yaml --db pubmed # PubMed only`)
+  $ search-hub query translate ./diabetes-ai.yaml --db pubmed # PubMed only`,
+    )
     .action(async (fileArg: string, options: { db?: string }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
         const file = await resolveQueryFile(fileArg);
-        const translateOptions = options.db
-          ? { providers: [options.db as ProviderName] }
-          : {};
+        const translateOptions = options.db ? { providers: [options.db as ProviderName] } : {};
         const result = await translateQueryCommand(file, translateOptions);
         if (!globalOpts.quiet) {
           console.log(formatTranslateResult(result, file));
         }
-        process.exitCode = result.success
-          ? EXIT_CODES.SUCCESS
-          : EXIT_CODES.QUERY_ERROR;
+        process.exitCode = result.success ? EXIT_CODES.SUCCESS : EXIT_CODES.QUERY_ERROR;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.QUERY_ERROR;
       }
@@ -756,17 +755,18 @@ Examples:
     .description('Show how a query resolves per provider (block replacements and added filters)')
     .argument('<file>', 'path to query YAML file')
     .option('--db <provider>', 'show resolution for specific provider only')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub query inspect ./diabetes-ai.yaml            # All databases
-  $ search-hub query inspect ./diabetes-ai.yaml --db pubmed # PubMed only`)
+  $ search-hub query inspect ./diabetes-ai.yaml --db pubmed # PubMed only`,
+    )
     .action(async (fileArg: string, options: { db?: string }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
         const file = await resolveQueryFile(fileArg);
-        const inspectOptions = options.db
-          ? { providers: [options.db as ProviderName] }
-          : {};
+        const inspectOptions = options.db ? { providers: [options.db as ProviderName] } : {};
         const result = await inspectQueryCommand(file, inspectOptions);
         if (!result.success) {
           if (!globalOpts.quiet) {
@@ -781,10 +781,7 @@ Examples:
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.QUERY_ERROR;
       }
@@ -797,43 +794,52 @@ Examples:
     .option('-o, --output <path>', 'write to specific file path')
     .option('--stdout', 'output to stdout instead of file')
     .option('--force', 'overwrite existing file', false)
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub query init "WBA pain mechanisms"              # → .search-hub/queries/wba-pain-mechanisms.yaml
   $ search-hub query init "WBA pain" -o ./custom-path.yaml   # Custom output path
-  $ search-hub query init "WBA pain" --stdout                # Print to stdout`)
-    .action(async (title: string, options: { output?: string; stdout?: boolean; force?: boolean }) => {
-      const globalOpts = program.opts() as GlobalOptions;
-      try {
-        const result = await writeQueryTemplate({
-          title,
-          output: options.output,
-          stdout: options.stdout,
-          force: options.force,
-        });
-        if (!globalOpts.quiet) {
-          if (result.success) {
-            console.log(result.message);
-            if (result.outputPath) {
-              const suggestion = formatSuggestion(getSuggestion({
-                command: 'query init',
-                outputFile: result.outputPath,
-              }));
-              if (suggestion) console.log('\n' + suggestion);
-              console.log('\nIterate: edit the same file and re-run step 3. Counts are logged automatically.');
+  $ search-hub query init "WBA pain" --stdout                # Print to stdout`,
+    )
+    .action(
+      async (title: string, options: { output?: string; stdout?: boolean; force?: boolean }) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          const result = await writeQueryTemplate({
+            title,
+            output: options.output,
+            stdout: options.stdout,
+            force: options.force,
+          });
+          if (!globalOpts.quiet) {
+            if (result.success) {
+              console.log(result.message);
+              if (result.outputPath) {
+                const suggestion = formatSuggestion(
+                  getSuggestion({
+                    command: 'query init',
+                    outputFile: result.outputPath,
+                  }),
+                );
+                if (suggestion) console.log('\n' + suggestion);
+                console.log(
+                  '\nIterate: edit the same file and re-run step 3. Counts are logged automatically.',
+                );
+              }
+            } else {
+              console.error(result.message);
             }
-          } else {
-            console.error(result.message);
           }
+          process.exitCode = result.success ? EXIT_CODES.SUCCESS : EXIT_CODES.GENERAL_ERROR;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error('Error:', error instanceof Error ? error.message : error);
+          }
+          process.exitCode = EXIT_CODES.GENERAL_ERROR;
         }
-        process.exitCode = result.success ? EXIT_CODES.SUCCESS : EXIT_CODES.GENERAL_ERROR;
-      } catch (error) {
-        if (!globalOpts.quiet) {
-          console.error('Error:', error instanceof Error ? error.message : error);
-        }
-        process.exitCode = EXIT_CODES.GENERAL_ERROR;
-      }
-    });
+      },
+    );
 
   queryCommand
     .command('assess')
@@ -842,48 +848,61 @@ Examples:
     .option('--verdict <verdict>', 'assessment verdict (e.g., reject, good, refine)')
     .option('--precision <precision>', 'estimated precision (e.g., ~60%)')
     .option('--comment <comment>', 'free-text comment')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub query assess query.yaml --verdict reject --comment "Too broad"
-  $ search-hub query assess query.yaml --verdict good --precision "~60%"`)
-    .action(async (fileArg: string, options: { verdict?: string; precision?: string; comment?: string }) => {
-      const globalOpts = program.opts() as GlobalOptions;
-      try {
-        const file = await resolveQueryFile(fileArg);
-        const result = await executeQueryAssess(file, options);
-        if (result.success) {
-          if (!globalOpts.quiet) {
-            console.log('Assessment recorded.');
-            const suggestion = formatSuggestion(getSuggestion({
-              command: 'query assess',
-              queryFile: file,
-            }));
-            if (suggestion) console.log(suggestion);
+  $ search-hub query assess query.yaml --verdict good --precision "~60%"`,
+    )
+    .action(
+      async (
+        fileArg: string,
+        options: { verdict?: string; precision?: string; comment?: string },
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          const file = await resolveQueryFile(fileArg);
+          const result = await executeQueryAssess(file, options);
+          if (result.success) {
+            if (!globalOpts.quiet) {
+              console.log('Assessment recorded.');
+              const suggestion = formatSuggestion(
+                getSuggestion({
+                  command: 'query assess',
+                  queryFile: file,
+                }),
+              );
+              if (suggestion) console.log(suggestion);
+            }
+            process.exitCode = EXIT_CODES.SUCCESS;
+          } else {
+            if (!globalOpts.quiet) {
+              console.error(`Error: ${result.error}`);
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
           }
-          process.exitCode = EXIT_CODES.SUCCESS;
-        } else {
+        } catch (error) {
           if (!globalOpts.quiet) {
-            console.error(`Error: ${result.error}`);
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
         }
-      } catch (error) {
-        if (!globalOpts.quiet) {
-          console.error('Error:', error instanceof Error ? error.message : error);
-        }
-        process.exitCode = EXIT_CODES.GENERAL_ERROR;
-      }
-    });
+      },
+    );
 
   queryCommand
     .command('log')
     .description('View the query iteration history')
     .argument('<file>', 'path to query YAML file')
     .option('--json', 'output as JSON')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub query log query.yaml
-  $ search-hub query log query.yaml --json`)
+  $ search-hub query log query.yaml --json`,
+    )
     .action(async (fileArg: string, options: { json?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -908,11 +927,14 @@ Examples:
     .argument('[session-id]', 'session ID to show details for')
     .option('--json', 'output as JSON')
     .option('--all', 'include completed sessions')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub status                           # List recent sessions
   $ search-hub status 20240115_diabetes-ai_a3f2 # Show session details
-  $ search-hub status --json                    # JSON output for scripting`)
+  $ search-hub status --json                    # JSON output for scripting`,
+    )
     .action(async (sessionId?: string, options?: { json?: boolean; all?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
@@ -926,7 +948,11 @@ Examples:
             // Compute deduplication stats
             try {
               const rawSession = await loadSession(sessionId, sessionsDir);
-              const dedupStats = await computeDeduplicationStats(sessionId, sessionsDir, rawSession);
+              const dedupStats = await computeDeduplicationStats(
+                sessionId,
+                sessionsDir,
+                rawSession,
+              );
               result.session.uniqueArticles = dedupStats.uniqueArticles;
               result.session.duplicatesRemoved = dedupStats.duplicatesRemoved;
             } catch {
@@ -953,10 +979,7 @@ Examples:
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.SESSION_ERROR;
       }
@@ -968,17 +991,30 @@ Examples:
     .description('Execute search across databases')
     .argument('[query-file]', 'path to query YAML file')
     .option('--db <providers>', 'target specific database(s), comma-separated')
-    .option('--query <string>', 'direct query in database-native syntax (advanced; requires --db; prefer YAML files)')
+    .option(
+      '--query <string>',
+      'direct query in database-native syntax (advanced; requires --db; prefer YAML files)',
+    )
     .option('--name <string>', 'session name')
     .option('--max-results <n>', 'limit results per database')
-    .addOption(new Option('--sort <method>', 'sort results by relevance or date').choices(['relevance', 'date']))
+    .addOption(
+      new Option('--sort <method>', 'sort results by relevance or date').choices([
+        'relevance',
+        'date',
+      ]),
+    )
     .option('--dry-run', 'show translated queries without executing')
     .option('--count-only', 'get hit counts without downloading results')
     .option('--preview', 'get hit counts and first 5 titles without creating session')
     .option('--skip-connection-test', 'skip API connection test during dry-run')
     .option('--no-resume', 'start fresh even if session exists')
-    .option('--strict', 'require all targeted databases to succeed (exit non-zero on partial failure)')
-    .addHelpText('after', `
+    .option(
+      '--strict',
+      'require all targeted databases to succeed (exit non-zero on partial failure)',
+    )
+    .addHelpText(
+      'after',
+      `
 Workflow position:
   query validate → [this command: search] → results / summary / diff
 
@@ -994,7 +1030,8 @@ Query features (use "query init" to see full template):
   filters:    year_from, year_to, language, publication_types
   exclude:    NOT terms per block (terms.exclude)
   mesh/eric:  controlled vocabulary (terms.mesh, terms.eric)
-  providers:  per-database block replacements and filter additions`)
+  providers:  per-database block replacements and filter additions`,
+    )
     .action(
       async (
         queryFile?: string,
@@ -1010,7 +1047,7 @@ Query features (use "query init" to see full template):
           skipConnectionTest?: boolean;
           resume?: boolean;
           strict?: boolean;
-        }
+        },
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
@@ -1059,28 +1096,30 @@ Query features (use "query init" to see full template):
             // Try to load config for provider readiness display
             let dryRunConfig: Config | undefined;
             try {
-              dryRunConfig = await loadConfig(globalOpts.config ? { explicitConfigPath: globalOpts.config } : {});
+              dryRunConfig = await loadConfig(
+                globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
+              );
             } catch {
               // Config unavailable, readiness section will be omitted
             }
 
             if (searchOpts.queryFile) {
               // Translate from file
-              const translateOpts = searchOpts.providers
-                ? { providers: searchOpts.providers }
-                : {};
-              const result = await translateQueryCommand(
-                searchOpts.queryFile,
-                translateOpts
-              );
+              const translateOpts = searchOpts.providers ? { providers: searchOpts.providers } : {};
+              const result = await translateQueryCommand(searchOpts.queryFile, translateOpts);
               if (result.success && result.translations) {
-                const translations = Object.entries(result.translations).map(
-                  ([provider, t]) => ({ provider, query: t.native })
-                );
-                const providers = translations.map(t => t.provider) as ProviderName[];
+                const translations = Object.entries(result.translations).map(([provider, t]) => ({
+                  provider,
+                  query: t.native,
+                }));
+                const providers = translations.map((t) => t.provider) as ProviderName[];
                 if (!globalOpts.quiet) {
                   const dryRunOpts = dryRunConfig
-                    ? { config: dryRunConfig, providers, skipConnectionTest: options?.skipConnectionTest }
+                    ? {
+                        config: dryRunConfig,
+                        providers,
+                        skipConnectionTest: options?.skipConnectionTest,
+                      }
                     : {};
                   console.log(await formatDryRunOutput(translations, dryRunOpts));
                 }
@@ -1101,7 +1140,11 @@ Query features (use "query init" to see full template):
               ];
               if (!globalOpts.quiet) {
                 const dryRunOpts = dryRunConfig
-                  ? { config: dryRunConfig, providers: searchOpts.providers as ProviderName[], skipConnectionTest: options?.skipConnectionTest }
+                  ? {
+                      config: dryRunConfig,
+                      providers: searchOpts.providers as ProviderName[],
+                      skipConnectionTest: options?.skipConnectionTest,
+                    }
                   : {};
                 console.log(await formatDryRunOutput(translations, dryRunOpts));
               }
@@ -1114,7 +1157,9 @@ Query features (use "query init" to see full template):
           if (searchOpts.preview) {
             let previewConfig;
             try {
-              previewConfig = await loadConfig(globalOpts.config ? { explicitConfigPath: globalOpts.config } : {});
+              previewConfig = await loadConfig(
+                globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
+              );
             } catch {
               previewConfig = getDefaultConfig();
             }
@@ -1142,10 +1187,12 @@ Query features (use "query init" to see full template):
 
             if (!globalOpts.quiet) {
               console.log(formatPreviewOutput(previews, searchOpts.queryFile));
-              const suggestion = formatSuggestion(getSuggestion({
-                command: 'search --preview',
-                queryFile: searchOpts.queryFile,
-              }));
+              const suggestion = formatSuggestion(
+                getSuggestion({
+                  command: 'search --preview',
+                  queryFile: searchOpts.queryFile,
+                }),
+              );
               if (suggestion) console.log(suggestion);
             }
 
@@ -1159,7 +1206,9 @@ Query features (use "query init" to see full template):
               process.exitCode = EXIT_CODES.SUCCESS;
             }
             if (previewHasErrors && !previewAllFailed && !globalOpts.quiet) {
-              const failed = previews.filter((p) => p.error).map((p) => `${p.provider}: ${p.error}`);
+              const failed = previews
+                .filter((p) => p.error)
+                .map((p) => `${p.provider}: ${p.error}`);
               console.warn(`\nWarning: Some providers failed:\n  ${failed.join('\n  ')}`);
             }
             return;
@@ -1169,7 +1218,9 @@ Query features (use "query init" to see full template):
           if (searchOpts.countOnly) {
             let countConfig;
             try {
-              countConfig = await loadConfig(globalOpts.config ? { explicitConfigPath: globalOpts.config } : {});
+              countConfig = await loadConfig(
+                globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
+              );
             } catch {
               countConfig = getDefaultConfig();
             }
@@ -1197,10 +1248,12 @@ Query features (use "query init" to see full template):
 
             if (!globalOpts.quiet) {
               console.log(formatCountOnlyOutput(counts, searchOpts.queryFile));
-              const suggestion = formatSuggestion(getSuggestion({
-                command: 'search --count-only',
-                queryFile: searchOpts.queryFile,
-              }));
+              const suggestion = formatSuggestion(
+                getSuggestion({
+                  command: 'search --count-only',
+                  queryFile: searchOpts.queryFile,
+                }),
+              );
               if (suggestion) console.log(suggestion);
             }
 
@@ -1225,19 +1278,14 @@ Query features (use "query init" to see full template):
           let config;
           try {
             config = await loadConfig(
-              globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
+              globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
             );
           } catch {
             config = getDefaultConfig();
           }
 
           const showProgress = !globalOpts.quiet && process.stdout.isTTY;
-          const result = await executeSearch(
-            searchOpts,
-            sessionsDir,
-            config,
-            showProgress
-          );
+          const result = await executeSearch(searchOpts, sessionsDir, config, showProgress);
 
           if (result.success) {
             if (!globalOpts.quiet) {
@@ -1270,19 +1318,21 @@ Query features (use "query init" to see full template):
                 const sessions = await listSessions(sessionsDir);
                 const suggestionCmd = searchOpts.directQuery ? 'search --query' : 'search';
                 // Find previous session with the same query name for diff suggestion
-                const currentSession = sessions.find(s => s.id === result.sessionId);
+                const currentSession = sessions.find((s) => s.id === result.sessionId);
                 const previousSession = currentSession
                   ? sessions
-                      .filter(s => s.name === currentSession.name && s.id !== result.sessionId)
+                      .filter((s) => s.name === currentSession.name && s.id !== result.sessionId)
                       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]
                   : undefined;
-                const suggestion = formatSuggestion(getSuggestion({
-                  command: suggestionCmd,
-                  sessionId: result.sessionId,
-                  sessionStatus: result.sessionStatus,
-                  sessionCount: sessions.length,
-                  previousSessionId: previousSession?.id,
-                }));
+                const suggestion = formatSuggestion(
+                  getSuggestion({
+                    command: suggestionCmd,
+                    sessionId: result.sessionId,
+                    sessionStatus: result.sessionStatus,
+                    sessionCount: sessions.length,
+                    previousSessionId: previousSession?.id,
+                  }),
+                );
                 if (suggestion) console.log(suggestion);
               }
             }
@@ -1298,14 +1348,11 @@ Query features (use "query init" to see full template):
           }
         } catch (error) {
           if (!globalOpts.quiet) {
-            console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
-            );
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
         }
-      }
+      },
     );
 
   // Register resume command
@@ -1315,123 +1362,109 @@ Query features (use "query init" to see full template):
     .argument('<session-id>', 'session ID to resume')
     .option('--db <providers>', 'resume only specific database(s)')
     .option('--retry-failed', 'retry failed databases')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub resume 20240115_diabetes-ai_a3f2   # Resume session
   $ search-hub resume SESSION_ID --retry-failed   # Retry failed databases
-  $ search-hub resume SESSION_ID --db scopus      # Resume specific database`)
-    .action(
-      async (
-        sessionId: string,
-        options?: { db?: string; retryFailed?: boolean }
-      ) => {
-        const globalOpts = program.opts() as GlobalOptions;
-        try {
-          // Parse and validate options
-          const resumeOpts = parseResumeOptions(sessionId, {
-            db: options?.db,
-            retryFailed: options?.retryFailed,
-          });
+  $ search-hub resume SESSION_ID --db scopus      # Resume specific database`,
+    )
+    .action(async (sessionId: string, options?: { db?: string; retryFailed?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        // Parse and validate options
+        const resumeOpts = parseResumeOptions(sessionId, {
+          db: options?.db,
+          retryFailed: options?.retryFailed,
+        });
 
-          const validation = validateResumeInput(resumeOpts);
-          if (!validation.valid) {
-            if (!globalOpts.quiet) {
-              console.error(`Error: ${validation.error}`);
-            }
-            process.exitCode = EXIT_CODES.SESSION_ERROR;
-            return;
-          }
-
-          const sessionsDir = await getSessionsDir(globalOpts);
-
-          // Get resumable providers
-          const result = await getResumableProvidersForCommand(
-            sessionId,
-            sessionsDir,
-            {
-              providers: resumeOpts.providers,
-              retryFailed: resumeOpts.retryFailed,
-            }
-          );
-
-          if (!result.success) {
-            if (!globalOpts.quiet) {
-              console.error(`Error: ${result.error}`);
-            }
-            process.exitCode = EXIT_CODES.SESSION_ERROR;
-            return;
-          }
-
-          if (!result.providers || result.providers.length === 0) {
-            if (!globalOpts.quiet) {
-              console.log('No providers need resuming for this session.');
-            }
-            process.exitCode = EXIT_CODES.SUCCESS;
-            return;
-          }
-
-          // Show resumable providers
+        const validation = validateResumeInput(resumeOpts);
+        if (!validation.valid) {
           if (!globalOpts.quiet) {
-            console.log(`Resuming session ${sessionId} with ${result.providers.length} provider(s):`);
-            for (const p of result.providers) {
-              const details = p.cursor
-                ? `cursor: ${p.cursor}`
-                : p.pageNumber
-                  ? `page: ${p.pageNumber}`
-                  : '';
-              console.log(`  - ${p.provider}: ${p.strategy}${details ? ` (${details})` : ''}`);
-            }
-            console.log('');
-          }
-
-          // Execute resume
-          let config;
-          try {
-            config = await loadConfig(
-              globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
-            );
-          } catch {
-            config = getDefaultConfig();
-          }
-
-          const showProgress = !globalOpts.quiet && process.stdout.isTTY;
-          const execResult = await executeResume(
-            resumeOpts,
-            sessionsDir,
-            config,
-            showProgress
-          );
-
-          if (execResult.success) {
-            if (!globalOpts.quiet) {
-              console.log(`\nResume completed. ${execResult.resumed} provider(s) resumed.`);
-              if (execResult.results) {
-                for (const [provider, stats] of Object.entries(execResult.results)) {
-                  console.log(`  ${provider}: ${stats.retrieved} results`);
-                }
-              }
-            }
-            process.exitCode = EXIT_CODES.SUCCESS;
-          } else {
-            if (!globalOpts.quiet) {
-              console.error(`Error: ${execResult.error}`);
-              if (globalOpts.verbose && execResult.results) {
-                console.error(formatVerboseProviderDetails(execResult.results));
-              }
-            }
-            process.exitCode = EXIT_CODES.NETWORK_ERROR;
-          }
-        } catch (error) {
-          if (!globalOpts.quiet) {
-            console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
-            );
+            console.error(`Error: ${validation.error}`);
           }
           process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
         }
+
+        const sessionsDir = await getSessionsDir(globalOpts);
+
+        // Get resumable providers
+        const result = await getResumableProvidersForCommand(sessionId, sessionsDir, {
+          providers: resumeOpts.providers,
+          retryFailed: resumeOpts.retryFailed,
+        });
+
+        if (!result.success) {
+          if (!globalOpts.quiet) {
+            console.error(`Error: ${result.error}`);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
+        }
+
+        if (!result.providers || result.providers.length === 0) {
+          if (!globalOpts.quiet) {
+            console.log('No providers need resuming for this session.');
+          }
+          process.exitCode = EXIT_CODES.SUCCESS;
+          return;
+        }
+
+        // Show resumable providers
+        if (!globalOpts.quiet) {
+          console.log(`Resuming session ${sessionId} with ${result.providers.length} provider(s):`);
+          for (const p of result.providers) {
+            const details = p.cursor
+              ? `cursor: ${p.cursor}`
+              : p.pageNumber
+                ? `page: ${p.pageNumber}`
+                : '';
+            console.log(`  - ${p.provider}: ${p.strategy}${details ? ` (${details})` : ''}`);
+          }
+          console.log('');
+        }
+
+        // Execute resume
+        let config;
+        try {
+          config = await loadConfig(
+            globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
+          );
+        } catch {
+          config = getDefaultConfig();
+        }
+
+        const showProgress = !globalOpts.quiet && process.stdout.isTTY;
+        const execResult = await executeResume(resumeOpts, sessionsDir, config, showProgress);
+
+        if (execResult.success) {
+          if (!globalOpts.quiet) {
+            console.log(`\nResume completed. ${execResult.resumed} provider(s) resumed.`);
+            if (execResult.results) {
+              for (const [provider, stats] of Object.entries(execResult.results)) {
+                console.log(`  ${provider}: ${stats.retrieved} results`);
+              }
+            }
+          }
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } else {
+          if (!globalOpts.quiet) {
+            console.error(`Error: ${execResult.error}`);
+            if (globalOpts.verbose && execResult.results) {
+              console.error(formatVerboseProviderDetails(execResult.results));
+            }
+          }
+          process.exitCode = EXIT_CODES.NETWORK_ERROR;
+        }
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
       }
-    );
+    });
 
   // Register export command
   program
@@ -1443,7 +1476,9 @@ Examples:
     .option('--id-type <type>', 'for ids format: doi, pmid, all')
     .option('--no-dedup', 'disable deduplication of results')
     .option('-q, --query <expr>', 'filter results with query expression')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub export SESSION_ID                             # JSONL to stdout
   $ search-hub export SESSION_ID --format json               # JSON to stdout
@@ -1466,7 +1501,8 @@ Query syntax:
   pmid:VALUE       pmid:12345678        PMID exact match
   source:VALUE     source:pubmed        Provider exact match
 
-  Multiple terms: different fields = AND, same field = OR`)
+  Multiple terms: different fields = AND, same field = OR`,
+    )
     .action(
       async (
         sessionId: string,
@@ -1476,7 +1512,7 @@ Query syntax:
           idType?: string;
           dedup?: boolean;
           query?: string;
-        }
+        },
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
@@ -1505,7 +1541,7 @@ Query syntax:
           } catch (error) {
             if (!globalOpts.quiet) {
               console.error(
-                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`
+                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`,
               );
             }
             process.exitCode = EXIT_CODES.SESSION_ERROR;
@@ -1582,7 +1618,9 @@ Query syntax:
                 parts.push(`filtered from ${preFilterCount} to ${exportArticles.length} articles`);
               }
               if (duplicatesRemoved > 0) {
-                parts.push(`${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed`);
+                parts.push(
+                  `${duplicatesRemoved} duplicate${duplicatesRemoved === 1 ? '' : 's'} removed`,
+                );
               }
               if (parts.length > 0) {
                 console.error(`(${parts.join(', ')})`);
@@ -1593,14 +1631,11 @@ Query syntax:
           process.exitCode = EXIT_CODES.SUCCESS;
         } catch (error) {
           if (!globalOpts.quiet) {
-            console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
-            );
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.SESSION_ERROR;
         }
-      }
+      },
     );
 
   // Register summary command
@@ -1609,65 +1644,60 @@ Query syntax:
     .description('Show statistical summary of session results')
     .argument('<session-id>', 'session ID to summarize')
     .option('--json', 'output as JSON')
-    .addHelpText('after', `\nExamples:
+    .addHelpText(
+      'after',
+      `\nExamples:
   $ search-hub summary 20240115_diabetes-ai_a3f2       # Human-readable summary
-  $ search-hub summary 20240115_diabetes-ai_a3f2 --json # JSON output`)
-    .action(
-      async (
-        sessionId: string,
-        options?: { json?: boolean }
-      ) => {
-        const globalOpts = program.opts() as GlobalOptions;
+  $ search-hub summary 20240115_diabetes-ai_a3f2 --json # JSON output`,
+    )
+    .action(async (sessionId: string, options?: { json?: boolean }) => {
+      const globalOpts = program.opts() as GlobalOptions;
+      try {
+        const sessionsDir = await getSessionsDir(globalOpts);
+
+        // Load session
+        let session;
         try {
-          const sessionsDir = await getSessionsDir(globalOpts);
-
-          // Load session
-          let session;
-          try {
-            session = await loadSession(sessionId, sessionsDir);
-          } catch (error) {
-            if (!globalOpts.quiet) {
-              console.error(
-                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`
-              );
-            }
-            process.exitCode = EXIT_CODES.SESSION_ERROR;
-            return;
-          }
-
-          // Collect articles from result files
-          const allArticles = await loadSessionArticles(session, sessionId, sessionsDir);
-
-          // Deduplicate
-          const dedupResult = deduplicateArticles(allArticles);
-
-          // Compute summary
-          const summary = computeSummary(allArticles, dedupResult.articles, {
-            sessionId,
-            sessionName: session.name,
-          });
-
-          // Format output
-          if (options?.json) {
-            console.log(formatSummaryJson(summary));
-          } else {
-            if (!globalOpts.quiet) {
-              console.log(formatSummary(summary));
-            }
-          }
-
-          process.exitCode = EXIT_CODES.SUCCESS;
+          session = await loadSession(sessionId, sessionsDir);
         } catch (error) {
           if (!globalOpts.quiet) {
             console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
+              `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`,
             );
           }
           process.exitCode = EXIT_CODES.SESSION_ERROR;
+          return;
         }
+
+        // Collect articles from result files
+        const allArticles = await loadSessionArticles(session, sessionId, sessionsDir);
+
+        // Deduplicate
+        const dedupResult = deduplicateArticles(allArticles);
+
+        // Compute summary
+        const summary = computeSummary(allArticles, dedupResult.articles, {
+          sessionId,
+          sessionName: session.name,
+        });
+
+        // Format output
+        if (options?.json) {
+          console.log(formatSummaryJson(summary));
+        } else {
+          if (!globalOpts.quiet) {
+            console.log(formatSummary(summary));
+          }
+        }
+
+        process.exitCode = EXIT_CODES.SUCCESS;
+      } catch (error) {
+        if (!globalOpts.quiet) {
+          console.error('Error:', error instanceof Error ? error.message : error);
+        }
+        process.exitCode = EXIT_CODES.SESSION_ERROR;
       }
-    );
+    });
 
   // Register results command
   program
@@ -1681,7 +1711,9 @@ Query syntax:
     .option('-q, --query <expr>', 'filter results with query expression')
     .option('--abstract', 'show abstracts with results')
     .option('--abstract-length <n>', 'maximum abstract length in characters (default: 300)')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub results SESSION_ID                              # List all articles
   $ search-hub results SESSION_ID --limit 20                   # First 20 articles
@@ -1704,7 +1736,8 @@ Query syntax:
   pmid:VALUE       pmid:12345678        PMID exact match
   source:VALUE     source:pubmed        Provider exact match
 
-  Multiple terms: different fields = AND, same field = OR`)
+  Multiple terms: different fields = AND, same field = OR`,
+    )
     .action(
       async (
         sessionId: string,
@@ -1716,7 +1749,7 @@ Query syntax:
           query?: string;
           abstract?: boolean;
           abstractLength?: string;
-        }
+        },
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
@@ -1749,7 +1782,7 @@ Query syntax:
           } catch (error) {
             if (!globalOpts.quiet) {
               console.error(
-                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`
+                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`,
               );
             }
             process.exitCode = EXIT_CODES.SESSION_ERROR;
@@ -1788,29 +1821,28 @@ Query syntax:
             console.log(formatResultsJson(displayArticles));
           } else {
             if (!globalOpts.quiet) {
-              console.log(formatResultsList(displayArticles, {
-                sessionId,
-                sessionName: session.name,
-                total,
-                offset,
-                filteredFrom,
-                showAbstract: resultsOpts.showAbstract,
-                abstractLength: resultsOpts.abstractLength,
-              }));
+              console.log(
+                formatResultsList(displayArticles, {
+                  sessionId,
+                  sessionName: session.name,
+                  total,
+                  offset,
+                  filteredFrom,
+                  showAbstract: resultsOpts.showAbstract,
+                  abstractLength: resultsOpts.abstractLength,
+                }),
+              );
             }
           }
 
           process.exitCode = EXIT_CODES.SUCCESS;
         } catch (error) {
           if (!globalOpts.quiet) {
-            console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
-            );
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.SESSION_ERROR;
         }
-      }
+      },
     );
 
   // Register diff command
@@ -1822,7 +1854,9 @@ Query syntax:
     .option('--show <section>', 'show only specific section: added, removed, or common')
     .option('--json', 'output as JSON')
     .option('--no-query-diff', 'hide query changes section')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub diff session-v1 session-v2                # Compare two sessions
   $ search-hub diff session-v1 session-v2 --show added   # Show only added articles
@@ -1835,12 +1869,13 @@ Query Refinement Workflow:
   2. Create refined query:       cp v1.yaml v2.yaml && edit v2.yaml
   3. Search with refined query:  search-hub search v2.yaml --max-results 100
   4. Compare results:            search-hub diff <session-v1> <session-v2> --show removed
-  5. Review excluded articles to verify refinement quality`)
+  5. Review excluded articles to verify refinement quality`,
+    )
     .action(
       async (
         sessionId1: string,
         sessionId2: string,
-        options?: { show?: string; json?: boolean; queryDiff?: boolean }
+        options?: { show?: string; json?: boolean; queryDiff?: boolean },
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
@@ -1850,7 +1885,9 @@ Query Refinement Workflow:
           if (options?.show) {
             if (!validShowValues.includes(options.show as ShowFilter)) {
               if (!globalOpts.quiet) {
-                console.error(`Error: Invalid --show value: ${options.show}. Valid values are: ${validShowValues.join(', ')}`);
+                console.error(
+                  `Error: Invalid --show value: ${options.show}. Valid values are: ${validShowValues.join(', ')}`,
+                );
               }
               process.exitCode = EXIT_CODES.GENERAL_ERROR;
               return;
@@ -1868,7 +1905,7 @@ Query Refinement Workflow:
           } catch (error) {
             if (!globalOpts.quiet) {
               console.error(
-                `Error loading session 1: ${error instanceof Error ? error.message : 'Failed to load session'}`
+                `Error loading session 1: ${error instanceof Error ? error.message : 'Failed to load session'}`,
               );
             }
             process.exitCode = EXIT_CODES.SESSION_ERROR;
@@ -1880,7 +1917,7 @@ Query Refinement Workflow:
           } catch (error) {
             if (!globalOpts.quiet) {
               console.error(
-                `Error loading session 2: ${error instanceof Error ? error.message : 'Failed to load session'}`
+                `Error loading session 2: ${error instanceof Error ? error.message : 'Failed to load session'}`,
               );
             }
             process.exitCode = EXIT_CODES.SESSION_ERROR;
@@ -1921,13 +1958,15 @@ Query Refinement Workflow:
               console.log(formatDiff(diff, sessionId1, sessionId2, showFilter, formatOptions));
 
               // Show suggestions
-              const suggestion = formatSuggestion(getSuggestion({
-                command: 'diff',
-                sessionId: sessionId2,
-                diffSession1Id: sessionId1,
-                diffAddedCount: diff.added.length,
-                diffRemovedCount: diff.removed.length,
-              }));
+              const suggestion = formatSuggestion(
+                getSuggestion({
+                  command: 'diff',
+                  sessionId: sessionId2,
+                  diffSession1Id: sessionId1,
+                  diffAddedCount: diff.added.length,
+                  diffRemovedCount: diff.removed.length,
+                }),
+              );
               if (suggestion) {
                 console.log(suggestion);
               }
@@ -1937,14 +1976,11 @@ Query Refinement Workflow:
           process.exitCode = EXIT_CODES.SUCCESS;
         } catch (error) {
           if (!globalOpts.quiet) {
-            console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
-            );
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.SESSION_ERROR;
         }
-      }
+      },
     );
 
   // Register check command
@@ -1957,7 +1993,9 @@ Query Refinement Workflow:
     .option('--pmid <ids>', 'comma-separated PMIDs to check')
     .option('--json', 'output as JSON')
     .option('--missing-only', 'show only missing identifiers')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub check SESSION --file known-dois.txt              # Check from file
   $ search-hub check SESSION --doi "10.1001/jama.2023.12345"    # Check single DOI
@@ -1971,11 +2009,18 @@ Input file format (one identifier per line):
   DOI:10.1038/s41586-023-xxxxx    DOI (explicit prefix)
   PMID:36543210                    PMID (explicit prefix)
   arxiv:2301.12345                 arXiv ID (explicit prefix)
-  # comment                        Comments and empty lines ignored`)
+  # comment                        Comments and empty lines ignored`,
+    )
     .action(
       async (
         sessionId: string,
-        options?: { file?: string; doi?: string; pmid?: string; json?: boolean; missingOnly?: boolean }
+        options?: {
+          file?: string;
+          doi?: string;
+          pmid?: string;
+          json?: boolean;
+          missingOnly?: boolean;
+        },
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
@@ -1999,7 +2044,9 @@ Input file format (one identifier per line):
               identifiers = parseIdentifierFile(content);
             } catch (error) {
               if (!globalOpts.quiet) {
-                console.error(`Error: ${error instanceof Error ? error.message : 'Failed to parse identifier file'}`);
+                console.error(
+                  `Error: ${error instanceof Error ? error.message : 'Failed to parse identifier file'}`,
+                );
               }
               process.exitCode = EXIT_CODES.GENERAL_ERROR;
               return;
@@ -2008,10 +2055,20 @@ Input file format (one identifier per line):
           } else if (options?.doi || options?.pmid) {
             const lines: string[] = [];
             if (options.doi) {
-              lines.push(...options.doi.split(',').map(d => d.trim()).filter(Boolean));
+              lines.push(
+                ...options.doi
+                  .split(',')
+                  .map((d) => d.trim())
+                  .filter(Boolean),
+              );
             }
             if (options.pmid) {
-              lines.push(...options.pmid.split(',').map(p => `PMID:${p.trim()}`).filter(Boolean));
+              lines.push(
+                ...options.pmid
+                  .split(',')
+                  .map((p) => `PMID:${p.trim()}`)
+                  .filter(Boolean),
+              );
             }
             identifiers = parseIdentifierFile(lines.join('\n'));
             source = 'command line';
@@ -2039,7 +2096,7 @@ Input file format (one identifier per line):
           } catch (error) {
             if (!globalOpts.quiet) {
               console.error(
-                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`
+                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`,
               );
             }
             process.exitCode = EXIT_CODES.SESSION_ERROR;
@@ -2055,25 +2112,24 @@ Input file format (one identifier per line):
             console.log(formatCheckResultJson(result, { sessionId, source }));
           } else {
             if (!globalOpts.quiet) {
-              console.log(formatCheckResult(result, {
-                sessionId,
-                source,
-                missingOnly: options?.missingOnly,
-              }));
+              console.log(
+                formatCheckResult(result, {
+                  sessionId,
+                  source,
+                  missingOnly: options?.missingOnly,
+                }),
+              );
             }
           }
 
           process.exitCode = EXIT_CODES.SUCCESS;
         } catch (error) {
           if (!globalOpts.quiet) {
-            console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
-            );
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
         }
-      }
+      },
     );
 
   // Register related command
@@ -2086,13 +2142,16 @@ Input file format (one identifier per line):
     .option('-s, --from-session <id>', 'load seed PMIDs from existing session')
     .option('--pmid <pmids...>', 'seed PMIDs (alternative to positional args)')
     .option('-t, --term <filter>', 'additional PubMed filter (e.g., "review[filter]")')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub related 12345678 23456789              # Find related articles
   $ search-hub related 12345678 --name my-related     # Custom session name
   $ search-hub related 12345678 -m 50                 # Get more results
   $ search-hub related --from-session SESSION --pmid 12345678
-  $ search-hub related 12345678 -t "review[filter]"   # Filter by review type`)
+  $ search-hub related 12345678 -t "review[filter]"   # Filter by review type`,
+    )
     .action(
       async (
         pmidArgs: string[],
@@ -2102,7 +2161,7 @@ Examples:
           fromSession?: string;
           pmid?: string[];
           term?: string;
-        }
+        },
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
@@ -2127,7 +2186,7 @@ Examples:
           } catch (error) {
             if (!globalOpts.quiet) {
               console.error(
-                `Error: ${error instanceof Error ? error.message : 'Failed to resolve seeds'}`
+                `Error: ${error instanceof Error ? error.message : 'Failed to resolve seeds'}`,
               );
             }
             process.exitCode = EXIT_CODES.SESSION_ERROR;
@@ -2144,7 +2203,7 @@ Examples:
 
           // Load config and create PubMed client
           const config = await loadConfig(
-            globalOpts.config ? { explicitConfigPath: globalOpts.config } : {}
+            globalOpts.config ? { explicitConfigPath: globalOpts.config } : {},
           );
           const providerConfig = config.providers.pubmed;
           const pubmedConfig: PubMedConfig = {
@@ -2182,14 +2241,14 @@ Examples:
             return;
           }
 
-          const relatedPmids = relatedArticles.map(a => a.id);
+          const relatedPmids = relatedArticles.map((a) => a.id);
 
           // Fetch full article records
           const articles = await client.fetch(relatedPmids);
 
           // Generate session name
-          const sessionName = parsedOptions.name
-            ?? `related-${new Date().toISOString().slice(0, 10)}`;
+          const sessionName =
+            parsedOptions.name ?? `related-${new Date().toISOString().slice(0, 10)}`;
 
           // Create session
           const sessionFile = await createRelatedSession({
@@ -2204,13 +2263,15 @@ Examples:
 
           // Display output
           if (!globalOpts.quiet) {
-            console.log(formatRelatedOutput({
-              sessionId: sessionFile.id,
-              seedCount: seedPmids.length,
-              totalRelated,
-              retrievedCount: articles.length,
-              articles,
-            }));
+            console.log(
+              formatRelatedOutput({
+                sessionId: sessionFile.id,
+                seedCount: seedPmids.length,
+                totalRelated,
+                retrievedCount: articles.length,
+                articles,
+              }),
+            );
 
             // Show suggestions
             const suggestion = getSuggestion({
@@ -2226,14 +2287,11 @@ Examples:
           process.exitCode = EXIT_CODES.SUCCESS;
         } catch (error) {
           if (!globalOpts.quiet) {
-            console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
-            );
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
         }
-      }
+      },
     );
 
   // Register merge command
@@ -2244,16 +2302,19 @@ Examples:
     .option('--name <string>', 'name for merged session')
     .option('--dry-run', 'show what would be merged without creating session')
     .option('--json', 'output as JSON')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub merge session-v4 session-v9                  # Merge two sessions
   $ search-hub merge session-v4 session-v9 --name combined  # Merge with custom name
   $ search-hub merge session-a session-b session-c          # Merge three sessions
-  $ search-hub merge session-v4 session-v9 --dry-run        # Preview merge`)
+  $ search-hub merge session-v4 session-v9 --dry-run        # Preview merge`,
+    )
     .action(
       async (
         sessionIds: string[],
-        options?: { name?: string; dryRun?: boolean; json?: boolean }
+        options?: { name?: string; dryRun?: boolean; json?: boolean },
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
@@ -2268,7 +2329,10 @@ Examples:
           const sessionsDir = await getSessionsDir(globalOpts);
 
           // Load all source sessions
-          const sessions = new Map<string, ReturnType<typeof loadSession> extends Promise<infer T> ? T : never>();
+          const sessions = new Map<
+            string,
+            ReturnType<typeof loadSession> extends Promise<infer T> ? T : never
+          >();
           for (const sessionId of sessionIds) {
             try {
               const session = await loadSession(sessionId, sessionsDir);
@@ -2276,7 +2340,7 @@ Examples:
             } catch (error) {
               if (!globalOpts.quiet) {
                 console.error(
-                  `Error loading session '${sessionId}': ${error instanceof Error ? error.message : 'Failed to load session'}`
+                  `Error loading session '${sessionId}': ${error instanceof Error ? error.message : 'Failed to load session'}`,
                 );
               }
               process.exitCode = EXIT_CODES.SESSION_ERROR;
@@ -2295,7 +2359,10 @@ Examples:
           }
 
           // Load articles from all sessions
-          const sessionArticles = new Map<string, Awaited<ReturnType<typeof loadSessionArticles>>>();
+          const sessionArticles = new Map<
+            string,
+            Awaited<ReturnType<typeof loadSessionArticles>>
+          >();
           for (const [sessionId, session] of sessions) {
             const articles = await loadSessionArticles(session, sessionId, sessionsDir);
             sessionArticles.set(sessionId, articles);
@@ -2318,7 +2385,8 @@ Examples:
 
           // Auto-generate name if not provided
           const firstSession = sessions.values().next().value;
-          const mergeName = options?.name ?? (firstSession ? firstSession.name + '-merged' : 'merged');
+          const mergeName =
+            options?.name ?? (firstSession ? firstSession.name + '-merged' : 'merged');
 
           if (options?.dryRun) {
             // Dry run - show preview without creating session
@@ -2383,14 +2451,11 @@ Examples:
           process.exitCode = EXIT_CODES.SUCCESS;
         } catch (error) {
           if (!globalOpts.quiet) {
-            console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
-            );
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.SESSION_ERROR;
         }
-      }
+      },
     );
 
   // Register register command
@@ -2405,7 +2470,9 @@ Examples:
     .option('--all', 'register all articles (ignore reviews)', false)
     .option('--force', 'skip confirmation prompts', false)
     .option('--no-attach-fulltext', 'skip automatic fulltext attachment')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub register SESSION_ID                # Register all results
   $ search-hub register SESSION_ID --with-abstracts
@@ -2414,7 +2481,8 @@ Examples:
 
 With review workflow:
   $ search-hub register SESSION_ID --reviewed     # Register only included articles
-  $ search-hub register SESSION_ID --all          # Register all (ignore reviews)`)
+  $ search-hub register SESSION_ID --all          # Register all (ignore reviews)`,
+    )
     .action(
       async (
         sessionId: string,
@@ -2426,7 +2494,7 @@ With review workflow:
           all?: boolean;
           force?: boolean;
           attachFulltext?: boolean;
-        }
+        },
       ) => {
         const globalOpts = program.opts() as GlobalOptions;
         try {
@@ -2455,7 +2523,9 @@ With review workflow:
             if (!globalOpts.quiet) {
               console.error('Error: reference-manager (ref) command not found.\n');
               console.error('reference-manager is required to register search results.');
-              console.error('Would you like to install it now? (npm i -g @ncukondo/reference-manager) [Y/n]: ');
+              console.error(
+                'Would you like to install it now? (npm i -g @ncukondo/reference-manager) [Y/n]: ',
+              );
             }
 
             // For non-interactive mode, suggest installation
@@ -2481,7 +2551,7 @@ With review workflow:
             } catch (installError) {
               if (!globalOpts.quiet) {
                 console.error(
-                  `\nFailed to install reference-manager: ${installError instanceof Error ? installError.message : 'Unknown error'}`
+                  `\nFailed to install reference-manager: ${installError instanceof Error ? installError.message : 'Unknown error'}`,
                 );
               }
               process.exitCode = EXIT_CODES.GENERAL_ERROR;
@@ -2498,7 +2568,7 @@ With review workflow:
           } catch (error) {
             if (!globalOpts.quiet) {
               console.error(
-                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`
+                `Error: ${error instanceof Error ? error.message : 'Failed to load session'}`,
               );
             }
             process.exitCode = EXIT_CODES.SESSION_ERROR;
@@ -2557,7 +2627,12 @@ With review workflow:
               const summary = await getReviewSummary(sessionId, sessionsDir);
               console.log(formatIgnoringReviewsNote(summary.total));
             }
-            articles = await loadSessionArticles(session, sessionId, sessionsDir, registerOpts.providers);
+            articles = await loadSessionArticles(
+              session,
+              sessionId,
+              sessionsDir,
+              registerOpts.providers,
+            );
           }
 
           // Dry run mode
@@ -2600,7 +2675,10 @@ With review workflow:
               const ft = record.fulltext.summary;
               console.log('\nFulltext attachment results:');
               if (ft.attached > 0) {
-                const totalFiles = record.fulltext.attached.reduce((sum, a) => sum + a.files.length, 0);
+                const totalFiles = record.fulltext.attached.reduce(
+                  (sum, a) => sum + a.files.length,
+                  0,
+                );
                 console.log(`  ✓ ${ft.attached} articles attached (${totalFiles} files)`);
               }
               if (ft.skipped > 0) {
@@ -2616,45 +2694,50 @@ With review workflow:
             console.log(`\n${formatDefaultLibraryHint(sessionDir)}`);
 
             // Show next step suggestions
-            const suggestion = formatSuggestion(getSuggestion({
-              command: 'register',
-              sessionId,
-              hasReviews: reviewExists,
-            }));
+            const suggestion = formatSuggestion(
+              getSuggestion({
+                command: 'register',
+                sessionId,
+                hasReviews: reviewExists,
+              }),
+            );
             if (suggestion) console.log(suggestion);
           }
 
           process.exitCode = EXIT_CODES.SUCCESS;
         } catch (error) {
           if (!globalOpts.quiet) {
-            console.error(
-              'Error:',
-              error instanceof Error ? error.message : error
-            );
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.SESSION_ERROR;
         }
-      }
+      },
     );
 
   // Register review command group
   const reviewCommand = program
     .command('review')
     .description('Article review workflow for systematic literature review')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub review init --session SESSION_ID           # Initialize reviews.yaml
   $ search-hub review status --session SESSION_ID         # Show review progress
   $ search-hub review list --session SESSION_ID --filter pending  # List articles
   $ search-hub review extract --session SESSION_ID --name title-screening  # Extract for review
   $ search-hub review merge --session SESSION_ID --name title-screening   # Merge reviews
-  $ search-hub review export --session SESSION_ID --only included -o included.yaml`);
+  $ search-hub review export --session SESSION_ID --only included -o included.yaml`,
+    );
 
   reviewCommand
     .command('init')
     .description('Generate reviews.yaml from deduplicated search results')
     .requiredOption('--session <id>', 'session ID')
-    .option('--mode <mode>', 'review mode: screening (exclusion-based) or picking (inclusion-based)')
+    .option(
+      '--mode <mode>',
+      'review mode: screening (exclusion-based) or picking (inclusion-based)',
+    )
     .option('-f, --force', 'overwrite existing reviews.yaml', false)
     .action(async (options: { session: string; mode?: string; force: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
@@ -2703,11 +2786,13 @@ Examples:
             console.log(JSON.stringify(result, null, 2));
           } else {
             console.log(formatStatusOutput(result));
-            const suggestion = formatSuggestion(getSuggestion({
-              command: 'review status',
-              sessionId: options.session,
-              reviewStatus: result,
-            }));
+            const suggestion = formatSuggestion(
+              getSuggestion({
+                command: 'review status',
+                sessionId: options.session,
+                reviewStatus: result,
+              }),
+            );
             if (suggestion) console.log(suggestion);
           }
         }
@@ -2724,16 +2809,31 @@ Examples:
     .command('list')
     .description('List articles with optional filtering')
     .requiredOption('--session <id>', 'session ID')
-    .option('--filter <type>', 'filter by status: pending, incomplete, all-uncertain, agreed-include, agreed-exclude, divided, finalized, all', 'all')
+    .option(
+      '--filter <type>',
+      'filter by status: pending, incomplete, all-uncertain, agreed-include, agreed-exclude, divided, finalized, all',
+      'all',
+    )
     .option('--json', 'output as JSON')
     .action(async (options: { session: string; filter?: string; json?: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
-        const validFilters: ListFilter[] = ['pending', 'incomplete', 'all-uncertain', 'agreed-include', 'agreed-exclude', 'divided', 'finalized', 'all'];
+        const validFilters: ListFilter[] = [
+          'pending',
+          'incomplete',
+          'all-uncertain',
+          'agreed-include',
+          'agreed-exclude',
+          'divided',
+          'finalized',
+          'all',
+        ];
         const filter = (options.filter ?? 'all') as ListFilter;
         if (!validFilters.includes(filter)) {
           if (!globalOpts.quiet) {
-            console.error(`Error: Invalid filter '${options.filter}'. Valid values: ${validFilters.join(', ')}`);
+            console.error(
+              `Error: Invalid filter '${options.filter}'. Valid values: ${validFilters.join(', ')}`,
+            );
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
           return;
@@ -2765,8 +2865,14 @@ Examples:
     .command('extract')
     .description('Extract subset to for-review/<name>/review.yaml for distributed review')
     .requiredOption('--session <id>', 'session ID')
-    .requiredOption('--name <name>', 'name for the review subset (output: for-review/<name>/review.yaml)')
-    .option('--filter <types>', 'filter by status (comma-separated): pending, incomplete, all-uncertain, agreed-include, agreed-exclude, divided, finalized')
+    .requiredOption(
+      '--name <name>',
+      'name for the review subset (output: for-review/<name>/review.yaml)',
+    )
+    .option(
+      '--filter <types>',
+      'filter by status (comma-separated): pending, incomplete, all-uncertain, agreed-include, agreed-exclude, divided, finalized',
+    )
     .option('--sort <method>', 'sort method: year, title, random, none', 'none')
     .option('--limit <n>', 'limit number of articles')
     .option('--offset <n>', 'skip first n articles')
@@ -2774,105 +2880,120 @@ Examples:
     .option('--basis <type>', 'basis for review: title, abstract, or fulltext')
     .option('--reviewer <id>', 'reviewer identifier (e.g., "ai:claude")')
     .option('--finalize', 'extract for final decision (includes reviewHistory and finalDecision)')
-    .action(async (options: {
-      session: string;
-      name: string;
-      filter?: string;
-      sort?: string;
-      limit?: string;
-      offset?: string;
-      seed?: string;
-      basis?: string;
-      reviewer?: string;
-      finalize?: boolean;
-    }) => {
-      const globalOpts = program.opts() as GlobalOptions;
-      try {
-        const validSorts: SortOption[] = ['year', 'title', 'random', 'none'];
-        const sort = (options.sort ?? 'none') as SortOption;
-        if (!validSorts.includes(sort)) {
-          if (!globalOpts.quiet) {
-            console.error(`Error: Invalid sort '${options.sort}'. Valid values: ${validSorts.join(', ')}`);
-          }
-          process.exitCode = EXIT_CODES.GENERAL_ERROR;
-          return;
-        }
-
-        const sessionsDir = await getSessionsDir(globalOpts);
-        const extractOptions: ReviewExtractOptions = {
-          sessionId: options.session,
-          name: options.name,
-          sort,
-        };
-
-        if (options.filter) {
-          extractOptions.filter = options.filter.split(',').map(s => s.trim()) as ReviewStatus[];
-        }
-        if (options.limit) {
-          extractOptions.limit = parseInt(options.limit, 10);
-        }
-        if (options.offset) {
-          extractOptions.offset = parseInt(options.offset, 10);
-        }
-        if (options.seed) {
-          extractOptions.seed = parseInt(options.seed, 10);
-        }
-
-        // Reviewer is required for all extract modes
-        if (!options.reviewer) {
-          if (!globalOpts.quiet) {
-            console.error('Error: --reviewer is required');
-          }
-          process.exitCode = EXIT_CODES.GENERAL_ERROR;
-          return;
-        }
-        extractOptions.reviewer = options.reviewer;
-
-        // Handle basis option
-        if (options.basis) {
-          const validBasis = ['title', 'abstract', 'fulltext'];
-          if (!validBasis.includes(options.basis)) {
+    .action(
+      async (options: {
+        session: string;
+        name: string;
+        filter?: string;
+        sort?: string;
+        limit?: string;
+        offset?: string;
+        seed?: string;
+        basis?: string;
+        reviewer?: string;
+        finalize?: boolean;
+      }) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          const validSorts: SortOption[] = ['year', 'title', 'random', 'none'];
+          const sort = (options.sort ?? 'none') as SortOption;
+          if (!validSorts.includes(sort)) {
             if (!globalOpts.quiet) {
-              console.error(`Error: Invalid basis '${options.basis}'. Valid values: ${validBasis.join(', ')}`);
+              console.error(
+                `Error: Invalid sort '${options.sort}'. Valid values: ${validSorts.join(', ')}`,
+              );
             }
             process.exitCode = EXIT_CODES.GENERAL_ERROR;
             return;
           }
-          extractOptions.basis = options.basis as 'title' | 'abstract' | 'fulltext';
-        }
 
-        if (options.finalize) {
-          extractOptions.finalize = true;
-        }
-
-        const result = await executeReviewExtract(extractOptions, sessionsDir);
-        if (!globalOpts.quiet) {
-          console.log(`Extracted ${result.extractedCount} of ${result.totalMatching} articles to ${result.outputPath}`);
-          const suggestion = formatSuggestion(getSuggestion({
-            command: 'review extract',
+          const sessionsDir = await getSessionsDir(globalOpts);
+          const extractOptions: ReviewExtractOptions = {
             sessionId: options.session,
-            extractName: options.name,
-            extractedCount: result.extractedCount,
-            totalMatching: result.totalMatching,
-            extractLimit: extractOptions.limit,
-            extractOffset: extractOptions.offset,
-          }));
-          if (suggestion) console.log(suggestion);
+            name: options.name,
+            sort,
+          };
+
+          if (options.filter) {
+            extractOptions.filter = options.filter
+              .split(',')
+              .map((s) => s.trim()) as ReviewStatus[];
+          }
+          if (options.limit) {
+            extractOptions.limit = parseInt(options.limit, 10);
+          }
+          if (options.offset) {
+            extractOptions.offset = parseInt(options.offset, 10);
+          }
+          if (options.seed) {
+            extractOptions.seed = parseInt(options.seed, 10);
+          }
+
+          // Reviewer is required for all extract modes
+          if (!options.reviewer) {
+            if (!globalOpts.quiet) {
+              console.error('Error: --reviewer is required');
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          }
+          extractOptions.reviewer = options.reviewer;
+
+          // Handle basis option
+          if (options.basis) {
+            const validBasis = ['title', 'abstract', 'fulltext'];
+            if (!validBasis.includes(options.basis)) {
+              if (!globalOpts.quiet) {
+                console.error(
+                  `Error: Invalid basis '${options.basis}'. Valid values: ${validBasis.join(', ')}`,
+                );
+              }
+              process.exitCode = EXIT_CODES.GENERAL_ERROR;
+              return;
+            }
+            extractOptions.basis = options.basis as 'title' | 'abstract' | 'fulltext';
+          }
+
+          if (options.finalize) {
+            extractOptions.finalize = true;
+          }
+
+          const result = await executeReviewExtract(extractOptions, sessionsDir);
+          if (!globalOpts.quiet) {
+            console.log(
+              `Extracted ${result.extractedCount} of ${result.totalMatching} articles to ${result.outputPath}`,
+            );
+            const suggestion = formatSuggestion(
+              getSuggestion({
+                command: 'review extract',
+                sessionId: options.session,
+                extractName: options.name,
+                extractedCount: result.extractedCount,
+                totalMatching: result.totalMatching,
+                extractLimit: extractOptions.limit,
+                extractOffset: extractOptions.offset,
+              }),
+            );
+            if (suggestion) console.log(suggestion);
+          }
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error('Error:', error instanceof Error ? error.message : error);
+          }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
         }
-        process.exitCode = EXIT_CODES.SUCCESS;
-      } catch (error) {
-        if (!globalOpts.quiet) {
-          console.error('Error:', error instanceof Error ? error.message : error);
-        }
-        process.exitCode = EXIT_CODES.SESSION_ERROR;
-      }
-    });
+      },
+    );
 
   reviewCommand
     .command('merge')
     .description('Merge edited file back into main reviews.yaml')
     .requiredOption('--session <id>', 'session ID')
-    .requiredOption('--name <name>', 'name of the review subset to merge (reads from for-review/<name>/review.yaml)')
+    .requiredOption(
+      '--name <name>',
+      'name of the review subset to merge (reads from for-review/<name>/review.yaml)',
+    )
     .option('--dry-run', 'show changes without applying', false)
     .action(async (options: { session: string; name: string; dryRun: boolean }) => {
       const globalOpts = program.opts() as GlobalOptions;
@@ -2887,12 +3008,17 @@ Examples:
         if (!globalOpts.quiet) {
           console.log(formatMergeOutput(result, options.dryRun));
           if (!options.dryRun) {
-            const statusResult = await executeReviewStatus({ sessionId: options.session }, sessionsDir);
-            const suggestion = formatSuggestion(getSuggestion({
-              command: 'review merge',
-              sessionId: options.session,
-              reviewStatus: statusResult,
-            }));
+            const statusResult = await executeReviewStatus(
+              { sessionId: options.session },
+              sessionsDir,
+            );
+            const suggestion = formatSuggestion(
+              getSuggestion({
+                command: 'review merge',
+                sessionId: options.session,
+                reviewStatus: statusResult,
+              }),
+            );
             if (suggestion) console.log(suggestion);
           }
         }
@@ -2912,19 +3038,16 @@ Examples:
     .option('--id <id>', 'article ID to mark')
     .option('--decision <decision>', 'decision: include, exclude, or uncertain')
     .option('--comment <text>', 'optional comment')
-    .action(async (options: {
-      file: string;
-      id?: string;
-      decision?: string;
-      comment?: string;
-    }) => {
+    .action(async (options: { file: string; id?: string; decision?: string; comment?: string }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
         // Validate decision if provided
         const validDecisions = ['include', 'exclude', 'uncertain'];
         if (options.decision && !validDecisions.includes(options.decision)) {
           if (!globalOpts.quiet) {
-            console.error(`Error: Invalid decision '${options.decision}'. Valid values: ${validDecisions.join(', ')}`);
+            console.error(
+              `Error: Invalid decision '${options.decision}'. Valid values: ${validDecisions.join(', ')}`,
+            );
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
           return;
@@ -2970,19 +3093,16 @@ Examples:
     .requiredOption('--only <filter>', 'export filter: included or excluded')
     .requiredOption('-o, --output <path>', 'output file path')
     .option('--format <fmt>', 'output format: yaml, json, jsonl', 'yaml')
-    .action(async (options: {
-      session: string;
-      only: string;
-      output: string;
-      format?: string;
-    }) => {
+    .action(async (options: { session: string; only: string; output: string; format?: string }) => {
       const globalOpts = program.opts() as GlobalOptions;
       try {
         const validOnlyValues: ReviewExportFilter[] = ['included', 'excluded'];
         const only = options.only as ReviewExportFilter;
         if (!validOnlyValues.includes(only)) {
           if (!globalOpts.quiet) {
-            console.error(`Error: Invalid --only value '${options.only}'. Valid values: ${validOnlyValues.join(', ')}`);
+            console.error(
+              `Error: Invalid --only value '${options.only}'. Valid values: ${validOnlyValues.join(', ')}`,
+            );
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
           return;
@@ -2992,7 +3112,9 @@ Examples:
         const format = (options.format ?? 'yaml') as ReviewExportFormat;
         if (!validFormats.includes(format)) {
           if (!globalOpts.quiet) {
-            console.error(`Error: Invalid format '${options.format}'. Valid values: ${validFormats.join(', ')}`);
+            console.error(
+              `Error: Invalid format '${options.format}'. Valid values: ${validFormats.join(', ')}`,
+            );
           }
           process.exitCode = EXIT_CODES.GENERAL_ERROR;
           return;
@@ -3025,62 +3147,85 @@ Examples:
     .option('--dry-run', 'preview without changes', false)
     .option('--min-reviewers <n>', 'minimum agreeing reviewers needed', '1')
     .option('--decision <type>', 'only finalize this decision type (include or exclude)')
-    .action(async (options: { session: string; dryRun: boolean; minReviewers: string; decision?: string }) => {
-      const globalOpts = program.opts() as GlobalOptions;
-      try {
-        const sessionsDir = await getSessionsDir(globalOpts);
-        if (options.decision && options.decision !== 'include' && options.decision !== 'exclude') {
+    .action(
+      async (options: {
+        session: string;
+        dryRun: boolean;
+        minReviewers: string;
+        decision?: string;
+      }) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          const sessionsDir = await getSessionsDir(globalOpts);
+          if (
+            options.decision &&
+            options.decision !== 'include' &&
+            options.decision !== 'exclude'
+          ) {
+            if (!globalOpts.quiet) {
+              console.error(
+                `Error: --decision must be "include" or "exclude", got "${options.decision}"`,
+              );
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
+          }
+          const finalizeOptions: ReviewFinalizeOptions = {
+            sessionId: options.session,
+            ...(options.dryRun && { dryRun: options.dryRun }),
+            ...(options.decision && { decision: options.decision as 'include' | 'exclude' }),
+          };
+          const minReviewers = parseInt(options.minReviewers, 10);
+          if (!Number.isNaN(minReviewers) && minReviewers > 1) {
+            finalizeOptions.minReviewers = minReviewers;
+          }
+          const result = await executeReviewFinalize(finalizeOptions, sessionsDir);
           if (!globalOpts.quiet) {
-            console.error(`Error: --decision must be "include" or "exclude", got "${options.decision}"`);
+            console.log(
+              formatFinalizeOutput(result, {
+                dryRun: options.dryRun,
+                ...(finalizeOptions.decision && { decision: finalizeOptions.decision }),
+              }),
+            );
+            if (!options.dryRun) {
+              const statusResult = await executeReviewStatus(
+                { sessionId: options.session },
+                sessionsDir,
+              );
+              const suggestion = formatSuggestion(
+                getSuggestion({
+                  command: 'review finalize',
+                  sessionId: options.session,
+                  reviewStatus: statusResult,
+                }),
+              );
+              if (suggestion) console.log(suggestion);
+            }
           }
-          process.exitCode = EXIT_CODES.GENERAL_ERROR;
-          return;
-        }
-        const finalizeOptions: ReviewFinalizeOptions = {
-          sessionId: options.session,
-          ...(options.dryRun && { dryRun: options.dryRun }),
-          ...(options.decision && { decision: options.decision as 'include' | 'exclude' }),
-        };
-        const minReviewers = parseInt(options.minReviewers, 10);
-        if (!Number.isNaN(minReviewers) && minReviewers > 1) {
-          finalizeOptions.minReviewers = minReviewers;
-        }
-        const result = await executeReviewFinalize(finalizeOptions, sessionsDir);
-        if (!globalOpts.quiet) {
-          console.log(formatFinalizeOutput(result, {
-            dryRun: options.dryRun,
-            ...(finalizeOptions.decision && { decision: finalizeOptions.decision }),
-          }));
-          if (!options.dryRun) {
-            const statusResult = await executeReviewStatus({ sessionId: options.session }, sessionsDir);
-            const suggestion = formatSuggestion(getSuggestion({
-              command: 'review finalize',
-              sessionId: options.session,
-              reviewStatus: statusResult,
-            }));
-            if (suggestion) console.log(suggestion);
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
+          process.exitCode = EXIT_CODES.SESSION_ERROR;
         }
-        process.exitCode = EXIT_CODES.SUCCESS;
-      } catch (error) {
-        if (!globalOpts.quiet) {
-          console.error('Error:', error instanceof Error ? error.message : error);
-        }
-        process.exitCode = EXIT_CODES.SESSION_ERROR;
-      }
-    });
+      },
+    );
 
   // Register notes command group
   const notesCommand = program
     .command('notes')
     .description('Manage session notes and assessments')
-    .addHelpText('after', `
+    .addHelpText(
+      'after',
+      `
 Examples:
   $ search-hub notes list SESSION_ID             # List notes for a session
   $ search-hub notes add SESSION_ID "my note"    # Add a note
   $ search-hub notes add SESSION_ID --file assessment.md  # Add from file
   $ search-hub notes assess SESSION_ID --precision "~54%" --verdict good --comment "Good results"
-  $ search-hub notes list --all                  # Show notes from all sessions`);
+  $ search-hub notes list --all                  # Show notes from all sessions`,
+    );
 
   notesCommand
     .command('list')
@@ -3141,10 +3286,7 @@ Examples:
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.SESSION_ERROR;
       }
@@ -3191,10 +3333,7 @@ Examples:
         process.exitCode = EXIT_CODES.SUCCESS;
       } catch (error) {
         if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error
-          );
+          console.error('Error:', error instanceof Error ? error.message : error);
         }
         process.exitCode = EXIT_CODES.SESSION_ERROR;
       }
@@ -3207,48 +3346,52 @@ Examples:
     .option('--precision <value>', 'estimated precision (e.g., "~54%", "15/28")')
     .option('--verdict <value>', 'quality judgment: good, refine, reject')
     .option('--comment <text>', 'free text explanation')
-    .action(async (sessionId: string, options?: { precision?: string; verdict?: string; comment?: string }) => {
-      const globalOpts = program.opts() as GlobalOptions;
-      try {
-        if (!options?.precision && !options?.verdict && !options?.comment) {
-          if (!globalOpts.quiet) {
-            console.error('Error: at least one of --precision, --verdict, or --comment is required');
+    .action(
+      async (
+        sessionId: string,
+        options?: { precision?: string; verdict?: string; comment?: string },
+      ) => {
+        const globalOpts = program.opts() as GlobalOptions;
+        try {
+          if (!options?.precision && !options?.verdict && !options?.comment) {
+            if (!globalOpts.quiet) {
+              console.error(
+                'Error: at least one of --precision, --verdict, or --comment is required',
+              );
+            }
+            process.exitCode = EXIT_CODES.GENERAL_ERROR;
+            return;
           }
-          process.exitCode = EXIT_CODES.GENERAL_ERROR;
-          return;
-        }
 
-        const sessionsDir = await getSessionsDir(globalOpts);
-        const sessionDir = join(sessionsDir, sessionId);
+          const sessionsDir = await getSessionsDir(globalOpts);
+          const sessionDir = join(sessionsDir, sessionId);
 
-        if (!(await sessionExists(sessionId, sessionsDir))) {
+          if (!(await sessionExists(sessionId, sessionsDir))) {
+            if (!globalOpts.quiet) {
+              console.error(`Error: session '${sessionId}' not found`);
+            }
+            process.exitCode = EXIT_CODES.SESSION_ERROR;
+            return;
+          }
+
+          await addAssessment(sessionDir, {
+            precision: options?.precision,
+            verdict: options?.verdict,
+            comment: options?.comment,
+          });
+
           if (!globalOpts.quiet) {
-            console.error(`Error: session '${sessionId}' not found`);
+            console.log('Assessment added.');
+          }
+          process.exitCode = EXIT_CODES.SUCCESS;
+        } catch (error) {
+          if (!globalOpts.quiet) {
+            console.error('Error:', error instanceof Error ? error.message : error);
           }
           process.exitCode = EXIT_CODES.SESSION_ERROR;
-          return;
         }
-
-        await addAssessment(sessionDir, {
-          precision: options?.precision,
-          verdict: options?.verdict,
-          comment: options?.comment,
-        });
-
-        if (!globalOpts.quiet) {
-          console.log('Assessment added.');
-        }
-        process.exitCode = EXIT_CODES.SUCCESS;
-      } catch (error) {
-        if (!globalOpts.quiet) {
-          console.error(
-            'Error:',
-            error instanceof Error ? error.message : error
-          );
-        }
-        process.exitCode = EXIT_CODES.SESSION_ERROR;
-      }
-    });
+      },
+    );
 
   // Register fulltext command group (init, sync, convert, check)
   registerFulltextCommands(program, getSessionsDir);

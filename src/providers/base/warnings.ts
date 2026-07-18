@@ -28,7 +28,7 @@ const VOCAB_DISPLAY_NAMES: Record<VocabType, string> = {
 export function collectUnsupportedVocabWarnings(
   blocks: QueryBlock[],
   providerDisplayName: string,
-  supportedVocab: ReadonlySet<VocabType>
+  supportedVocab: ReadonlySet<VocabType>,
 ): string[] {
   const warnings: string[] = [];
   const vocabTypes: VocabType[] = ['mesh', 'emtree', 'eric'];
@@ -42,11 +42,11 @@ export function collectUnsupportedVocabWarnings(
         const blockNum = i + 1;
         if (hasKeywords) {
           warnings.push(
-            `${providerDisplayName}: ${displayName} terms in block ${blockNum} ignored (not supported) — keywords still searched`
+            `${providerDisplayName}: ${displayName} terms in block ${blockNum} ignored (not supported) — keywords still searched`,
           );
         } else {
           warnings.push(
-            `${providerDisplayName}: block ${blockNum} skipped (contains only ${displayName} terms, not supported)`
+            `${providerDisplayName}: block ${blockNum} skipped (contains only ${displayName} terms, not supported)`,
           );
         }
       }

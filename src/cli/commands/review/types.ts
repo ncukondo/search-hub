@@ -91,7 +91,7 @@ export type ReviewStatus =
  */
 export function classifyStatus(
   entry: ArticleEntry,
-  registeredReviewers?: ReviewerRecord[]
+  registeredReviewers?: ReviewerRecord[],
 ): ReviewStatus {
   // 1. Finalized takes precedence
   if (entry.finalDecision !== undefined && entry.finalDecision !== null) {
@@ -113,14 +113,11 @@ export function classifyStatus(
       highestReviewedRank = Math.max(highestReviewedRank, basisRank(r.basis));
     }
     // When reviews have no basis (legacy), check all registered reviewers
-    const applicableReviewers = highestReviewedRank === 0
-      ? registeredReviewers
-      : registeredReviewers.filter(
-          (reg) => basisRank(reg.basis) <= highestReviewedRank
-        );
-    const hasAllReviewers = applicableReviewers.every((reg) =>
-      reviewerNames.has(reg.name)
-    );
+    const applicableReviewers =
+      highestReviewedRank === 0
+        ? registeredReviewers
+        : registeredReviewers.filter((reg) => basisRank(reg.basis) <= highestReviewedRank);
+    const hasAllReviewers = applicableReviewers.every((reg) => reviewerNames.has(reg.name));
     if (applicableReviewers.length > 0 && !hasAllReviewers) {
       return 'incomplete';
     }
@@ -166,10 +163,18 @@ export function classifyStatus(
       // Prefer definitive over uncertain
       if (r.decision !== 'uncertain' && existing.decision === 'uncertain') {
         reviewerMap.set(r.reviewer, { decision: r.decision!, rank });
-      } else if (r.decision !== 'uncertain' && existing.decision !== 'uncertain' && rank > existing.rank) {
+      } else if (
+        r.decision !== 'uncertain' &&
+        existing.decision !== 'uncertain' &&
+        rank > existing.rank
+      ) {
         // Higher-basis definitive overrides lower-basis definitive
         reviewerMap.set(r.reviewer, { decision: r.decision!, rank });
-      } else if (r.decision === 'uncertain' && existing.decision === 'uncertain' && rank > existing.rank) {
+      } else if (
+        r.decision === 'uncertain' &&
+        existing.decision === 'uncertain' &&
+        rank > existing.rank
+      ) {
         reviewerMap.set(r.reviewer, { decision: r.decision!, rank });
       }
     }

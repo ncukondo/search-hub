@@ -71,16 +71,8 @@ export class ERICClient {
   /**
    * Search ERIC database.
    */
-  async search(
-    query: string,
-    options: ERICSearchOptions = {}
-  ): Promise<ERICSearchResult> {
-    const {
-      start = 0,
-      rows = DEFAULT_PAGE_SIZE,
-      fields = DEFAULT_FIELDS,
-      signal,
-    } = options;
+  async search(query: string, options: ERICSearchOptions = {}): Promise<ERICSearchResult> {
+    const { start = 0, rows = DEFAULT_PAGE_SIZE, fields = DEFAULT_FIELDS, signal } = options;
 
     // Build URL with query parameters
     const params = new URLSearchParams({
@@ -113,7 +105,7 @@ export class ERICClient {
           response.status >= 500 ? 'SERVER_ERROR' : 'PARSE_ERROR',
           `ERIC API error: ${response.status} ${response.statusText}`,
           'eric',
-          { retryable: response.status >= 500 }
+          { retryable: response.status >= 500 },
         );
       }
 
@@ -128,19 +120,22 @@ export class ERICClient {
             'This may be due to slow network or server issues. ' +
             'Try again later or check your network connection.',
           'eric',
-          { retryable: true, cause: error }
+          { retryable: true, cause: error },
         );
       }
       // Handle network errors (connection refused, DNS failure, etc.)
-      if (error instanceof TypeError ||
-          (error instanceof Error && /network|fetch|connect|ECONNREFUSED|ENOTFOUND|dns/i.test(error.message))) {
+      if (
+        error instanceof TypeError ||
+        (error instanceof Error &&
+          /network|fetch|connect|ECONNREFUSED|ENOTFOUND|dns/i.test(error.message))
+      ) {
         throw createProviderError(
           'NETWORK_ERROR',
           'Failed to connect to ERIC API. ' +
             'This may be due to network issues or the ERIC service being unavailable. ' +
             `Error: ${error instanceof Error ? error.message : String(error)}`,
           'eric',
-          { retryable: true, cause: error }
+          { retryable: true, cause: error },
         );
       }
       // Re-throw ProviderErrors as-is (from parseSearchResponse validation)
@@ -152,7 +147,7 @@ export class ERICClient {
         'SERVER_ERROR',
         `ERIC API unexpected error: ${error instanceof Error ? error.message : String(error)}`,
         'eric',
-        { retryable: false, cause: error }
+        { retryable: false, cause: error },
       );
     } finally {
       clearTimeout(timeoutId);

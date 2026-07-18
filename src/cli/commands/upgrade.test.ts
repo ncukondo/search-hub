@@ -53,7 +53,7 @@ describe('runUpgrade', () => {
         installMethod: 'binary',
         upgradeBinaryFn,
         upgradeNpmFn,
-      })
+      }),
     );
 
     expect(upgradeBinaryFn).toHaveBeenCalledTimes(1);
@@ -71,7 +71,7 @@ describe('runUpgrade', () => {
         installMethod: 'npm-global',
         upgradeBinaryFn,
         upgradeNpmFn,
-      })
+      }),
     );
 
     expect(upgradeBinaryFn).not.toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe('runUpgrade', () => {
         stderr,
         upgradeBinaryFn,
         upgradeNpmFn,
-      })
+      }),
     );
 
     expect(upgradeBinaryFn).not.toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe('runUpgrade', () => {
     const { stream: stderr, output } = captureStream();
     const result = await runUpgrade(
       {} as UpgradeCommandOptions,
-      defaultDeps({ installMethod: 'npx', stderr })
+      defaultDeps({ installMethod: 'npx', stderr }),
     );
 
     expect(result.exitCode).toBe(2);
@@ -118,12 +118,12 @@ describe('runUpgrade', () => {
       okResult({
         status: 'guidance',
         url: assetUrl,
-      })
+      }),
     );
     const { stream: stdout, output } = captureStream();
     const result = await runUpgrade(
       { check: true } as UpgradeCommandOptions,
-      defaultDeps({ installMethod: 'binary', upgradeBinaryFn, stdout })
+      defaultDeps({ installMethod: 'binary', upgradeBinaryFn, stdout }),
     );
 
     expect(upgradeBinaryFn).toHaveBeenCalledTimes(1);
@@ -137,7 +137,7 @@ describe('runUpgrade', () => {
     const upgradeNpmFn = vi.fn(async (_o: UpgradeNpmOptions) => okResult());
     await runUpgrade(
       { version: 'v0.25.0', yes: true } as UpgradeCommandOptions,
-      defaultDeps({ installMethod: 'npm-global', upgradeNpmFn })
+      defaultDeps({ installMethod: 'npm-global', upgradeNpmFn }),
     );
 
     const [firstCall] = upgradeNpmFn.mock.calls;
@@ -152,7 +152,7 @@ describe('runUpgrade', () => {
         installMethod: 'binary',
         argv1: '/home/user/.local/bin/search-hub',
         upgradeBinaryFn,
-      })
+      }),
     );
 
     const [firstCall] = upgradeBinaryFn.mock.calls;
@@ -164,26 +164,28 @@ describe('runUpgrade', () => {
     const upgradeBinaryFn = vi.fn(async (_o: UpgradeBinaryOptions) => okResult());
     await runUpgrade(
       { installDir: '/opt/custom' } as UpgradeCommandOptions,
-      defaultDeps({ installMethod: 'binary', upgradeBinaryFn })
+      defaultDeps({ installMethod: 'binary', upgradeBinaryFn }),
     );
 
     const [firstCall] = upgradeBinaryFn.mock.calls;
     const expected = join(
       '/opt/custom',
-      process.platform === 'win32' ? 'search-hub.exe' : 'search-hub'
+      process.platform === 'win32' ? 'search-hub.exe' : 'search-hub',
     );
     expect(firstCall?.[0].destPath).toBe(expected);
   });
 
   it("exits 1 when the strategy returns status='error'", async () => {
-    const upgradeBinaryFn = vi.fn(async (): Promise<UpgradeResult> => ({
-      status: 'error',
-      fromVersion: '0.23.1',
-      error: 'boom',
-    }));
+    const upgradeBinaryFn = vi.fn(
+      async (): Promise<UpgradeResult> => ({
+        status: 'error',
+        fromVersion: '0.23.1',
+        error: 'boom',
+      }),
+    );
     const result = await runUpgrade(
       {} as UpgradeCommandOptions,
-      defaultDeps({ installMethod: 'binary', upgradeBinaryFn })
+      defaultDeps({ installMethod: 'binary', upgradeBinaryFn }),
     );
 
     expect(result.exitCode).toBe(1);
@@ -201,7 +203,7 @@ describe('runUpgrade', () => {
         installMethod: 'binary',
         currentVersion: '0.24.0',
         upgradeBinaryFn,
-      })
+      }),
     );
 
     expect(result.exitCode).toBe(0);

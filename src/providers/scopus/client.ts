@@ -6,7 +6,12 @@
 
 import type { ScopusConfig, ScopusSearchResponse } from './types';
 import { parseSearchResponse } from './parser';
-import { createProviderError, type ConnectionTestResult, type ProviderError, type RateLimitError } from '../base/types';
+import {
+  createProviderError,
+  type ConnectionTestResult,
+  type ProviderError,
+  type RateLimitError,
+} from '../base/types';
 
 const SCOPUS_API_BASE = 'https://api.elsevier.com';
 const SCOPUS_SEARCH_ENDPOINT = '/content/search/scopus';
@@ -61,10 +66,7 @@ export class ScopusClient {
   /**
    * Execute a search query against Scopus API.
    */
-  async search(
-    query: string,
-    options: ScopusSearchOptions = {}
-  ): Promise<ScopusClientResponse> {
+  async search(query: string, options: ScopusSearchOptions = {}): Promise<ScopusClientResponse> {
     const url = this.buildSearchUrl(query, options);
     const headers = this.buildHeaders();
     const timeoutMs = this.config.timeout ?? DEFAULT_TIMEOUT_MS;
@@ -96,7 +98,7 @@ export class ScopusClient {
           'TIMEOUT',
           `Scopus API request timed out after ${timeoutMs}ms`,
           'scopus',
-          { retryable: true }
+          { retryable: true },
         );
       }
       throw error;
@@ -114,11 +116,12 @@ export class ScopusClient {
       await this.search('ALL(test)', { count: 1, view: 'STANDARD' });
       return { ok: true };
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : typeof error === 'object' && error !== null && 'message' in error
-          ? String((error as { message: unknown }).message)
-          : String(error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' && error !== null && 'message' in error
+            ? String((error as { message: unknown }).message)
+            : String(error);
       return { ok: false, error: message };
     }
   }
@@ -195,7 +198,7 @@ export class ScopusClient {
           'API_KEY_INVALID',
           `Scopus API key is invalid or expired (HTTP 401). Verify your key at https://dev.elsevier.com/`,
           'scopus',
-          { retryable: false }
+          { retryable: false },
         );
 
       case 403:
@@ -203,7 +206,7 @@ export class ScopusClient {
           'ACCESS_DENIED',
           `Scopus API access denied (HTTP 403). Your key may lack permissions for this resource.`,
           'scopus',
-          { retryable: false }
+          { retryable: false },
         );
 
       case 429: {
@@ -214,7 +217,7 @@ export class ScopusClient {
             'RATE_LIMIT_EXCEEDED',
             'Scopus API rate limit exceeded',
             'scopus',
-            { retryable: true }
+            { retryable: true },
           ),
           retryAfter: retryMs,
         } as RateLimitError;
@@ -226,14 +229,14 @@ export class ScopusClient {
             'SERVER_ERROR',
             `Scopus API server error: ${status} ${response.statusText}`,
             'scopus',
-            { retryable: true }
+            { retryable: true },
           );
         }
         return createProviderError(
           'NETWORK_ERROR',
           `Scopus API error: ${status} ${response.statusText}`,
           'scopus',
-          { retryable: false }
+          { retryable: false },
         );
     }
   }

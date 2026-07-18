@@ -114,7 +114,7 @@ describe('executeReviewMark', () => {
           file: filePath,
           id: 'nonexistent',
           decision: 'include',
-        })
+        }),
       ).rejects.toThrow(/not found/i);
     });
 
@@ -126,11 +126,13 @@ describe('executeReviewMark', () => {
           sessionId: 'test-session',
           basis: 'title',
           reviewer: 'ai:claude',
-          articles: [{
-            doi: '10.1234/test1',
-            title: 'Article 1',
-            reviews: [{ decision: 'uncertain', comment: '' }],
-          }],
+          articles: [
+            {
+              doi: '10.1234/test1',
+              title: 'Article 1',
+              reviews: [{ decision: 'uncertain', comment: '' }],
+            },
+          ],
         }),
       ].join('\n');
       const filePath = join(tempDir, 'with-comments.yaml');
@@ -151,17 +153,20 @@ describe('executeReviewMark', () => {
   describe('validation', () => {
     it('throws error when file has no basis field', async () => {
       const filePath = join(tempDir, 'invalid.yaml');
-      await writeFile(filePath, stringifyYaml({
-        sessionId: 'test',
-        articles: [{ title: 'Test', reviews: [] }],
-      }));
+      await writeFile(
+        filePath,
+        stringifyYaml({
+          sessionId: 'test',
+          articles: [{ title: 'Test', reviews: [] }],
+        }),
+      );
 
       await expect(
         executeReviewMark({
           file: filePath,
           id: '1',
           decision: 'include',
-        })
+        }),
       ).rejects.toThrow(/basis/i);
     });
 
@@ -171,7 +176,7 @@ describe('executeReviewMark', () => {
           file: '/nonexistent/file.yaml',
           id: '1',
           decision: 'include',
-        })
+        }),
       ).rejects.toThrow();
     });
   });

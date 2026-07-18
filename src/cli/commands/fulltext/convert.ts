@@ -4,7 +4,13 @@
 
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { getFulltextDir, getArticleDir, getMetaPath, convertPmcXmlToMarkdown, convertArxivHtmlToMarkdown } from '@ncukondo/academic-fulltext';
+import {
+  getFulltextDir,
+  getArticleDir,
+  getMetaPath,
+  convertPmcXmlToMarkdown,
+  convertArxivHtmlToMarkdown,
+} from '@ncukondo/academic-fulltext';
 
 export interface FulltextConvertOptions {
   sessionId: string;
@@ -38,10 +44,7 @@ async function fileExists(path: string): Promise<boolean> {
 /**
  * Get list of article directory names to process.
  */
-async function getArticleDirs(
-  sessionDir: string,
-  articleFilter?: string,
-): Promise<string[]> {
+async function getArticleDirs(sessionDir: string, articleFilter?: string): Promise<string[]> {
   const fulltextDir = getFulltextDir(sessionDir);
 
   if (articleFilter) {
@@ -56,9 +59,7 @@ async function getArticleDirs(
   // List all directories in fulltext/
   try {
     const entries = await readdir(fulltextDir, { withFileTypes: true });
-    return entries
-      .filter((e) => e.isDirectory())
-      .map((e) => e.name);
+    return entries.filter((e) => e.isDirectory()).map((e) => e.name);
   } catch {
     return [];
   }

@@ -41,7 +41,7 @@ export interface FormatOptions {
 
 export function parseResultsOptions(
   sessionId: string,
-  options: CommandLineOptions
+  options: CommandLineOptions,
 ): ResultsCommandOptions {
   const result: ResultsCommandOptions = {
     sessionId,
@@ -116,10 +116,7 @@ function truncateTitle(title: string, maxLength: number = DEFAULT_TITLE_MAX_LENG
   return truncateText(title, maxLength);
 }
 
-export function formatResultsList(
-  articles: Article[],
-  options: FormatOptions
-): string {
+export function formatResultsList(articles: Article[], options: FormatOptions): string {
   const lines: string[] = [];
 
   // Header

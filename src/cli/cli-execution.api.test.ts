@@ -83,11 +83,18 @@ filters:
 
     try {
       await program.parseAsync([
-        'node', 'test', 'search', queryFile,
-        '--db', 'pubmed',
-        '--max-results', '5',
-        '--session-dir', sessionsDir,
-        '--config', configPath,
+        'node',
+        'test',
+        'search',
+        queryFile,
+        '--db',
+        'pubmed',
+        '--max-results',
+        '5',
+        '--session-dir',
+        sessionsDir,
+        '--config',
+        configPath,
       ]);
     } catch {
       // exitOverride may throw
@@ -125,12 +132,19 @@ filters:
 
       try {
         await program.parseAsync([
-          'node', 'test', 'search',
-          '--db', 'pubmed',
-          '--query', 'COVID-19[tiab] AND vaccine[tiab]',
-          '--max-results', '3',
-          '--session-dir', sessionsDir,
-          '--config', configPath,
+          'node',
+          'test',
+          'search',
+          '--db',
+          'pubmed',
+          '--query',
+          'COVID-19[tiab] AND vaccine[tiab]',
+          '--max-results',
+          '3',
+          '--session-dir',
+          sessionsDir,
+          '--config',
+          configPath,
         ]);
       } catch {
         // exitOverride may throw
@@ -157,8 +171,12 @@ filters:
       const session = parseYaml(await readFile(sessionPath, 'utf-8')) as SessionFile;
       const pubmedDb = session.databases['pubmed'];
 
-      if (pubmedDb && pubmedDb.totalHits && pubmedDb.retrievedCount !== undefined &&
-          pubmedDb.totalHits > pubmedDb.retrievedCount) {
+      if (
+        pubmedDb &&
+        pubmedDb.totalHits &&
+        pubmedDb.retrievedCount !== undefined &&
+        pubmedDb.totalHits > pubmedDb.retrievedCount
+      ) {
         (pubmedDb as DatabaseStatus).status = 'in_progress';
         session.summary.status = 'running';
         await writeFile(sessionPath, stringifyYaml(session), 'utf-8');
@@ -168,9 +186,14 @@ filters:
 
         try {
           await program.parseAsync([
-            'node', 'test', 'resume', searchSessionId!,
-            '--session-dir', sessionsDir,
-            '--config', configPath,
+            'node',
+            'test',
+            'resume',
+            searchSessionId!,
+            '--session-dir',
+            sessionsDir,
+            '--config',
+            configPath,
           ]);
         } catch {
           // exitOverride may throw
@@ -181,7 +204,7 @@ filters:
         const updatedSession = parseYaml(await readFile(sessionPath, 'utf-8')) as SessionFile;
         const updatedPubmedDb = updatedSession.databases['pubmed'];
         expect(updatedPubmedDb?.retrievedCount).toBeGreaterThanOrEqual(
-          pubmedDb.retrievedCount ?? 0
+          pubmedDb.retrievedCount ?? 0,
         );
       } else {
         expect(pubmedDb?.status).toBe('completed');
@@ -205,10 +228,16 @@ filters:
 
       try {
         await program.parseAsync([
-          'node', 'test', 'export', searchSessionId!,
-          '--format', 'jsonl',
-          '-o', outputFile,
-          '--session-dir', sessionsDir,
+          'node',
+          'test',
+          'export',
+          searchSessionId!,
+          '--format',
+          'jsonl',
+          '-o',
+          outputFile,
+          '--session-dir',
+          sessionsDir,
         ]);
       } catch {
         // exitOverride may throw
@@ -240,11 +269,18 @@ filters:
 
       try {
         await program.parseAsync([
-          'node', 'test', 'export', searchSessionId!,
-          '--format', 'ids',
-          '--id-type', 'pmid',
-          '-o', outputFile,
-          '--session-dir', sessionsDir,
+          'node',
+          'test',
+          'export',
+          searchSessionId!,
+          '--format',
+          'ids',
+          '--id-type',
+          'pmid',
+          '-o',
+          outputFile,
+          '--session-dir',
+          sessionsDir,
         ]);
       } catch {
         // exitOverride may throw

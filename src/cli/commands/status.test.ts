@@ -184,34 +184,37 @@ describe('status command', () => {
           status: 'completed',
           totalHits: 750,
           retrievedCount: 750,
-        })
+        }),
       );
       expect(result.session!.databases).toContainEqual(
         expect.objectContaining({
           provider: 'arxiv',
           status: 'failed',
           error: 'Connection timeout',
-        })
+        }),
       );
     });
   });
 
   describe('formatSessionList', () => {
     it('should format sessions as human-readable table', () => {
-      const result = formatSessionList({
-        sessions: [
-          {
-            id: '20240115_diabetes-ai_a3f2c1',
-            name: 'diabetes-ai',
-            status: 'running',
-            createdAt: '2024-01-15T10:30:00Z',
-            progress: '800/1500',
-          },
-        ],
-        totalCount: 1,
-        filteredCount: 1,
-        showingAll: true,
-      }, { json: false });
+      const result = formatSessionList(
+        {
+          sessions: [
+            {
+              id: '20240115_diabetes-ai_a3f2c1',
+              name: 'diabetes-ai',
+              status: 'running',
+              createdAt: '2024-01-15T10:30:00Z',
+              progress: '800/1500',
+            },
+          ],
+          totalCount: 1,
+          filteredCount: 1,
+          showingAll: true,
+        },
+        { json: false },
+      );
 
       expect(result).toContain('diabetes-ai');
       expect(result).toContain('running');
@@ -219,20 +222,23 @@ describe('status command', () => {
     });
 
     it('should format sessions as JSON when json option is true', () => {
-      const result = formatSessionList({
-        sessions: [
-          {
-            id: '20240115_diabetes-ai_a3f2c1',
-            name: 'diabetes-ai',
-            status: 'running',
-            createdAt: '2024-01-15T10:30:00Z',
-            progress: '800/1500',
-          },
-        ],
-        totalCount: 1,
-        filteredCount: 1,
-        showingAll: true,
-      }, { json: true });
+      const result = formatSessionList(
+        {
+          sessions: [
+            {
+              id: '20240115_diabetes-ai_a3f2c1',
+              name: 'diabetes-ai',
+              status: 'running',
+              createdAt: '2024-01-15T10:30:00Z',
+              progress: '800/1500',
+            },
+          ],
+          totalCount: 1,
+          filteredCount: 1,
+          showingAll: true,
+        },
+        { json: true },
+      );
       const parsed = JSON.parse(result);
 
       expect(parsed).toHaveLength(1);
@@ -240,23 +246,29 @@ describe('status command', () => {
     });
 
     it('should return "No sessions found" message when no sessions exist', () => {
-      const result = formatSessionList({
-        sessions: [],
-        totalCount: 0,
-        filteredCount: 0,
-        showingAll: true,
-      }, { json: false });
+      const result = formatSessionList(
+        {
+          sessions: [],
+          totalCount: 0,
+          filteredCount: 0,
+          showingAll: true,
+        },
+        { json: false },
+      );
 
       expect(result).toContain('No sessions found');
     });
 
     it('should show hint about hidden completed sessions', () => {
-      const result = formatSessionList({
-        sessions: [],
-        totalCount: 5,
-        filteredCount: 0,
-        showingAll: false,
-      }, { json: false });
+      const result = formatSessionList(
+        {
+          sessions: [],
+          totalCount: 5,
+          filteredCount: 0,
+          showingAll: false,
+        },
+        { json: false },
+      );
 
       expect(result).toContain('No active sessions');
       expect(result).toContain('5 completed sessions hidden');
@@ -264,43 +276,52 @@ describe('status command', () => {
     });
 
     it('should show hint about single hidden completed session', () => {
-      const result = formatSessionList({
-        sessions: [],
-        totalCount: 1,
-        filteredCount: 0,
-        showingAll: false,
-      }, { json: false });
+      const result = formatSessionList(
+        {
+          sessions: [],
+          totalCount: 1,
+          filteredCount: 0,
+          showingAll: false,
+        },
+        { json: false },
+      );
 
       expect(result).toContain('1 completed session hidden');
     });
 
     it('should show hint about hidden sessions when some are displayed', () => {
-      const result = formatSessionList({
-        sessions: [
-          {
-            id: '20240115_diabetes-ai_a3f2c1',
-            name: 'diabetes-ai',
-            status: 'running',
-            createdAt: '2024-01-15T10:30:00Z',
-            progress: '800/1500',
-          },
-        ],
-        totalCount: 3,
-        filteredCount: 1,
-        showingAll: false,
-      }, { json: false });
+      const result = formatSessionList(
+        {
+          sessions: [
+            {
+              id: '20240115_diabetes-ai_a3f2c1',
+              name: 'diabetes-ai',
+              status: 'running',
+              createdAt: '2024-01-15T10:30:00Z',
+              progress: '800/1500',
+            },
+          ],
+          totalCount: 3,
+          filteredCount: 1,
+          showingAll: false,
+        },
+        { json: false },
+      );
 
       expect(result).toContain('diabetes-ai');
       expect(result).toContain('2 completed sessions hidden');
     });
 
     it('should return empty array JSON when empty and json option is true', () => {
-      const result = formatSessionList({
-        sessions: [],
-        totalCount: 0,
-        filteredCount: 0,
-        showingAll: true,
-      }, { json: true });
+      const result = formatSessionList(
+        {
+          sessions: [],
+          totalCount: 0,
+          filteredCount: 0,
+          showingAll: true,
+        },
+        { json: true },
+      );
 
       expect(JSON.parse(result)).toEqual([]);
     });
@@ -421,7 +442,13 @@ describe('status command', () => {
         databases: [],
         notes: [
           { date: '2026-02-03 10:30', text: 'MeSH terms too broad' },
-          { date: '2026-02-03 10:45', type: 'assessment', precision: '~54%', verdict: 'good', text: 'Core papers captured' } as AssessmentEntry,
+          {
+            date: '2026-02-03 10:45',
+            type: 'assessment',
+            precision: '~54%',
+            verdict: 'good',
+            text: 'Core papers captured',
+          } as AssessmentEntry,
         ],
       };
 
@@ -463,9 +490,7 @@ describe('status command', () => {
         totalHits: 500,
         totalRetrieved: 500,
         databases: [],
-        notes: [
-          { date: '2026-02-03 10:30', text: 'A note' },
-        ],
+        notes: [{ date: '2026-02-03 10:30', text: 'A note' }],
       };
 
       const result = formatSessionDetails(details, { json: true });

@@ -145,9 +145,7 @@ function translateLanguageFilters(languages: string[]): string | null {
 /**
  * Translate publication type filters to PubMed syntax.
  */
-function translatePublicationTypeFilters(
-  pubTypes: Filters['publicationTypes']
-): string[] {
+function translatePublicationTypeFilters(pubTypes: Filters['publicationTypes']): string[] {
   const filters: string[] = [];
 
   if (!pubTypes) {
@@ -156,9 +154,7 @@ function translatePublicationTypeFilters(
 
   // Include filters
   if (pubTypes.include && pubTypes.include.length > 0) {
-    const includeTerms = pubTypes.include.map(
-      (pt) => `"${pt.toLowerCase()}"[pt]`
-    );
+    const includeTerms = pubTypes.include.map((pt) => `"${pt.toLowerCase()}"[pt]`);
     if (includeTerms.length === 1) {
       filters.push(includeTerms[0]!);
     } else {
@@ -172,7 +168,7 @@ function translatePublicationTypeFilters(
     if (excludeTerms.length === 1) {
       filters.push(`NOT ${excludeTerms[0]}`);
     } else {
-      filters.push(`NOT (${excludeTerms.join(" OR ")})`);
+      filters.push(`NOT (${excludeTerms.join(' OR ')})`);
     }
   }
 
@@ -189,9 +185,7 @@ export function translateQuery(resolved: ResolvedAST): TranslatedQuery {
   const blockResults = resolved.blocks.map((block) => translateBlock(block));
 
   // Collect query parts and NOT clauses
-  const blockStrings = blockResults
-    .map((r) => r.query)
-    .filter((s) => s.length > 0);
+  const blockStrings = blockResults.map((r) => r.query).filter((s) => s.length > 0);
   const blockNotClauses = blockResults
     .map((r) => r.notClause)
     .filter((s): s is string => s !== null);

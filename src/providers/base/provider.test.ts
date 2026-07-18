@@ -34,10 +34,7 @@ class TestProvider extends BaseProvider {
     super(config);
   }
 
-  async *search(
-    _query: TranslatedQuery,
-    _options?: SearchOptions
-  ): AsyncIterable<Article> {
+  async *search(_query: TranslatedQuery, _options?: SearchOptions): AsyncIterable<Article> {
     // Test implementation
     yield {
       doi: '10.1234/test',
@@ -110,7 +107,7 @@ class TestProvider extends BaseProvider {
   testCreateBaseState(
     query: TranslatedQuery,
     totalResults: number,
-    retrievedCount: number
+    retrievedCount: number,
   ): SearchState {
     return this.createBaseState(query, totalResults, retrievedCount);
   }
@@ -241,12 +238,9 @@ describe('BaseProvider', () => {
 
     it('retries on network error', async () => {
       const provider = new TestProvider({ retries: 3, initialBackoff: 100 });
-      const networkError = createProviderError(
-        'NETWORK_ERROR',
-        'Connection failed',
-        'pubmed',
-        { retryable: true }
-      );
+      const networkError = createProviderError('NETWORK_ERROR', 'Connection failed', 'pubmed', {
+        retryable: true,
+      });
 
       const fn = vi
         .fn()
@@ -267,17 +261,11 @@ describe('BaseProvider', () => {
 
     it('retries on 5xx server error', async () => {
       const provider = new TestProvider({ retries: 3, initialBackoff: 100 });
-      const serverError = createProviderError(
-        'SERVER_ERROR',
-        'Internal server error',
-        'pubmed',
-        { retryable: true }
-      );
+      const serverError = createProviderError('SERVER_ERROR', 'Internal server error', 'pubmed', {
+        retryable: true,
+      });
 
-      const fn = vi
-        .fn()
-        .mockRejectedValueOnce(serverError)
-        .mockResolvedValue('success');
+      const fn = vi.fn().mockRejectedValueOnce(serverError).mockResolvedValue('success');
 
       const resultPromise = provider.testWithRetry(fn);
       await vi.advanceTimersByTimeAsync(100);
@@ -289,12 +277,9 @@ describe('BaseProvider', () => {
 
     it('does not retry on 401/403 auth error', async () => {
       const provider = new TestProvider({ retries: 3 });
-      const authError = createProviderError(
-        'API_KEY_INVALID',
-        'Invalid API key',
-        'pubmed',
-        { retryable: false }
-      );
+      const authError = createProviderError('API_KEY_INVALID', 'Invalid API key', 'pubmed', {
+        retryable: false,
+      });
 
       const fn = vi.fn().mockRejectedValue(authError);
 
@@ -304,12 +289,7 @@ describe('BaseProvider', () => {
 
     it('uses exponential backoff between retries', async () => {
       const provider = new TestProvider({ retries: 3, initialBackoff: 100 });
-      const error = createProviderError(
-        'NETWORK_ERROR',
-        'Timeout',
-        'pubmed',
-        { retryable: true }
-      );
+      const error = createProviderError('NETWORK_ERROR', 'Timeout', 'pubmed', { retryable: true });
 
       const fn = vi
         .fn()
@@ -333,12 +313,7 @@ describe('BaseProvider', () => {
 
     it('throws after max retries exceeded', async () => {
       const provider = new TestProvider({ retries: 2, initialBackoff: 100 });
-      const error = createProviderError(
-        'NETWORK_ERROR',
-        'Timeout',
-        'pubmed',
-        { retryable: true }
-      );
+      const error = createProviderError('NETWORK_ERROR', 'Timeout', 'pubmed', { retryable: true });
 
       const fn = vi.fn().mockRejectedValue(error);
 
@@ -369,10 +344,7 @@ describe('BaseProvider', () => {
         retryAfter: 5000,
       };
 
-      const fn = vi
-        .fn()
-        .mockRejectedValueOnce(rateLimitError)
-        .mockResolvedValue('success');
+      const fn = vi.fn().mockRejectedValueOnce(rateLimitError).mockResolvedValue('success');
 
       const resultPromise = provider.testWithRetry(fn);
 

@@ -108,8 +108,8 @@ describe.skipIf(skip)('PubMed Provider E2E', () => {
         articles.some(
           (a) =>
             a.title.toLowerCase().includes('insulin') ||
-            a.title.toLowerCase().includes('resistance')
-        )
+            a.title.toLowerCase().includes('resistance'),
+        ),
       ).toBe(true);
     }, 30000);
 
@@ -193,7 +193,7 @@ describe.skipIf(skip)('PubMed Provider E2E', () => {
       // Scores should be sorted descending
       for (let i = 1; i < result[0]!.relatedIds.length; i++) {
         expect(result[0]!.relatedIds[i]!.score).toBeLessThanOrEqual(
-          result[0]!.relatedIds[i - 1]!.score
+          result[0]!.relatedIds[i - 1]!.score,
         );
       }
 

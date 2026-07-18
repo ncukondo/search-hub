@@ -55,7 +55,7 @@ function cleanArticleForYaml(article: Article): Omit<Article, 'rawResponse'> {
 export async function convertResultsToYaml(
   jsonlPath: string,
   yamlPath: string,
-  metadata: ConversionMetadata
+  metadata: ConversionMetadata,
 ): Promise<void> {
   // Read JSONL file (may not exist if 0 results)
   let content = '';
@@ -64,7 +64,10 @@ export async function convertResultsToYaml(
   } catch {
     // File doesn't exist - 0 results case
   }
-  const lines = content.trim().split('\n').filter((line) => line.length > 0);
+  const lines = content
+    .trim()
+    .split('\n')
+    .filter((line) => line.length > 0);
 
   const articles: Array<Omit<Article, 'rawResponse'>> = [];
 
@@ -123,10 +126,7 @@ export async function convertResultsToYaml(
  * Reads from YAML when available, falls back to JSONL for
  * in-progress or legacy sessions.
  */
-export async function loadResults(
-  sessionDir: string,
-  provider: ProviderName
-): Promise<Article[]> {
+export async function loadResults(sessionDir: string, provider: ProviderName): Promise<Article[]> {
   const yamlPath = join(sessionDir, `${provider}_results.yaml`);
   const jsonlPath = join(sessionDir, `${provider}_results.jsonl`);
 
@@ -144,7 +144,10 @@ export async function loadResults(
   try {
     await access(jsonlPath);
     const content = await readFile(jsonlPath, 'utf-8');
-    const lines = content.trim().split('\n').filter((line) => line.length > 0);
+    const lines = content
+      .trim()
+      .split('\n')
+      .filter((line) => line.length > 0);
     return lines.map((line) => JSON.parse(line) as Article);
   } catch {
     // Neither file exists
