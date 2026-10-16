@@ -71,24 +71,28 @@ echo "[$SCRIPT_NAME] Workspace: $WORKSPACE_ID"
 
 # --- 4. Start claude ---
 echo "[$SCRIPT_NAME] Starting Claude agent '$AGENT_NAME'..."
-if [ -n "$PROMPT" ]; then
-  START_OUT=$(herdr agent start "$AGENT_NAME" \
-    --cwd "$WORKTREE_DIR" --workspace "$WORKSPACE_ID" \
-    --env CLAUDE_WORKER_ID="$AGENT_NAME" --no-focus \
-    -- claude --permission-mode auto "$PROMPT")
-else
-  START_OUT=$(herdr agent start "$AGENT_NAME" \
-    --cwd "$WORKTREE_DIR" --workspace "$WORKSPACE_ID" \
-    --env CLAUDE_WORKER_ID="$AGENT_NAME" --no-focus \
-    -- claude --permission-mode auto)
-fi
-
-if echo "$START_OUT" | jq -e '.error' >/dev/null 2>&1; then
-  echo "[$SCRIPT_NAME] ERROR: $(echo "$START_OUT" | jq -r '.error.message')" >&2
+# herdr >= 0.9 starts agents only in an existing shell pane, so split a new
+# pane (cwd + env set there) and start claude in it.
+SPLIT_OUT=$(herdr pane split "$ROOT_PANE" --direction right \
+  --cwd "$WORKTREE_DIR" --env CLAUDE_WORKER_ID="$AGENT_NAME" --no-focus)
+if [ -z "$SPLIT_OUT" ] || echo "$SPLIT_OUT" | jq -e '.error' >/dev/null 2>&1; then
+  echo "[$SCRIPT_NAME] ERROR: pane split failed: $(echo "$SPLIT_OUT" | jq -r '.error.message // "no response"')" >&2
   exit 1
 fi
+PANE_ID=$(echo "$SPLIT_OUT" | jq -r '.result.pane.pane_id')
 
-PANE_ID=$(echo "$START_OUT" | jq -r '.result.agent.pane_id')
+if [ -n "$PROMPT" ]; then
+  START_OUT=$(herdr agent start "$AGENT_NAME" --kind claude --pane "$PANE_ID" --timeout 120000 \
+    -- --permission-mode auto "$PROMPT")
+else
+  START_OUT=$(herdr agent start "$AGENT_NAME" --kind claude --pane "$PANE_ID" --timeout 120000 \
+    -- --permission-mode auto)
+fi
+
+if [ -z "$START_OUT" ] || echo "$START_OUT" | jq -e '.error' >/dev/null 2>&1; then
+  echo "[$SCRIPT_NAME] ERROR: $(echo "$START_OUT" | jq -r '.error.message // "no response"')" >&2
+  exit 1
+fi
 
 # Close the workspace's root shell pane if we just created the workspace —
 # it is an unused shell and only clutters the layout. Never touch it on an
