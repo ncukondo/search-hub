@@ -55,15 +55,15 @@ providers:
   - [x] Verify Red → Green; `npm run lint && npm run typecheck`
   - [x] Acceptance: invalid `omits` usage reports a clear error naming the provider and block id
 
-- [ ] Step 2: JSON schema
-  - [ ] Write/extend test: `src/query/json-schema.test.ts` — `omits` present as string array
-  - [ ] Update `src/query/json-schema.ts`
-  - [ ] Acceptance: generated schema allows `providers.<db>.omits`
+- [x] Step 2: JSON schema
+  - [x] Write/extend test: `src/query/json-schema.test.ts` — `omits` present as string array
+  - [x] Update `src/query/json-schema.ts`
+  - [x] Acceptance: generated schema allows `providers.<db>.omits`
 
-- [ ] Step 3: Resolution layer
-  - [ ] Write tests: `src/query/resolver.test.ts` — omitted block absent from `ResolvedAST.blocks` for that provider only; other providers unaffected; combines with `replaces` on other blocks and with `adds.filters`; block order preserved; errors for unknown id / overlap / all omitted
-  - [ ] Implement in `resolveForProvider()`
-  - [ ] Acceptance: `query translate` for arXiv produces `#1 AND #2 AND #4` when block 3 is omitted
+- [x] Step 3: Resolution layer
+  - [x] Write tests: `src/query/resolver.test.ts` — omitted block absent from `ResolvedAST.blocks` for that provider only; other providers unaffected; combines with `replaces` on other blocks and with `adds.filters`; block order preserved; errors for unknown id / overlap / all omitted
+  - [x] Implement in `resolveForProvider()`
+  - [x] Acceptance: `query translate` for arXiv produces `#1 AND #2 AND #4` when block 3 is omitted
 
 - [ ] Step 4: CLI visibility (`query inspect`, `query translate`, `search --dry-run`)
   - [ ] Write tests for each command's output

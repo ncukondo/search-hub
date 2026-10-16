@@ -51,6 +51,7 @@ const blockReplacementInputSchema = z.object({
 const providerSectionInputSchema = z
   .object({
     replaces: z.record(z.string(), blockReplacementInputSchema).optional(),
+    omits: z.array(z.string().min(1)).optional(),
     adds: z
       .object({
         filters: filtersInputSchema,
