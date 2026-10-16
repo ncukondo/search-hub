@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { checkProviderSection } from './provider-section-checks.js';
 import type { QueryAST } from './types.js';
 
 /**
@@ -120,10 +121,11 @@ const addsFiltersSchema = z
   }));
 
 /**
- * Schema for provider section with replaces and adds.
+ * Schema for provider section with replaces, omits and adds.
  */
 export const providerSectionSchema = z.object({
   replaces: z.record(z.string(), blockReplacementSchema).optional(),
+  omits: z.array(z.string().min(1)).optional(),
   adds: z
     .object({
       filters: addsFiltersSchema.optional(),
@@ -158,23 +160,20 @@ export const queryFileSchema = z
     filters: filtersSchema,
     providers: providersSchema,
   })
-  .refine(
-    (data) => {
-      // Cross-validation: replaces keys must reference existing block ids
-      const blockIds = new Set(data.query.map((b) => b.id));
-      for (const [, section] of Object.entries(data.providers ?? {})) {
-        if (section?.replaces) {
-          for (const key of Object.keys(section.replaces)) {
-            if (!blockIds.has(key)) {
-              return false;
-            }
-          }
-        }
+  .superRefine((data, ctx) => {
+    // Cross-validation: replaces/omits must reference existing block ids consistently
+    const blockIds = data.query.map((b) => b.id);
+    for (const [provider, section] of Object.entries(data.providers ?? {})) {
+      if (!section) continue;
+      for (const issue of checkProviderSection(blockIds, provider, section)) {
+        ctx.addIssue({
+          code: 'custom',
+          message: issue.message,
+          path: ['providers', provider, issue.key],
+        });
       }
-      return true;
-    },
-    { message: 'replaces keys must reference existing block ids' },
-  )
+    }
+  })
   .transform((data) => ({
     name: data.name,
     description: data.description,

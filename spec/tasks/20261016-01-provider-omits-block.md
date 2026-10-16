@@ -48,12 +48,12 @@ providers:
 
 ## Implementation Steps
 
-- [ ] Step 1: Types & validator
-  - [ ] Write tests: `src/query/validator.test.ts` — accepts `omits: [id]`; rejects unknown id, id in both `replaces` and `omits`, all blocks omitted, duplicate ids
-  - [ ] Add `omits?: string[]` to `ProviderSection` in `src/query/types.ts`
-  - [ ] Extend provider section schema and cross-validation in `src/query/validator.ts`
-  - [ ] Verify Red → Green; `npm run lint && npm run typecheck`
-  - [ ] Acceptance: invalid `omits` usage reports a clear error naming the provider and block id
+- [x] Step 1: Types & validator
+  - [x] Write tests: `src/query/validator.test.ts` — accepts `omits: [id]`; rejects unknown id, id in both `replaces` and `omits`, all blocks omitted, duplicate ids
+  - [x] Add `omits?: string[]` to `ProviderSection` in `src/query/types.ts`
+  - [x] Extend provider section schema and cross-validation in `src/query/validator.ts`
+  - [x] Verify Red → Green; `npm run lint && npm run typecheck`
+  - [x] Acceptance: invalid `omits` usage reports a clear error naming the provider and block id
 
 - [ ] Step 2: JSON schema
   - [ ] Write/extend test: `src/query/json-schema.test.ts` — `omits` present as string array

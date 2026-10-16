@@ -80,11 +80,13 @@ export interface Filters {
 }
 
 /**
- * Provider-specific section with block replacements and filter additions.
+ * Provider-specific section with block replacements, omissions and filter additions.
  */
 export interface ProviderSection {
   /** Block replacements keyed by block id */
   replaces?: Record<string, Omit<QueryBlock, 'id'>> | undefined;
+  /** Block ids to drop for this provider (must not overlap with replaces) */
+  omits?: string[] | undefined;
   /** Additional filters to merge with defaults */
   adds?:
     | {
