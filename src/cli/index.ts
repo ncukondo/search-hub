@@ -1032,7 +1032,7 @@ Query features (use "query init" to see full template):
   filters:    year_from, year_to, language, publication_types
   exclude:    NOT terms per block (terms.exclude)
   mesh/eric:  controlled vocabulary (terms.mesh, terms.eric)
-  providers:  per-database block replacements and filter additions`,
+  providers:  per-database block replacements, omissions and filter additions`,
     )
     .action(
       async (
