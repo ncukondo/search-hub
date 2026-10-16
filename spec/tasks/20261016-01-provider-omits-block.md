@@ -75,22 +75,22 @@ providers:
   - [x] Write test: session created from a query with `omits` keeps `omits` in `query_common.yaml`, and the provider's saved translated query excludes the block
   - [x] Acceptance: the session fully records the per-provider strategy
 
-- [ ] Step 6: Spec & docs
-  - [ ] Update `spec/models/query-dsl.md`: design principle 3, provider section example, Reading Rules, Resolution Layer
-  - [ ] Update `spec/cli/commands.md` output examples if affected
-  - [ ] Update user docs / README query DSL section if it documents `replaces`
+- [x] Step 6: Spec & docs
+  - [x] Update `spec/models/query-dsl.md`: design principle 3, provider section example, Reading Rules, Resolution Layer
+  - [x] Update `spec/cli/commands.md` output examples if affected
+  - [x] Update user docs / README query DSL section if it documents `replaces`
 
 ### Final Step: E2E Integration Tests (MANDATORY)
 
-- [ ] Write E2E test: `src/query/omits.e2e.test.ts` (or extend existing query/search E2E)
+- [x] Write E2E test: `src/query/omits.e2e.test.ts` (or extend existing query/search E2E)
   - YAML file with 4 blocks and `providers.arxiv.omits: [<block-3>]`
   - `query translate` → arXiv query lacks block 3; PubMed query contains all 4
   - `search --dry-run` → shows omission note for arXiv
   - Invalid cases (unknown id, overlap with `replaces`, all omitted) exit non-zero with clear message
-- [ ] Verify all E2E tests pass
-- [ ] Run full test suite: `npm test`
-- [ ] **Manual verification**: run `query inspect`, `query translate`, `search --dry-run` on a sample file
-- [ ] Acceptance: All tests pass, feature works in real usage; close #155 via PR
+- [x] Verify all E2E tests pass
+- [x] Run full test suite: `npm test`
+- [x] **Manual verification**: run `query inspect`, `query translate`, `search --dry-run` on a sample file
+- [x] Acceptance: All tests pass, feature works in real usage; close #155 via PR
 
 ## Notes
 

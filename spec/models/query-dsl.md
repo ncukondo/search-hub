@@ -6,7 +6,7 @@ YAML-based domain-specific language for defining search queries that translate t
 
 1. **One file = one search intent** — A single YAML file represents one search intent across all providers
 2. **Default + provider customization** — Common query blocks serve all providers; provider-specific sections customize where strategies diverge
-3. **Explicit actions** — `replaces` means replacement, `adds` means additive; no implicit merge semantics
+3. **Explicit actions** — `replaces` means replacement, `omits` means omission, `adds` means additive; no implicit merge semantics
 4. **Named concept blocks** — Every block has an `id` that links it across default and provider sections
 
 ## File Structure
@@ -59,7 +59,7 @@ query:
 ```
 
 The `id` serves as:
-- A reference key in `providers.{name}.replaces`
+- A reference key in `providers.{name}.replaces` and `providers.{name}.omits`
 - A label in CLI output (e.g., `query inspect`, `query translate`)
 - A conceptual identifier (often maps to PICO elements in systematic reviews)
 
@@ -200,9 +200,10 @@ Provider-specific filter types (also part of the `Filters` type):
 
 ## Provider Section
 
-The `providers` section contains two explicit action keys:
+The `providers` section contains three explicit action keys:
 
-- **`replaces`** — Named block replacement (the only override mechanism)
+- **`replaces`** — Named block replacement
+- **`omits`** — Named block omission (drop blocks for this provider only)
 - **`adds`** — Additive configuration (filters merged with defaults)
 
 ```yaml
@@ -214,6 +215,8 @@ providers:
         terms:
           keywords: [diabetes, "type 2 diabetes", T2DM, "diabetic patients"]
         operator: OR
+    omits:
+      - setting                            # Drop the "setting" block for arXiv only
     adds:
       filters:
         categories: [cs.AI, cs.LG, q-bio.QM]
@@ -235,11 +238,25 @@ providers:
 ```
 providers.{name}:
   replaces  → Replace the named block entirely for this provider
+  omits     → Drop the named blocks for this provider
   adds      → Merge into default configuration for this provider
 ```
 
 - A block **not mentioned** in `replaces` → default block is used as-is
 - A block **mentioned** in `replaces` → default block is completely replaced
+- A block **listed** in `omits` → block is removed from this provider's query; remaining blocks keep their order and are still ANDed
+- `omits` is the only way to drop a block (`replaces: { <id>: null }` is not supported)
+- Validation errors (reported with provider and block id):
+  - `omits` references a non-existent block id
+  - the same id appears in both `replaces` and `omits` for one provider
+  - duplicate ids within `omits`
+  - `omits` would remove all blocks for a provider
+
+Typical use: a 4-block strategy returns 0 records on a small database, so reviewers agree to run
+`#1 AND #2 AND #4` there only. `omits` keeps this in the same query file and session, so
+deduplication and PRISMA counts stay in one place. `query inspect` marks such blocks as `omitted`,
+and `query translate` / `search --dry-run` list them under the provider query
+(`ℹ Omitted blocks: setting`).
 - `adds.filters` → deep-merged with default `filters` (arrays replace, scalars replace, objects recurse)
 
 ### Filter Merge Semantics
@@ -257,7 +274,7 @@ Arrays are **replaced** (not appended). Scalars are replaced. Objects are recurs
 
 Before translation, the query AST is resolved for a specific provider using `resolveForProvider(ast, providerName)`. This produces a `ResolvedAST` with:
 
-- Blocks: default blocks with any `replaces` applied
+- Blocks: default blocks minus any `omits`, with any `replaces` applied (order preserved)
 - Filters: default filters deep-merged with `adds.filters`
 
 Translators receive `ResolvedAST` and do not need to handle provider sections themselves.
@@ -366,7 +383,7 @@ See `src/query/types.ts` for the authoritative type definitions:
 - `QueryAST` - Complete parsed query structure (with `providers` section)
 - `QueryBlock` - Individual query block with `id`, field, terms, and operator
 - `Filters` - Filter settings (year range, languages, publication types, categories, source types)
-- `ProviderSection` - Provider-specific customizations (`replaces` and `adds`)
+- `ProviderSection` - Provider-specific customizations (`replaces`, `omits` and `adds`)
 - `ResolvedAST` - Provider-resolved query (blocks and filters fully merged, no `providers` section)
 
 ## Translation Rules

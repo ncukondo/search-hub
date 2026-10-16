@@ -752,7 +752,9 @@ Examples:
 
   queryCommand
     .command('inspect')
-    .description('Show how a query resolves per provider (block replacements and added filters)')
+    .description(
+      'Show how a query resolves per provider (block replacements, omissions and added filters)',
+    )
     .argument('<file>', 'path to query YAML file')
     .option('--db <provider>', 'show resolution for specific provider only')
     .addHelpText(
