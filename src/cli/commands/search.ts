@@ -34,6 +34,8 @@ export interface CommandLineOptions {
 export interface TranslationResult {
   provider: string;
   query: string;
+  /** Block ids omitted for this provider via providers.<db>.omits */
+  omittedBlocks?: string[] | undefined;
 }
 
 export interface ValidationResult {
@@ -367,6 +369,9 @@ export async function formatDryRunOutput(
   for (const t of translations) {
     queryLines.push(`[${t.provider}]`);
     queryLines.push(t.query);
+    if (t.omittedBlocks && t.omittedBlocks.length > 0) {
+      queryLines.push(`ℹ Omitted blocks: ${t.omittedBlocks.join(', ')}`);
+    }
     queryLines.push('');
   }
   sections.push(queryLines.join('\n'));

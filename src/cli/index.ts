@@ -1111,6 +1111,7 @@ Query features (use "query init" to see full template):
                 const translations = Object.entries(result.translations).map(([provider, t]) => ({
                   provider,
                   query: t.native,
+                  omittedBlocks: result.omittedBlocks?.[provider],
                 }));
                 const providers = translations.map((t) => t.provider) as ProviderName[];
                 if (!globalOpts.quiet) {

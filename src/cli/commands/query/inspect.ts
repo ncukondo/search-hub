@@ -2,7 +2,7 @@
  * Query Inspect Command
  *
  * Visualizes how a query DSL file resolves for each provider,
- * showing which blocks use default vs. custom strategies and
+ * showing which blocks use default, replaced or omitted strategies and
  * which filters are added per provider.
  */
 
@@ -21,9 +21,11 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   embase: 'Embase',
 };
 
+export type BlockStatus = 'default' | 'replaced' | 'omitted';
+
 export interface BlockInspectRow {
   id: string;
-  status: Partial<Record<ProviderName, 'default' | 'replaced'>>;
+  status: Partial<Record<ProviderName, BlockStatus>>;
 }
 
 export interface FilterInspectRow {
@@ -54,10 +56,12 @@ const DEFAULT_PROVIDERS: ProviderName[] = ['pubmed', 'eric', 'arxiv', 'scopus'];
  */
 export function inspectQuery(ast: QueryAST, enabledProviders: ProviderName[]): InspectResult {
   const blocks: BlockInspectRow[] = ast.blocks.map((block) => {
-    const status: Partial<Record<ProviderName, 'default' | 'replaced'>> = {};
+    const status: Partial<Record<ProviderName, BlockStatus>> = {};
     for (const provider of enabledProviders) {
       const section = ast.providers[provider];
-      if (section?.replaces?.[block.id]) {
+      if (section?.omits?.includes(block.id)) {
+        status[provider] = 'omitted';
+      } else if (section?.replaces?.[block.id]) {
         status[provider] = 'replaced';
       } else {
         status[provider] = 'default';

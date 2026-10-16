@@ -209,6 +209,20 @@ describe('search command', () => {
       expect(result).toContain('diabetes AND AI');
     });
 
+    it('should show omitted blocks under the provider query', async () => {
+      const translations = [
+        { provider: 'pubmed', query: 'a AND b AND c' },
+        { provider: 'arxiv', query: 'a AND b', omittedBlocks: ['setting'] },
+      ];
+
+      const result = await formatDryRunOutput(translations);
+
+      const arxivSection = result.slice(result.indexOf('[arxiv]'));
+      expect(arxivSection).toContain('Omitted blocks: setting');
+      const pubmedSection = result.slice(result.indexOf('[pubmed]'), result.indexOf('[arxiv]'));
+      expect(pubmedSection).not.toContain('Omitted');
+    });
+
     it('should handle empty translations', async () => {
       const result = await formatDryRunOutput([]);
 

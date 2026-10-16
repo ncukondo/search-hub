@@ -65,11 +65,11 @@ providers:
   - [x] Implement in `resolveForProvider()`
   - [x] Acceptance: `query translate` for arXiv produces `#1 AND #2 AND #4` when block 3 is omitted
 
-- [ ] Step 4: CLI visibility (`query inspect`, `query translate`, `search --dry-run`)
-  - [ ] Write tests for each command's output
-  - [ ] `query inspect`: mark omitted blocks per provider (e.g. `(omitted)` alongside the existing `(replaced)` marker)
-  - [ ] `query translate` / `--dry-run`: show a note listing omitted block ids per provider
-  - [ ] Acceptance: a user can see from `--dry-run` alone which blocks each provider skips
+- [x] Step 4: CLI visibility (`query inspect`, `query translate`, `search --dry-run`)
+  - [x] Write tests for each command's output
+  - [x] `query inspect`: mark omitted blocks per provider (e.g. `(omitted)` alongside the existing `(replaced)` marker)
+  - [x] `query translate` / `--dry-run`: show a note listing omitted block ids per provider
+  - [x] Acceptance: a user can see from `--dry-run` alone which blocks each provider skips
 
 - [ ] Step 5: Session snapshot
   - [ ] Write test: session created from a query with `omits` keeps `omits` in `query_common.yaml`, and the provider's saved translated query excludes the block
