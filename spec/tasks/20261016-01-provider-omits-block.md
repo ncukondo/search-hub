@@ -71,9 +71,9 @@ providers:
   - [x] `query translate` / `--dry-run`: show a note listing omitted block ids per provider
   - [x] Acceptance: a user can see from `--dry-run` alone which blocks each provider skips
 
-- [ ] Step 5: Session snapshot
-  - [ ] Write test: session created from a query with `omits` keeps `omits` in `query_common.yaml`, and the provider's saved translated query excludes the block
-  - [ ] Acceptance: the session fully records the per-provider strategy
+- [x] Step 5: Session snapshot
+  - [x] Write test: session created from a query with `omits` keeps `omits` in `query_common.yaml`, and the provider's saved translated query excludes the block
+  - [x] Acceptance: the session fully records the per-provider strategy
 
 - [ ] Step 6: Spec & docs
   - [ ] Update `spec/models/query-dsl.md`: design principle 3, provider section example, Reading Rules, Resolution Layer
