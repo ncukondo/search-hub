@@ -73,7 +73,7 @@ const QUERY_TEMPLATE =
   "#       - \"Review\"\n" +
   "#       - \"Comment\"\n" +
   "\n" +
-  "# providers:                 # Optional: per-database block replacements & filter additions\n" +
+  "# providers:                 # Optional: per-database block replacements, omissions & filter additions\n" +
   "#   pubmed:\n" +
   "#     replaces:\n" +
   "#       concept-1:           # Replace block by id\n" +
@@ -86,7 +86,10 @@ const QUERY_TEMPLATE =
   "#       filters:\n" +
   "#         publication_types:\n" +
   "#           exclude:\n" +
-  "#             - \"Letter\"\n";
+  "#             - \"Letter\"\n" +
+  "#   arxiv:\n" +
+  "#     omits:                 # Drop blocks by id for this provider\n" +
+  "#       - concept-3\n";
 
 /**
  * Generate the query template YAML string.

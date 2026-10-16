@@ -627,6 +627,15 @@ search-hub query translate <query> [--db <provider>]
 
 `<query>` is resolved via Query File Resolution (see above).
 
+When a provider drops blocks via `providers.<db>.omits`, a note follows that provider's query
+(the same note appears in `search --dry-run`):
+
+```
+[ARXIV]
+((ti:diabetes OR abs:diabetes)) AND ((ti:insulin OR abs:insulin)) AND ((ti:mortality OR abs:mortality))
+ℹ Omitted blocks: setting
+```
+
 ### query assess
 
 Record an assessment for a query file. Assessments are stored in a log file alongside the query file (`{basename}.search-log.yaml`).

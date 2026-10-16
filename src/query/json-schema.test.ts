@@ -74,4 +74,13 @@ describe('generateQueryJSONSchema', () => {
       minLength: 1,
     });
   });
+
+  it('should allow providers.<db>.omits as a string array', () => {
+    const schema = generateQueryJSONSchema() as JSONSchema;
+    const arxiv = schema['properties']['providers']['properties']['arxiv'];
+    expect(arxiv['properties']['omits']).toMatchObject({
+      type: 'array',
+      items: { type: 'string', minLength: 1 },
+    });
+  });
 });

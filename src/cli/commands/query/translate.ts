@@ -46,6 +46,8 @@ export interface TranslateResult {
   error?: string;
   /** Translations by provider name */
   translations?: Record<string, TranslatedQuery>;
+  /** Block ids omitted per provider (only providers with omissions) */
+  omittedBlocks?: Record<string, string[]>;
 }
 
 /**
@@ -88,6 +90,7 @@ export async function translateQueryCommand(
 
   // Translate for each provider
   const translations: Record<string, TranslatedQuery> = {};
+  const omittedBlocks: Record<string, string[]> = {};
 
   for (const provider of providers) {
     const translator = translators[provider];
@@ -95,6 +98,10 @@ export async function translateQueryCommand(
       try {
         const resolved = resolveForProvider(ast, provider as ProviderName);
         translations[provider] = translator(resolved);
+        const omits = ast.providers[provider as ProviderName]?.omits;
+        if (omits && omits.length > 0) {
+          omittedBlocks[provider] = [...omits];
+        }
       } catch (error) {
         const message =
           error instanceof Error ? error.message : `Failed to translate for ${provider}`;
@@ -109,6 +116,7 @@ export async function translateQueryCommand(
   return {
     success: true,
     translations,
+    ...(Object.keys(omittedBlocks).length > 0 ? { omittedBlocks } : {}),
   };
 }
 
@@ -126,6 +134,10 @@ export function formatTranslateResult(result: TranslateResult, filePath: string)
     for (const [provider, translation] of Object.entries(result.translations)) {
       lines.push(`[${provider.toUpperCase()}]`);
       lines.push(translation.native);
+      const omitted = result.omittedBlocks?.[provider];
+      if (omitted && omitted.length > 0) {
+        lines.push(`ℹ Omitted blocks: ${omitted.join(', ')}`);
+      }
       if (translation.warnings && translation.warnings.length > 0) {
         for (const warning of translation.warnings) {
           lines.push(`⚠ ${warning}`);

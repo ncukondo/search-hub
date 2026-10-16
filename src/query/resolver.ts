@@ -5,6 +5,7 @@
  * producing a flat ResolvedAST suitable for translation.
  */
 
+import { checkProviderSection } from './provider-section-checks.js';
 import type { Filters, ProviderName, QueryAST, QueryBlock, ResolvedAST } from './types.js';
 
 /**
@@ -39,13 +40,14 @@ function deepMergeFilters(base: Filters, override: Partial<Filters>): Filters {
 /**
  * Resolve a QueryAST for a specific provider.
  *
- * Applies provider-specific block replacements and filter additions,
+ * Applies provider-specific block omissions, replacements and filter additions,
  * returning a flat ResolvedAST with no provider sections.
  *
  * @param ast - The full QueryAST with optional providers section
  * @param provider - The target provider name
  * @returns A ResolvedAST with replacements applied and filters merged
- * @throws Error if replaces references a non-existent block id
+ * @throws Error if replaces/omits reference a non-existent block id, a block is both
+ *   replaced and omitted, omits contains duplicates, or omits would remove all blocks
  */
 export function resolveForProvider(ast: QueryAST, provider: ProviderName): ResolvedAST {
   const section = ast.providers[provider];
@@ -60,26 +62,26 @@ export function resolveForProvider(ast: QueryAST, provider: ProviderName): Resol
     };
   }
 
-  // Apply block replacements
-  let blocks: QueryBlock[];
-  if (section.replaces) {
-    const blockIds = new Set(ast.blocks.map((b) => b.id));
-    for (const key of Object.keys(section.replaces)) {
-      if (!blockIds.has(key)) {
-        throw new Error(`replaces references non-existent block id: "${key}"`);
-      }
-    }
+  const issues = checkProviderSection(
+    ast.blocks.map((b) => b.id),
+    provider,
+    section,
+  );
+  if (issues.length > 0) {
+    throw new Error(issues.map((i) => i.message).join('; '));
+  }
 
-    blocks = ast.blocks.map((block) => {
+  // Apply block omissions and replacements (block order preserved)
+  const omitted = new Set(section.omits ?? []);
+  const blocks: QueryBlock[] = ast.blocks
+    .filter((block) => !omitted.has(block.id))
+    .map((block) => {
       const replacement = section.replaces?.[block.id];
       if (replacement) {
         return { id: block.id, ...structuredClone(replacement) };
       }
       return structuredClone(block);
     });
-  } else {
-    blocks = ast.blocks.map((b) => structuredClone(b));
-  }
 
   // Apply filter additions
   let filters: Filters;

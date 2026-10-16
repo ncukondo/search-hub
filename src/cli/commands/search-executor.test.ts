@@ -237,6 +237,36 @@ filters:
       expect(result.sessionId).toContain('my-custom-session');
     });
 
+    it('should record providers.<db>.omits in the session snapshot', async () => {
+      const omitsQuery = `name: omits-query
+query:
+  - id: population
+    field: title_abstract
+    terms:
+      keywords: [diabetes]
+    operator: OR
+  - id: setting
+    field: title_abstract
+    terms:
+      keywords: [hospital]
+    operator: OR
+providers:
+  pubmed:
+    omits: [setting]
+`;
+      await writeFile(queryFilePath, omitsQuery, 'utf-8');
+
+      const result = await executeSearch({ queryFile: queryFilePath }, sessionsDir, config);
+
+      expect(result.success).toBe(true);
+      const sessionDir = join(sessionsDir, result.sessionId!);
+      const common = parseYaml(await readFile(join(sessionDir, 'query_common.yaml'), 'utf-8'));
+      expect(common.providers.pubmed.omits).toEqual(['setting']);
+      const savedQuery = await readFile(join(sessionDir, 'pubmed_query.txt'), 'utf-8');
+      expect(savedQuery).toContain('diabetes');
+      expect(savedQuery).not.toContain('hospital');
+    });
+
     it('should save results to JSONL file', async () => {
       const options: SearchCommandOptions = {
         queryFile: queryFilePath,

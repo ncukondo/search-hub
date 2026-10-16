@@ -302,3 +302,39 @@ describe('formatInspectOutput', () => {
     expect(output).toContain('\u2014');
   });
 });
+
+describe('inspect with omits', () => {
+  const ast: QueryAST = {
+    name: 'omits-test',
+    blocks: [
+      { id: 'population', field: 'title_abstract', terms: { keywords: ['a'] }, operator: 'OR' },
+      { id: 'intervention', field: 'title_abstract', terms: { keywords: ['b'] }, operator: 'OR' },
+      { id: 'setting', field: 'title_abstract', terms: { keywords: ['c'] }, operator: 'OR' },
+    ],
+    filters: {},
+    providers: {
+      arxiv: {
+        omits: ['setting'],
+        replaces: {
+          intervention: { field: 'all', terms: { keywords: ['ml'] }, operator: 'OR' },
+        },
+      },
+    },
+  };
+
+  it('should mark omitted blocks per provider', () => {
+    const result = inspectQuery(ast, ['pubmed', 'arxiv']);
+    const setting = result.blocks.find((b) => b.id === 'setting')!;
+    expect(setting.status['arxiv']).toBe('omitted');
+    expect(setting.status['pubmed']).toBe('default');
+    const intervention = result.blocks.find((b) => b.id === 'intervention')!;
+    expect(intervention.status['arxiv']).toBe('replaced');
+  });
+
+  it('should show "omitted" in the formatted table', () => {
+    const output = formatInspectOutput(inspectQuery(ast, ['pubmed', 'arxiv']));
+    const settingLine = output.split('\n').find((l) => l.includes('setting'))!;
+    expect(settingLine).toContain('omitted');
+    expect(settingLine).toContain('default');
+  });
+});

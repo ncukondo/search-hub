@@ -726,3 +726,92 @@ describe('Query Validator Schemas', () => {
     });
   });
 });
+
+describe('providers.<db>.omits', () => {
+  const blocks = [
+    {
+      id: 'population',
+      field: 'title_abstract',
+      terms: { keywords: ['diabetes'] },
+      operator: 'OR',
+    },
+    { id: 'intervention', field: 'title_abstract', terms: { keywords: ['AI'] }, operator: 'OR' },
+    { id: 'outcome', field: 'title_abstract', terms: { keywords: ['mortality'] }, operator: 'OR' },
+  ];
+
+  function makeFile(providers: Record<string, unknown>) {
+    return { name: 'test_query', query: blocks, providers };
+  }
+
+  it('should accept omits referencing existing block ids', () => {
+    const result = validateQueryFile(makeFile({ arxiv: { omits: ['outcome'] } }));
+    expect(result.providers.arxiv?.omits).toEqual(['outcome']);
+  });
+
+  it('should accept omits combined with replaces on a different block', () => {
+    const result = validateQueryFile(
+      makeFile({
+        arxiv: {
+          omits: ['outcome'],
+          replaces: {
+            intervention: { field: 'all', terms: { keywords: ['ML'] }, operator: 'OR' },
+          },
+        },
+      }),
+    );
+    expect(result.providers.arxiv?.omits).toEqual(['outcome']);
+    expect(result.providers.arxiv?.replaces?.['intervention']).toBeDefined();
+  });
+
+  it('should reject omits referencing a non-existent block id', () => {
+    const errors = formatValidationErrors(makeFile({ arxiv: { omits: ['nonexistent'] } }));
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.path).toBe('providers.arxiv.omits');
+    expect(errors[0]!.message).toMatch(/arxiv/);
+    expect(errors[0]!.message).toMatch(/nonexistent/);
+  });
+
+  it('should reject a block id present in both replaces and omits', () => {
+    const errors = formatValidationErrors(
+      makeFile({
+        arxiv: {
+          omits: ['outcome'],
+          replaces: {
+            outcome: { field: 'all', terms: { keywords: ['death'] }, operator: 'OR' },
+          },
+        },
+      }),
+    );
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.message).toMatch(/arxiv/);
+    expect(errors[0]!.message).toMatch(/outcome/);
+    expect(errors[0]!.message).toMatch(/replaces/);
+  });
+
+  it('should reject omitting all blocks', () => {
+    const errors = formatValidationErrors(
+      makeFile({ eric: { omits: ['population', 'intervention', 'outcome'] } }),
+    );
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.message).toMatch(/eric/);
+    expect(errors[0]!.message).toMatch(/all blocks/);
+  });
+
+  it('should reject duplicate ids within omits', () => {
+    const errors = formatValidationErrors(makeFile({ arxiv: { omits: ['outcome', 'outcome'] } }));
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.message).toMatch(/arxiv/);
+    expect(errors[0]!.message).toMatch(/duplicate/i);
+    expect(errors[0]!.message).toMatch(/outcome/);
+  });
+
+  it('should reject non-string omits entries', () => {
+    expect(() => validateQueryFile(makeFile({ arxiv: { omits: 'outcome' } }))).toThrow();
+  });
+
+  it('should throw from validateQueryFile with a message naming provider and block', () => {
+    expect(() => validateQueryFile(makeFile({ scopus: { omits: ['missing'] } }))).toThrow(
+      /scopus.*missing|missing.*scopus/s,
+    );
+  });
+});

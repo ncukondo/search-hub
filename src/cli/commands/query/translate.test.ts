@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { translateQueryCommand } from './translate.js';
+import { translateQueryCommand, formatTranslateResult } from './translate.js';
 import * as fs from 'node:fs/promises';
 
 vi.mock('node:fs/promises');
@@ -97,5 +97,61 @@ describe('query translate command', () => {
       expect(pubmedTranslation!.native).toBeDefined();
       expect(typeof pubmedTranslation!.native).toBe('string');
     });
+  });
+});
+
+const omitsYaml = `
+name: omits-query
+query:
+  - id: population
+    field: title_abstract
+    terms:
+      keywords: [diabetes]
+    operator: OR
+  - id: intervention
+    field: title_abstract
+    terms:
+      keywords: [insulin]
+    operator: OR
+  - id: setting
+    field: title_abstract
+    terms:
+      keywords: [hospital]
+    operator: OR
+providers:
+  arxiv:
+    omits: [setting]
+`;
+
+describe('query translate with omits', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should exclude omitted blocks and report them per provider', async () => {
+    vi.mocked(fs.readFile).mockResolvedValue(omitsYaml);
+
+    const result = await translateQueryCommand('/path/to/query.yaml', {
+      providers: ['pubmed', 'arxiv'],
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.translations!['arxiv']!.native).not.toContain('hospital');
+    expect(result.translations!['pubmed']!.native).toContain('hospital');
+    expect(result.omittedBlocks).toEqual({ arxiv: ['setting'] });
+  });
+
+  it('should show an omission note under the provider in formatted output', async () => {
+    vi.mocked(fs.readFile).mockResolvedValue(omitsYaml);
+
+    const result = await translateQueryCommand('/path/to/query.yaml', {
+      providers: ['pubmed', 'arxiv'],
+    });
+    const output = formatTranslateResult(result, 'q.yaml');
+
+    const arxivSection = output.slice(output.indexOf('[ARXIV]'));
+    expect(arxivSection).toContain('Omitted blocks: setting');
+    const pubmedSection = output.slice(output.indexOf('[PUBMED]'), output.indexOf('[ARXIV]'));
+    expect(pubmedSection).not.toContain('Omitted');
   });
 });

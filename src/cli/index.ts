@@ -752,7 +752,9 @@ Examples:
 
   queryCommand
     .command('inspect')
-    .description('Show how a query resolves per provider (block replacements and added filters)')
+    .description(
+      'Show how a query resolves per provider (block replacements, omissions and added filters)',
+    )
     .argument('<file>', 'path to query YAML file')
     .option('--db <provider>', 'show resolution for specific provider only')
     .addHelpText(
@@ -1030,7 +1032,7 @@ Query features (use "query init" to see full template):
   filters:    year_from, year_to, language, publication_types
   exclude:    NOT terms per block (terms.exclude)
   mesh/eric:  controlled vocabulary (terms.mesh, terms.eric)
-  providers:  per-database block replacements and filter additions`,
+  providers:  per-database block replacements, omissions and filter additions`,
     )
     .action(
       async (
@@ -1111,6 +1113,7 @@ Query features (use "query init" to see full template):
                 const translations = Object.entries(result.translations).map(([provider, t]) => ({
                   provider,
                   query: t.native,
+                  omittedBlocks: result.omittedBlocks?.[provider],
                 }));
                 const providers = translations.map((t) => t.provider) as ProviderName[];
                 if (!globalOpts.quiet) {

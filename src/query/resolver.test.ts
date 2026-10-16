@@ -274,4 +274,102 @@ describe('resolveForProvider', () => {
     });
     expect(() => resolveForProvider(ast, 'arxiv')).toThrow(/nonexistent/);
   });
+
+  describe('omits', () => {
+    function makeFourBlockAST(providers: QueryAST['providers']): QueryAST {
+      const base = makeAST();
+      return makeAST({
+        blocks: [
+          ...base.blocks,
+          {
+            id: 'setting',
+            field: 'title_abstract',
+            terms: { keywords: ['hospital'] },
+            operator: 'OR',
+          },
+          {
+            id: 'outcome',
+            field: 'title_abstract',
+            terms: { keywords: ['mortality'] },
+            operator: 'OR',
+          },
+        ],
+        providers,
+      });
+    }
+
+    it('should drop omitted blocks for that provider only', () => {
+      const ast = makeFourBlockAST({ arxiv: { omits: ['setting'] } });
+      expect(resolveForProvider(ast, 'arxiv').blocks.map((b) => b.id)).toEqual([
+        'population',
+        'intervention',
+        'outcome',
+      ]);
+      expect(resolveForProvider(ast, 'pubmed').blocks.map((b) => b.id)).toEqual([
+        'population',
+        'intervention',
+        'setting',
+        'outcome',
+      ]);
+    });
+
+    it('should preserve block order when omitting multiple blocks', () => {
+      const ast = makeFourBlockAST({ arxiv: { omits: ['outcome', 'population'] } });
+      expect(resolveForProvider(ast, 'arxiv').blocks.map((b) => b.id)).toEqual([
+        'intervention',
+        'setting',
+      ]);
+    });
+
+    it('should combine with replaces on other blocks and adds.filters', () => {
+      const ast = makeFourBlockAST({
+        arxiv: {
+          omits: ['setting'],
+          replaces: {
+            intervention: { field: 'all', terms: { keywords: ['deep learning'] }, operator: 'OR' },
+          },
+          adds: { filters: { categories: ['cs.AI'] } },
+        },
+      });
+      const resolved = resolveForProvider(ast, 'arxiv');
+      expect(resolved.blocks.map((b) => b.id)).toEqual(['population', 'intervention', 'outcome']);
+      expect(resolved.blocks[1]!.terms.keywords).toEqual(['deep learning']);
+      expect(resolved.filters.categories).toEqual(['cs.AI']);
+    });
+
+    it('should not mutate the input AST', () => {
+      const ast = makeFourBlockAST({ arxiv: { omits: ['setting'] } });
+      resolveForProvider(ast, 'arxiv');
+      expect(ast.blocks).toHaveLength(4);
+    });
+
+    it('should throw for omits referencing non-existent id', () => {
+      const ast = makeFourBlockAST({ arxiv: { omits: ['nonexistent'] } });
+      expect(() => resolveForProvider(ast, 'arxiv')).toThrow(/arxiv.*nonexistent/);
+    });
+
+    it('should throw when a block is in both replaces and omits', () => {
+      const ast = makeFourBlockAST({
+        arxiv: {
+          omits: ['setting'],
+          replaces: {
+            setting: { field: 'all', terms: { keywords: ['clinic'] }, operator: 'OR' },
+          },
+        },
+      });
+      expect(() => resolveForProvider(ast, 'arxiv')).toThrow(/setting.*both replaces and omits/);
+    });
+
+    it('should throw when all blocks are omitted', () => {
+      const ast = makeFourBlockAST({
+        arxiv: { omits: ['population', 'intervention', 'setting', 'outcome'] },
+      });
+      expect(() => resolveForProvider(ast, 'arxiv')).toThrow(/removes all blocks/);
+    });
+
+    it('should throw for duplicate ids in omits', () => {
+      const ast = makeFourBlockAST({ arxiv: { omits: ['setting', 'setting'] } });
+      expect(() => resolveForProvider(ast, 'arxiv')).toThrow(/duplicate block id "setting"/);
+    });
+  });
 });
