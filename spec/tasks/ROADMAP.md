@@ -144,7 +144,7 @@ This file tracks high-level progress. For implementation details, see individual
 | 135 | Register Articles with Alternative Identifiers (#151) | 11 | ✅ Completed | [20260712-01](completed/20260712-01-register-alt-identifiers.md) |
 | 136 | Self-Upgrade Command + Update Notification | 129 | ✅ Completed | [20260712-02](completed/20260712-02-self-upgrade.md) |
 | 137 | Rate Limiter Backoff Jitter (#4) | 5 | ✅ Completed | [20260713-01](completed/20260713-01-rate-limiter-backoff-jitter.md) |
-| 138 | Provider Block Omission (`providers.<db>.omits`) (#155) | 115, 116 | 🔲 Pending | [20261016-01](20261016-01-provider-omits-block.md) |
+| 138 | Provider Block Omission (`providers.<db>.omits`) (#155) | 115, 116 | ✅ Completed | [20261016-01](completed/20261016-01-provider-omits-block.md) |
 
 ## Development Flow
 
